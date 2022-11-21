@@ -9,7 +9,10 @@ Run
  - kinova_src/initialize.m
 in Matlab before you run any other scripts!
 
-### WARNING
+### Dependency
+This repo depends on the following repos:
+ - [CORA](https://tumcps.github.io/CORA/)
+
 This repo assumes that you have installed the following libraries:
  - libboost-dev (1.71)
  - libeigen3-dev (3.3.7) in eigen3/
