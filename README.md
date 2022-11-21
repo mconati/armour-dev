@@ -7,6 +7,7 @@ The repo has been verified on Matlab R>=2021b and Ubuntu >= 20.04
 Run 
  - initialize.m
  - kinova_src/initialize.m
+ 
 in Matlab before you run any other scripts!
 
 ### Dependency
