@@ -1,11 +1,13 @@
-# Main Testing Scripts
+# Test Scripts / Interfaces For Kinova
 
-More info incoming
+## Start
+   
+Please run 'initialize.m' before running any other scripts!
 
- - kinova_run_100_worlds.m: blahblah
- - kinova_run_100_worlds_summary.m: blahblah
- - kinova_run_hard_scrnarios: blahblah
+## Test Scripts
 
-### In all test scripts, please make sure you run them in their current folder in Matlab !!!
+More info incoming!
 
-### In all test scripts, please specify the global path to the folder that you install armtd-dev properly in variable WHERE_YOU_INSTALL_ARMTD !!!
+ - scripts/kinova_run_100_worlds.m: blahblah
+ - scripts/kinova_run_100_worlds_summary.m: blahblah
+ - scripts/kinova_run_hard_scrnarios: blahblah

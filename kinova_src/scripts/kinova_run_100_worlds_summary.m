@@ -10,12 +10,7 @@ clear; clc;
 use_robust_input = true;
 
 save_file_header = 'trial_' ;
-file_location = '../simulator_files/testing/saved_worlds/20221023_armtd_withoutgripper' ;
-if use_robust_input
-    file_location = [file_location, '_robust'];
-else
-    file_location = [file_location, '_nominal_only'];
-end
+file_location = '../saved_worlds/random' ;
 addpath(file_location);
 
 summary_files = dir([file_location, '/trial_*']);
