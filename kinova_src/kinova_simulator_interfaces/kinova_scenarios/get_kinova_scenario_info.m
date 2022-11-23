@@ -217,7 +217,7 @@ switch scenario
         
         % window size
         window_center = [0.6; 0; 0.8];
-        window_side_length = 0.5;
+        window_side_length = 0.625;
         
         obs_height = 1.5;
         obs_width = 1.5;

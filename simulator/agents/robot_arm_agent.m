@@ -741,17 +741,20 @@ classdef robot_arm_agent < multi_link_agent
                     T_pred = T{p_idx} ;
                 end
                 
-                % get the value and location of the current joint
-                j_idx = j_vals(idx) ;
+                % get the location of the current joint
                 j_loc = j_locs(:,idx) ;
                 
                 % compute link rotation
                 switch A.joint_types{idx}
                     case 'revolute'
+                        % get value of current joint
+                        j_idx = j_vals(A.q_index(idx)) ;
                         if d == 3
                             % rotation matrix of current link
-                            axis_pred = R_pred*A.joint_axes(:,idx) ;
-                            R_succ = axis_angle_to_rotation_matrix_3D([axis_pred', j_idx])*R_pred ;
+%                             axis_pred = A.robot.Bodies{idx}.Joint.JointToParentTransform(1:3, 1:3)*R_pred*A.joint_axes(:,idx) ;
+%                             R_succ = axis_angle_to_rotation_matrix_3D([axis_pred', j_idx])*A.robot.Bodies{idx}.Joint.JointToParentTransform(1:3, 1:3)*R_pred ;
+                            axis_pred =A.joint_axes(:,idx) ;
+                            R_succ = R_pred*A.robot.Bodies{idx}.Joint.JointToParentTransform(1:3, 1:3)*axis_angle_to_rotation_matrix_3D([axis_pred', j_idx]) ;
                         else
                             % rotation matrix of current link
                             R_succ = rotation_matrix_2D(j_idx)*R_pred ;
@@ -762,6 +765,15 @@ classdef robot_arm_agent < multi_link_agent
                     case 'prismatic'
                         % R_succ = R_pred ;
                         error('Prismatic joints are not yet supported!')
+                    case 'fixed'
+                        if d == 3
+                            R_succ = A.robot.Bodies{idx}.Joint.JointToParentTransform(1:3, 1:3)*R_pred ;
+                        else
+                            % rotation matrix of current link assumed same as predecessor
+                            R_succ = R_pred ;
+                        end
+                        % create translation
+                        T_succ = T_pred + R_pred*j_loc(1:d) - R_succ*j_loc(d+1:end) ;
                     otherwise
                         error('Invalid joint type!')
                 end
@@ -829,38 +841,75 @@ classdef robot_arm_agent < multi_link_agent
             n = A.n_links_and_joints ;
             d = A.dimension ;
             
-            % set up translations and rotations
-            R_pred = eye(d) ;
-            T_pred = zeros(d,1) ;
+            % allocate cell arrays for the rotations and translations
+            R = mat2cell(repmat(eye(d),1,n),d,d*ones(1,n)) ;
+            T = mat2cell(repmat(zeros(d,1),1,n),d,ones(1,n)) ;
             
             % allocate array for the joint locations
             J = nan(d,n) ;
             
-            if isa(q,'sym')
-                J = sym(J) ;
-            end
-            
             % move through the kinematic chain and get the rotations and
             % translation of each link
             for idx = 1:n
-                % get the value and location of the current joint
-                j_idx = j_vals(idx) ;
+                k_idx = A.kinematic_chain(:,idx) ;
+                p_idx = k_idx(1) ;
+                s_idx = k_idx(2) ;
+                
+                % get the rotation and translation of the predecessor and
+                % successor links; we assume the baselink is always rotated
+                % to an angle of 0 and with a translation of 0
+                if p_idx == 0
+                    R_pred = eye(d) ;
+                    T_pred = zeros(d,1) ;
+                else
+                    R_pred = R{p_idx} ;
+                    T_pred = T{p_idx} ;
+                end
+                
+                % get the location of the current joint
                 j_loc = j_locs(:,idx) ;
                 
-                % rotation matrix of current joint
-                axis_pred = R_pred*A.joint_axes(:,idx) ;
-                R_succ = axis_angle_to_rotation_matrix_3D([axis_pred', j_idx])*R_pred ;
+                % compute link rotation
+                switch A.joint_types{idx}
+                    case 'revolute'
+                        % get value of current joint
+                        j_idx = j_vals(A.q_index(idx)) ;
+                        if d == 3
+                            % rotation matrix of current link
+%                             axis_pred = A.robot.Bodies{idx}.Joint.JointToParentTransform(1:3, 1:3)*R_pred*A.joint_axes(:,idx) ;
+%                             R_succ = axis_angle_to_rotation_matrix_3D([axis_pred', j_idx])*A.robot.Bodies{idx}.Joint.JointToParentTransform(1:3, 1:3)*R_pred ;
+                            axis_pred =A.joint_axes(:,idx) ;
+                            R_succ = R_pred*A.robot.Bodies{idx}.Joint.JointToParentTransform(1:3, 1:3)*axis_angle_to_rotation_matrix_3D([axis_pred', j_idx]) ;
+                        else
+                            % rotation matrix of current link
+                            R_succ = rotation_matrix_2D(j_idx)*R_pred ;
+                        end
+                        
+                        % create translation
+                        T_succ = T_pred + R_pred*j_loc(1:d) - R_succ*j_loc(d+1:end) ;
+                    case 'prismatic'
+                        % R_succ = R_pred ;
+                        error('Prismatic joints are not yet supported!')
+                    case 'fixed'
+                        if d == 3
+                            R_succ = A.robot.Bodies{idx}.Joint.JointToParentTransform(1:3, 1:3)*R_pred ;
+                        else
+                            % rotation matrix of current link assumed same as predecessor
+                            R_succ = R_pred ;
+                        end
+                        % create translation
+                        T_succ = T_pred + R_pred*j_loc(1:d) - R_succ*j_loc(d+1:end) ;
+                    otherwise
+                        error('Invalid joint type!')
+                end
                 
-                % create translation
-                T_succ = T_pred + R_pred*j_loc(1:d) - R_succ*j_loc(d+1:end) ;
+                % fill in rotation and translation cells
+                R{s_idx} = R_succ ;
+                T{s_idx} = T_succ ;
                 
                 % fill in the joint location
                 j_loc_local = j_locs((d+1):end,idx) ;
                 J(:,idx) = -R_succ*j_loc_local + T_succ ;
-                
-                % update predecessors for next iteration
-                R_pred = R_succ ;
-                T_pred = T_succ ;
             end
         end
         
