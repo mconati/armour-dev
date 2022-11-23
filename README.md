@@ -9,9 +9,20 @@ This repo depends on the following repos:
 
 This repo assumes that you have installed the following libraries:
  - libboost-dev (1.71)
- - libeigen3-dev (3.3.7) in eigen3/
  - libipopt
  - libcoinhsl
+
+#### Install Eigen3
+Download `eigen-3.3.7` by following [this link](https://gitlab.com/libeigen/eigen/-/releases/3.3.7) 
+
+     cd ~/Downloads
+     tar -xvzf eigen-3.3.7.tar.gz
+     mv eigen-3.3.7 /your/favorite/path/
+     cd /your/favorite/path/eigen-3.3.7
+     mkdir build && cd $_
+     cmake ..
+     sudo make
+     sudo make install
  
  libipopt and libcoinhsl could be very annoying to install and to work with Matlab. 
  Suppose libipopt and libcoinhsl are both installed in /usr/local/lib.
