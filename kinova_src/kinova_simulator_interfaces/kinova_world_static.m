@@ -1,7 +1,7 @@
 classdef kinova_world_static < world
     properties
         % setup info
-        include_base_obstacle = true ;
+        include_base_obstacle = false;
         N_random_obstacles = 0 ;
         create_random_obstacles_flag = true ;
         obstacle_size_range = [0.01 0.5] ; % [min, max] side length
@@ -46,13 +46,6 @@ classdef kinova_world_static < world
             
             W.plot_data.obstacles = [] ;
             W.plot_data.goal = [] ;
-%             W.plot_data.baselink = [] ;
-
-            % generate obstacles representing the fetch's body
-%             if W.include_base_obstacle
-%                 W.create_base_obstacle() ;
-%             end
-
 %             W.setup() ;
         end
         

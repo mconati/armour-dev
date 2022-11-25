@@ -1,6 +1,6 @@
 %% description
 % This script iterates through a list of presaved random worlds and runs
-% the aRmTD planner on them. It then saves information on how well each the
+% the ARMOUR planner on them. It then saves information on how well each the
 % planner performed in each trial.
 %
 % Authors: Bohao Zhang (adapted from Patrick Holmes code)
@@ -19,8 +19,7 @@ close all; clear; clc; figure(1); clf; view(3); grid on;
 
 use_robust_input = true;
 
-% goal_type = 'end_effector_location';
-goal_type = 'configuration';
+goal_type = 'configuration'; % pick 'end_effector_location' or 'configuration'
 goal_radius = pi/30;
 dimension = 3 ;
 verbosity = 10;
@@ -33,12 +32,10 @@ use_q_plan_for_cost = false; % otherwise use q_stop (q at final time)
 input_constraints_flag = true;
 
 %%% for agent
-% agent_urdf = 'gen3.urdf';
 agent_urdf = 'kinova_without_gripper.urdf';
 
 add_uncertainty_to = 'all'; % choose 'all', 'link', or 'none'
 links_with_uncertainty = {}; % if add_uncertainty_to = 'link', specify links here.
-% links_with_uncertainty = {'dumbbell_link'}; % if add_uncertainty_to = 'link', specify links here.
 uncertain_mass_range = [0.97, 1.03];
 
 agent_move_mode = 'integrator' ; % pick 'direct' or 'integrator'
@@ -51,36 +48,20 @@ LLC_V_max = 5e-5;
 use_true_params_for_robust = false;
 if_use_mex_controller = true;
 
-no_obstacles = false;
-
+%%% for HLP
 if_use_RRT = false;
-% create_random_obstacles_flag = false ;
-% verbosity = 6 ;
-% actual_t_plan = 10 ;
-% simulated_t_plan = 0.5 ;
-% HLP_timeout = 2 ; 
 HLP_grow_tree_mode = 'new' ;
-% plot_while_sampling_flag = false ;
-% make_new_graph_every_iteration = false ;
-% plot_HLP_flag = true ; % for planner
-plot_waypoint_flag = true ; % for HLP
-plot_waypoint_arm_flag  = true ; % for HLP
-% lookahead_distance = 0.2 ;
-% use_end_effector_for_cost_flag = true ;
-% plot_CAD_flag = false ; % plot the faaaaancy arm :)
+plot_waypoint_flag = true ;
+plot_waypoint_arm_flag  = true ;
+lookahead_distance = 0.1 ;
 
 % plotting
 plot_while_running = false ;
-% agent_camera_distance = 3 ; % default is 3
-% agent_camera_position = [-3;0;1] ; % default is [-3;0;1.5]
-% plot_agent_view = 'behind' ; % none, behind, above, or onboard
-% plot_zonotopes = true ;
 
 % simulation
 max_sim_time = 172800 ; % 48 hours
 max_sim_iter = 600 ;
 stop_threshold = 4 ; % number of failed iterations before exiting
-% first_iter_pause_flag = false;
 
 % file handling
 save_file_header = 'trial_' ;
@@ -104,11 +85,11 @@ params = load_robot_params(robot, ...
                            'links_with_uncertainty', links_with_uncertainty,...
                            'uncertain_mass_range', uncertain_mass_range);
 joint_speed_limits = [-1.3963, -1.3963, -1.3963, -1.3963, -1.2218, -1.2218, -1.2218;
-                       1.3963,  1.3963,  1.3963,  1.3963,  1.2218,  1.2218,  1.2218]; % matlab doesn't import these from urdf
+                       1.3963,  1.3963,  1.3963,  1.3963,  1.2218,  1.2218,  1.2218]; % matlab doesn't import these from urdf so hard code into class
 joint_input_limits = [-56.7, -56.7, -56.7, -56.7, -29.4, -29.4, -29.4;
-                       56.7,  56.7,  56.7,  56.7,  29.4,  29.4,  29.4]; % matlab doesn't import these from urdf
-transmision_inertia = [8.02999999999999936 11.99620246153036440 9.00254278617515169 11.58064393167063599 8.46650409179141228 8.85370693737424297 8.85873036646853151];
-M_min_eigenvalue = 5.095620491878957;
+                       56.7,  56.7,  56.7,  56.7,  29.4,  29.4,  29.4]; % matlab doesn't import these from urdf so hard code into class
+transmision_inertia = [8.02999999999999936 11.99620246153036440 9.00254278617515169 11.58064393167063599 8.46650409179141228 8.85370693737424297 8.85873036646853151]; % matlab doesn't import these from urdf so hard code into class
+M_min_eigenvalue = 5.095620491878957; % matlab doesn't import these from urdf so hard code into class
 
 use_cuda_flag = true;
 
@@ -131,7 +112,7 @@ for idx = 1:length(world_file_list)
         include_base_obstacle = true;
     end
     
-    W = kinova_world_static('create_random_obstacles_flag', false, 'include_base_obstacle', include_base_obstacle, 'goal_radius', goal_radius, 'N_obstacles',length(obstacles),'dimension',dimension,'workspace_goal_check', 0,...
+    W = kinova_world_static('create_random_obstacles_flag', false, 'goal_radius', goal_radius, 'N_obstacles',length(obstacles),'dimension',dimension,'workspace_goal_check', 0,...
                             'verbose',verbosity, 'start', start, 'goal', goal, 'obstacles', obstacles, 'goal_type', goal_type) ;
     
     % create arm agent

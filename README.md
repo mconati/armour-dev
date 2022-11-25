@@ -24,10 +24,11 @@ The repo has been verified on MATLAB R>=2021b and Ubuntu >= 20.04
 
 This repo depends on the following repos:
  - [CORA](https://tumcps.github.io/CORA/)
+ 
 You need to download this repo and add to your MATLAB path.
 
 This repo assumes that you have installed the following libraries:
- - libboost-dev (1.71)
+ - libboost-dev
  - libeigen3-dev (3.3.7)
  - libipopt
  - libcoinhsl
@@ -59,14 +60,13 @@ Download `eigen-3.3.7` by following [this link](https://gitlab.com/libeigen/eige
      sudo make
      sudo make install
  
-#### Install Ipopt and HSL (TODO: Maybe add more introduction)
- libipopt and libcoinhsl could be very annoying to install and to work with MATLAB. 
- Suppose libipopt and libcoinhsl are both installed in /usr/local/lib.
- You need to add that path to both user's environmental variable 'LD_LIBRARY_PATH' and MATLAB's environment variable 'LD_LIBRARY_PATH'
- Check [here](https://www.mathworks.com/help/matlab/matlab_external/set-run-time-library-path-on-linux-systems.html) and [here](https://stackoverflow.com/questions/13428910/how-to-set-the-environmental-variable-ld-library-path-in-linux) for more information.
+#### Install Ipopt and HSL (TODO: Maybe add more introduction, but will be fairly long)
+libipopt and libcoinhsl could be very annoying to install and to work with MATLAB. 
+Suppose libipopt and libcoinhsl are both installed in /usr/local/lib.
+You need to add that path to both user's environmental variable 'LD_LIBRARY_PATH' and MATLAB's environment variable 'LD_LIBRARY_PATH'
+Check [here](https://www.mathworks.com/help/matlab/matlab_external/set-run-time-library-path-on-linux-systems.html) and [here](https://stackoverflow.com/questions/13428910/how-to-set-the-environmental-variable-ld-library-path-in-linux) for more information.
 
 ## Building
-
 Run 
  - initialize.m
  - kinova_src/initialize.m
@@ -74,7 +74,11 @@ Run
 in MATLAB before you run any other scripts!
 
 ## Usage
-Before running the package, make sure you run the initalization scripts successfully and put the Ipopt libraries in the proper path.
+Before running any scripts, make sure you run the initalization scripts successfully and put the Ipopt libraries in the proper path.
+
+All of our results in the paper is developed based on [Kinova Gen3](https://www.kinovarobotics.com/product/gen3-robots). 
+All of the related test scripts are included in [kinova_src](https://github.com/roahmlab/armour-dev/tree/main/kinova_src).
+Check the [README](https://github.com/roahmlab/armour-dev/blob/main/kinova_src/README.md) in that folder for more information.
 
 ## License
 

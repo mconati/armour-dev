@@ -1,6 +1,6 @@
 %% description
-% This script iterates through a list of presaved random worlds and runs
-% the aRmTD planner on them. It then saves information on how well each the
+% This script iterates through a list of presaved hard worlds and runs
+% the ARMOUR planner on them. It then saves information on how well each the
 % planner performed in each trial.
 %
 % Authors: Bohao Zhang (adapted from Patrick Holmes code)
@@ -33,12 +33,10 @@ use_q_plan_for_cost = false; % otherwise use q_stop (q at final time)
 input_constraints_flag = true;
 
 %%% for agent
-% agent_urdf = 'gen3.urdf';
 agent_urdf = 'kinova_without_gripper.urdf';
 
 add_uncertainty_to = 'all'; % choose 'all', 'link', or 'none'
 links_with_uncertainty = {}; % if add_uncertainty_to = 'link', specify links here.
-% links_with_uncertainty = {'dumbbell_link'}; % if add_uncertainty_to = 'link', specify links here.
 uncertain_mass_range = [0.97, 1.03];
 
 agent_move_mode = 'integrator' ; % pick 'direct' or 'integrator'
@@ -51,36 +49,21 @@ LLC_V_max = 5e-5;
 use_true_params_for_robust = false;
 if_use_mex_controller = true;
 
-no_obstacles = false;
-
+%%% for HLP
 if_use_RRT = true;
-% create_random_obstacles_flag = false ;
-% verbosity = 6 ;
-% actual_t_plan = 10 ;
-% simulated_t_plan = 0.5 ;
-% HLP_timeout = 2 ; 
 HLP_grow_tree_mode = 'keep' ; % pick 'new' or 'keep'
-% plot_while_sampling_flag = false ;
-% make_new_graph_every_iteration = false ;
-plot_HLP_flag = true ; % for planner
-plot_waypoint_flag = true ; % for HLP
-plot_waypoint_arm_flag  = true ; % for HLP
+plot_HLP_flag = true ;
+plot_waypoint_flag = true ;
+plot_waypoint_arm_flag  = true ;
 lookahead_distance = 0.1 ;
-% use_end_effector_for_cost_flag = true ;
-% plot_CAD_flag = false ; % plot the faaaaancy arm :)
 
 % plotting
 plot_while_running = true ;
-% agent_camera_distance = 3 ; % default is 3
-% agent_camera_position = [-3;0;1] ; % default is [-3;0;1.5]
-% plot_agent_view = 'behind' ; % none, behind, above, or onboard
-% plot_zonotopes = true ;
 
 % simulation
 max_sim_time = 172800 ; % 48 hours
 max_sim_iter = 600 ;
 stop_threshold = 4 ; % number of failed iterations before exiting
-% first_iter_pause_flag = false;
 
 % file handling
 save_file_header = 'trial_' ;
@@ -101,8 +84,8 @@ joint_speed_limits = [-1.3963, -1.3963, -1.3963, -1.3963, -1.2218, -1.2218, -1.2
                        1.3963,  1.3963,  1.3963,  1.3963,  1.2218,  1.2218,  1.2218]; % matlab doesn't import these from urdf
 joint_input_limits = [-56.7, -56.7, -56.7, -56.7, -29.4, -29.4, -29.4;
                        56.7,  56.7,  56.7,  56.7,  29.4,  29.4,  29.4]; % matlab doesn't import these from urdf
-transmision_inertia = [8.02999999999999936 11.99620246153036440 9.00254278617515169 11.58064393167063599 8.46650409179141228 8.85370693737424297 8.85873036646853151];
-M_min_eigenvalue = 5.095620491878957;
+transmision_inertia = [8.02999999999999936 11.99620246153036440 9.00254278617515169 11.58064393167063599 8.46650409179141228 8.85370693737424297 8.85873036646853151]; % matlab doesn't import these from urdf so hard code into class
+M_min_eigenvalue = 5.095620491878957; % matlab doesn't import these from urdf so hard code into class
 
 use_cuda_flag = true;
 
@@ -116,15 +99,7 @@ for idx = 1:7
     % read world CSV to get start and goal, populate obstacles:
     [obstacles,start,goal_radius,goal_type,goal] = get_kinova_scenario_info(idx);
 
-    if no_obstacles
-        obstacles = {};
-        disp('Obstacles disabled!!!');
-        include_base_obstacle = false;
-    else
-        include_base_obstacle = true;
-    end
-    
-    W = kinova_world_static('create_random_obstacles_flag', false, 'include_base_obstacle', include_base_obstacle, 'goal_radius', goal_radius, 'N_obstacles',length(obstacles),'dimension',dimension,'workspace_goal_check', 0,...
+    W = kinova_world_static('create_random_obstacles_flag', false, 'goal_radius', goal_radius, 'N_obstacles',length(obstacles),'dimension',dimension,'workspace_goal_check', 0,...
                             'verbose',verbosity, 'start', start, 'goal', goal, 'obstacles', obstacles, 'goal_type', goal_type) ;
     
     % create arm agent
