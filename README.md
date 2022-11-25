@@ -28,11 +28,9 @@ This repo depends on the following repos:
 You need to download this repo and add to your MATLAB path.
 
 This repo assumes that you have installed the following libraries:
-<<<<<<< HEAD
+
  - libboost-dev
  - libeigen3-dev (3.3.7)
-=======
->>>>>>> 7703dfd73cd612c8447ba91db8478efaff843d6c
  - libipopt
  - libcoinhsl
  
