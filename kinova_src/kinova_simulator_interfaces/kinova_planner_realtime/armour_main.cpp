@@ -255,15 +255,21 @@ Section III:
     }
 
     // Ask Ipopt to solve the problem
-	status = app->OptimizeTNLP(mynlp);
+    status = app->OptimizeTNLP(mynlp);
+	
+    auto stop2 = std::chrono::high_resolution_clock::now();
+    auto duration2 = std::chrono::duration_cast<std::chrono::milliseconds>(stop2 - start2);
 
     if (status == Maximum_CpuTime_Exceeded) {
         cout << "        CUDA & C++: Ipopt maximum CPU time exceeded!\n";
     }
-
-    auto stop2 = std::chrono::high_resolution_clock::now();
-    auto duration2 = std::chrono::duration_cast<std::chrono::milliseconds>(stop2 - start2);
-    cout << "        CUDA & C++: Time taken by Ipopt: " << duration2.count() << " milliseconds" << endl;
+    
+    if (status == Invalid_Option) {
+        cout << "        CUDA & C++: Cannot find HSL library! Need to put libcoinhsl.so in proper path!\n";
+    }
+    else {
+        cout << "        CUDA & C++: Time taken by Ipopt: " << duration2.count() << " milliseconds" << endl;
+    }
 
 /*
 Section IV:

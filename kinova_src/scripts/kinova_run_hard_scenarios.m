@@ -42,7 +42,7 @@ links_with_uncertainty = {}; % if add_uncertainty_to = 'link', specify links her
 uncertain_mass_range = [0.97, 1.03];
 
 agent_move_mode = 'integrator' ; % pick 'direct' or 'integrator'
-use_CAD_flag = false;
+use_CAD_flag = true;
 add_measurement_noise_ = false;
 measurement_noise_size_ = 0;
 
@@ -109,7 +109,7 @@ use_cuda_flag = true;
 %% automated from here
 % run loop
 tic
-for idx = 7:7
+for idx = 1:7
     clc; 
     fprintf("THIS IS WORLD %d\n\n", idx);
 
