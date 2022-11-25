@@ -1,4 +1,6 @@
-# ARMOUR (Autonomous Robust Manipulation via Optimization with Uncertainty-aware Reachability)
+![](https://github.com/roahmlab/armour-dev/blob/main/assets/armour_logo.png?raw=true)
+
+# Autonomous Robust Manipulation via Optimization with Uncertainty-aware Reachability
 **Authors:** Jonathan Michaux (jmichaux@umich.edu), Patrick Holmes (pdholmes@umich.edu), Bohao Zhang (jimzhang@umich.edu), Che Chen (cctom7@umich.edu), Baiyue Wang (baiyuew@umich.edu), Shrey Sahgal (shreyps@umich.edu), Tiancheng Zhang (zhangtc@umich.edu), Sidhartha Dey (sid.dey@agilityrobotics.com), Shreyas Kousik (skousik@gatech.edu), and Ram Vasudevan (ramv@umich.edu). 
 
 - All authors are affiliated with the Robotics Institute and department of Mechanical Engineering of the University of Michigan, 2505 Hayward Street, Ann Arbor, Michigan, USA (TODO: include Shreyas and Sid).
