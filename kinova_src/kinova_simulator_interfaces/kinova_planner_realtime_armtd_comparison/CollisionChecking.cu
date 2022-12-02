@@ -255,10 +255,12 @@ __global__ void checkCollisionKernel(TYPE* A, TYPE* d, TYPE* delta,
 
 	__shared__ TYPE C[COMB_NUM][3];
 
-	__shared__ TYPE compdata[COMB_NUM];
-	__shared__ unsigned int compdata_idx[COMB_NUM];
-	__shared__ bool compdata_c[COMB_NUM]; // 0 for c1, 1 for c2
-	__shared__ bool compdata_sign[COMB_NUM]; // 0 for C, 1 for -C
+	__shared__ TYPE begin_dot[COMB_NUM];
+	__shared__ TYPE end_dot[COMB_NUM];
+	__shared__ TYPE delta_v[COMB_NUM];
+	__shared__ TYPE lambda_lb[COMB_NUM];
+	__shared__ TYPE lambda_ub[COMB_NUM];
+	__shared__ TYPE LHS[COMB_NUM];
 
 	if (p_id == 0) {
         if (link_id > 0) {
@@ -292,10 +294,9 @@ __global__ void checkCollisionKernel(TYPE* A, TYPE* d, TYPE* delta,
 		d_lc2[2][p_id] = dk_checkJointsPosition[((time_id * NUM_FACTORS + link_id) * 3 + 2) * NUM_FACTORS + p_id];
 	}
 
-	compdata[p_id] = -10000000.0;
-	compdata_c[p_id] = 100;
-	compdata_sign[p_id] = 100;
-	compdata_idx[p_id] = p_id;
+	lambda_lb[p_id] = -100000000;
+	lambda_ub[p_id] = 100000000;
+	LHS[p_id] = 0;
 
 	__syncthreads();
 
@@ -306,104 +307,155 @@ __global__ void checkCollisionKernel(TYPE* A, TYPE* d, TYPE* delta,
 	C[p_id][1] = C2;
 	C[p_id][2] = C3;
 
-	// cc = c1 * lambda + c2 * (1 - lambda), lambda \in [0,1]
-	// PA * cc - Pb <= 0 
-	// <==> Aprime * lambda - Bprime <= 0
-	// \exist lambda \in [0,1], Aprime * lambda - Bprime <= 0 
-	// <==> min(Aprime - Bprime, -Bprime) <= 0
-	// <==> min(PA * c1 - Pb, PA * c2 - Pb) <= 0
 	if (C1 != 0 || C2 != 0 || C3 != 0) {
 		TYPE d_v = d[((time_id * NUM_FACTORS + link_id) * num_obstacles + obs_id) * COMB_NUM + p_id];
-		TYPE delta_v = delta[((time_id * NUM_FACTORS + link_id) * num_obstacles + obs_id) * COMB_NUM + p_id];
-		TYPE cmp_pos_c1 = C1 * lc1[0] + C2 * lc1[1] + C3 * lc1[2] - d_v - delta_v;
-		TYPE cmp_pos_c2 = C1 * lc2[0] + C2 * lc2[1] + C3 * lc2[2] - d_v - delta_v;
-		TYPE cmp_neg_c1 = -(C1 * lc1[0] + C2 * lc1[1] + C3 * lc1[2]) + d_v - delta_v;
-		TYPE cmp_neg_c2 = -(C1 * lc2[0] + C2 * lc2[1] + C3 * lc2[2]) + d_v - delta_v;
+		delta_v[p_id] = delta[((time_id * NUM_FACTORS + link_id) * num_obstacles + obs_id) * COMB_NUM + p_id];
+		begin_dot[p_id] = C1 * lc1[0] + C2 * lc1[1] + C3 * lc1[2] - d_v;
+		end_dot[p_id] = C1 * lc2[0] + C2 * lc2[1] + C3 * lc2[2] - d_v;
+		LHS[p_id] = begin_dot[p_id] - end_dot[p_id];
 
-		// min(cmp_pos_c1, cmp_pos_c2)
-		TYPE cmp_pos_min;
-		bool cmp_pos_min_c;
-		if (cmp_pos_c1 > cmp_pos_c2) {
-			cmp_pos_min = cmp_pos_c2;
-			cmp_pos_min_c = 1;
+		if (LHS[p_id] > 0) {
+			lambda_ub[p_id] = (delta_v[p_id] - end_dot[p_id]) / LHS[p_id];
+            lambda_lb[p_id] = (-delta_v[p_id] - end_dot[p_id]) / LHS[p_id];
 		}
 		else {
-			cmp_pos_min = cmp_pos_c1;
-			cmp_pos_min_c = 0;
+			lambda_ub[p_id] = (-delta_v[p_id] - end_dot[p_id]) / LHS[p_id];
+            lambda_lb[p_id] = (delta_v[p_id] - end_dot[p_id]) / LHS[p_id];
 		}
-
-		// min(cmp_neg_c1, cmp_neg_c2)
-		TYPE cmp_neg_min;
-		bool cmp_neg_min_c;
-		if (cmp_neg_c1 > cmp_neg_c2) {
-			cmp_neg_min = cmp_neg_c2;
-			cmp_neg_min_c = 1;
-		}
-		else {
-			cmp_neg_min = cmp_neg_c1;
-			cmp_neg_min_c = 0;
-		}
-
-		// max(cmp_pos_min, cmp_neg_min)
-		if (cmp_pos_min > cmp_neg_min) {
-			compdata[p_id] = cmp_pos_min;
-			compdata_c[p_id] = cmp_pos_min_c;
-			compdata_sign[p_id] = 0;
-		}
-		else {
-			compdata[p_id] = cmp_neg_min;
-			compdata_c[p_id] = cmp_neg_min_c;
-			compdata_sign[p_id] = 1;
-		} 
 	}
 
 	__syncthreads();
+	
+	if (p_id == 0) {
+		unsigned int lb_max_id = 0;
+		unsigned int ub_min_id = 0;
+		for (unsigned int i = 1; i < COMB_NUM; i++) {
+			if (lambda_lb[lb_max_id] < lambda_lb[i]) {
+				lb_max_id = i;
+			}
+			if (lambda_ub[i] < lambda_ub[ub_min_id]) {
+				ub_min_id = i;
+			}
+		}
+		
+		const TYPE& lambda_lb_max = lambda_lb[lb_max_id];
+		const TYPE& LHS_lb = LHS[lb_max_id];
+		const TYPE begin_dot_lb = begin_dot[lb_max_id];
+		const TYPE end_dot_lb = end_dot[lb_max_id];
+		const TYPE& delta_lb = delta_v[lb_max_id];
 
-	// find maximum
-	for (unsigned int i = 1; i < COMB_NUM; i <<= 1) {
-		if ((p_id % i == 0) && p_id + i < COMB_NUM) {
-			if (compdata[p_id] < compdata[p_id + i]) {
-				compdata[p_id] = compdata[p_id + i];
-				compdata_idx[p_id] = compdata_idx[p_id + i];
-				compdata_c[p_id] = compdata_c[p_id + i];
-				compdata_sign[p_id] = compdata_sign[p_id + i];
+		const TYPE& lambda_ub_min = lambda_ub[ub_min_id];
+		const TYPE& LHS_ub = LHS[ub_min_id];
+		// const TYPE begin_dot_ub = begin_dot[ub_min_id];
+		const TYPE end_dot_ub = end_dot[ub_min_id];
+		const TYPE& delta_ub = delta_v[ub_min_id];
+		
+		TYPE begin_dot_lb_derivative[NUM_FACTORS];
+		TYPE end_dot_lb_derivative[NUM_FACTORS];
+		TYPE begin_dot_ub_derivative[NUM_FACTORS];
+		TYPE end_dot_ub_derivative[NUM_FACTORS];
+
+		if (dk_checkJointsPosition != nullptr) {
+			for (unsigned int i = 0; i < NUM_FACTORS; i++) {
+				begin_dot_lb_derivative[i] = C[lb_max_id][0] * d_lc1[0][i] + C[lb_max_id][1] * d_lc1[1][i] + C[lb_max_id][2] * d_lc1[2][i];
+				end_dot_lb_derivative[i] = C[lb_max_id][0] * d_lc2[0][i] + C[lb_max_id][1] * d_lc2[1][i] + C[lb_max_id][2] * d_lc2[2][i];
+				begin_dot_ub_derivative[i] = C[ub_min_id][0] * d_lc1[0][i] + C[ub_min_id][1] * d_lc1[1][i] + C[ub_min_id][2] * d_lc1[2][i];
+				end_dot_ub_derivative[i] = C[ub_min_id][0] * d_lc2[0][i] + C[ub_min_id][1] * d_lc2[1][i] + C[ub_min_id][2] * d_lc2[2][i];
 			}
 		}
 
-		__syncthreads();
-	}
+		if (1 < lambda_lb_max) {
+			if (LHS_lb > 0) {
+				link_c[time_id * num_obstacles + obs_id] = begin_dot_lb - delta_lb;
+				
+				for (unsigned int i = 0; i < NUM_FACTORS; i++) {
+					grad_link_c[(time_id * num_obstacles + obs_id) * NUM_FACTORS + i] = begin_dot_lb_derivative[i];
+				}
+			}
+			else {
+				link_c[time_id * num_obstacles + obs_id] = -begin_dot_lb - delta_lb;
 
-	if (p_id == 0) {
-		link_c[time_id * num_obstacles + obs_id] = -compdata[0];
+				for (unsigned int i = 0; i < NUM_FACTORS; i++) {
+					grad_link_c[(time_id * num_obstacles + obs_id) * NUM_FACTORS + i] = -begin_dot_lb_derivative[i];
+				}
+			}
+		}
+		else if (lambda_ub_min < 0) {
+			if (LHS_ub > 0) {
+				link_c[time_id * num_obstacles + obs_id] = -end_dot_ub + delta_ub;
 
-        if (dk_checkJointsPosition != nullptr) {
-            unsigned int max_idx = compdata_idx[0];
+				for (unsigned int i = 0; i < NUM_FACTORS; i++) {
+					grad_link_c[(time_id * num_obstacles + obs_id) * NUM_FACTORS + i] = -end_dot_ub_derivative[i];
+				}
+			}
+			else {
+				link_c[time_id * num_obstacles + obs_id] = end_dot_ub + delta_ub;
 
-            if (!compdata_c[0]) {
-                if (!compdata_sign[0]) {
-                    for (unsigned int i = 0; i < NUM_FACTORS; i++) {
-                        grad_link_c[(time_id * num_obstacles + obs_id) * NUM_FACTORS + i] = -(C[max_idx][0] * d_lc1[0][i] + C[max_idx][1] * d_lc1[1][i] + C[max_idx][2] * d_lc1[2][i]);
-                    }
-                }
-                else {
-                    for (unsigned int i = 0; i < NUM_FACTORS; i++) {
-                        grad_link_c[(time_id * num_obstacles + obs_id) * NUM_FACTORS + i] = (C[max_idx][0] * d_lc1[0][i] + C[max_idx][1] * d_lc1[1][i] + C[max_idx][2] * d_lc1[2][i]);
-                    }
-                }
-            }
-            else {
-                if (!compdata_sign[0]) {
-                    for (unsigned int i = 0; i < NUM_FACTORS; i++) {
-                        grad_link_c[(time_id * num_obstacles + obs_id) * NUM_FACTORS + i] = -(C[max_idx][0] * d_lc2[0][i] + C[max_idx][1] * d_lc2[1][i] + C[max_idx][2] * d_lc2[2][i]);
-                    }
-                }
-                else {
-                    for (unsigned int i = 0; i < NUM_FACTORS; i++) {
-                        grad_link_c[(time_id * num_obstacles + obs_id) * NUM_FACTORS + i] = (C[max_idx][0] * d_lc2[0][i] + C[max_idx][1] * d_lc2[1][i] + C[max_idx][2] * d_lc2[2][i]);
-                    }
-                }
-            }
-        }
+				for (unsigned int i = 0; i < NUM_FACTORS; i++) {
+					grad_link_c[(time_id * num_obstacles + obs_id) * NUM_FACTORS + i] = end_dot_ub_derivative[i];
+				}
+			}
+		}
+		else {
+			TYPE LHS_ub_derivative[NUM_FACTORS];
+			TYPE LHS_lb_derivative[NUM_FACTORS];
+
+			if (dk_checkJointsPosition != nullptr) {
+				for (unsigned int i = 0; i < NUM_FACTORS; i++) {
+					LHS_ub_derivative[i] = begin_dot_ub_derivative[i] - end_dot_ub_derivative[i];
+					LHS_lb_derivative[i] = begin_dot_lb_derivative[i] - end_dot_lb_derivative[i];
+				}
+			}
+
+			if (LHS_lb > 0) {
+				if (LHS_ub > 0) {
+					link_c[time_id * num_obstacles + obs_id] = LHS_ub * (end_dot_lb + delta_lb) + LHS_lb * (-end_dot_ub + delta_ub);
+
+					for (unsigned int i = 0; i < NUM_FACTORS; i++) {
+						grad_link_c[(time_id * num_obstacles + obs_id) * NUM_FACTORS + i] = 
+										(LHS_ub_derivative[i] * (end_dot_lb + delta_lb)) + 
+										(LHS_ub * end_dot_lb_derivative[i]) + 
+										(LHS_lb_derivative[i] * (-end_dot_ub + delta_ub)) + 
+										(LHS_lb * (-end_dot_ub_derivative[i]));
+					}
+				}
+				else {
+					link_c[time_id * num_obstacles + obs_id] = -LHS_ub * (end_dot_lb + delta_lb) + LHS_lb * (end_dot_ub + delta_ub);
+
+					for (unsigned int i = 0; i < NUM_FACTORS; i++) {
+						grad_link_c[(time_id * num_obstacles + obs_id) * NUM_FACTORS + i] = 
+										(-LHS_ub_derivative[i] * (end_dot_lb + delta_lb)) + 
+										(-LHS_ub * end_dot_lb_derivative[i]) + 
+										(LHS_lb_derivative[i] * (end_dot_ub + delta_ub)) + 
+										(LHS_lb * (end_dot_ub_derivative[i]));
+					}
+				}
+			}
+			else {
+				if (LHS_ub > 0) {
+					link_c[time_id * num_obstacles + obs_id] = LHS_ub * (-end_dot_lb + delta_lb) - LHS_lb * (-end_dot_ub + delta_ub);
+
+					for (unsigned int i = 0; i < NUM_FACTORS; i++) {
+						grad_link_c[(time_id * num_obstacles + obs_id) * NUM_FACTORS + i] = 
+										(LHS_ub_derivative[i] * (-end_dot_lb + delta_lb)) + 
+										(LHS_ub * (-end_dot_lb_derivative[i])) + 
+										(-LHS_lb_derivative[i] * (-end_dot_ub + delta_ub)) + 
+										(LHS_lb * (end_dot_ub_derivative[i]));
+					}
+				}
+				else {
+					link_c[time_id * num_obstacles + obs_id] = -LHS_ub * (-end_dot_lb + delta_lb) - LHS_lb * (end_dot_ub + delta_ub);
+				
+					for (unsigned int i = 0; i < NUM_FACTORS; i++) {
+						grad_link_c[(time_id * num_obstacles + obs_id) * NUM_FACTORS + i] = 
+										(-LHS_ub_derivative[i] * (-end_dot_lb + delta_lb)) + 
+										(LHS_ub * (end_dot_lb_derivative[i])) + 
+										(-LHS_lb_derivative[i] * (end_dot_ub + delta_ub)) + 
+										(-LHS_lb * (end_dot_ub_derivative[i]));
+					}
+				}
+			}
+		}
 	}
 }
 

@@ -13,7 +13,7 @@
 initialize_script_path = matlab.desktop.editor.getActiveFilename;
 cd(initialize_script_path(1:end-23));
 
-close all; clear; clc; figure(1); clf; view(3); grid on;
+close all; clear; clc;
 
 %% user parameters
 
@@ -95,6 +95,10 @@ use_cuda_flag = true;
 
 %% automated from here
 % run loop
+if plot_while_running
+    figure(1); clf; view(3); grid on;
+end
+
 tic
 for idx = 1:length(world_file_list)
     clc; 
@@ -103,14 +107,6 @@ for idx = 1:length(world_file_list)
     % read world CSV to get start and goal, populate obstacles:
     world_filename = world_file_list(idx).name;
     [start, goal, obstacles] = load_saved_world([world_file_folder world_filename]);
-
-    if no_obstacles
-        obstacles = {};
-        disp('Obstacles disabled!!!');
-        include_base_obstacle = false;
-    else
-        include_base_obstacle = true;
-    end
     
     W = kinova_world_static('create_random_obstacles_flag', false, 'goal_radius', goal_radius, 'N_obstacles',length(obstacles),'dimension',dimension,'workspace_goal_check', 0,...
                             'verbose',verbosity, 'start', start, 'goal', goal, 'obstacles', obstacles, 'goal_type', goal_type) ;

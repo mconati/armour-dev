@@ -9,7 +9,7 @@
 initialize_script_path = matlab.desktop.editor.getActiveFilename;
 cd(initialize_script_path(1:end-23));
 
-close all; clear; clc; figure(1); clf; view(3); grid on;
+close all; clear; clc;
 
 %% user parameters
 goal_type = 'configuration'; % pick 'end_effector_location' or 'configuration'
@@ -75,10 +75,12 @@ M_min_eigenvalue = 5.095620491878957; % matlab doesn't import these from urdf so
 use_cuda_flag = true;
 
 %% automated from here
-% run loop
-tic
-clc; 
+if plot_while_running
+    figure(1); clf; view(3); grid on;
+end
 
+% run loop
+tic;
 W = kinova_world_static('create_random_obstacles_flag', false, 'goal_radius', goal_radius, 'N_obstacles',length(obstacles),'dimension',dimension,'workspace_goal_check', 0,...
                         'verbose',verbosity, 'start', start, 'goal', goal, 'obstacles', obstacles, 'goal_type', goal_type) ;
 
@@ -154,5 +156,5 @@ if plot_while_running
 end
 
 % run simulation
-summary = S.run()
+summary = S.run();
 

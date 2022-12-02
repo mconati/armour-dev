@@ -13,7 +13,7 @@
 initialize_script_path = matlab.desktop.editor.getActiveFilename;
 cd(initialize_script_path(1:end-27));
 
-close all; clear; clc; figure(1); clf; view(3); grid on;
+close all; clear; clc;
 
 %% user parameters
 
@@ -90,6 +90,10 @@ M_min_eigenvalue = 5.095620491878957; % matlab doesn't import these from urdf so
 use_cuda_flag = true;
 
 %% automated from here
+if plot_while_running
+    figure(1); clf; view(3); grid on;
+end
+
 % run loop
 tic
 for idx = 1:7
