@@ -92,7 +92,7 @@
 <body style="background-color:#ffffff;">
     <!-- Github Logo on the top-right corner -->
     <div class="github_logo">
-        <a href="https://github.com/roahmlab/sel_map" class="github-corner" aria-label="View source on Github">
+        <a href="https://github.com/roahmlab/armour-dev" class="github-corner" aria-label="View source on Github">
             <svg width="80" height="80" viewBox="0 0 250 250" style="fill:#333333; color:#fff; position: absolute; top: 0; border: 0; right: 0;" aria-hidden="true">
                 <defs>
                     <mask id="octomask">
@@ -136,28 +136,43 @@
     </div>
     <!-- Author list -->
     <div class="section">
-        <h1 class="title">Semantic ELevation (SEL) Map</h1>
-        <h1 class="subtitle">Semantic Bayesian inferencing framework for real-time elevation mapping and terrain property estimation</h1>
+        <h1 class="title">Autonomous Robust Manipulation via Optimization with Uncertainty-aware Reachability</h1>
+        <h1 class="subtitle">Can't Touch This: Real-Time, Safe Motion Planning and Control for Manipulators Under Uncertainty</h1>
         <!-- Author name-->
         <div class="row">
             <div class="col" style="font-weight: 200;">
-                <p>Parker Ewen</p>
+                <p>Jonathan Michaux</p>
             </div>
             <div class="col" style="font-weight: 200;">
-                <p>Adam Li</p>
+                <p>Patrick Holmes</p>
             </div>
             <div class="col" style="font-weight: 200;">
-                <p>Yuxin Chen</p>
+                <p>Bohao Zhang</p>
             </div>
             <div class="col" style="font-weight: 200;">
-                <p>Steven Hong</p>
+                <p>Che Chen</p>
+            </div>
+            <div class="col" style="font-weight: 200;">
+                <p>Baiyue Wang</p>
+            </div>
+            <div class="col" style="font-weight: 200;">
+                <p>Shrey Sahgal</p>
+            </div>
+            <div class="col" style="font-weight: 200;">
+                <p>Tiancheng Zhang</p>
+            </div>
+            <div class="col" style="font-weight: 200;">
+                <p>Sidhartha Dey</p>
+            </div>
+            <div class="col" style="font-weight: 200;">
+                <p>Shreyas Kousik</p>
             </div>
             <div class="col" style="font-weight: 200;">
                 <p>Ram Vasudevan</p>
             </div>
         </div>    
-        <!-- Mailbox -->
-        <div class="row">
+        <!-- Mailbox TODO: Do you want to put email here? --> 
+        <!-- <div class="row">
             <div class="col", style="font-size:10pt;">
                 <p>pewen@umich.edu</p>
             </div>
@@ -173,7 +188,7 @@
             <div class="col", style="font-size:10pt;">
                 <p>ramv@umich.edu</p>
             </div>
-        </div> 
+        </div>  -->
         <!-- Authors affiliation -->
         <div class="affiliation">
             <p>All authors affiliated with the Robotics Institute and department of Mechanical Engineering of the University of Michigan, Ann Arbor.</p>
@@ -181,23 +196,27 @@
         <!-- Links -->
         <div class="row" style="margin-left:auto; margin-right:auto; margin-top:10pt;max-width:300px;">
             <div class="col" style="width: 50%; line-height: 50pt;">
-                <a href="https://arxiv.org/abs/2205.12925">
-                    <img src="./web_elements/paper.png" height="25pt"/>
+                <a href="TODO: PAPER LINK">
+                    <img src="./figures/paper.png" height="25pt"/>
                 </a>
             </div>
             <div class="col" style="width: 50%; line-height: 50pt;">
                 <a href="https://github.com/roahmlab/sel_map">
-                    <img src="./web_elements/github.png" height="25pt" style="opacity:.85"/>
+                    <img src="./figures/github.png" height="25pt" style="opacity:.85"/>
                 </a>
             </div>
         </div>
         <!-- Link name -->
         <div class="row" style="margin-left:auto; margin-right:auto; max-width:300px; line-height: 10pt;">
             <div class="col" style="width: 50%; font-size:10pt; font-weight: 500;">
-                <p>Paper</p>
+                <a href="TODO: PAPER LINK">
+                    <p>Paper</p>
+                </a>
             </div>
             <div class="col" style="width: 50%; font-size:10pt; font-weight: 500;">
-                <p>&lt;/Code&gt;</p>
+                <a href="TODO: PAPER LINK">
+                    <p>&lt;/Code&gt;</p>
+                </a>
             </div>
         </div>
     </div>
@@ -206,63 +225,53 @@
     <div class="container" style="padding-top: 0pt;">
         <h2 class="section_title">Overview Video</h2>
         <video width="100%" controls>
-            <source src="https://user-images.githubusercontent.com/13129304/160706120-fc7aa07b-84d0-4dc2-9630-8289401880d8.mp4">
+            <source src="TODO: put the video in the wiki and copy the link here">
         </video>
     </div>
 
     <!-- Introduction -->
     <div class="container" style="background-color:#f2f2f2">
         <h2 class="section_title">Introduction</h2>
-        <p class="body">The equations of motion governing mobile robots are dependent on terrain properties such as the coefficient of friction, and contact model parameters. 
-            Estimating these properties is thus essential for robotic navigation. 
-            Ideally any map estimating terrain properties should run in real time, mitigate sensor noise, and provide probability distributions of the aforementioned properties, thus enabling risk-mitigating navigation and planning. 
-            This paper addresses these needs and proposes a Bayesian inference framework for semantic mapping which recursively estimates both the terrain surface profile and a probability distribution for terrain properties using data from a single RGB-D camera. 
-            The proposed framework is evaluated in simulation against other semantic mapping methods and is shown to outperform these state-of-the-art methods in terms of correctly estimating simulated ground-truth terrain properties when evaluated using a precision-recall curve and the Kullback-Leibler divergence test. 
-            Additionally, the proposed method is deployed on a physical legged robotic platform in both indoor and outdoor environments, and we show our method correctly predicts terrain properties in both cases. 
-            The proposed framework runs in real-time and includes a ROS interface for easy integration.</p>
+        <p class="body">A key challenge to the widespread deployment of robotic manipulators is the need to ensure safety in arbitrary environments while generating new motion plans in real-time.
+            In particular, one must ensure that the manipulator does not collide with obstacles, collide with itself, or exceed its own joint torque limits.
+            This challenge is compounded by the need to account for uncertainty in the mass and inertia of manipulated objects, and potentially the robot itself.
+            The present work addresses this challenge by proposing Autonomous Robust Manipulation via Optimization with Uncertainty-aware Reachability (`ARMOUR`), a provably-safe, receding-horizon trajectory planner and tracking controller framework for serial link manipulators.
+            In particular, this paper makes three contributions.
+            First, a robust, passivity-based controller enables a manipulator to track desired trajectories with bounded error despite uncertain dynamics.
+            Second, a novel variation on the Recursive Newton-Euler Algorithm (RNEA) allows \methodname to compute the set of all possible inputs required to track any trajectory within a continuum of desired trajectories.
+            Third, this paper provides a method to compute the swept volume of the manipulator given a reachable set of states; this enables one to guarantee safety by checking that the swept volume does not intersect with obstacles.
+            The proposed method is compared to state of the art methods and demonstrated on a variety of challenging manipulation examples in simulation, such as maneuvering a heavy dumbbell with uncertain mass around obstacles. 
+            The link to the project website is</p>
         <div style="text-align: center;">
-            <img src="./web_elements/main.png", width="700pt">
+            <img src="./figures/urmtd_front_figure.png", width="700pt">
         </div>
-        <p class="body">The image above illustrates the real-time semantic mapping method proposed in this paper which recursively estimates terrain height and friction properties from RGB-D images. 
-            This is done by constructing a triangular mesh to estimate the contact surface of the robot's surroundings (drawn within the grey oval sensor footprint), and the mean and variance of each vertex within the mesh is computed using a one-dimensional Kalman filter at each iteration. 
-            Terrain classes are estimated by combining off-the-shelf semantic segmentation networks with a novel algorithm we develop to recursively estimate terrain properties using Bayesian inference. 
-            These property estimates are full probability distributions (shown in the red inlay for one region) and are computed for each cell within the mesh (the mean estimated friction coefficient is colored according to the given legend).
-            This algorithm operates at between 5-25Hz and runs on several robot systems including Boston Dynamics's Spot and Agility Robotics's Digit.</p>
     </div>
 
     <!-- Method -->
     <div class="container">
         <h2 class="section_title">Method</h2>
-        <p class="body">Here is a flow diagram illustrating out method.
-            RGB-D images are semantically segmented using an off-the-shelf semantic segmentation network. 
-            Using the camera’s estimated pose and associated depth image, the pixel-wise probabilistic terrain class estimates are projected into the map. 
-            The height map is updated using a 1D Kalman filter and the terrain class estimates, alongside our novel material property dataset, are used to recursively estimate terrain properties for each region of the map.</p>
+        <p class="body">TODO: method</p>
         <div style="text-align: center;">
-            <img src="./web_elements/flow_diagram.png", width="900pt">
+            <img src="TODO: method figure", width="900pt">
         </div>
     </div>
 
     <!-- Results -->
     <div class="container">
         <h2 class="section_title">Results</h2>
-        <p class="body">We ran our method on the Spot quadruped using an on-board Realsense D435 RGB-D camera. 
-            Experiments were conducted both indoors and outdoors with a variety of terrain classes. 
-            We compared our method to a state-of-the-art traversability mapping framework to demonstrate the utility of our semantic mapping algorithm when compared to a traversability estimation algorithm.</p>
+        <p class="body">TODO: results</p>
         <div style="text-align: center;">
-            <img src="./web_elements/comparison_full.PNG", width="900pt">
+            <img src="TODO: result figure", width="900pt">
         </div>
-        <p class="body">Each column depicts the performance of our proposed mapping algorithm (second row, the first column uses the Context-Encoding ResNet-50 trained on the Pascal dataset while the remaining columns use the RenNet-50 trained on ADE20K for terrain classification) when compared to a traversability estimation algorithm (third row) applied on the scenes depicted in the top row. 
-            Traversability estimation sometimes believes that a region is traversable when it is not, such as an icy surface (column a) or a puddle (column e) . 
-            In other scenarios, it believes that an area is intraversable when it is traversable such as on hills (column b, d) and near low vegetation (column c). 
-            Our method makes no claims about traversability, instead it estimates the probability distribution of terrain properties for each mesh element along with the terrain geometry.</p>
     </div>
 
     <!-- Citation -->
     <div class="container" style="background-color:#f2f2f2">
         <h2 class="section_title">Citation</h2>
         <ul class="body" style="padding-left:50pt; font-size: 10pt; line-height: 15pt;">
-            <li>This work is supported by the Ford Motor Company via the Ford-UM Alliance under award N022977, by the Office of Naval Research under award number N00014-18-1-2575, and in part by the National Science Foundation under Grant 1751093.</li>
-            <li>sel_map was developed in <a href="http://www.roahmlab.com">Robotics and Optimization for Analysis of Human Motion (ROAHM) Lab</a> at University of Michigan - Ann Arbor.</li>
+            <li>This work is supported by the Ford Motor Company via the Ford-UM
+                Alliance under award N022977, National Science Foundation Career Award #1751093 and by the Office of Naval Research under Award Number N00014-18-1-2575</li>
+            <li>ARMOUR was developed in <a href="http://www.roahmlab.com">Robotics and Optimization for Analysis of Human Motion (ROAHM) Lab</a> at University of Michigan - Ann Arbor.</li>
             <ul style="padding-left:0"><div style="background-color:#e6e6e6;">
                 <p class="body" style="padding-left:0pt; font-size: 10pt;padding-bottom:0;text-indent:-3rem;margin-left:4rem;font-family:monospace;line-height: 1.2rem;">  @article{9792203, <br>
                     author={Ewen, Parker and Li, Adam and Chen, Yuxin and Hong, Steven and Vasudevan, Ram}, <br>
