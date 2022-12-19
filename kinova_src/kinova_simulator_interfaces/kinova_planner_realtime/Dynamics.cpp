@@ -53,6 +53,8 @@ void KinematicsDynamics::rnea(PZsparse* v_arr,
                               PZsparse* mass_arr,
                               matPZsparse* I_arr,
                               PZsparse* u,
+                              vecPZsparse f;
+                              vecPZsparse n;
                               bool setGravity) {
     vecPZsparse w;
     vecPZsparse wdot;
@@ -137,9 +139,6 @@ void KinematicsDynamics::rnea(PZsparse* v_arr,
         N[i] = I_arr[i] * wdot
                 + cross(w_aux, (I_arr[i] * w));
     }
-
-    vecPZsparse f;
-    vecPZsparse n;
 
     // RNEA reverse recursion
     for (int i = NUM_JOINTS - 1; i >= 0; i--) {

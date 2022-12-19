@@ -3,7 +3,7 @@
 
 #include "PZsparse.h"
 
-// These values are specifically corresponded with a Bezuer curve parameterization
+// These values are specifically corresponded with a Bezier curve parameterization
 #define QDD_DES_K_DEP_MAXIMA (0.5 - sqrt(3) / 6)
 #define QDD_DES_K_DEP_MINIMA (0.5 + sqrt(3) / 6)
 

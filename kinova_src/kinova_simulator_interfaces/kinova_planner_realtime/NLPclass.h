@@ -137,6 +137,7 @@ public:
     //@}
 
     TYPE t_plan = 1.0;
+    // question for Bohao, what t_plan is this and what units does it have?
 
     TYPE solution[NUM_FACTORS];
 
