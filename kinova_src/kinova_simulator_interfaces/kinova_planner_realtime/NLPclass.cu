@@ -40,7 +40,14 @@ bool armtd_NLP::set_parameters(
 
     constraint_number = NUM_FACTORS * NUM_TIME_STEPS +
                         (NUM_FACTORS - 1) * NUM_TIME_STEPS * obstacles->num_obstacles + 
-                        NUM_FACTORS * 4;
+                        NUM_FACTORS * 4 + 
+                        NUM_TIME_STEPS * 3;
+    // 1. torque constraints
+    // 2. collision checking constraints (ignoring base link)
+    // question for Bohao: does this include self-collision?
+    // 3. joint limit constraints, pos/vel lower and upper constraints
+    // question for Bohao: should there be a * NUM_TIME_STEPS for the joint limit constraints? since you need to enforce them at each time step?
+    // 4. force constraints
 
     g_copy = new Number[constraint_number];
 
@@ -108,9 +115,9 @@ bool armtd_NLP::get_bounds_info(
             g_u[i * NUM_FACTORS + j] = torque_limits[j] - v_norm[i * NUM_FACTORS + j];
         }
     }    
+    Index offset = NUM_FACTORS * NUM_TIME_STEPS;
 
     // collision avoidance constraints
-    Index offset = NUM_FACTORS * NUM_TIME_STEPS;
     for( Index i = offset; i < offset + (NUM_FACTORS - 1) * NUM_TIME_STEPS * obstacles->num_obstacles; i++ ) {
         g_l[i] = -1e19;
         g_u[i] = 0;
@@ -144,6 +151,39 @@ bool armtd_NLP::get_bounds_info(
         g_l[i] = -speed_limits[i - offset] + qde;
         g_u[i] = speed_limits[i - offset] - qde;
     }
+    offset += NUM_FACTORS;
+
+
+
+    // force constraints on contact joint between tray and cup
+    // need to add the radius of the constraints here (like how is done with the torque constraints, v_norm passes out the radius I think)
+    // double check signs and how the torque constraints are buffered using the radius
+    // for v_norm in armour_main.cpp : getRadius(u_nom[t_ind * NUM_FACTORS + i].independent)
+
+
+    //     separation constraint
+    // upper bound should be zero and lower bound should be -inf
+    for( Index i = offset; i < offset + NUM_TIME_STEPS; i++){
+        g_l[i] = -1e19;
+        g_u[i] = 0;
+    }
+    offset += NUM_TIME_STEPS;
+
+    //     slipping constraint
+    // upper bound should be zero and lower bound should be -inf for the reformulated constraint (not the normal friction law?)
+    for( Index i = offset; i < offset + NUM_TIME_STEPS; i++){
+        g_l[i] = -1e19;
+        g_u[i] = 0;
+    }
+    offset += NUM_TIME_STEPS;
+
+    //     tipping constraint
+    // upper bound should be zero and lower bound should be -inf for the reformulated constraint
+    for( Index i = offset; i < offset + NUM_TIME_STEPS; i++){
+        g_l[i] = -1e19;
+        g_u[i] = 0;
+    }
+    offset += NUM_TIME_STEPS;
 
     return true;
 }
@@ -272,6 +312,10 @@ bool armtd_NLP::eval_g(
     // Part 4. (position & velocity) state limit constraints
     desired_trajectory->returnJointPositionExtremum(g + NUM_TIME_STEPS * NUM_FACTORS + (NUM_FACTORS - 1) * NUM_TIME_STEPS * obstacles->num_obstacles, x);
     desired_trajectory->returnJointVelocityExtremum(g + NUM_TIME_STEPS * NUM_FACTORS + (NUM_FACTORS - 1) * NUM_TIME_STEPS * obstacles->num_obstacles + NUM_FACTORS * 2, x);
+
+    // Part 5. force constraints on contact joint between tray and object
+    // need the center of the constraints (radius is used to buffer lower and upper bound)
+    // have separate function in some appropriate file which calculates the constraint PZs?
 
     return true;
 }
