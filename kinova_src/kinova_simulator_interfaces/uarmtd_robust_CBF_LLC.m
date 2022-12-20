@@ -9,7 +9,7 @@ classdef uarmtd_robust_CBF_LLC < robot_arm_LLC
         alpha_constant = 1;
         alpha = [];
         use_true_params_for_robust = false;
-        use_disturbance_norm = true;
+        use_disturbance_norm = false;
         ultimate_bound;
         ultimate_bound_position;
         ultimate_bound_velocity;
@@ -46,6 +46,7 @@ classdef uarmtd_robust_CBF_LLC < robot_arm_LLC
             info.ultimate_bound_velocity = LLC.ultimate_bound_velocity;
 
             info.alpha_constant = LLC.alpha_constant;
+            info.Kr = LLC.Kr;
         end
 
         %% get control inputs
@@ -88,7 +89,7 @@ classdef uarmtd_robust_CBF_LLC < robot_arm_LLC
                         if LLC.use_disturbance_norm
                             norm_rho = norm(disturbance);
                         else
-                            rho = r'*disturbance/norm(r);
+                            rho = abs(r)'*abs(disturbance);
                         end
                         
                         % compute true Lyapunov function
@@ -104,7 +105,7 @@ classdef uarmtd_robust_CBF_LLC < robot_arm_LLC
                             Phi_max = abs(supremum(disturbance));
                             norm_rho = norm(max(Phi_min, Phi_max));
                         else
-                            rho = supremum(r'*disturbance)/norm(r);
+                            rho = supremum(abs(r)'*abs(disturbance));
                         end
                         
                         % compute interval Lyapunov function

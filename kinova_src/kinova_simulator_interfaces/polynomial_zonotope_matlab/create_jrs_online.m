@@ -1,4 +1,4 @@
-function [Q_des, Qd_des, Qdd_des, Q, Qd, Qd_a, Qdd_a, R_des, R_t_des, R, R_t, jrs_info] = create_jrs_online(q, dq, ddq, joint_axes, taylor_degree, traj_type, add_ultimate_bound, bernstein_waypoint)
+function [Q_des, Qd_des, Qdd_des, Q, Qd, Qd_a, Qdd_a, R_des, R_t_des, R, R_t, jrs_info] = create_jrs_online(q, dq, ddq, joint_axes, taylor_degree, traj_type, add_ultimate_bound, LLC_info)
 % patrick 20220330
 % implementing jrs computation that avoids going through CORA"s reachability toolbox
 % and relies only on PZ arithmetic.
@@ -12,9 +12,6 @@ function [Q_des, Qd_des, Qdd_des, Q, Qd, Qd_a, Qdd_a, R_des, R_t_des, R, R_t, jr
 % continue development on armtd_dev!
 
 %% setup
-% hard coded ultimate bound... update to be inputs:
-ultimate_bound = 0.0191;
-k_r = 10; % assuming K_r = k_r*eye(n_q)
 if ~exist('add_ultimate_bound', 'var')
     add_ultimate_bound = true;
 end
@@ -46,10 +43,19 @@ if ~exist('traj_type', 'var')
    traj_type = 'orig'; % use original traj parameterization by default
 end
 
-if ~exist('bernstein_waypoint', 'var')
-	bernstein_center = 0;
+% if ~exist('bernstein_waypoint', 'var')
+	bernstein_center = zeros(size(q));
+% else
+% 	bernstein_center = bernstein_waypoint - q;
+% end
+
+if ~exist('LLC_info', 'var')
+    % hard coded ultimate bound if not passed in
+    ultimate_bound = 0.0191;
+    k_r = 10; % assuming K_r = k_r*eye(n_q)
 else
-	bernstein_center = bernstein_waypoint - q;
+    ultimate_bound = LLC_info.ultimate_bound;
+    k_r = LLC_info.Kr;
 end
 
 bernstein_final_range = pi/36*ones(n_q, 1);
@@ -134,7 +140,7 @@ case 'orig'
 	end
 case 'bernstein'
     for j = 1:n_q
-       q1{j, 1} = bernstein_center(j) + bernstein_final_range(j).*K{j}; % final position is initial position +- k \in [-1, 1]
+       q1{j, 1} = q(j) + bernstein_center(j) + bernstein_final_range(j).*K{j}; % final position is initial position +- k \in [-1, 1]
        dq1 = 0;
        ddq1 = 0;
        beta{j} = match_deg5_bernstein_coefficients({q(j); dq(j); ddq(j); q1{j}; dq1; ddq1});

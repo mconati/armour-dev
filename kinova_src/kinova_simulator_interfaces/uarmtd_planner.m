@@ -38,9 +38,9 @@ classdef uarmtd_planner < robot_arm_generic_planner
         combs;
 
         % for JRSs and trajectories:
-        taylor_degree = 6;
+        taylor_degree = 1;
         traj_type = 'bernstein'; % choose 'orig' for original ARMTD, or 'bernstein'
-        use_waypoint_for_bernstein_center = false; % if true, centers bernstein final configuration range around waypoint
+%         use_waypoint_for_bernstein_center = false; % if true, centers bernstein final configuration range around waypoint
         jrs_type = 'online';
         use_cuda = false;
 
@@ -410,13 +410,13 @@ classdef uarmtd_planner < robot_arm_generic_planner
                 [q_des, dq_des, ddq_des, q, dq, dq_a, ddq_a, R_des, R_t_des, R, R_t, jrs_info] = load_offline_jrs(q_0, q_dot_0, q_ddot_0,...
                     P.agent_info.params.pz_nominal.joint_axes, P.use_robust_input);
             else
-                if P.use_waypoint_for_bernstein_center
+%                 if P.use_waypoint_for_bernstein_center
+%                     [q_des, dq_des, ddq_des, q, dq, dq_a, ddq_a, R_des, R_t_des, R, R_t, jrs_info] = create_jrs_online(q_0, q_dot_0, q_ddot_0,...
+%                         P.agent_info.params.pz_nominal.joint_axes, P.taylor_degree, P.traj_type, P.use_robust_input, waypoint);
+%                 else
                     [q_des, dq_des, ddq_des, q, dq, dq_a, ddq_a, R_des, R_t_des, R, R_t, jrs_info] = create_jrs_online(q_0, q_dot_0, q_ddot_0,...
-                        P.agent_info.params.pz_nominal.joint_axes, P.taylor_degree, P.traj_type, P.use_robust_input, waypoint);
-                else
-                    [q_des, dq_des, ddq_des, q, dq, dq_a, ddq_a, R_des, R_t_des, R, R_t, jrs_info] = create_jrs_online(q_0, q_dot_0, q_ddot_0,...
-                        P.agent_info.params.pz_nominal.joint_axes, P.taylor_degree, P.traj_type, P.use_robust_input);
-                end
+                        P.agent_info.params.pz_nominal.joint_axes, P.taylor_degree, P.traj_type, P.use_robust_input, P.agent_info.LLC_info);
+%                 end
             end
             P.jrs_info = jrs_info;
 
