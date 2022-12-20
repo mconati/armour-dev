@@ -25,8 +25,8 @@ public:
 			  PZsparse* mass_arr,
 			  matPZsparse* I_arr,
 			  PZsparse* u,
-			  vecPZsparse f;
-        	  vecPZsparse n;
+			  vecPZsparse* f_c,
+        	  vecPZsparse* n_c,
 			  bool setGravity = false);
 };
 

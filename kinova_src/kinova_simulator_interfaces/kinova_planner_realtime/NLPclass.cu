@@ -317,6 +317,15 @@ bool armtd_NLP::eval_g(
     // need the center of the constraints (radius is used to buffer lower and upper bound)
     // have separate function in some appropriate file which calculates the constraint PZs?
 
+    // all of the below could be called in armour_main.cpp and be a function elsewhere?
+    // should have access to f,n here
+    // split into components
+
+    // in this file I need to slice and then calculate the constraints
+    // slice
+    // calculate constraints
+    // take center of those constraints
+
     return true;
 }
 // [TNLP_eval_g]

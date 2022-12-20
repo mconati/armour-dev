@@ -8,13 +8,16 @@
 
 // number of joints
 #define NUM_JOINTS 10
+// question for Bohao, how should this be defined?
 
 // number of factors (variables) in polynomial / number of actuated motors
 // The last one joint (end effector) of Kinova is fixed
 #define NUM_FACTORS 7
 
 // 1,2,3 -> x,y,z, negative sign means rotate in reverse direction, 0 means fixed joint
-const int axes[NUM_JOINTS] = { 3,3,3,3,3,3,3,0,0,0,0 }; 
+const int axes[NUM_JOINTS] = { 3,3,3,3,3,3,3,0,0,0 }; 
+// joint axes? so matches NUM_JOINTS
+
 // link order: {'shoulder_link','half_arm_1_link','half_arm_2_link','forearm_link','spherical_wrist_1_link','spherical_wrist_2_link','bracelet_link','gripper_base','waiter_tray_link','cube_link'}
 // note: link "base" is not included
 
@@ -30,7 +33,9 @@ const TYPE trans[(NUM_JOINTS + 1) * 3] = {  0,          0,     0.15643,
 											0,          0,   -0.061525,
 											0,   -0.14948,           0,
                                             0,     -0.075,     0.00127,
-                                            0,          0,           0 }; // extra for RNEA
+                                            0,          0,           0 };
+											//0,          0,           0 }; 
+// question for Bohao, why is there an extra here?
 
 
 // joint position rotation element w.r.t previous joint frame, same as rpy in urdf
