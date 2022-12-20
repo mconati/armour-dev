@@ -162,7 +162,6 @@ Section II:
                 n_c_int,
                 true);
 
-
         // // Part 5: compute the Lyapunov function bound
         // // Part 5.a: compute M*r
         // kd.rnea(nullptr, // nullptr means zero vector
@@ -196,6 +195,18 @@ Section II:
         // pull out the f,n components here
         //  need to change call to rnea above to include the f,n
         //  also need to preallocate them
+
+        // note: need to preallocate these for each time step
+        // extract components of force
+        f_c_x = kd.f_c.elt[0];
+        f_c_y = kd.f_c.elt[1];
+        f_c_z = kd.f_c.elt[2];
+        // extract components of moment
+        n_c_x = kd.n_c.elt[0]
+        n_c_y = kd.n_c.elt[1]
+        n_c_z = kd.n_c.elt[2]
+
+        // these then need to be passed into the optimization call?
 
 
     }
@@ -245,6 +256,8 @@ Section III:
 
     SmartPtr<armtd_NLP> mynlp = new armtd_NLP();
 	mynlp->set_parameters(q_des, t_plan, &traj, p, u_nom, v_norm, &O);
+    // need to pass in the f_c_int and n_c_int or the separated versions
+    // need to change the NLPclass.h and NLPclass.cu files as well
 
     SmartPtr<IpoptApplication> app = IpoptApplicationFactory();
 

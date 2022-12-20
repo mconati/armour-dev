@@ -64,10 +64,6 @@ void KinematicsDynamics::rnea(PZsparse* v_arr,
     vecPZsparse F[NUM_JOINTS];
     vecPZsparse N[NUM_JOINTS];
 
-    // pass out the contact joint through f_c and n_c
-    vecPZsparse f[NUM_JOINTS];
-    vecPZsparse n[NUM_JOINTS];
-
     if (setGravity) { // set gravity
         *(linear_acc.elt[2]) = PZsparse(gravity);
     }
@@ -144,6 +140,10 @@ void KinematicsDynamics::rnea(PZsparse* v_arr,
                 + cross(w_aux, (I_arr[i] * w));
     }
 
+    // pass out the contact joint through f_c and n_c
+    vecPZsparse f;
+    vecPZsparse n;
+
     // RNEA reverse recursion
     for (int i = NUM_JOINTS - 1; i >= 0; i--) {
         // line 29
@@ -168,9 +168,9 @@ void KinematicsDynamics::rnea(PZsparse* v_arr,
         // passing out the contact joint RNEA outputs
         // ERROR! this needs to be NUM_JOINTS, i.e. 10th joint, but this for loop doesn't go that far.
         // I think the recursion is wrong? or the definition of NUM_JOINTS is wrong
-        if (i = NUM_JOINTS) {
-            f_c = f[i];
-            n_c = n[i];
+        if (i = NUM_JOINTS-1) {
+            f_c = f;
+            n_c = n;
         }
     }
 }
