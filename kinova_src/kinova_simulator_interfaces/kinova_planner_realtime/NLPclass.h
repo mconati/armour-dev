@@ -25,7 +25,9 @@ public:
         PZsparse* joint_position_input,
         PZsparse* control_input_input,
         TYPE* v_norm_input,
-        Obstacles* Obstacle_input
+        Obstacles* Obstacle_input,
+        vecPZsparse* f_c_input,
+        vecPZsparse* n_c_input
     );
 
     /**@name Overloaded from TNLP */
@@ -183,6 +185,10 @@ private:
     TYPE* v_norm = nullptr;
 
     Obstacles* obstacles = nullptr;
+
+    vecPZsparse* = nullptr;
+
+    vecPZsparse* nullptr;
 
     //@}
 };

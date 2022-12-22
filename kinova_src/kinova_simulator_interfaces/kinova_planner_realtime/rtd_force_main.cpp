@@ -93,8 +93,8 @@ Section II:
     PZsparse Mr[NUM_TIME_STEPS * NUM_FACTORS];
     // PZsparse V[NUM_TIME_STEPS];
     TYPE jointPositionRadius[NUM_TIME_STEPS * NUM_FACTORS * 3] = {0.0};
-    vecPZsparse f_c_nom[NUM_TIME_STEPS];
-    vecPZsparse n_c_nom[NUM_TIME_STEPS];
+    vecPZsparse f_c_nom[NUM_TIME_STEPS]; // may not be needed (can pass in nullptr instead)
+    vecPZsparse n_c_nom[NUM_TIME_STEPS]; // may not be needed (can pass in nullptr instead)
     vecPZsparse f_c_int[NUM_TIME_STEPS];
     vecPZsparse n_c_int[NUM_TIME_STEPS];
     
@@ -119,6 +119,7 @@ Section II:
 
     int openmp_t_ind; // loop index
 
+    // solving forward kinematics and dynamics in parallel
     #pragma omp parallel for shared(traj, mass, mass_arr, I_nominal_arr, I_uncertain_arr, r) private(openmp_t_ind) schedule(static, NUM_TIME_STEPS / NUM_THREADS)
     for(openmp_t_ind = 0; openmp_t_ind < NUM_TIME_STEPS; openmp_t_ind++) {
         // Part 1: convert parameterized Bezier curve desired trajectory to PZsparse
@@ -146,10 +147,9 @@ Section II:
                 nullptr, // nominal mass already defined as constant array
                 I_nominal_arr,
                 u_nom + openmp_t_ind * NUM_FACTORS,
-                f_c_nom,
-                n_c_nom,
+                nullptr,
+                nullptr,
                 true);
-        // could pass in nullptr for nominal rnea here instead?
 
         // Part 4: compute the nominal control input with interval parameters
         kd.rnea(traj.qd_des + openmp_t_ind * NUM_FACTORS,
@@ -158,8 +158,8 @@ Section II:
                 mass_arr,
                 I_uncertain_arr,
                 u_nom_int + openmp_t_ind * NUM_FACTORS,
-                f_c_int,
-                n_c_int,
+                f_c_int + openmp_t_ind, // ? not sure if the + openmp_t_ind is needed?
+                n_c_int + openmp_t_ind, // ? not sure if the + openmp_t_ind is needed?
                 true);
 
         // // Part 5: compute the Lyapunov function bound
@@ -192,22 +192,7 @@ Section II:
         }
 
         // force constraints
-        // pull out the f,n components here
-        //  need to change call to rnea above to include the f,n
-        //  also need to preallocate them
-
-        // note: need to preallocate these for each time step
-        // extract components of force
-        f_c_x = kd.f_c.elt[0];
-        f_c_y = kd.f_c.elt[1];
-        f_c_z = kd.f_c.elt[2];
-        // extract components of moment
-        n_c_x = kd.n_c.elt[0]
-        n_c_y = kd.n_c.elt[1]
-        n_c_z = kd.n_c.elt[2]
-
-        // these then need to be passed into the optimization call?
-
+        // added f_c_int and n_c_int above, these now need to be passed into the optimization call
 
     }
 
@@ -255,8 +240,8 @@ Section III:
     auto start2 = std::chrono::high_resolution_clock::now();
 
     SmartPtr<armtd_NLP> mynlp = new armtd_NLP();
-	mynlp->set_parameters(q_des, t_plan, &traj, p, u_nom, v_norm, &O);
-    // need to pass in the f_c_int and n_c_int or the separated versions
+	mynlp->set_parameters(q_des, t_plan, &traj, p, u_nom, v_norm, &O, f_c_int, n_c_int);
+    // force constraint update: added in f_c_int and n_c_int for constraint formulation
     // need to change the NLPclass.h and NLPclass.cu files as well
 
     SmartPtr<IpoptApplication> app = IpoptApplicationFactory();

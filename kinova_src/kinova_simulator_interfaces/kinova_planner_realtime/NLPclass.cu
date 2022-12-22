@@ -27,7 +27,9 @@ bool armtd_NLP::set_parameters(
     PZsparse* joint_position_input,
     PZsparse* control_input_input,
     TYPE* v_norm_input,
-    Obstacles* obstacles_input
+    Obstacles* obstacles_input,
+    vecPZsparse* f_c_input,
+    vecPZsparse* n_c_input
  ) 
  {
     q_des = q_des_input;
@@ -37,16 +39,16 @@ bool armtd_NLP::set_parameters(
     control_input = control_input_input;
     v_norm = v_norm_input;
     obstacles = obstacles_input;
+    f_c = f_c_input;
+    n_c = n_c_input;
 
     constraint_number = NUM_FACTORS * NUM_TIME_STEPS +
                         (NUM_FACTORS - 1) * NUM_TIME_STEPS * obstacles->num_obstacles + 
                         NUM_FACTORS * 4 + 
                         NUM_TIME_STEPS * 3;
     // 1. torque constraints
-    // 2. collision checking constraints (ignoring base link)
-    // question for Bohao: does this include self-collision?
+    // 2. collision checking constraints (ignoring base link and no self-collision)
     // 3. joint limit constraints, pos/vel lower and upper constraints
-    // question for Bohao: should there be a * NUM_TIME_STEPS for the joint limit constraints? since you need to enforce them at each time step?
     // 4. force constraints
 
     g_copy = new Number[constraint_number];
@@ -314,6 +316,24 @@ bool armtd_NLP::eval_g(
     desired_trajectory->returnJointVelocityExtremum(g + NUM_TIME_STEPS * NUM_FACTORS + (NUM_FACTORS - 1) * NUM_TIME_STEPS * obstacles->num_obstacles + NUM_FACTORS * 2, x);
 
     // Part 5. force constraints on contact joint between tray and object
+    #pragma omp parallel for private(i) schedule(static, NUM_TIME_STEPS*3 / NUM_THREADS)
+    for(i = 0; i < NUM_TIME_STEPS*3; i++) {
+        // put everything for force closure in here? or three for loops for each
+    }
+    // extract components of force
+    f_c_x = f_c.elt[0];
+    f_c_y = f_c.elt[1];
+    f_c_z = f_c.elt[2];
+    // extract components of moment
+    n_c_x = n_c.elt[0]
+    n_c_y = n_c.elt[1]
+    n_c_z = n_c.elt[2]
+
+    // separation constraint: -inf < -1*f_c_z < 0
+    sep_value = getCenter(f_c_z.slice(x));
+    // not sure what index to use here?
+    g[NUM_TIME_STEPS * NUM_FACTORS + (NUM_FACTORS - 1) * NUM_TIME_STEPS * obstacles->num_obstacles + NUM_FACTORS * 2] = -1*sep_value;
+
     // need the center of the constraints (radius is used to buffer lower and upper bound)
     // have separate function in some appropriate file which calculates the constraint PZs?
 
@@ -325,6 +345,12 @@ bool armtd_NLP::eval_g(
     // slice
     // calculate constraints
     // take center of those constraints
+    // pull out the f,n components here
+    //  need to change call to rnea above to include the f,n
+    //  also need to preallocate them
+
+    // note: need to preallocate these for each time step
+    
 
     return true;
 }
