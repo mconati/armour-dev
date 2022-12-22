@@ -57,6 +57,8 @@ else
 	if add_ultimate_bound
 	    ultimate_bound = LLC_info.ultimate_bound;
 	    k_r = LLC_info.Kr;
+    else
+        k_r = 0;
 	end
 end
 

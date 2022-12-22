@@ -423,8 +423,10 @@ classdef uarmtd_planner < robot_arm_generic_planner
             %% create FO and input poly zonotopes:
             % set up zeros and overapproximation of r
             for j = 1:jrs_info.n_q
-                zero_cell{j, 1} = polyZonotope_ROAHM(0); 
-                r{j, 1} = polyZonotope_ROAHM(0, [], P.agent_info.LLC_info.ultimate_bound);
+                zero_cell{j, 1} = polyZonotope_ROAHM(0);
+                if P.use_robust_input
+                    r{j, 1} = polyZonotope_ROAHM(0, [], P.agent_info.LLC_info.ultimate_bound);
+                end
             end
             
             % get forward kinematics and forward occupancy

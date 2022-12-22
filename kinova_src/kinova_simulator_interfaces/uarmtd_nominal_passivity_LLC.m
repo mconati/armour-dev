@@ -4,7 +4,6 @@ classdef uarmtd_nominal_passivity_LLC < robot_arm_LLC
     % but keeping ultimate bound checking
     
     properties
-
     end
     
     methods
@@ -67,41 +66,8 @@ classdef uarmtd_nominal_passivity_LLC < robot_arm_LLC
         
         %% helper functions
         function out = ultimate_bound_check(LLC, A, t_start)
-            % create time vector for checking
-            t_agent = A.time(end);
-            t_check = t_start:A.traj_check_time_discretization:t_agent;
-
-            if isempty(t_check) || t_check(end) ~= t_agent
-                t_check = [t_check, t_agent] ;
-            end
-
-            % get agent state and reference trajectories interpolated to time
-            z_agent = match_trajectories(t_check,A.time,A.state) ;
-            z_ref_agent = match_trajectories(t_check,A.time,A.reference_state) ;
-
-            % check bound satisfaction
-            A.vdisp('Running ultimate bound check!',3);
+            A.vdisp('No ultimate bound available when not using robust input.', 3)
             out = false;
-            for t_idx = 1:length(t_check)
-                q = z_agent(A.joint_state_indices, t_idx);
-                qd = z_agent(A.joint_speed_indices, t_idx);
-                q_ref = z_ref_agent(A.joint_state_indices, t_idx);
-                qd_ref = z_ref_agent(A.joint_speed_indices, t_idx);
-                for i = 1:length(q)
-                    if abs(q(i) - q_ref(i)) > LLC.ultimate_bound_position
-                        fprintf('Time %.2f, joint %d position bound exceeded: %.5f vs +-%.5f \n', t_check(t_idx), i, q(i) - q_ref(i), LLC.ultimate_bound_position);
-                        out = true;
-                    end
-                    if abs(qd(i) - qd_ref(i)) > LLC.ultimate_bound_velocity
-                        fprintf('Time %.2f, joint %d velocity bound exceeded: %.5f vs +-%.5f \n', t_check(t_idx), i, qd(i) - qd_ref(i), LLC.ultimate_bound_velocity);
-                        out = true;
-                    end
-                end
-            end
-
-            if ~out
-                LLC.vdisp('No ultimate bound exceeded', 3);
-            end
         end
     end
         
