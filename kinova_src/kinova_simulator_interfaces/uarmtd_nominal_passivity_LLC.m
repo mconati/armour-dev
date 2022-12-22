@@ -4,47 +4,23 @@ classdef uarmtd_nominal_passivity_LLC < robot_arm_LLC
     % but keeping ultimate bound checking
     
     properties
-        Kr = 10;
-        V_max = 3.1e-7; % max allowable value of lyapunov function
-%         alpha_constant = 1;
-%         alpha = [];
-%         use_true_params_for_robust = false;
-%         use_disturbance_norm = true;
-        ultimate_bound;
-        ultimate_bound_position;
-        ultimate_bound_velocity
+
     end
     
     methods
         function LLC = uarmtd_nominal_passivity_LLC(varargin)
             LLC = parse_args(LLC,varargin{:}) ;
-%             LLC.alpha = @(h) LLC.alpha_constant*h;
         end
         
         %% setup
         function setup(LLC,A)
             % call default setup
             setup@robot_arm_LLC(LLC, A);
-
-            % using min eigenvalue of robot mass matrix, compute
-            % ultimate bound from controller parameters
-            if isprop(A, 'M_min_eigenvalue')
-                LLC.ultimate_bound = sqrt(2*LLC.V_max/A.M_min_eigenvalue);
-                LLC.ultimate_bound_position = (1/LLC.Kr)*LLC.ultimate_bound;
-                LLC.ultimate_bound_velocity = 2*LLC.ultimate_bound;
-                LLC.vdisp(sprintf('Computed ultimate bound of %.3f', LLC.ultimate_bound), 8);
-            else
-                warning('No minimum eigenvalue of agent mass matrix specified, can not compute ultimate bound');
-            end
         end
 
         %% info
         function info = get_LLC_info(LLC)
-            info.ultimate_bound = LLC.ultimate_bound;
-            info.ultimate_bound_position = LLC.ultimate_bound_position;
-            info.ultimate_bound_velocity = LLC.ultimate_bound_velocity;
-
-%             info.alpha_constant = LLC.alpha_constant;
+            info = struct();
         end
 
         %% get control inputs
@@ -75,76 +51,17 @@ classdef uarmtd_nominal_passivity_LLC < robot_arm_LLC
 
             % nominal controller
             tau = rnea(q, qd, qd_ref, qdd_ref, true, A.params.nominal);
-% 
-%             % robust input
-%             if norm(r) ~= 0
-%                 if LLC.use_true_params_for_robust
-%                     % calculate true disturbance
-%                     disturbance = rnea(q, qd, qd_ref, qdd_ref, true, A.params.true) - tau;
-% 
-%                     % bounds on max disturbance
-%                     if LLC.use_disturbance_norm
-%                         norm_rho = norm(disturbance);
-%                     else
-%                         rho = r'*disturbance/norm(r);
-%                     end
-%                     
-%                     % compute true Lyapunov function
-%                     V_tmp = rnea(q, zeros(A.n_states/2, 1), zeros(A.n_states/2, 1), r, false, A.params.true);
-%                     V = 0.5*r'*V_tmp;
-%                 else
-%                     % calculate interval disturbance
-%                     disturbance = rnea(q, qd, qd_ref, qdd_ref, true, A.params.interval) - tau;
-%                     
-%                     % bounds on max disturbance
-%                     if LLC.use_disturbance_norm
-%                         Phi_min = abs(infimum(disturbance));
-%                         Phi_max = abs(supremum(disturbance));
-%                         norm_rho = norm(max(Phi_min, Phi_max));
-%                     else
-%                         rho = supremum(r'*disturbance)/norm(r);
-%                     end
-%                     
-%                     % compute interval Lyapunov function
-%                     V_tmp = rnea(q, zeros(A.n_states/2, 1), zeros(A.n_states/2, 1), r, false, A.params.interval);
-%                     V_int = 0.5*r'*V_tmp;
-%                     V = supremum(V_int);
-%                 end
-%                 
-%                 % assemble input
-%                 h = -V + LLC.V_max; % value of CBF function
-% 
-%                 if LLC.use_disturbance_norm
-%                     lambda = max(0, -LLC.alpha(h)/norm(r)^2 + norm_rho/norm(r)); % coefficient on r
-%                 else
-%                     lambda = max(0, (-LLC.alpha(h) + rho)/norm(r)^2);
-%                 end
-% 
-%                 v = lambda*r; % positive here! because u = tau + v in this code instead of tau - v
-%             else
-%                 v = zeros(size(r));
-%                 V = 0;
-%             end
 
-            % combine nominal and robust inputs
+            % input is just nominal input, no robust input.
             u = tau;
-            v = 0;
 
             % output more for logging if desired
             if nargout > 3
-%                 if ~LLC.use_true_params_for_robust
-%                     true_disturbance = rnea(q, qd, qd_ref, qdd_ref, true, A.params.true) - tau;
-%                     true_V_tmp = rnea(q, zeros(A.n_states/2, 1), zeros(A.n_states/2, 1), r, false, A.params.true);
-%                     true_V = 0.5*r'*true_V_tmp;
-%                 else
-%                     if norm(r) == 0
-                        disturbance = rnea(q, qd, qd_ref, qdd_ref, true, A.params.true) - tau;
-%                     end
+                    disturbance = rnea(q, qd, qd_ref, qdd_ref, true, A.params.true) - tau;
                     V_tmp = rnea(q, zeros(A.n_states/2, 1), zeros(A.n_states/2, 1), r, false, A.params.true);
                     V = 0.5*r'*V_tmp;
                     true_disturbance = disturbance;
                     true_V = V;
-%                 end
             end
         end
         
