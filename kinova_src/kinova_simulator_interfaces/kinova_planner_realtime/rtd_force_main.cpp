@@ -97,6 +97,8 @@ Section II:
     vecPZsparse n_c_nom[NUM_TIME_STEPS]; // may not be needed (can pass in nullptr instead)
     vecPZsparse f_c_int[NUM_TIME_STEPS];
     vecPZsparse n_c_int[NUM_TIME_STEPS];
+    const Number* u_s = 0.5; // static coefficient of friction between tray and object
+    // Note: might want to change this to be input to the C++ code from matlab?
     
     for (int i = 0; i < NUM_JOINTS; i++) {
         mass_arr[i] = PZsparse(mass[i], mass_uncertainty);
@@ -150,6 +152,7 @@ Section II:
                 nullptr,
                 nullptr,
                 true);
+                // should output the nominal f_c and n_c and compare to matlab
 
         // Part 4: compute the nominal control input with interval parameters
         kd.rnea(traj.qd_des + openmp_t_ind * NUM_FACTORS,
@@ -240,7 +243,7 @@ Section III:
     auto start2 = std::chrono::high_resolution_clock::now();
 
     SmartPtr<armtd_NLP> mynlp = new armtd_NLP();
-	mynlp->set_parameters(q_des, t_plan, &traj, p, u_nom, v_norm, &O, f_c_int, n_c_int);
+	mynlp->set_parameters(q_des, t_plan, &traj, p, u_nom, v_norm, &O, f_c_int, n_c_int, u_s);
     // force constraint update: added in f_c_int and n_c_int for constraint formulation
     // need to change the NLPclass.h and NLPclass.cu files as well
 
@@ -309,32 +312,32 @@ Section IV:
     outputstream1.close();
 
     // output FRS and other information, you can comment them if they are unnecessary
-    std::ofstream outputstream2(outputfilename2);
-    outputstream2 << std::setprecision(10);
-    for (int i = 0; i < NUM_TIME_STEPS * NUM_FACTORS; i++) {
-        for (int j = 0; j < 3; j++) {
-            outputstream2 << mynlp->checkJointsPosition[i * 3 + j] << ' ';
-        }
-        outputstream2 << '\n';
-    }
-    outputstream2.close();
+    // std::ofstream outputstream2(outputfilename2);
+    // outputstream2 << std::setprecision(10);
+    // for (int i = 0; i < NUM_TIME_STEPS * NUM_FACTORS; i++) {
+    //     for (int j = 0; j < 3; j++) {
+    //         outputstream2 << mynlp->checkJointsPosition[i * 3 + j] << ' ';
+    //     }
+    //     outputstream2 << '\n';
+    // }
+    // outputstream2.close();
 
-    std::ofstream outputstream3(outputfilename3);
-    outputstream3 << std::setprecision(6);
-    for (int i = 0; i < NUM_TIME_STEPS * NUM_FACTORS; i++) {
-        for (int j = 0; j < 3; j++) {
-            outputstream3 << jointPositionRadius[i * 3 + j] << ' ';
-        }
-        outputstream3 << '\n';
-    }
-    outputstream3.close();
+    // std::ofstream outputstream3(outputfilename3);
+    // outputstream3 << std::setprecision(6);
+    // for (int i = 0; i < NUM_TIME_STEPS * NUM_FACTORS; i++) {
+    //     for (int j = 0; j < 3; j++) {
+    //         outputstream3 << jointPositionRadius[i * 3 + j] << ' ';
+    //     }
+    //     outputstream3 << '\n';
+    // }
+    // outputstream3.close();
 
-    std::ofstream outputstream4(outputfilename4);
-    outputstream4 << std::setprecision(6);
-    for (int i = 0; i < NUM_TIME_STEPS * NUM_FACTORS; i++) {
-        outputstream4 << v_norm[i] << '\n';
-    }
-    outputstream4.close();
+    // std::ofstream outputstream4(outputfilename4);
+    // outputstream4 << std::setprecision(6);
+    // for (int i = 0; i < NUM_TIME_STEPS * NUM_FACTORS; i++) {
+    //     outputstream4 << v_norm[i] << '\n';
+    // }
+    // outputstream4.close();
 
     std::ofstream outputstream5(outputfilename5);
     outputstream5 << std::setprecision(6);

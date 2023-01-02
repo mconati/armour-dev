@@ -29,7 +29,8 @@ bool armtd_NLP::set_parameters(
     TYPE* v_norm_input,
     Obstacles* obstacles_input,
     vecPZsparse* f_c_input,
-    vecPZsparse* n_c_input
+    vecPZsparse* n_c_input,
+    const Number* u_s
  ) 
  {
     q_des = q_des_input;
@@ -296,60 +297,130 @@ bool armtd_NLP::eval_g(
 
     Index i;
     #pragma omp parallel for private(i) schedule(static, NUM_TIME_STEPS * NUM_FACTORS / NUM_THREADS)
-    for(i = 0; i < NUM_TIME_STEPS * NUM_FACTORS; i++) {
-        // Part 1. slice the control input PZ to get the center of the input bound, 
-        //         while the radius of the input bound has already been incorporated in ipopt constraint bounds
-        g[i] = getCenter(control_input[i].slice(x));
+    for(i = 0; i < (NUM_TIME_STEPS * NUM_FACTORS + NUM_TIME_STEPS*3); i++) {
+        
+        if(i < (NUM_TIME_STEPS * NUM_FACTORS)) {
+            // Part 1. slice the control input PZ to get the center of the input bound, 
+            //         while the radius of the input bound has already been incorporated in ipopt constraint bounds
+            g[i] = getCenter(control_input[i].slice(x));
 
-        // Part 2. slice the forward kinematics PZ to get the center of the joint position bound, 
-        //         while the radius of the joint position bound has already been considered in Obstacles class
-        checkJointsPosition[i * 3    ] = getCenter(joint_position[i * 3    ].slice(x));
-        checkJointsPosition[i * 3 + 1] = getCenter(joint_position[i * 3 + 1].slice(x));
-        checkJointsPosition[i * 3 + 2] = getCenter(joint_position[i * 3 + 2].slice(x));
+            // Part 2. slice the forward kinematics PZ to get the center of the joint position bound, 
+            //         while the radius of the joint position bound has already been considered in Obstacles class
+            checkJointsPosition[i * 3    ] = getCenter(joint_position[i * 3    ].slice(x));
+            checkJointsPosition[i * 3 + 1] = getCenter(joint_position[i * 3 + 1].slice(x));
+            checkJointsPosition[i * 3 + 2] = getCenter(joint_position[i * 3 + 2].slice(x));
+        } 
+        else {
+            // Part 3. force constraints on contact joint between tray and object
+
+            // extract components of force (is f_c and n_c a single time step here or an array of all of them?)
+            PZsparse* f_c_x = f_c[i].elt[0];
+            PZsparse* f_c_y = f_c[i].elt[1];
+            PZsparse* f_c_z = f_c[i].elt[2];
+            // get centers
+            Number* f_c_x_center = getCenter(f_c_x);
+            Number* f_c_y_center = getCenter(f_c_y);
+            Number* f_c_z_center = getCenter(f_c_z);
+            // get radii of independent generators
+            TYPE* f_c_x_radius = getRadius(f_c_x.independent)
+            TYPE* f_c_y_radius = getRadius(f_c_y.independent)
+            TYPE* f_c_z_radius = getRadius(f_c_z.independent)
+
+            // extract components of moment
+            PZsparse* n_c_x = n_c[i].elt[0]
+            PZsparse* n_c_y = n_c[i].elt[1]
+            PZsparse* n_c_z = n_c[i].elt[2]
+
+            // separation constraint: -inf < -1*f_c_z < 0
+            // storing separation constraint value, not sure what index to use here?
+            g[i] = -1*getCenter(f_c_z.slice(x));
+
+            // slipping constraint: -inf < f_c_x*f_c_x + f_c_y*f_c_y - u_s^2*f_c_z*f_c_z < 0
+            // need to write this constraint differently than matlab implementation as we need to 
+            // slice before doing multiplications of PZs in order to avoid memory problems.
+            // getCenter, getRadius (for v_norm in armour_main.cpp : getRadius(u_nom[t_ind * NUM_FACTORS + i].independent))
+            
+            // check the signs of the centers of the force zonotopes
+            // condition 1: all positive
+            if ( (f_c_x_center >= 0) && (f_c_y_center >= 0) && (f_c_z_center >= 0) ){
+                // Note: double check that the center/radius is a number that can be squared
+                g[i+NUM_TIME_STEPS] = f_c_x_center^2 + 2*f_c_x_radius*f_c_x_center + f_c_x_radius^2 + f_c_y_center^2 + 2*f_c_y_radius*f_c_y_center + f_c_y_radius^2 - u_s^2 * ( f_c_z_center^2 - 2*f_c_z_radius*f_c_z_center - f_c_z_radius^2);
+            }
+            // condition 2: y negative
+            else if ( (f_c_x_center >= 0) && (f_c_y_center <= 0) && (f_c_z_center >= 0) ) {
+                g[i+NUM_TIME_STEPS] = f_c_x_center^2 + 2*f_c_x_radius*f_c_x_center + f_c_x_radius^2 + f_c_y_center^2 + 2*f_c_y_radius*f_c_y_center + f_c_y_radius^2 - u_s^2 * ( f_c_z_center^2 - 2*f_c_z_radius*f_c_z_center - f_c_z_radius^2);
+            }
+            // condition 3: z negative
+            else if ( (f_c_x_center >= 0) && (f_c_y_center >= 0) && (f_c_z_center <= 0) ) {
+                g[i+NUM_TIME_STEPS] = f_c_x_center^2 + 2*f_c_x_radius*f_c_x_center + f_c_x_radius^2 + f_c_y_center^2 + 2*f_c_y_radius*f_c_y_center + f_c_y_radius^2 - u_s^2 * ( f_c_z_center^2 - 2*f_c_z_radius*f_c_z_center - f_c_z_radius^2);
+            }
+            // condition 4: y and z negative
+            else if ( (f_c_x_center >= 0) && (f_c_y_center <= 0) && (f_c_z_center <= 0) ) {
+                g[i+NUM_TIME_STEPS] = f_c_x_center^2 + 2*f_c_x_radius*f_c_x_center + f_c_x_radius^2 + f_c_y_center^2 + 2*f_c_y_radius*f_c_y_center + f_c_y_radius^2 - u_s^2 * ( f_c_z_center^2 - 2*f_c_z_radius*f_c_z_center - f_c_z_radius^2);
+            }
+            // condition 5: x negative
+            else if ( (f_c_x_center <= 0) && (f_c_y_center >= 0) && (f_c_z_center >= 0) ) {
+                g[i+NUM_TIME_STEPS] = f_c_x_center^2 + 2*f_c_x_radius*f_c_x_center + f_c_x_radius^2 + f_c_y_center^2 + 2*f_c_y_radius*f_c_y_center + f_c_y_radius^2 - u_s^2 * ( f_c_z_center^2 - 2*f_c_z_radius*f_c_z_center - f_c_z_radius^2);
+            }
+            // condition 6: x and y negative
+            else if ( (f_c_x_center <= 0) && (f_c_y_center <= 0) && (f_c_z_center >= 0) ) {
+                g[i+NUM_TIME_STEPS] = f_c_x_center^2 + 2*f_c_x_radius*f_c_x_center + f_c_x_radius^2 + f_c_y_center^2 + 2*f_c_y_radius*f_c_y_center + f_c_y_radius^2 - u_s^2 * ( f_c_z_center^2 - 2*f_c_z_radius*f_c_z_center - f_c_z_radius^2);
+            }
+            // condition 7: x and z negative
+            else if ( (f_c_x_center <= 0) && (f_c_y_center >= 0) && (f_c_z_center <= 0) ) {
+                g[i+NUM_TIME_STEPS] = f_c_x_center^2 + 2*f_c_x_radius*f_c_x_center + f_c_x_radius^2 + f_c_y_center^2 + 2*f_c_y_radius*f_c_y_center + f_c_y_radius^2 - u_s^2 * ( f_c_z_center^2 - 2*f_c_z_radius*f_c_z_center - f_c_z_radius^2);
+            }
+            // condition 8: x and y and z negative
+            else if ( (f_c_x_center <= 0) && (f_c_y_center <= 0) && (f_c_z_center <= 0) ) {
+                g[i+NUM_TIME_STEPS] = f_c_x_center^2 + 2*f_c_x_radius*f_c_x_center + f_c_x_radius^2 + f_c_y_center^2 + 2*f_c_y_radius*f_c_y_center + f_c_y_radius^2 - u_s^2 * ( f_c_z_center^2 - 2*f_c_z_radius*f_c_z_center - f_c_z_radius^2);
+            }
+
+            // storing tipping constraint value, not sure what index to use here?
+            g[i+NUM_TIME_STEPS*2] = ;
+
+        }
+        
     }
 
-    // Part 3. check collision between joint position reachable set and obstacles (in gpu)
-    obstacles->linkFRSConstraints(checkJointsPosition, nullptr, g + NUM_TIME_STEPS * NUM_FACTORS, nullptr);
+    // Bohao says to put contact constraints into the same loop
+    //  adjust the index length (+NUM_TIME_STEPS*3)
+    //  separate joint position constraint and force constraints by using if/else statement to check index?
+    //    if i < NUM_TIME_STEPS * NUM_FACTORS (0 -> NUM_TIME_STEPS*NUM_FACTORS)
+    //      joint_position constraint
+    //    else
+    //      contact constraints (NUM_TIME_STEPS*NUM_FACTORS -> (NUM_TIME_STEPS*NUM_FACTORS+NUM_TIME_STEPS*3))
+    //  adjust the indices of the following constraints
 
-    // Part 4. (position & velocity) state limit constraints
-    desired_trajectory->returnJointPositionExtremum(g + NUM_TIME_STEPS * NUM_FACTORS + (NUM_FACTORS - 1) * NUM_TIME_STEPS * obstacles->num_obstacles, x);
-    desired_trajectory->returnJointVelocityExtremum(g + NUM_TIME_STEPS * NUM_FACTORS + (NUM_FACTORS - 1) * NUM_TIME_STEPS * obstacles->num_obstacles + NUM_FACTORS * 2, x);
+    // Part 4. check collision between joint position reachable set and obstacles (in gpu)
+    obstacles->linkFRSConstraints(checkJointsPosition, nullptr, g + (NUM_TIME_STEPS * NUM_FACTORS + NUM_TIME_STEPS*3), nullptr);
+
+    // Part 5. (position & velocity) state limit constraints
+    desired_trajectory->returnJointPositionExtremum(g + (NUM_TIME_STEPS * NUM_FACTORS + NUM_TIME_STEPS*3) + (NUM_FACTORS - 1) * NUM_TIME_STEPS * obstacles->num_obstacles, x);
+    desired_trajectory->returnJointVelocityExtremum(g + (NUM_TIME_STEPS * NUM_FACTORS + NUM_TIME_STEPS*3) + (NUM_FACTORS - 1) * NUM_TIME_STEPS * obstacles->num_obstacles + NUM_FACTORS * 2, x);
 
     // Part 5. force constraints on contact joint between tray and object
-    #pragma omp parallel for private(i) schedule(static, NUM_TIME_STEPS*3 / NUM_THREADS)
-    for(i = 0; i < NUM_TIME_STEPS*3; i++) {
         // put everything for force closure in here? or three for loops for each
+
+        
+        // need the center of the constraints (radius is used to buffer lower and upper bound)
+        // have separate function in some appropriate file which calculates the constraint PZs?
+
+        // all of the below could be called in armour_main.cpp and be a function elsewhere?
+        // should have access to f,n here
+        // split into components
+
+        // in this file I need to slice and then calculate the constraints
+        // slice
+        // calculate constraints
+        // take center of those constraints
+        // pull out the f,n components here
+        //  need to change call to rnea above to include the f,n
+        //  also need to preallocate them
+
+        // note: need to preallocate these for each time step
+
     }
-    // extract components of force
-    f_c_x = f_c.elt[0];
-    f_c_y = f_c.elt[1];
-    f_c_z = f_c.elt[2];
-    // extract components of moment
-    n_c_x = n_c.elt[0]
-    n_c_y = n_c.elt[1]
-    n_c_z = n_c.elt[2]
 
-    // separation constraint: -inf < -1*f_c_z < 0
-    sep_value = getCenter(f_c_z.slice(x));
-    // not sure what index to use here?
-    g[NUM_TIME_STEPS * NUM_FACTORS + (NUM_FACTORS - 1) * NUM_TIME_STEPS * obstacles->num_obstacles + NUM_FACTORS * 2] = -1*sep_value;
-
-    // need the center of the constraints (radius is used to buffer lower and upper bound)
-    // have separate function in some appropriate file which calculates the constraint PZs?
-
-    // all of the below could be called in armour_main.cpp and be a function elsewhere?
-    // should have access to f,n here
-    // split into components
-
-    // in this file I need to slice and then calculate the constraints
-    // slice
-    // calculate constraints
-    // take center of those constraints
-    // pull out the f,n components here
-    //  need to change call to rnea above to include the f,n
-    //  also need to preallocate them
-
-    // note: need to preallocate these for each time step
     
 
     return true;
