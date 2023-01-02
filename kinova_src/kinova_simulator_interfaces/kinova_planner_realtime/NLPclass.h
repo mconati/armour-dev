@@ -28,7 +28,8 @@ public:
         Obstacles* Obstacle_input,
         vecPZsparse* f_c_input,
         vecPZsparse* n_c_input,
-        const Number* u_s
+        const Number* u_s,
+        const Number* surf_rad
     );
 
     /**@name Overloaded from TNLP */

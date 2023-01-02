@@ -97,7 +97,8 @@ Section II:
     vecPZsparse n_c_nom[NUM_TIME_STEPS]; // may not be needed (can pass in nullptr instead)
     vecPZsparse f_c_int[NUM_TIME_STEPS];
     vecPZsparse n_c_int[NUM_TIME_STEPS];
-    const Number* u_s = 0.5; // static coefficient of friction between tray and object
+    const Number u_s = 0.5; // static coefficient of friction between tray and object
+    const Number surf_rad = 0.0762; // radius of contact area between tray and object (area assumed to be circular)
     // Note: might want to change this to be input to the C++ code from matlab?
     
     for (int i = 0; i < NUM_JOINTS; i++) {
@@ -243,7 +244,7 @@ Section III:
     auto start2 = std::chrono::high_resolution_clock::now();
 
     SmartPtr<armtd_NLP> mynlp = new armtd_NLP();
-	mynlp->set_parameters(q_des, t_plan, &traj, p, u_nom, v_norm, &O, f_c_int, n_c_int, u_s);
+	mynlp->set_parameters(q_des, t_plan, &traj, p, u_nom, v_norm, &O, f_c_int, n_c_int, u_s, surf_rad);
     // force constraint update: added in f_c_int and n_c_int for constraint formulation
     // need to change the NLPclass.h and NLPclass.cu files as well
 

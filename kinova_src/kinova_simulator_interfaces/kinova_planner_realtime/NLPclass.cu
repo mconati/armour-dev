@@ -30,7 +30,8 @@ bool armtd_NLP::set_parameters(
     Obstacles* obstacles_input,
     vecPZsparse* f_c_input,
     vecPZsparse* n_c_input,
-    const Number* u_s
+    const Number* u_s,
+    const Number* surf_rad
  ) 
  {
     q_des = q_des_input;
@@ -344,35 +345,35 @@ bool armtd_NLP::eval_g(
             // condition 1: all positive
             if ( (f_c_x_center >= 0) && (f_c_y_center >= 0) && (f_c_z_center >= 0) ){
                 // Note: double check that the center/radius is a number that can be squared
-                g[i+NUM_TIME_STEPS] = f_c_x_center^2 + 2*f_c_x_radius*f_c_x_center + f_c_x_radius^2 + f_c_y_center^2 + 2*f_c_y_radius*f_c_y_center + f_c_y_radius^2 - u_s^2 * ( f_c_z_center^2 - 2*f_c_z_radius*f_c_z_center - f_c_z_radius^2);
+                g[i+NUM_TIME_STEPS] = f_c_x_center^2 + 2*f_c_x_radius*f_c_x_center + f_c_x_radius^2 + f_c_y_center^2 + 2*f_c_y_radius*f_c_y_center + f_c_y_radius^2 - u_s^2 * ( f_c_z_center^2 - 2*f_c_z_radius*f_c_z_center - f_c_z_radius^2); // checked signs
             }
             // condition 2: y negative
             else if ( (f_c_x_center >= 0) && (f_c_y_center <= 0) && (f_c_z_center >= 0) ) {
-                g[i+NUM_TIME_STEPS] = f_c_x_center^2 + 2*f_c_x_radius*f_c_x_center + f_c_x_radius^2 + f_c_y_center^2 + 2*f_c_y_radius*f_c_y_center + f_c_y_radius^2 - u_s^2 * ( f_c_z_center^2 - 2*f_c_z_radius*f_c_z_center - f_c_z_radius^2);
+                g[i+NUM_TIME_STEPS] = f_c_x_center^2 + 2*f_c_x_radius*f_c_x_center + f_c_x_radius^2 + f_c_y_center^2 - 2*f_c_y_radius*f_c_y_center + f_c_y_radius^2 - u_s^2 * ( f_c_z_center^2 - 2*f_c_z_radius*f_c_z_center - f_c_z_radius^2); // checked signs
             }
             // condition 3: z negative
             else if ( (f_c_x_center >= 0) && (f_c_y_center >= 0) && (f_c_z_center <= 0) ) {
-                g[i+NUM_TIME_STEPS] = f_c_x_center^2 + 2*f_c_x_radius*f_c_x_center + f_c_x_radius^2 + f_c_y_center^2 + 2*f_c_y_radius*f_c_y_center + f_c_y_radius^2 - u_s^2 * ( f_c_z_center^2 - 2*f_c_z_radius*f_c_z_center - f_c_z_radius^2);
+                g[i+NUM_TIME_STEPS] = f_c_x_center^2 + 2*f_c_x_radius*f_c_x_center + f_c_x_radius^2 + f_c_y_center^2 + 2*f_c_y_radius*f_c_y_center + f_c_y_radius^2 - u_s^2 * ( f_c_z_center^2 + 2*f_c_z_radius*f_c_z_center - f_c_z_radius^2); // checked signs
             }
             // condition 4: y and z negative
             else if ( (f_c_x_center >= 0) && (f_c_y_center <= 0) && (f_c_z_center <= 0) ) {
-                g[i+NUM_TIME_STEPS] = f_c_x_center^2 + 2*f_c_x_radius*f_c_x_center + f_c_x_radius^2 + f_c_y_center^2 + 2*f_c_y_radius*f_c_y_center + f_c_y_radius^2 - u_s^2 * ( f_c_z_center^2 - 2*f_c_z_radius*f_c_z_center - f_c_z_radius^2);
+                g[i+NUM_TIME_STEPS] = f_c_x_center^2 + 2*f_c_x_radius*f_c_x_center + f_c_x_radius^2 + f_c_y_center^2 - 2*f_c_y_radius*f_c_y_center + f_c_y_radius^2 - u_s^2 * ( f_c_z_center^2 + 2*f_c_z_radius*f_c_z_center - f_c_z_radius^2); // checked signs
             }
             // condition 5: x negative
             else if ( (f_c_x_center <= 0) && (f_c_y_center >= 0) && (f_c_z_center >= 0) ) {
-                g[i+NUM_TIME_STEPS] = f_c_x_center^2 + 2*f_c_x_radius*f_c_x_center + f_c_x_radius^2 + f_c_y_center^2 + 2*f_c_y_radius*f_c_y_center + f_c_y_radius^2 - u_s^2 * ( f_c_z_center^2 - 2*f_c_z_radius*f_c_z_center - f_c_z_radius^2);
+                g[i+NUM_TIME_STEPS] = f_c_x_center^2 - 2*f_c_x_radius*f_c_x_center + f_c_x_radius^2 + f_c_y_center^2 + 2*f_c_y_radius*f_c_y_center + f_c_y_radius^2 - u_s^2 * ( f_c_z_center^2 - 2*f_c_z_radius*f_c_z_center - f_c_z_radius^2); // checked signs
             }
             // condition 6: x and y negative
             else if ( (f_c_x_center <= 0) && (f_c_y_center <= 0) && (f_c_z_center >= 0) ) {
-                g[i+NUM_TIME_STEPS] = f_c_x_center^2 + 2*f_c_x_radius*f_c_x_center + f_c_x_radius^2 + f_c_y_center^2 + 2*f_c_y_radius*f_c_y_center + f_c_y_radius^2 - u_s^2 * ( f_c_z_center^2 - 2*f_c_z_radius*f_c_z_center - f_c_z_radius^2);
+                g[i+NUM_TIME_STEPS] = f_c_x_center^2 - 2*f_c_x_radius*f_c_x_center + f_c_x_radius^2 + f_c_y_center^2 - 2*f_c_y_radius*f_c_y_center + f_c_y_radius^2 - u_s^2 * ( f_c_z_center^2 - 2*f_c_z_radius*f_c_z_center - f_c_z_radius^2); // checked signs
             }
             // condition 7: x and z negative
             else if ( (f_c_x_center <= 0) && (f_c_y_center >= 0) && (f_c_z_center <= 0) ) {
-                g[i+NUM_TIME_STEPS] = f_c_x_center^2 + 2*f_c_x_radius*f_c_x_center + f_c_x_radius^2 + f_c_y_center^2 + 2*f_c_y_radius*f_c_y_center + f_c_y_radius^2 - u_s^2 * ( f_c_z_center^2 - 2*f_c_z_radius*f_c_z_center - f_c_z_radius^2);
+                g[i+NUM_TIME_STEPS] = f_c_x_center^2 - 2*f_c_x_radius*f_c_x_center + f_c_x_radius^2 + f_c_y_center^2 + 2*f_c_y_radius*f_c_y_center + f_c_y_radius^2 - u_s^2 * ( f_c_z_center^2 + 2*f_c_z_radius*f_c_z_center - f_c_z_radius^2); // checked signs
             }
             // condition 8: x and y and z negative
             else if ( (f_c_x_center <= 0) && (f_c_y_center <= 0) && (f_c_z_center <= 0) ) {
-                g[i+NUM_TIME_STEPS] = f_c_x_center^2 + 2*f_c_x_radius*f_c_x_center + f_c_x_radius^2 + f_c_y_center^2 + 2*f_c_y_radius*f_c_y_center + f_c_y_radius^2 - u_s^2 * ( f_c_z_center^2 - 2*f_c_z_radius*f_c_z_center - f_c_z_radius^2);
+                g[i+NUM_TIME_STEPS] = f_c_x_center^2 - 2*f_c_x_radius*f_c_x_center + f_c_x_radius^2 + f_c_y_center^2 - 2*f_c_y_radius*f_c_y_center + f_c_y_radius^2 - u_s^2 * ( f_c_z_center^2 + 2*f_c_z_radius*f_c_z_center - f_c_z_radius^2); // checked signs
             }
 
             // storing tipping constraint value, not sure what index to use here?
