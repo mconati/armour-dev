@@ -297,7 +297,7 @@ bool armtd_NLP::eval_g(
     }
 
     Index i;
-    #pragma omp parallel for private(i) schedule(static, NUM_TIME_STEPS * NUM_FACTORS / NUM_THREADS)
+    #pragma omp parallel for private(i) schedule(static, NUM_TIME_STEPS * NUM_FACTORS + NUM_TIME_STEPS*3 / NUM_THREADS)
     for(i = 0; i < (NUM_TIME_STEPS * NUM_FACTORS + NUM_TIME_STEPS*3); i++) {
         
         if(i < (NUM_TIME_STEPS * NUM_FACTORS)) {
@@ -314,70 +314,144 @@ bool armtd_NLP::eval_g(
         else {
             // Part 3. force constraints on contact joint between tray and object
 
-            // extract components of force (is f_c and n_c a single time step here or an array of all of them?)
-            PZsparse* f_c_x = f_c[i].elt[0];
-            PZsparse* f_c_y = f_c[i].elt[1];
-            PZsparse* f_c_z = f_c[i].elt[2];
-            // get centers
-            Number* f_c_x_center = getCenter(f_c_x);
-            Number* f_c_y_center = getCenter(f_c_y);
-            Number* f_c_z_center = getCenter(f_c_z);
-            // get radii of independent generators
-            TYPE* f_c_x_radius = getRadius(f_c_x.independent)
-            TYPE* f_c_y_radius = getRadius(f_c_y.independent)
-            TYPE* f_c_z_radius = getRadius(f_c_z.independent)
+            // NOTE: NEED TO FIX (^), this is a different operation in C++ 
 
-            // extract components of moment
-            PZsparse* n_c_x = n_c[i].elt[0]
-            PZsparse* n_c_y = n_c[i].elt[1]
-            PZsparse* n_c_z = n_c[i].elt[2]
+            // force
+            // get centers and their squares
+            Number f_c_x_center = getCenter(f_c[i].elt[0].slice(x));
+            Number f_c_x_center_2 = f_c_x_center * f_c_x_center;
+            Number f_c_y_center = getCenter(f_c[i].elt[1].slice(x));
+            Number f_c_y_center_2 = f_c_y_center * f_c_y_center;
+            Number f_c_z_center = getCenter(f_c[i].elt[2].slice(x));
+            Number f_c_z_center_2 = f_c_z_center * f_c_z_center;
+            // get radii of independent generators and their squares
+            TYPE f_c_x_radius = getRadius(f_c[i].elt[0].slice(x).independent)
+            TYPE f_c_x_radius_2 = f_c_x_radius * f_c_x_radius;
+            TYPE f_c_y_radius = getRadius(f_c[i].elt[1].slice(x).independent)
+            TYPE f_c_y_radius_2 = f_c_y_radius * f_c_y_radius;
+            TYPE f_c_z_radius = getRadius(f_c[i].elt[2].slice(x).independent)
+            TYPE f_c_z_radius_2 = f_c_z_radius * f_c_z_radius;
+
+            // moment
+            // get centers and their squares
+            Number n_c_x_center = getCenter(n_c[i].elt[0].slice(x));
+            Number n_c_x_center_2 = n_c_x_center * n_c_x_center;
+            Number n_c_y_center = getCenter(n_c[i].elt[1].slice(x));
+            Number n_c_y_center_2 = n_c_y_center * n_c_y_center;
+            Number n_c_z_center = getCenter(n_c[i].elt[2].slice(x));
+            Number n_c_z_center_2 = n_c_z_center * n_c_z_center;
+            // get radii of independent generators and their squares
+            TYPE n_c_x_radius = getRadius(n_c[i].elt[0].slice(x).independent)
+            TYPE n_c_x_radius_2 = n_c_x_radius * n_c_x_radius;
+            TYPE n_c_y_radius = getRadius(n_c[i].elt[1].slice(x).independent)
+            TYPE n_c_y_radius_2 = n_c_y_radius * n_c_y_radius;
+            TYPE n_c_z_radius = getRadius(n_c[i].elt[2].slice(x).independent)
+            TYPE n_c_z_radius_2 = n_c_z_radius * n_c_z_radius;
 
             // separation constraint: -inf < -1*f_c_z < 0
             // storing separation constraint value, not sure what index to use here?
-            g[i] = -1*getCenter(f_c_z.slice(x));
+            // question: not sure what to do with the radius here?
+            // g[i] = -1*getCenter(f_c_z);
+            g[i] = -1*f_c_z_center;
+
 
             // slipping constraint: -inf < f_c_x*f_c_x + f_c_y*f_c_y - u_s^2*f_c_z*f_c_z < 0
             // need to write this constraint differently than matlab implementation as we need to 
             // slice before doing multiplications of PZs in order to avoid memory problems.
             // getCenter, getRadius (for v_norm in armour_main.cpp : getRadius(u_nom[t_ind * NUM_FACTORS + i].independent))
+
+            // if ( getCenter(f_c[i].elt[0].slice(x)) >= 0) && (getCenter(f_c[i].elt[1].slice(x)) >= 0) && (getCenter(f_c[i].elt[2].slice(x)) >= 0 ){
+            //     g[i+NUM_TIME_STEPS] = (getCenter(f_c[i].elt[0].slice(x)))_2 + 2*getRadius(f_c[i].elt[0].slice(x).independent)*getCenter(f_c[i].elt[0].slice(x)) + (getRadius(f_c[i].elt[0].slice(x).independent))_2 + (getCenter(f_c[i].elt[1].slice(x)))_2 + 2*getRadius(f_c[i].elt[1].slice(x).independent)*getCenter(f_c[i].elt[1].slice(x)) + (getRadius(f_c[i].elt[1].slice(x).independent))_2 - u_s_2*((getCenter(f_c[i].elt[2].slice(x)))_2 - 2*getRadius(f_c[i].elt[2].slice(x).independent)*getCenter(f_c[i].elt[2].slice(x)) - (getRadius(f_c[i].elt[2].slice(x).independent))_2);
+            
             
             // check the signs of the centers of the force zonotopes
             // condition 1: all positive
             if ( (f_c_x_center >= 0) && (f_c_y_center >= 0) && (f_c_z_center >= 0) ){
                 // Note: double check that the center/radius is a number that can be squared
-                g[i+NUM_TIME_STEPS] = f_c_x_center^2 + 2*f_c_x_radius*f_c_x_center + f_c_x_radius^2 + f_c_y_center^2 + 2*f_c_y_radius*f_c_y_center + f_c_y_radius^2 - u_s^2 * ( f_c_z_center^2 - 2*f_c_z_radius*f_c_z_center - f_c_z_radius^2); // checked signs
+                g[i+NUM_TIME_STEPS] = f_c_x_center_2 + 2*f_c_x_radius*f_c_x_center + f_c_x_radius_2 + f_c_y_center_2 + 2*f_c_y_radius*f_c_y_center + f_c_y_radius_2 - u_s*u_s * ( f_c_z_center_2 - 2*f_c_z_radius*f_c_z_center - f_c_z_radius_2); // checked signs
             }
             // condition 2: y negative
             else if ( (f_c_x_center >= 0) && (f_c_y_center <= 0) && (f_c_z_center >= 0) ) {
-                g[i+NUM_TIME_STEPS] = f_c_x_center^2 + 2*f_c_x_radius*f_c_x_center + f_c_x_radius^2 + f_c_y_center^2 - 2*f_c_y_radius*f_c_y_center + f_c_y_radius^2 - u_s^2 * ( f_c_z_center^2 - 2*f_c_z_radius*f_c_z_center - f_c_z_radius^2); // checked signs
+                g[i+NUM_TIME_STEPS] = f_c_x_center_2 + 2*f_c_x_radius*f_c_x_center + f_c_x_radius_2 + f_c_y_center_2 - 2*f_c_y_radius*f_c_y_center + f_c_y_radius_2 - u_s*u_s * ( f_c_z_center_2 - 2*f_c_z_radius*f_c_z_center - f_c_z_radius_2); // checked signs
             }
             // condition 3: z negative
             else if ( (f_c_x_center >= 0) && (f_c_y_center >= 0) && (f_c_z_center <= 0) ) {
-                g[i+NUM_TIME_STEPS] = f_c_x_center^2 + 2*f_c_x_radius*f_c_x_center + f_c_x_radius^2 + f_c_y_center^2 + 2*f_c_y_radius*f_c_y_center + f_c_y_radius^2 - u_s^2 * ( f_c_z_center^2 + 2*f_c_z_radius*f_c_z_center - f_c_z_radius^2); // checked signs
+                g[i+NUM_TIME_STEPS] = f_c_x_center_2 + 2*f_c_x_radius*f_c_x_center + f_c_x_radius_2 + f_c_y_center_2 + 2*f_c_y_radius*f_c_y_center + f_c_y_radius_2 - u_s*u_s * ( f_c_z_center_2 + 2*f_c_z_radius*f_c_z_center - f_c_z_radius_2); // checked signs
             }
             // condition 4: y and z negative
             else if ( (f_c_x_center >= 0) && (f_c_y_center <= 0) && (f_c_z_center <= 0) ) {
-                g[i+NUM_TIME_STEPS] = f_c_x_center^2 + 2*f_c_x_radius*f_c_x_center + f_c_x_radius^2 + f_c_y_center^2 - 2*f_c_y_radius*f_c_y_center + f_c_y_radius^2 - u_s^2 * ( f_c_z_center^2 + 2*f_c_z_radius*f_c_z_center - f_c_z_radius^2); // checked signs
+                g[i+NUM_TIME_STEPS] = f_c_x_center_2 + 2*f_c_x_radius*f_c_x_center + f_c_x_radius_2 + f_c_y_center_2 - 2*f_c_y_radius*f_c_y_center + f_c_y_radius_2 - u_s*u_s * ( f_c_z_center_2 + 2*f_c_z_radius*f_c_z_center - f_c_z_radius_2); // checked signs
             }
             // condition 5: x negative
             else if ( (f_c_x_center <= 0) && (f_c_y_center >= 0) && (f_c_z_center >= 0) ) {
-                g[i+NUM_TIME_STEPS] = f_c_x_center^2 - 2*f_c_x_radius*f_c_x_center + f_c_x_radius^2 + f_c_y_center^2 + 2*f_c_y_radius*f_c_y_center + f_c_y_radius^2 - u_s^2 * ( f_c_z_center^2 - 2*f_c_z_radius*f_c_z_center - f_c_z_radius^2); // checked signs
+                g[i+NUM_TIME_STEPS] = f_c_x_center_2 - 2*f_c_x_radius*f_c_x_center + f_c_x_radius_2 + f_c_y_center_2 + 2*f_c_y_radius*f_c_y_center + f_c_y_radius_2 - u_s*u_s * ( f_c_z_center_2 - 2*f_c_z_radius*f_c_z_center - f_c_z_radius_2); // checked signs
             }
             // condition 6: x and y negative
             else if ( (f_c_x_center <= 0) && (f_c_y_center <= 0) && (f_c_z_center >= 0) ) {
-                g[i+NUM_TIME_STEPS] = f_c_x_center^2 - 2*f_c_x_radius*f_c_x_center + f_c_x_radius^2 + f_c_y_center^2 - 2*f_c_y_radius*f_c_y_center + f_c_y_radius^2 - u_s^2 * ( f_c_z_center^2 - 2*f_c_z_radius*f_c_z_center - f_c_z_radius^2); // checked signs
+                g[i+NUM_TIME_STEPS] = f_c_x_center_2 - 2*f_c_x_radius*f_c_x_center + f_c_x_radius_2 + f_c_y_center_2 - 2*f_c_y_radius*f_c_y_center + f_c_y_radius_2 - u_s*u_s * ( f_c_z_center_2 - 2*f_c_z_radius*f_c_z_center - f_c_z_radius_2); // checked signs
             }
             // condition 7: x and z negative
             else if ( (f_c_x_center <= 0) && (f_c_y_center >= 0) && (f_c_z_center <= 0) ) {
-                g[i+NUM_TIME_STEPS] = f_c_x_center^2 - 2*f_c_x_radius*f_c_x_center + f_c_x_radius^2 + f_c_y_center^2 + 2*f_c_y_radius*f_c_y_center + f_c_y_radius^2 - u_s^2 * ( f_c_z_center^2 + 2*f_c_z_radius*f_c_z_center - f_c_z_radius^2); // checked signs
+                g[i+NUM_TIME_STEPS] = f_c_x_center_2 - 2*f_c_x_radius*f_c_x_center + f_c_x_radius_2 + f_c_y_center_2 + 2*f_c_y_radius*f_c_y_center + f_c_y_radius_2 - u_s*u_s * ( f_c_z_center_2 + 2*f_c_z_radius*f_c_z_center - f_c_z_radius_2); // checked signs
             }
             // condition 8: x and y and z negative
             else if ( (f_c_x_center <= 0) && (f_c_y_center <= 0) && (f_c_z_center <= 0) ) {
-                g[i+NUM_TIME_STEPS] = f_c_x_center^2 - 2*f_c_x_radius*f_c_x_center + f_c_x_radius^2 + f_c_y_center^2 - 2*f_c_y_radius*f_c_y_center + f_c_y_radius^2 - u_s^2 * ( f_c_z_center^2 + 2*f_c_z_radius*f_c_z_center - f_c_z_radius^2); // checked signs
+                g[i+NUM_TIME_STEPS] = f_c_x_center_2 - 2*f_c_x_radius*f_c_x_center + f_c_x_radius_2 + f_c_y_center_2 - 2*f_c_y_radius*f_c_y_center + f_c_y_radius_2 - u_s*u_s * ( f_c_z_center_2 + 2*f_c_z_radius*f_c_z_center - f_c_z_radius_2); // checked signs
             }
 
+
+            // tipping constraint: ZMP_top_x*ZMP_top_x + ZMP_top_y*ZMP_top_y - surf_rad*ZMP_bottom*ZMP_bottom < 0
             // storing tipping constraint value, not sure what index to use here?
-            g[i+NUM_TIME_STEPS*2] = ;
+
+            vecPZsparse ZMP_top = cross([0;0;1],n_c[i]);
+            
+            PZsparse ZMP_top_x = ZMP_top.elt[0].slice(x);
+            ZMP_top_x_center = getCenter(ZMP_top_x);
+            ZMP_top_x_2 = ZMP_top_x*ZMP_top_x;
+            ZMP_top_y = ZMP_top.elt[1];
+            ZMP_top_y_2 = ZMP_top_y*ZMP_top_y;
+            ZMP_top_z = ZMP_top.elt[2]; // use for debugging, check this is always equal to zero
+            
+            ZMP_bottom = n_c[i].elt[2];
+            ZMP_bottom_center = getCenter(ZMP_bottom);
+            ZMP_bottom_center_2 = ZMP_bottom_center*ZMP_bottom_center;
+            ZMP_bottom_radius = getRadius(ZMP_bottom.independent);
+            ZMP_bottom_radius_2 = ZMP_bottom_radius*ZMP_bottom_radius;
+            
+            // check the signs of the centers of the force zonotopes
+            // condition 1: all positive
+            if ( (n_c_x_center >= 0) && (n_c_y_center >= 0) && (n_c_z_center >= 0) ){
+                // Note: double check that the center/radius is a number that can be squared
+                g[i+2*NUM_TIME_STEPS] = n_c_x_center_2 + 2*n_c_x_radius*n_c_x_center + n_c_x_radius_2 + n_c_y_center_2 + 2*n_c_y_radius*n_c_y_center + n_c_y_radius_2 - surf_rad_2 * ( n_c_z_center_2 - 2*n_c_z_radius*n_c_z_center - n_c_z_radius_2); // checked signs
+            }
+            // condition 2: y negative
+            else if ( (n_c_x_center >= 0) && (n_c_y_center <= 0) && (n_c_z_center >= 0) ) {
+                g[i+2*NUM_TIME_STEPS] = n_c_x_center_2 + 2*n_c_x_radius*n_c_x_center + n_c_x_radius_2 + n_c_y_center_2 - 2*n_c_y_radius*n_c_y_center + n_c_y_radius_2 - surf_rad_2 * ( n_c_z_center_2 - 2*n_c_z_radius*n_c_z_center - n_c_z_radius_2); // checked signs
+            }
+            // condition 3: z negative
+            else if ( (n_c_x_center >= 0) && (n_c_y_center >= 0) && (n_c_z_center <= 0) ) {
+                g[i+2*NUM_TIME_STEPS] = n_c_x_center_2 + 2*n_c_x_radius*n_c_x_center + n_c_x_radius_2 + n_c_y_center_2 + 2*n_c_y_radius*n_c_y_center + n_c_y_radius_2 - surf_rad_2 * ( n_c_z_center_2 + 2*n_c_z_radius*n_c_z_center - n_c_z_radius_2); // checked signs
+            }
+            // condition 4: y and z negative
+            else if ( (n_c_x_center >= 0) && (n_c_y_center <= 0) && (n_c_z_center <= 0) ) {
+                g[i+2*NUM_TIME_STEPS] = n_c_x_center_2 + 2*n_c_x_radius*n_c_x_center + n_c_x_radius_2 + n_c_y_center_2 - 2*n_c_y_radius*n_c_y_center + n_c_y_radius_2 - surf_rad_2 * ( n_c_z_center_2 + 2*n_c_z_radius*n_c_z_center - n_c_z_radius_2); // checked signs
+            }
+            // condition 5: x negative
+            else if ( (n_c_x_center <= 0) && (n_c_y_center >= 0) && (n_c_z_center >= 0) ) {
+                g[i+2*NUM_TIME_STEPS] = n_c_x_center_2 - 2*n_c_x_radius*n_c_x_center + n_c_x_radius_2 + n_c_y_center_2 + 2*n_c_y_radius*n_c_y_center + n_c_y_radius_2 - surf_rad_2 * ( n_c_z_center_2 - 2*n_c_z_radius*n_c_z_center - n_c_z_radius_2); // checked signs
+            }
+            // condition 6: x and y negative
+            else if ( (n_c_x_center <= 0) && (n_c_y_center <= 0) && (n_c_z_center >= 0) ) {
+                g[i+2*NUM_TIME_STEPS] = n_c_x_center_2 - 2*n_c_x_radius*n_c_x_center + n_c_x_radius_2 + n_c_y_center_2 - 2*n_c_y_radius*n_c_y_center + n_c_y_radius_2 - surf_rad_2 * ( n_c_z_center_2 - 2*n_c_z_radius*n_c_z_center - n_c_z_radius_2); // checked signs
+            }
+            // condition 7: x and z negative
+            else if ( (n_c_x_center <= 0) && (n_c_y_center >= 0) && (n_c_z_center <= 0) ) {
+                g[i+2*NUM_TIME_STEPS] = n_c_x_center_2 - 2*n_c_x_radius*n_c_x_center + n_c_x_radius_2 + n_c_y_center_2 + 2*n_c_y_radius*n_c_y_center + n_c_y_radius_2 - surf_rad_2 * ( n_c_z_center_2 + 2*n_c_z_radius*n_c_z_center - n_c_z_radius_2); // checked signs
+            }
+            // condition 8: x and y and z negative
+            else if ( (n_c_x_center <= 0) && (n_c_y_center <= 0) && (n_c_z_center <= 0) ) {
+                g[i+2*NUM_TIME_STEPS] = n_c_x_center_2 - 2*n_c_x_radius*n_c_x_center + n_c_x_radius_2 + n_c_y_center_2 - 2*n_c_y_radius*n_c_y_center + n_c_y_radius_2 - surf_rad_2 * ( n_c_z_center_2 + 2*n_c_z_radius*n_c_z_center - n_c_z_radius_2); // checked signs
+            }
 
         }
         
