@@ -314,9 +314,7 @@ bool armtd_NLP::eval_g(
         else {
             // Part 3. force constraints on contact joint between tray and object
 
-            // NOTE: NEED TO FIX (^), this is a different operation in C++ 
-
-            // force
+            //     force
             // get centers and their squares
             Number f_c_x_center = getCenter(f_c[i].elt[0].slice(x));
             Number f_c_x_center_2 = f_c_x_center * f_c_x_center;
@@ -332,7 +330,7 @@ bool armtd_NLP::eval_g(
             TYPE f_c_z_radius = getRadius(f_c[i].elt[2].slice(x).independent)
             TYPE f_c_z_radius_2 = f_c_z_radius * f_c_z_radius;
 
-            // moment
+            //     moment
             // get centers and their squares
             Number n_c_x_center = getCenter(n_c[i].elt[0].slice(x));
             Number n_c_x_center_2 = n_c_x_center * n_c_x_center;
@@ -348,21 +346,21 @@ bool armtd_NLP::eval_g(
             TYPE n_c_z_radius = getRadius(n_c[i].elt[2].slice(x).independent)
             TYPE n_c_z_radius_2 = n_c_z_radius * n_c_z_radius;
 
-            // separation constraint: -inf < -1*f_c_z < 0
+
+            //     separation constraint: -inf < -1*f_c_z < 0
             // storing separation constraint value, not sure what index to use here?
             // question: not sure what to do with the radius here?
             // g[i] = -1*getCenter(f_c_z);
             g[i] = -1*f_c_z_center;
 
 
-            // slipping constraint: -inf < f_c_x*f_c_x + f_c_y*f_c_y - u_s^2*f_c_z*f_c_z < 0
+            //     slipping constraint: -inf < f_c_x*f_c_x + f_c_y*f_c_y - u_s^2*f_c_z*f_c_z < 0
             // need to write this constraint differently than matlab implementation as we need to 
             // slice before doing multiplications of PZs in order to avoid memory problems.
             // getCenter, getRadius (for v_norm in armour_main.cpp : getRadius(u_nom[t_ind * NUM_FACTORS + i].independent))
 
             // if ( getCenter(f_c[i].elt[0].slice(x)) >= 0) && (getCenter(f_c[i].elt[1].slice(x)) >= 0) && (getCenter(f_c[i].elt[2].slice(x)) >= 0 ){
             //     g[i+NUM_TIME_STEPS] = (getCenter(f_c[i].elt[0].slice(x)))_2 + 2*getRadius(f_c[i].elt[0].slice(x).independent)*getCenter(f_c[i].elt[0].slice(x)) + (getRadius(f_c[i].elt[0].slice(x).independent))_2 + (getCenter(f_c[i].elt[1].slice(x)))_2 + 2*getRadius(f_c[i].elt[1].slice(x).independent)*getCenter(f_c[i].elt[1].slice(x)) + (getRadius(f_c[i].elt[1].slice(x).independent))_2 - u_s_2*((getCenter(f_c[i].elt[2].slice(x)))_2 - 2*getRadius(f_c[i].elt[2].slice(x).independent)*getCenter(f_c[i].elt[2].slice(x)) - (getRadius(f_c[i].elt[2].slice(x).independent))_2);
-            
             
             // check the signs of the centers of the force zonotopes
             // condition 1: all positive
@@ -400,11 +398,11 @@ bool armtd_NLP::eval_g(
             }
 
 
-            // tipping constraint: ZMP_top_x*ZMP_top_x + ZMP_top_y*ZMP_top_y - surf_rad*ZMP_bottom*ZMP_bottom < 0
-            // storing tipping constraint value, not sure what index to use here?
+            //     tipping constraint: ZMP_top_x*ZMP_top_x + ZMP_top_y*ZMP_top_y - surf_rad*ZMP_bottom*ZMP_bottom < 0
 
+            // compute the numerator of the ZMP point equation
             vecPZsparse ZMP_top = cross([0;0;1],n_c[i]);
-            
+            // extract the x, y and z components, slice by the parameters, then get the centers and radii of independent generators and their squares
             PZsparse ZMP_top_x = ZMP_top.elt[0].slice(x);
             ZMP_top_x_center = getCenter(ZMP_top_x);
             ZMP_top_x_2 = ZMP_top_x*ZMP_top_x;
@@ -412,13 +410,18 @@ bool armtd_NLP::eval_g(
             ZMP_top_y_2 = ZMP_top_y*ZMP_top_y;
             ZMP_top_z = ZMP_top.elt[2]; // use for debugging, check this is always equal to zero
             
-            ZMP_bottom = n_c[i].elt[2];
+            // compute the denominator of the ZMP point equation
+            // note that if the normal vector corresponds to the body frame z-axis, n=[0;0;1] and the dot product of that normal vector
+            // with the moment results in the z-component of the moment.
+            // question: is the moment about the contact point like in Matlab RNEA? need to verify this
+            ZMP_bottom = n_c[i].elt[2].slice(x);
+            // extract center and radius of independent generators and their squares
             ZMP_bottom_center = getCenter(ZMP_bottom);
             ZMP_bottom_center_2 = ZMP_bottom_center*ZMP_bottom_center;
             ZMP_bottom_radius = getRadius(ZMP_bottom.independent);
             ZMP_bottom_radius_2 = ZMP_bottom_radius*ZMP_bottom_radius;
             
-            // check the signs of the centers of the force zonotopes
+            // check the signs of the centers of the force zonotopes in order to form the constraint
             // condition 1: all positive
             if ( (n_c_x_center >= 0) && (n_c_y_center >= 0) && (n_c_z_center >= 0) ){
                 // Note: double check that the center/radius is a number that can be squared
