@@ -297,7 +297,7 @@ bool armtd_NLP::eval_g(
     }
 
     Index i;
-    #pragma omp parallel for private(i) schedule(static, NUM_TIME_STEPS * NUM_FACTORS + NUM_TIME_STEPS*3 / NUM_THREADS)
+    #pragma omp parallel for private(i) schedule(static, (NUM_TIME_STEPS * NUM_FACTORS + NUM_TIME_STEPS*3) / NUM_THREADS)
     for(i = 0; i < (NUM_TIME_STEPS * NUM_FACTORS + NUM_TIME_STEPS*3); i++) {
         
         if(i < (NUM_TIME_STEPS * NUM_FACTORS)) {
@@ -403,12 +403,20 @@ bool armtd_NLP::eval_g(
             // compute the numerator of the ZMP point equation
             vecPZsparse ZMP_top = cross([0;0;1],n_c[i]);
             // extract the x, y and z components, slice by the parameters, then get the centers and radii of independent generators and their squares
+            // x-component
             PZsparse ZMP_top_x = ZMP_top.elt[0].slice(x);
             ZMP_top_x_center = getCenter(ZMP_top_x);
-            ZMP_top_x_2 = ZMP_top_x*ZMP_top_x;
-            ZMP_top_y = ZMP_top.elt[1];
-            ZMP_top_y_2 = ZMP_top_y*ZMP_top_y;
-            ZMP_top_z = ZMP_top.elt[2]; // use for debugging, check this is always equal to zero
+            ZMP_top_x_center_2 = ZMP_top_x_center*ZMP_top_x_center;
+            ZMP_top_x_radius = getRadius(ZMP_top_x.independent);
+            ZMP_top_x_radius_2 = ZMP_top_x_radius*ZMP_top_x_radius;
+            // y-component
+            ZMP_top_y = ZMP_top.elt[1].slice(x);
+            ZMP_top_y_center = getCenter(ZMP_top_y);
+            ZMP_top_y_center_2 = ZMP_top_y_center*ZMP_top_y_center;
+            ZMP_top_y_radius = getRadius(ZMP_top_y.independent);
+            ZMP_top_y_radius_2 = ZMP_top_y_radius*ZMP_top_y_radius;
+            // z-component
+            ZMP_top_z = ZMP_top.elt[2].slice(x); // use for debugging, check this is always equal to zero
             
             // compute the denominator of the ZMP point equation
             // note that if the normal vector corresponds to the body frame z-axis, n=[0;0;1] and the dot product of that normal vector
@@ -423,37 +431,37 @@ bool armtd_NLP::eval_g(
             
             // check the signs of the centers of the force zonotopes in order to form the constraint
             // condition 1: all positive
-            if ( (n_c_x_center >= 0) && (n_c_y_center >= 0) && (n_c_z_center >= 0) ){
+            if ( (ZMP_top_x_center >= 0) && (ZMP_top_y_center >= 0) && (ZMP_bottom_center >= 0) ){
                 // Note: double check that the center/radius is a number that can be squared
-                g[i+2*NUM_TIME_STEPS] = n_c_x_center_2 + 2*n_c_x_radius*n_c_x_center + n_c_x_radius_2 + n_c_y_center_2 + 2*n_c_y_radius*n_c_y_center + n_c_y_radius_2 - surf_rad_2 * ( n_c_z_center_2 - 2*n_c_z_radius*n_c_z_center - n_c_z_radius_2); // checked signs
+                g[i+2*NUM_TIME_STEPS] = ZMP_top_x_center_2 + 2*ZMP_top_x_radius*ZMP_top_x_center + ZMP_top_x_radius_2 + ZMP_top_y_center_2 + 2*ZMP_top_y_radius*ZMP_top_y_center + ZMP_top_y_radius_2 - surf_rad_2 * ( ZMP_bottom_center_2 - 2*ZMP_bottom_radius*ZMP_bottom_center - ZMP_bottom_radius_2); // checked signs
             }
             // condition 2: y negative
-            else if ( (n_c_x_center >= 0) && (n_c_y_center <= 0) && (n_c_z_center >= 0) ) {
-                g[i+2*NUM_TIME_STEPS] = n_c_x_center_2 + 2*n_c_x_radius*n_c_x_center + n_c_x_radius_2 + n_c_y_center_2 - 2*n_c_y_radius*n_c_y_center + n_c_y_radius_2 - surf_rad_2 * ( n_c_z_center_2 - 2*n_c_z_radius*n_c_z_center - n_c_z_radius_2); // checked signs
+            else if ( (ZMP_top_x_center >= 0) && (ZMP_top_y_center <= 0) && (ZMP_bottom_center >= 0) ) {
+                g[i+2*NUM_TIME_STEPS] = ZMP_top_x_center_2 + 2*ZMP_top_x_radius*ZMP_top_x_center + ZMP_top_x_radius_2 + ZMP_top_y_center_2 - 2*ZMP_top_y_radius*ZMP_top_y_center + ZMP_top_y_radius_2 - surf_rad_2 * ( ZMP_bottom_center_2 - 2*ZMP_bottom_radius*ZMP_bottom_center - ZMP_bottom_radius_2); // checked signs
             }
             // condition 3: z negative
-            else if ( (n_c_x_center >= 0) && (n_c_y_center >= 0) && (n_c_z_center <= 0) ) {
-                g[i+2*NUM_TIME_STEPS] = n_c_x_center_2 + 2*n_c_x_radius*n_c_x_center + n_c_x_radius_2 + n_c_y_center_2 + 2*n_c_y_radius*n_c_y_center + n_c_y_radius_2 - surf_rad_2 * ( n_c_z_center_2 + 2*n_c_z_radius*n_c_z_center - n_c_z_radius_2); // checked signs
+            else if ( (ZMP_top_x_center >= 0) && (ZMP_top_y_center >= 0) && (ZMP_bottom_center <= 0) ) {
+                g[i+2*NUM_TIME_STEPS] = ZMP_top_x_center_2 + 2*ZMP_top_x_radius*ZMP_top_x_center + ZMP_top_x_radius_2 + ZMP_top_y_center_2 + 2*ZMP_top_y_radius*ZMP_top_y_center + ZMP_top_y_radius_2 - surf_rad_2 * ( ZMP_bottom_center_2 + 2*ZMP_bottom_radius*ZMP_bottom_center - ZMP_bottom_radius_2); // checked signs
             }
             // condition 4: y and z negative
-            else if ( (n_c_x_center >= 0) && (n_c_y_center <= 0) && (n_c_z_center <= 0) ) {
-                g[i+2*NUM_TIME_STEPS] = n_c_x_center_2 + 2*n_c_x_radius*n_c_x_center + n_c_x_radius_2 + n_c_y_center_2 - 2*n_c_y_radius*n_c_y_center + n_c_y_radius_2 - surf_rad_2 * ( n_c_z_center_2 + 2*n_c_z_radius*n_c_z_center - n_c_z_radius_2); // checked signs
+            else if ( (ZMP_top_x_center >= 0) && (ZMP_top_y_center <= 0) && (ZMP_bottom_center <= 0) ) {
+                g[i+2*NUM_TIME_STEPS] = ZMP_top_x_center_2 + 2*ZMP_top_x_radius*ZMP_top_x_center + ZMP_top_x_radius_2 + ZMP_top_y_center_2 - 2*ZMP_top_y_radius*ZMP_top_y_center + ZMP_top_y_radius_2 - surf_rad_2 * ( ZMP_bottom_center_2 + 2*ZMP_bottom_radius*ZMP_bottom_center - ZMP_bottom_radius_2); // checked signs
             }
             // condition 5: x negative
-            else if ( (n_c_x_center <= 0) && (n_c_y_center >= 0) && (n_c_z_center >= 0) ) {
-                g[i+2*NUM_TIME_STEPS] = n_c_x_center_2 - 2*n_c_x_radius*n_c_x_center + n_c_x_radius_2 + n_c_y_center_2 + 2*n_c_y_radius*n_c_y_center + n_c_y_radius_2 - surf_rad_2 * ( n_c_z_center_2 - 2*n_c_z_radius*n_c_z_center - n_c_z_radius_2); // checked signs
+            else if ( (ZMP_top_x_center <= 0) && (ZMP_top_y_center >= 0) && (ZMP_bottom_center >= 0) ) {
+                g[i+2*NUM_TIME_STEPS] = ZMP_top_x_center_2 - 2*ZMP_top_x_radius*ZMP_top_x_center + ZMP_top_x_radius_2 + ZMP_top_y_center_2 + 2*ZMP_top_y_radius*ZMP_top_y_center + ZMP_top_y_radius_2 - surf_rad_2 * ( ZMP_bottom_center_2 - 2*ZMP_bottom_radius*ZMP_bottom_center - ZMP_bottom_radius_2); // checked signs
             }
             // condition 6: x and y negative
-            else if ( (n_c_x_center <= 0) && (n_c_y_center <= 0) && (n_c_z_center >= 0) ) {
-                g[i+2*NUM_TIME_STEPS] = n_c_x_center_2 - 2*n_c_x_radius*n_c_x_center + n_c_x_radius_2 + n_c_y_center_2 - 2*n_c_y_radius*n_c_y_center + n_c_y_radius_2 - surf_rad_2 * ( n_c_z_center_2 - 2*n_c_z_radius*n_c_z_center - n_c_z_radius_2); // checked signs
+            else if ( (ZMP_top_x_center <= 0) && (ZMP_top_y_center <= 0) && (ZMP_bottom_center >= 0) ) {
+                g[i+2*NUM_TIME_STEPS] = ZMP_top_x_center_2 - 2*ZMP_top_x_radius*ZMP_top_x_center + ZMP_top_x_radius_2 + ZMP_top_y_center_2 - 2*ZMP_top_y_radius*ZMP_top_y_center + ZMP_top_y_radius_2 - surf_rad_2 * ( ZMP_bottom_center_2 - 2*ZMP_bottom_radius*ZMP_bottom_center - ZMP_bottom_radius_2); // checked signs
             }
             // condition 7: x and z negative
-            else if ( (n_c_x_center <= 0) && (n_c_y_center >= 0) && (n_c_z_center <= 0) ) {
-                g[i+2*NUM_TIME_STEPS] = n_c_x_center_2 - 2*n_c_x_radius*n_c_x_center + n_c_x_radius_2 + n_c_y_center_2 + 2*n_c_y_radius*n_c_y_center + n_c_y_radius_2 - surf_rad_2 * ( n_c_z_center_2 + 2*n_c_z_radius*n_c_z_center - n_c_z_radius_2); // checked signs
+            else if ( (ZMP_top_x_center <= 0) && (ZMP_top_y_center >= 0) && (ZMP_bottom_center <= 0) ) {
+                g[i+2*NUM_TIME_STEPS] = ZMP_top_x_center_2 - 2*ZMP_top_x_radius*ZMP_top_x_center + ZMP_top_x_radius_2 + ZMP_top_y_center_2 + 2*ZMP_top_y_radius*ZMP_top_y_center + ZMP_top_y_radius_2 - surf_rad_2 * ( ZMP_bottom_center_2 + 2*ZMP_bottom_radius*ZMP_bottom_center - ZMP_bottom_radius_2); // checked signs
             }
             // condition 8: x and y and z negative
-            else if ( (n_c_x_center <= 0) && (n_c_y_center <= 0) && (n_c_z_center <= 0) ) {
-                g[i+2*NUM_TIME_STEPS] = n_c_x_center_2 - 2*n_c_x_radius*n_c_x_center + n_c_x_radius_2 + n_c_y_center_2 - 2*n_c_y_radius*n_c_y_center + n_c_y_radius_2 - surf_rad_2 * ( n_c_z_center_2 + 2*n_c_z_radius*n_c_z_center - n_c_z_radius_2); // checked signs
+            else if ( (ZMP_top_x_center <= 0) && (ZMP_top_y_center <= 0) && (ZMP_bottom_center <= 0) ) {
+                g[i+2*NUM_TIME_STEPS] = ZMP_top_x_center_2 - 2*ZMP_top_x_radius*ZMP_top_x_center + ZMP_top_x_radius_2 + ZMP_top_y_center_2 - 2*ZMP_top_y_radius*ZMP_top_y_center + ZMP_top_y_radius_2 - surf_rad_2 * ( ZMP_bottom_center_2 + 2*ZMP_bottom_radius*ZMP_bottom_center - ZMP_bottom_radius_2); // checked signs
             }
 
         }
@@ -475,31 +483,6 @@ bool armtd_NLP::eval_g(
     // Part 5. (position & velocity) state limit constraints
     desired_trajectory->returnJointPositionExtremum(g + (NUM_TIME_STEPS * NUM_FACTORS + NUM_TIME_STEPS*3) + (NUM_FACTORS - 1) * NUM_TIME_STEPS * obstacles->num_obstacles, x);
     desired_trajectory->returnJointVelocityExtremum(g + (NUM_TIME_STEPS * NUM_FACTORS + NUM_TIME_STEPS*3) + (NUM_FACTORS - 1) * NUM_TIME_STEPS * obstacles->num_obstacles + NUM_FACTORS * 2, x);
-
-    // Part 5. force constraints on contact joint between tray and object
-        // put everything for force closure in here? or three for loops for each
-
-        
-        // need the center of the constraints (radius is used to buffer lower and upper bound)
-        // have separate function in some appropriate file which calculates the constraint PZs?
-
-        // all of the below could be called in armour_main.cpp and be a function elsewhere?
-        // should have access to f,n here
-        // split into components
-
-        // in this file I need to slice and then calculate the constraints
-        // slice
-        // calculate constraints
-        // take center of those constraints
-        // pull out the f,n components here
-        //  need to change call to rnea above to include the f,n
-        //  also need to preallocate them
-
-        // note: need to preallocate these for each time step
-
-    }
-
-    
 
     return true;
 }
@@ -538,8 +521,10 @@ bool armtd_NLP::eval_jac_g(
     }
     else {
         Index i;
-        #pragma omp parallel for private(i) schedule(static, NUM_TIME_STEPS * NUM_FACTORS / NUM_THREADS)
-        for(i = 0; i < NUM_TIME_STEPS * NUM_FACTORS; i++) {
+        #pragma omp parallel for private(i) schedule(static, (NUM_TIME_STEPS * NUM_FACTORS + NUM_TIME_STEPS*3)/ NUM_THREADS)
+        for(i = 0; i < (NUM_TIME_STEPS * NUM_FACTORS + NUM_TIME_STEPS*3); i++) {
+
+            if (i < NUM_TIME_STEPS * NUM_FACTORS) {
             // Part 1. slice the control input PZ to get the center of the input bound, 
             //         while the radius of the input bound has already been incorporated in ipopt constraint bounds
             control_input[i].slice(values + i * NUM_FACTORS, x);
@@ -552,12 +537,19 @@ bool armtd_NLP::eval_jac_g(
             joint_position[i * 3    ].slice(dk_checkJointsPosition + (i * 3    ) * NUM_FACTORS, x);
             joint_position[i * 3 + 1].slice(dk_checkJointsPosition + (i * 3 + 1) * NUM_FACTORS, x);
             joint_position[i * 3 + 2].slice(dk_checkJointsPosition + (i * 3 + 2) * NUM_FACTORS, x);
+            }
+            else {
+                // Part 3. Force constraints
+
+            }
+            
+
         }
 
-        // Part 3. check collision between joint position reachable set and obstacles (in gpu)
+        // Part 4. check collision between joint position reachable set and obstacles (in gpu)
         obstacles->linkFRSConstraints(checkJointsPosition, dk_checkJointsPosition, nullptr, values + NUM_TIME_STEPS * NUM_FACTORS * NUM_FACTORS);
 
-        // Part 4. (position & velocity) state limit constraints
+        // Part 5. (position & velocity) state limit constraints
         desired_trajectory->returnJointPositionExtremumGradient(values + (NUM_TIME_STEPS * NUM_FACTORS + (NUM_FACTORS - 1) * NUM_TIME_STEPS * obstacles->num_obstacles) * NUM_FACTORS, x);
         desired_trajectory->returnJointVelocityExtremumGradient(values + (NUM_TIME_STEPS * NUM_FACTORS + (NUM_FACTORS - 1) * NUM_TIME_STEPS * obstacles->num_obstacles + NUM_FACTORS * 2) * NUM_FACTORS, x);
     }
@@ -646,6 +638,8 @@ void armtd_NLP::finalize_solution(
         }
     }
     offset += (NUM_FACTORS - 1) * NUM_TIME_STEPS * obstacles->num_obstacles;
+
+    // NOTE: need to add force constraints here and adjust the indices offsets after this
 
     // state limit constraints
     //     minimum joint position
