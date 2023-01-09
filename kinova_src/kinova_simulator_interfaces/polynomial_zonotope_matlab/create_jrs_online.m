@@ -54,8 +54,12 @@ if ~exist('LLC_info', 'var')
     ultimate_bound = 0.0191;
     k_r = 10; % assuming K_r = k_r*eye(n_q)
 else
-    ultimate_bound = LLC_info.ultimate_bound;
-    k_r = LLC_info.Kr;
+	if add_ultimate_bound
+	    ultimate_bound = LLC_info.ultimate_bound;
+	    k_r = LLC_info.Kr;
+    else
+        k_r = 0;
+	end
 end
 
 bernstein_final_range = pi/36*ones(n_q, 1);
