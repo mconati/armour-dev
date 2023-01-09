@@ -1,0 +1,246 @@
+#include "Dynamics.h"
+#include "BufferPath.h"
+
+const std::string inputfilename = pathname + "armour.in";
+const std::string outputfilename1 = pathname + "armour.out";
+const std::string outputfilename2 = pathname + "armour_joint_position_center.out";
+const std::string outputfilename3 = pathname + "armour_joint_position_radius.out";
+const std::string outputfilename4 = pathname + "armour_control_input_radius.out";
+const std::string outputfilename5 = pathname + "armour_constraints.out";
+
+int main() {
+/*
+Section I:
+    Parse input
+    There is no check and warning, so be careful!
+*/
+    // Here is an example of required input
+    // TYPE q0[NUM_FACTORS] = {0.6543, -0.0876, -0.4837, -1.2278, -1.5735, -1.0720, 0};
+    // TYPE qd0[NUM_FACTORS] = {0, 0, 0, 0, 0, 0, 0};
+    // TYPE qdd0[NUM_FACTORS] = {0, 0, 0, 0, 0, 0, 0};
+    // TYPE q_des[NUM_FACTORS] = {0.6831, 0.009488, -0.2471, -0.9777, -1.414, -0.9958, 0};
+
+    // const int num_obstacles = 10;
+    // const TYPE obstacles[num_obstacles * (MAX_OBSTACLE_GENERATOR_NUM + 1) * 3] = {-0.28239,  -0.33281, 0.88069, 0.069825, 0, 0, 0,  0.09508, 0, 0, 0, 0.016624,
+    //                                                                             -0.19033,  0.035391,  1.3032,  0.11024, 0, 0, 0, 0.025188, 0, 0, 0, 0.014342,
+    //                                                                             0.67593, -0.085841, 0.43572,  0.17408, 0, 0, 0,  0.07951, 0, 0, 0,  0.18012,
+    //                                                                             0.75382,   0.51895,  0.4731, 0.030969, 0, 0, 0,  0.22312, 0, 0, 0,  0.22981,
+    //                                                                             0.75382,   0.51895,  0.4731, 0.030969, 0, 0, 0,  0.22312, 0, 0, 0,  0.22981,
+    //                                                                             -0.28239,  -0.33281, 0.88069, 0.069825, 0, 0, 0,  0.09508, 0, 0, 0, 0.016624,
+    //                                                                             -0.19033,  0.035391,  1.3032,  0.11024, 0, 0, 0, 0.025188, 0, 0, 0, 0.014342,
+    //                                                                             0.67593, -0.085841, 0.43572,  0.17408, 0, 0, 0,  0.07951, 0, 0, 0,  0.18012,
+    //                                                                             0.75382,   0.51895,  0.4731, 0.030969, 0, 0, 0,  0.22312, 0, 0, 0,  0.22981,
+    //                                                                             0.75382,   0.51895,  0.4731, 0.030969, 0, 0, 0,  0.22312, 0, 0, 0,  0.22981};
+
+    // declare this first and make sure we always have a new output
+    std::ofstream outputstream1(outputfilename1);
+
+    TYPE q0[NUM_FACTORS] = {0.0};
+    TYPE qd0[NUM_FACTORS] = {0.0};
+    TYPE qdd0[NUM_FACTORS] = {0.0};
+    TYPE q_des[NUM_FACTORS] = {0.0};
+
+    int num_obstacles = 0;
+    TYPE obstacles[MAX_OBSTACLE_NUM * (MAX_OBSTACLE_GENERATOR_NUM + 1) * 3] = {0.0};
+
+    std::ifstream inputstream(inputfilename);
+    if (!inputstream.is_open()) {
+        WARNING_PRINT("        CUDA & C++: Error reading input files !\n");
+        outputstream1 << -1;
+        outputstream1.close();
+        throw;
+    }
+    for (int i = 0; i < NUM_FACTORS; i++) {
+        inputstream >> q0[i];
+    }
+    for (int i = 0; i < NUM_FACTORS; i++) {
+        inputstream >> qd0[i];
+    }
+    for (int i = 0; i < NUM_FACTORS; i++) {
+        inputstream >> qdd0[i];
+    }
+    for (int i = 0; i < NUM_FACTORS; i++) {
+        inputstream >> q_des[i];
+    }
+    inputstream >> num_obstacles;
+    if (num_obstacles > MAX_OBSTACLE_NUM || num_obstacles < 0) {
+        WARNING_PRINT("Number of obstacles larger than MAX_OBSTACLE_NUM !\n");
+        outputstream1 << -1;
+        outputstream1.close();
+        throw;
+    }
+    if (num_obstacles > 0) {
+        for (int i = 0; i < num_obstacles * (MAX_OBSTACLE_GENERATOR_NUM + 1) * 3; i++) {
+            inputstream >> obstacles[i];
+        }
+    }
+
+    inputstream.close();
+
+    TYPE t_plan = 1.0; // optimize the distance between q_des and the desired trajectories at t_plan
+     
+/*
+Section II:
+    Initialize all polynomial zonotopes, including forward kinematics and torques
+*/
+    PZsparse p[NUM_TIME_STEPS * NUM_FACTORS * 3];
+    PZsparse mass_arr[NUM_JOINTS];
+    matPZsparse I_nominal_arr[NUM_JOINTS];
+    matPZsparse I_uncertain_arr[NUM_JOINTS];
+    PZsparse u_nom[NUM_TIME_STEPS * NUM_FACTORS];
+    PZsparse u_nom_int[NUM_TIME_STEPS * NUM_FACTORS];
+    PZsparse r[NUM_FACTORS];
+    PZsparse Mr[NUM_TIME_STEPS * NUM_FACTORS];
+    // PZsparse V[NUM_TIME_STEPS];
+    TYPE jointPositionRadius[NUM_TIME_STEPS * NUM_FACTORS * 3] = {0.0};
+    
+    for (int i = 0; i < NUM_JOINTS; i++) {
+        mass_arr[i] = PZsparse(mass[i], mass_uncertainty);
+        I_nominal_arr[i] = matPZsparse(inertia + i * 9);
+        I_uncertain_arr[i] = matPZsparse(inertia + i * 9, inertia_uncertainty);
+
+        if (i < NUM_FACTORS) {
+            r[i] = PZsparse(Interval(-eps, eps));
+        }
+    }
+
+    // do not count time for memory allocation
+    auto start1 = std::chrono::high_resolution_clock::now();
+
+    BezierCurve traj(q0, qd0, qdd0);
+
+    omp_set_num_threads(NUM_THREADS);
+
+    int openmp_t_ind; // loop index
+
+    #pragma omp parallel for shared(traj, mass, mass_arr, I_nominal_arr, I_uncertain_arr, r) private(openmp_t_ind) schedule(static, NUM_TIME_STEPS / NUM_THREADS)
+    for(openmp_t_ind = 0; openmp_t_ind < NUM_TIME_STEPS; openmp_t_ind++) {
+        // Part 1: convert parameterized Bezier curve desired trajectory to PZsparse
+        traj.makePolyZono(openmp_t_ind);
+
+        // Part 2: compute forward kinematics reachable sets
+        KinematicsDynamics kd(traj.cos_q_des + openmp_t_ind * NUM_FACTORS, traj.sin_q_des + openmp_t_ind * NUM_FACTORS);
+
+        kd.fk(p + openmp_t_ind * NUM_FACTORS * 3);
+
+        for (int i = 0; i < NUM_FACTORS; i++) {
+            p[(openmp_t_ind * NUM_FACTORS + i) * 3    ].reduce();
+            p[(openmp_t_ind * NUM_FACTORS + i) * 3 + 1].reduce();
+            p[(openmp_t_ind * NUM_FACTORS + i) * 3 + 2].reduce();
+
+            jointPositionRadius[(openmp_t_ind * NUM_FACTORS + i) * 3    ] = getRadius(p[(openmp_t_ind * NUM_FACTORS + i) * 3    ].independent);
+            jointPositionRadius[(openmp_t_ind * NUM_FACTORS + i) * 3 + 1] = getRadius(p[(openmp_t_ind * NUM_FACTORS + i) * 3 + 1].independent);
+            jointPositionRadius[(openmp_t_ind * NUM_FACTORS + i) * 3 + 2] = getRadius(p[(openmp_t_ind * NUM_FACTORS + i) * 3 + 2].independent);
+        }
+
+        // Part 3: compute the nominal control input with nominal parameters
+        kd.rnea(traj.qd_des + openmp_t_ind * NUM_FACTORS,
+                traj.qda_des + openmp_t_ind * NUM_FACTORS,
+                traj.qdda_des + openmp_t_ind * NUM_FACTORS,
+                nullptr, // nominal mass already defined as constant array
+                I_nominal_arr,
+                u_nom + openmp_t_ind * NUM_FACTORS,
+                true);
+
+        // Part 4: compute the nominal control input with interval parameters
+        kd.rnea(traj.qd_des + openmp_t_ind * NUM_FACTORS,
+                traj.qda_des + openmp_t_ind * NUM_FACTORS,
+                traj.qdda_des + openmp_t_ind * NUM_FACTORS,
+                mass_arr,
+                I_uncertain_arr,
+                u_nom_int + openmp_t_ind * NUM_FACTORS,
+                true);
+
+        // // Part 5: compute the Lyapunov function bound
+        // // Part 5.a: compute M*r
+        // kd.rnea(nullptr, // nullptr means zero vector
+        //         nullptr, // nullptr means zero vector
+        //         r,
+        //         mass_arr,
+        //         I_uncertain_arr,
+        //         Mr + openmp_t_ind * NUM_FACTORS);
+        //         // do not apply gravity here!
+            
+        // // Part 5.b: compute V = r^T * (M*r)
+        // for (int i = 0; i < NUM_FACTORS; i++) {
+        //     V[openmp_t_ind] += r[i] * Mr[openmp_t_ind * NUM_FACTORS + i];
+        // }
+
+        // // Part 5.c: compute V_diff = V - V
+        // V[openmp_t_ind] = V[openmp_t_ind] - V[openmp_t_ind];
+
+        // Part 6: compute rho_max
+        for (int i = 0; i < NUM_FACTORS; i++) {
+            // Part 6.a: compute disturbance
+            u_nom_int[openmp_t_ind * NUM_FACTORS + i] = u_nom_int[openmp_t_ind * NUM_FACTORS + i] - u_nom[openmp_t_ind * NUM_FACTORS + i];
+        }
+
+        // Part 9: reduce non-only-k-dependent generators so that slice takes less time
+        for (int i = 0; i < NUM_FACTORS; i++) {
+            u_nom[openmp_t_ind * NUM_FACTORS + i].reduce();
+        }
+    }
+
+    TYPE rho_max[NUM_TIME_STEPS] = {0.0};
+    TYPE v_norm[NUM_TIME_STEPS * NUM_FACTORS] = {0.0};
+   
+    for(int t_ind = 0; t_ind < NUM_TIME_STEPS; t_ind++) {
+        // // Part 5.c: compute V_diff = V - V
+        // Interval V_diff_int = V[t_ind].toInterval();
+
+        // // Part 6: compute rho_max
+        // // Part 7: compute robust input bound
+        // // ||v|| = alpha * ||V_diff|| / eps + 0.5 * R_i + ||R||
+        Interval rho_max_temp = Interval(0.0);
+        for (int i = 0; i < NUM_FACTORS; i++) {
+            // Part 6.b: compute norm of disturbance
+            Interval temp = u_nom_int[t_ind * NUM_FACTORS + i].toInterval();
+            rho_max_temp += temp * temp;
+
+            v_norm[t_ind * NUM_FACTORS + i] = alpha * (M_max - M_min) * eps + 0.5 * max(abs(temp.lower()), abs(temp.upper()));
+        }
+        rho_max_temp = sqrt(rho_max_temp);
+        
+        for (int i = 0; i < NUM_FACTORS; i++) {
+            v_norm[t_ind * NUM_FACTORS + i] = v_norm[t_ind * NUM_FACTORS + i] + 0.5 * rho_max_temp.upper();
+        }
+
+        // Part 8: add the radius of the nominal input PZ, 
+        //         so v_norm would be the radius of the total control input PZ from now
+        for (int i = 0; i < NUM_FACTORS; i++) {
+            v_norm[t_ind * NUM_FACTORS + i] = v_norm[t_ind * NUM_FACTORS + i] + getRadius(u_nom[t_ind * NUM_FACTORS + i].independent);
+        }
+    }
+
+    auto stop1 = std::chrono::high_resolution_clock::now();
+    auto duration1 = std::chrono::duration_cast<std::chrono::milliseconds>(stop1 - start1);
+    cout << "        CUDA & C++: Time taken by generating trajectory & rnea: " << duration1.count() << " milliseconds" << endl;
+
+    Interval try1 = p[(NUM_TIME_STEPS * NUM_FACTORS - 1) * 3 + 0].toInterval();
+    Interval try2 = p[(NUM_TIME_STEPS * NUM_FACTORS - 1) * 3 + 1].toInterval();
+    Interval try3 = p[(NUM_TIME_STEPS * NUM_FACTORS - 1) * 3 + 2].toInterval();
+
+    cout << getRadius(try1) << endl;
+    cout << getRadius(try2) << endl;
+    cout << getRadius(try3) << endl;
+
+/*
+Section IV:
+    Prepare output
+*/
+    // set precision to 10 decimal digits
+    // outputstream1 << std::setprecision(10);
+
+    // // output FRS and other information, you can comment them if they are unnecessary
+    // std::ofstream outputstream2(outputfilename2);
+    // outputstream2 << std::setprecision(10);
+    // for (int i = 0; i < NUM_TIME_STEPS * NUM_FACTORS; i++) {
+    //     for (int j = 0; j < 3; j++) {
+    //         outputstream2 << mynlp->checkJointsPosition[i * 3 + j] << ' ';
+    //     }
+    //     outputstream2 << '\n';
+    // }
+    // outputstream2.close();
+
+    return 0;
+}
