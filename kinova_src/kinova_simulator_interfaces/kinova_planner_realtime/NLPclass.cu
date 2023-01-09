@@ -623,6 +623,12 @@ void armtd_NLP::finalize_solution(
         }
     }    
 
+    // NOTE: need to add force constraints here and adjust the indices offsets after this
+
+    for( Index i = 0; i < NUM_TIME_STEPS*3; i++) {
+        
+    }
+
     // collision avoidance constraints
     Index offset = NUM_FACTORS * NUM_TIME_STEPS;
     for( Index i = 0; i < NUM_FACTORS - 1; i++ ) {
@@ -639,7 +645,7 @@ void armtd_NLP::finalize_solution(
     }
     offset += (NUM_FACTORS - 1) * NUM_TIME_STEPS * obstacles->num_obstacles;
 
-    // NOTE: need to add force constraints here and adjust the indices offsets after this
+    
 
     // state limit constraints
     //     minimum joint position
