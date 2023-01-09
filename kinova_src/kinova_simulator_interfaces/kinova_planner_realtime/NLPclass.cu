@@ -297,8 +297,8 @@ bool armtd_NLP::eval_g(
     }
 
     Index i;
-    #pragma omp parallel for private(i) schedule(static, (NUM_TIME_STEPS * NUM_FACTORS + NUM_TIME_STEPS*3) / NUM_THREADS)
-    for(i = 0; i < (NUM_TIME_STEPS * NUM_FACTORS + NUM_TIME_STEPS*3); i++) {
+    #pragma omp parallel for private(i) schedule(static, (NUM_TIME_STEPS * NUM_FACTORS + NUM_TIME_STEPS) / NUM_THREADS)
+    for(i = 0; i < (NUM_TIME_STEPS * NUM_FACTORS + NUM_TIME_STEPS); i++) {  // took out the times 3 here since I am calculating all three contact constraints at the same time, but they still fill up all the same space
         
         if(i < (NUM_TIME_STEPS * NUM_FACTORS)) {
             // Part 1. slice the control input PZ to get the center of the input bound, 
@@ -313,6 +313,7 @@ bool armtd_NLP::eval_g(
         } 
         else {
             // Part 3. force constraints on contact joint between tray and object
+            // note: could change the next couple of lines to not slice multiple times
 
             //     force
             // get centers and their squares
@@ -521,8 +522,8 @@ bool armtd_NLP::eval_jac_g(
     }
     else {
         Index i;
-        #pragma omp parallel for private(i) schedule(static, (NUM_TIME_STEPS * NUM_FACTORS + NUM_TIME_STEPS*3)/ NUM_THREADS)
-        for(i = 0; i < (NUM_TIME_STEPS * NUM_FACTORS + NUM_TIME_STEPS*3); i++) {
+        #pragma omp parallel for private(i) schedule(static, (NUM_TIME_STEPS * NUM_FACTORS + NUM_TIME_STEPS)/ NUM_THREADS)
+        for(i = 0; i < (NUM_TIME_STEPS * NUM_FACTORS + NUM_TIME_STEPS); i++) { // not *3 for the contact constraints since they're being done at the same time.
 
             if (i < NUM_TIME_STEPS * NUM_FACTORS) {
             // Part 1. slice the control input PZ to get the center of the input bound, 
@@ -540,6 +541,22 @@ bool armtd_NLP::eval_jac_g(
             }
             else {
                 // Part 3. Force constraints
+                // how to properly index this part?
+
+                // .slice(##, x) fills the pointer ## with the gradient, so for one instance it fills up by NUM_FACTORS
+
+
+                // separation constraint
+                // .slice(values + i*NUM_FACTORS, x)
+                // should be able to use .slice(##, x) here
+                f_c[i].elt[2].slice(values + i*NUM_FACTORS, x)
+
+                // slipping constraint
+                // .slice(values + (NUM_FACTORS*NUM_TIME_STEPS + NUM_TIME_STEPS)*NUM_FACTORS, x)
+                values[(i+NUM_TIME_STEPS)*NUM_FACTORS]
+
+                //tipping constraint
+                // .slice(, x)
 
             }
             
@@ -547,11 +564,11 @@ bool armtd_NLP::eval_jac_g(
         }
 
         // Part 4. check collision between joint position reachable set and obstacles (in gpu)
-        obstacles->linkFRSConstraints(checkJointsPosition, dk_checkJointsPosition, nullptr, values + NUM_TIME_STEPS * NUM_FACTORS * NUM_FACTORS);
+        obstacles->linkFRSConstraints(checkJointsPosition, dk_checkJointsPosition, nullptr, values + NUM_TIME_STEPS * NUM_FACTORS * NUM_FACTORS); // needs to be updated
 
         // Part 5. (position & velocity) state limit constraints
-        desired_trajectory->returnJointPositionExtremumGradient(values + (NUM_TIME_STEPS * NUM_FACTORS + (NUM_FACTORS - 1) * NUM_TIME_STEPS * obstacles->num_obstacles) * NUM_FACTORS, x);
-        desired_trajectory->returnJointVelocityExtremumGradient(values + (NUM_TIME_STEPS * NUM_FACTORS + (NUM_FACTORS - 1) * NUM_TIME_STEPS * obstacles->num_obstacles + NUM_FACTORS * 2) * NUM_FACTORS, x);
+        desired_trajectory->returnJointPositionExtremumGradient(values + (NUM_TIME_STEPS * NUM_FACTORS + (NUM_FACTORS - 1) * NUM_TIME_STEPS * obstacles->num_obstacles) * NUM_FACTORS, x); // needs to be updated
+        desired_trajectory->returnJointVelocityExtremumGradient(values + (NUM_TIME_STEPS * NUM_FACTORS + (NUM_FACTORS - 1) * NUM_TIME_STEPS * obstacles->num_obstacles + NUM_FACTORS * 2) * NUM_FACTORS, x); // needs to be updated
     }
 
     return true;
