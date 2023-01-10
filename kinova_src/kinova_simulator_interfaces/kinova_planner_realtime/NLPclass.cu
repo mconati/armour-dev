@@ -624,13 +624,25 @@ void armtd_NLP::finalize_solution(
     }    
 
     // NOTE: need to add force constraints here and adjust the indices offsets after this
+    Index offset = NUM_FACTORS * NUM_TIME_STEPS;
+    for( Index i = offset; i < NUM_TIME_STEPS*3; i++) {
+        // separation constraint
+        if(g_copy[i] > SEPARATION_CONSTRAINT_VIOLATION_THRESHOLD) {
 
-    for( Index i = 0; i < NUM_TIME_STEPS*3; i++) {
-        
+        }
+        // slipping constraint
+        if(g_copy[i+NUM_TIME_STEPS] > SLIPPING_CONSTRAINT_VIOLATION_THRESHOLD){
+
+        }
+        // tipping constraint
+        if(g_copy[i+2*NUM_TIME_STEPS] > TIPPING_CONSTRAINT_VIOLATION_THRESHOLD){
+
+        }
     }
+    offset +=  NUM_TIME_STEPS*3;
 
     // collision avoidance constraints
-    Index offset = NUM_FACTORS * NUM_TIME_STEPS;
+    // Index offset = NUM_FACTORS * NUM_TIME_STEPS + NUM_TIME_STEPS*3;
     for( Index i = 0; i < NUM_FACTORS - 1; i++ ) {
         for( Index j = 0; j < NUM_TIME_STEPS; j++ ) {
             for( Index h = 0; h < obstacles->num_obstacles; h++ ) {
