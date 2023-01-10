@@ -553,11 +553,29 @@ bool armtd_NLP::eval_jac_g(
 
                 // slipping constraint
                 // .slice(values + (NUM_FACTORS*NUM_TIME_STEPS + NUM_TIME_STEPS)*NUM_FACTORS, x)
-                values[(i+NUM_TIME_STEPS)*NUM_FACTORS]
+                values[(i+NUM_TIME_STEPS)*NUM_FACTORS] = ;
+                // create function for return partial of a passed in index? function(g[i])
+                for (int j=0; j<NUM_FACTORS; j++) {
+                    for (int k=0; k<NUM_FACTORS; k++) {
+                        if (j==k) {
+                            if (degreeArray[j]==0) {
+
+                            }
+                            else {
+                                
+                            }
+                        }
+                        else {
+
+                        }
+                    }
+                }
 
                 //tipping constraint
                 // .slice(, x)
-
+                values[(i+2*NUM_TIME_STEPS)*NUM_FACTORS] = ; // need to fill in all the factors here
+                
+                
             }
             
 
@@ -574,6 +592,24 @@ bool armtd_NLP::eval_jac_g(
     return true;
 }
 // [TNLP_eval_jac_g]
+
+
+void Number::contactConstraintPartial(TYPE* gradient, const Number contactEquation) {
+    // inputs: 
+    //    pointer to storage location?
+    //    constraint to take derivative of? (slip, tip? then have if statement for each)
+    //    pointer to f_c and n_c?
+
+    if ( contactEquation == 1 ) {
+        // take gradient of slip constraint equation wrt trajectory parameters
+        
+    }
+    else if ( contactEquation == 2 ) {
+
+    }
+
+
+}
 
 
 // [TNLP_eval_h]
@@ -643,7 +679,7 @@ void armtd_NLP::finalize_solution(
     // NOTE: need to add force constraints here and adjust the indices offsets after this
 
     for( Index i = 0; i < NUM_TIME_STEPS*3; i++) {
-        
+
     }
 
     // collision avoidance constraints
