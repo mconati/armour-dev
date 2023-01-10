@@ -162,8 +162,8 @@ Section II:
                 mass_arr,
                 I_uncertain_arr,
                 u_nom_int + openmp_t_ind * NUM_FACTORS,
-                f_c_int + openmp_t_ind, // ? not sure if the + openmp_t_ind is needed?
-                n_c_int + openmp_t_ind, // ? not sure if the + openmp_t_ind is needed?
+                f_c_int + openmp_t_ind, // ? Bohao question: not sure if the + openmp_t_ind is needed?
+                n_c_int + openmp_t_ind, // ? Bohao question: not sure if the + openmp_t_ind is needed?  // don't need  * NUM_FACTORS since not storing for each joint
                 true);
 
         // // Part 5: compute the Lyapunov function bound
@@ -196,7 +196,7 @@ Section II:
         }
 
         // force constraints
-        // added f_c_int and n_c_int above, these now need to be passed into the optimization call
+        // Bohao question: need to reduce these?
 
     }
 

@@ -121,6 +121,35 @@ bool armtd_NLP::get_bounds_info(
     }    
     Index offset = NUM_FACTORS * NUM_TIME_STEPS;
 
+    // force constraints on contact joint between tray and cup
+    // need to add the radius of the constraints here (like how is done with the torque constraints, v_norm passes out the radius I think)
+    // double check signs and how the torque constraints are buffered using the radius
+    // for v_norm in armour_main.cpp : getRadius(u_nom[t_ind * NUM_FACTORS + i].independent)
+
+    //     separation constraint
+    // upper bound should be zero and lower bound should be -inf
+    for( Index i = offset; i < offset + NUM_TIME_STEPS; i++){
+        g_l[i] = -1e19;
+        g_u[i] = 0;
+    }
+    offset += NUM_TIME_STEPS;
+
+    //     slipping constraint
+    // upper bound should be zero and lower bound should be -inf for the reformulated constraint (not the normal friction law?)
+    for( Index i = offset; i < offset + NUM_TIME_STEPS; i++){
+        g_l[i] = -1e19;
+        g_u[i] = 0;
+    }
+    offset += NUM_TIME_STEPS;
+
+    //     tipping constraint
+    // upper bound should be zero and lower bound should be -inf for the reformulated constraint
+    for( Index i = offset; i < offset + NUM_TIME_STEPS; i++){
+        g_l[i] = -1e19;
+        g_u[i] = 0;
+    }
+    offset += NUM_TIME_STEPS;
+
     // collision avoidance constraints
     for( Index i = offset; i < offset + (NUM_FACTORS - 1) * NUM_TIME_STEPS * obstacles->num_obstacles; i++ ) {
         g_l[i] = -1e19;
@@ -156,38 +185,6 @@ bool armtd_NLP::get_bounds_info(
         g_u[i] = speed_limits[i - offset] - qde;
     }
     offset += NUM_FACTORS;
-
-
-
-    // force constraints on contact joint between tray and cup
-    // need to add the radius of the constraints here (like how is done with the torque constraints, v_norm passes out the radius I think)
-    // double check signs and how the torque constraints are buffered using the radius
-    // for v_norm in armour_main.cpp : getRadius(u_nom[t_ind * NUM_FACTORS + i].independent)
-
-
-    //     separation constraint
-    // upper bound should be zero and lower bound should be -inf
-    for( Index i = offset; i < offset + NUM_TIME_STEPS; i++){
-        g_l[i] = -1e19;
-        g_u[i] = 0;
-    }
-    offset += NUM_TIME_STEPS;
-
-    //     slipping constraint
-    // upper bound should be zero and lower bound should be -inf for the reformulated constraint (not the normal friction law?)
-    for( Index i = offset; i < offset + NUM_TIME_STEPS; i++){
-        g_l[i] = -1e19;
-        g_u[i] = 0;
-    }
-    offset += NUM_TIME_STEPS;
-
-    //     tipping constraint
-    // upper bound should be zero and lower bound should be -inf for the reformulated constraint
-    for( Index i = offset; i < offset + NUM_TIME_STEPS; i++){
-        g_l[i] = -1e19;
-        g_u[i] = 0;
-    }
-    offset += NUM_TIME_STEPS;
 
     return true;
 }
@@ -347,13 +344,11 @@ bool armtd_NLP::eval_g(
             TYPE n_c_z_radius = getRadius(n_c[i].elt[2].slice(x).independent)
             TYPE n_c_z_radius_2 = n_c_z_radius * n_c_z_radius;
 
-
             //     separation constraint: -inf < -1*f_c_z < 0
             // storing separation constraint value, not sure what index to use here?
             // question: not sure what to do with the radius here?
             // g[i] = -1*getCenter(f_c_z);
             g[i] = -1*f_c_z_center;
-
 
             //     slipping constraint: -inf < f_c_x*f_c_x + f_c_y*f_c_y - u_s^2*f_c_z*f_c_z < 0
             // need to write this constraint differently than matlab implementation as we need to 
@@ -397,7 +392,6 @@ bool armtd_NLP::eval_g(
             else if ( (f_c_x_center <= 0) && (f_c_y_center <= 0) && (f_c_z_center <= 0) ) {
                 g[i+NUM_TIME_STEPS] = f_c_x_center_2 - 2*f_c_x_radius*f_c_x_center + f_c_x_radius_2 + f_c_y_center_2 - 2*f_c_y_radius*f_c_y_center + f_c_y_radius_2 - u_s*u_s * ( f_c_z_center_2 + 2*f_c_z_radius*f_c_z_center - f_c_z_radius_2); // checked signs
             }
-
 
             //     tipping constraint: ZMP_top_x*ZMP_top_x + ZMP_top_y*ZMP_top_y - surf_rad*ZMP_bottom*ZMP_bottom < 0
 
@@ -468,15 +462,6 @@ bool armtd_NLP::eval_g(
         }
         
     }
-
-    // Bohao says to put contact constraints into the same loop
-    //  adjust the index length (+NUM_TIME_STEPS*3)
-    //  separate joint position constraint and force constraints by using if/else statement to check index?
-    //    if i < NUM_TIME_STEPS * NUM_FACTORS (0 -> NUM_TIME_STEPS*NUM_FACTORS)
-    //      joint_position constraint
-    //    else
-    //      contact constraints (NUM_TIME_STEPS*NUM_FACTORS -> (NUM_TIME_STEPS*NUM_FACTORS+NUM_TIME_STEPS*3))
-    //  adjust the indices of the following constraints
 
     // Part 4. check collision between joint position reachable set and obstacles (in gpu)
     obstacles->linkFRSConstraints(checkJointsPosition, nullptr, g + (NUM_TIME_STEPS * NUM_FACTORS + NUM_TIME_STEPS*3), nullptr);
@@ -594,22 +579,22 @@ bool armtd_NLP::eval_jac_g(
 // [TNLP_eval_jac_g]
 
 
-void Number::contactConstraintPartial(TYPE* gradient, const Number contactEquation) {
-    // inputs: 
-    //    pointer to storage location?
-    //    constraint to take derivative of? (slip, tip? then have if statement for each)
-    //    pointer to f_c and n_c?
+// void Number::contactConstraintPartial(TYPE* gradient, const Number contactEquation) {
+//     // inputs: 
+//     //    pointer to storage location?
+//     //    constraint to take derivative of? (slip, tip? then have if statement for each)
+//     //    pointer to f_c and n_c?
 
-    if ( contactEquation == 1 ) {
-        // take gradient of slip constraint equation wrt trajectory parameters
+//     if ( contactEquation == 1 ) {
+//         // take gradient of slip constraint equation wrt trajectory parameters
         
-    }
-    else if ( contactEquation == 2 ) {
+//     }
+//     else if ( contactEquation == 2 ) {
 
-    }
+//     }
 
 
-}
+// }
 
 
 // [TNLP_eval_h]
@@ -678,18 +663,24 @@ void armtd_NLP::finalize_solution(
 
     // NOTE: need to add force constraints here and adjust the indices offsets after this
     Index offset = NUM_FACTORS * NUM_TIME_STEPS;
-    for( Index i = offset; i < NUM_TIME_STEPS*3; i++) {
+    for( Index i = offset; i < NUM_TIME_STEPS; i++) {
         // separation constraint
         if(g_copy[i] > SEPARATION_CONSTRAINT_VIOLATION_THRESHOLD) {
-
+            feasible = false;
+            double t_violation = i - offset;
+            cout << "        CUDA & C++: Ipopt: Separation constraint violated at time interval: " << t_violation << " \n";
         }
         // slipping constraint
         if(g_copy[i+NUM_TIME_STEPS] > SLIPPING_CONSTRAINT_VIOLATION_THRESHOLD){
-
+            feasible = false;
+            double t_violation = i - offset;
+            cout << "        CUDA & C++: Ipopt: Slipping constraint violated at time interval: " << t_violation << " \n";
         }
         // tipping constraint
         if(g_copy[i+2*NUM_TIME_STEPS] > TIPPING_CONSTRAINT_VIOLATION_THRESHOLD){
-
+            feasible = false;
+            double t_violation = i - offset;
+            cout << "        CUDA & C++: Ipopt: Tipping constraint violated at time interval: " << t_violation << " \n";
         }
     }
     offset +=  NUM_TIME_STEPS*3;
