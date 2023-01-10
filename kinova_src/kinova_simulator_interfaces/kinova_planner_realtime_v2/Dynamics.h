@@ -5,27 +5,43 @@
 
 class KinematicsDynamics {
 public:
-	// orientation of frame i with respect to frame i-1
-	matPZsparse R[NUM_JOINTS + 1];
+	const BezierCurve* traj = nullptr;
 
-	// orientation of frame i-1 with respect to frame i
-    matPZsparse R_t[NUM_JOINTS];
+	// inertial paramete PZs
+	// mass_nominal already stored as double array mass in RobotInfo.h
+    PZsparseArray mass_arr;
+    PZsparseArray I_nominal_arr;
+    PZsparseArray I_uncertain_arr;
 
-	KinematicsDynamics() {};
+	// link PZs
+	PZsparseArray links;
 
-	KinematicsDynamics(PZsparse* cosElt_arr, PZsparse* sinElt_arr);
+	// nominal torque PZs
+    PZsparseArray u_nom;
+    PZsparseArray u_nom_int;
 
-	~KinematicsDynamics() {};
+	// other PZs
+    PZsparseArray r;
+    PZsparseArray Mr;
+    // PZsparseArray V;
 
-	void fk(PZsparse* p);
+	KinematicsDynamics() {}
 
-	void rnea(PZsparse* v_arr,
-			  PZsparse* v_aux_arr,
-			  PZsparse* a_arr,
-			  PZsparse* mass_arr,
-			  matPZsparse* I_arr,
-			  PZsparse* u,
-			  bool setGravity = false);
+	KinematicsDynamics(const BezierCurve* traj_input);
+
+	// generate link PZs through forward kinematics
+	void fk();
+
+	// generate nominal torque PZs through rnea
+	// void rnea(PZsparseArray* R,
+	// 		  PZsparseArray* R_t,
+	// 		  PZsparseArray* v_arr,
+	// 		  PZsparseArray* v_aux_arr,
+	// 		  PZsparseArray* a_arr,
+	// 		  PZsparseArray* mass_arr,
+	// 		  PZsparseArray* I_arr,
+	// 		  PZsparseArray* u,
+	// 		  bool setGravity = true);
 };
 
 #endif

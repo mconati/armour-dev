@@ -7,6 +7,8 @@
 #define QDD_DES_K_DEP_MAXIMA (0.5 - sqrt(3) / 6)
 #define QDD_DES_K_DEP_MINIMA (0.5 + sqrt(3) / 6)
 
+typedef Eigen::Array<PZsparse, Eigen::Dynamic, Eigen::Dynamic> PZsparseArray;
+
 // 5th order Bezier curve
 // The initial position/velocity/acceleration is equal to q0/qd0/qdd0
 // The end position is equal to q0 + k
@@ -55,18 +57,18 @@ public:
     // PZsparse cos_q_des[NUM_TIME_STEPS * NUM_FACTORS];
     // PZsparse sin_q_des[NUM_TIME_STEPS * NUM_FACTORS];
 
-    // rotation matrix (and its transpose) of each joint
-    PZsparse R[NUM_TIME_STEPS * NUM_FACTORS];
-    PZsparse R_t[NUM_TIME_STEPS * NUM_FACTORS];
+    // // rotation matrix (and its transpose) of each joint
+    PZsparseArray R;
+    PZsparseArray R_t;
 
     // joint velocity
-    PZsparse qd_des[NUM_TIME_STEPS * NUM_FACTORS];
+    PZsparseArray qd_des;
 
     // auxiliary joint velocity
-    PZsparse qda_des[NUM_TIME_STEPS * NUM_FACTORS];
+    PZsparseArray qda_des;
 
     // joint acceleration
-    PZsparse qdda_des[NUM_TIME_STEPS * NUM_FACTORS];
+    PZsparseArray qdda_des;
 
     BezierCurve() {};
 

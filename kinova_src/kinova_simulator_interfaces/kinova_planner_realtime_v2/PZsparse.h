@@ -87,7 +87,9 @@ public:
 
     PZsparse(const Eigen::MatrixXd& center_inp);
 
-    PZsparse(double center_inp, double uncertainty_percent);
+    // PZsparse(double center_inp, double uncertainty_percent);
+
+    PZsparse(const Eigen::MatrixXd& center_inp, double uncertainty_percent);
 
     // PZsparse(Interval interval_inp);
 

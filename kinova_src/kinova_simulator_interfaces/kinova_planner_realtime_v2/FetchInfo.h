@@ -29,7 +29,7 @@ const double trans[(NUM_JOINTS + 1) * 3] = { -0.0326, 0, 0.726,
 												
 // joint position rotation element w.r.t previous joint frame, same as rpy in urdf
 // Fetch does not have a nontrivial rotation element for all joints!
-const double rots[1] = { 0 };
+const double rots[NUM_JOINTS * 3] = { 0 };
 
 // link mass
 const double mass[NUM_JOINTS] = { 2.5587, 2.6615, 2.3311, 2.1299, 1.6563, 1.725, 0.1354, 1.5175, 2.26796 };

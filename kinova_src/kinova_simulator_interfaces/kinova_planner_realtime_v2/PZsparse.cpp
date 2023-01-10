@@ -56,13 +56,21 @@ PZsparse::PZsparse(const Eigen::MatrixXd& center_inp) {
 }
 
 // 1x1 PZ
-PZsparse::PZsparse(double center_inp, double uncertainty_percent) {
-    NRows = 1;
-    NCols = 1;
-    center.resize(NRows, NCols);
-    center(0) = center_inp;
-    independent.resize(NRows, NCols);
-    independent(0) = uncertainty_percent * fabs(center_inp);
+// PZsparse::PZsparse(double center_inp, double uncertainty_percent) {
+//     NRows = 1;
+//     NCols = 1;
+//     center.resize(NRows, NCols);
+//     center(0) = center_inp;
+//     independent.resize(NRows, NCols);
+//     independent(0) = uncertainty_percent * fabs(center_inp);
+// }
+
+// NxM PZ
+PZsparse::PZsparse(const Eigen::MatrixXd& center_inp, double uncertainty_percent) {
+    NRows = center_inp.rows();
+    NCols = center_inp.cols();
+    center = center_inp;
+    independent = uncertainty_percent * center_inp.cwiseAbs();
 }
 
 // // 1x1 PZ
@@ -74,6 +82,15 @@ PZsparse::PZsparse(double center_inp, double uncertainty_percent) {
 //     independent.resize(NRows, NCols);
 //     independent(0) = getRadius(interval_inp);
 // }
+
+PZsparse::PZsparse(double center_inp, Interval independent_inp) {
+    NRows = 1;
+    NCols = 1;
+    center.resize(NRows, NCols);
+    center(0) = center_inp + getCenter(independent_inp);
+    independent.resize(NRows, NCols);
+    independent(0) = getRadius(independent_inp);
+}
 
 // 1x1 PZ
 PZsparse::PZsparse(double center_inp, double* coeff_inp, uint64_t degree_inp[][NUM_FACTORS * 6], uint num_monomials) {
@@ -147,18 +164,18 @@ PZsparse::PZsparse(double cos_center_inp, double* cos_coeff_inp, uint64_t cos_de
 
     Eigen::MatrixXd coeff_temp;
     for (uint i = 0; i < cos_num_monomials; i++) {
-        makeRotationMatrix(coeff_temp, cos_coeff_inp[i], 0, axis);
+        makeRotationMatrix(coeff_temp, cos_coeff_inp[i], 0, axis, true);
         polynomial.emplace_back(coeff_temp, convertDegreeToHash(cos_degree_inp[i]));
     }
 
     for (uint i = 0; i < sin_num_monomials; i++) {
-        makeRotationMatrix(coeff_temp, 0, sin_coeff_inp[i], axis);
+        makeRotationMatrix(coeff_temp, 0, sin_coeff_inp[i], axis, true);
         polynomial.emplace_back(coeff_temp, convertDegreeToHash(sin_degree_inp[i]));
     }
 
     // assume independent_inp is centered at 0
     // makeRotationMatrix(independent, getRadius(cos_independent_inp), getRadius(sin_independent_inp), axis);
-    independent = Eigen::MatrixXd::Zero(3,3);
+    independent = Eigen::MatrixXd::Zero(3, 3);
 
     simplify();
 }
@@ -210,19 +227,19 @@ void PZsparse::makeRotationMatrix(Eigen::MatrixXd& R, const double cosElt, const
 
 bool PZsparse::checkDimensions() {
     if (center.rows() != NRows) {
-        cout << "PZsparse warning: center matrix number of rows not consistent!" << endl;
+        WARNING_PRINT("PZsparse warning: center matrix number of rows not consistent!");
         return false;
     }
     if (center.cols() != NCols) {
-        cout << "PZsparse warning: center matrix number of columns not consistent!" << endl;
+        WARNING_PRINT("PZsparse warning: center matrix number of columns not consistent!");
         return false;
     }
     if (independent.rows() != NRows) {
-        cout << "PZsparse warning: independent generator matrix number of rows not consistent!" << endl;
+        WARNING_PRINT("PZsparse warning: independent generator matrix number of rows not consistent!");
         return false;
     }
     if (independent.cols() != NCols) {
-        cout << "PZsparse warning: independent generator matrix number of columns not consistent!" << endl;
+        WARNING_PRINT("PZsparse warning: independent generator matrix number of columns not consistent!");
         return false;
     }
     return true;
@@ -301,7 +318,7 @@ MatrixXInt PZsparse::slice(const double* factor) {
     for (auto it : polynomial) {
         Eigen::MatrixXd resTemp = it.coeff;
 
-        if (it.degree <= (1 << (2 * NUM_FACTORS))) { // only dependent on k
+        if (it.degree < (1 << (2 * NUM_FACTORS))) { // only dependent on k
             convertHashToDegree(it.degree);
 
             for (uint j = 0; j < NUM_FACTORS; j++) {
@@ -428,31 +445,31 @@ std::ostream& operator<<(std::ostream& os, PZsparse& a) {
 
         os << " * cosqe^(";
         for (uint j = 0; j < NUM_FACTORS; j++) {
-            os << a.degreeArray[j];
+            os << a.degreeArray[j + NUM_FACTORS * 1];
         }
         os << ") ";
 
         os << " * sinqe^(";
         for (uint j = 0; j < NUM_FACTORS; j++) {
-            os << a.degreeArray[j];
+            os << a.degreeArray[j + NUM_FACTORS * 2];
         }
         os << ") ";
 
         os << " * qde^(";
         for (uint j = 0; j < NUM_FACTORS; j++) {
-            os << a.degreeArray[j];
+            os << a.degreeArray[j + NUM_FACTORS * 3];
         }
         os << ") ";
 
         os << " * qdae^(";
         for (uint j = 0; j < NUM_FACTORS; j++) {
-            os << a.degreeArray[j];
+            os << a.degreeArray[j + NUM_FACTORS * 4];
         }
         os << ") ";
 
         os << " * qddae^(";
         for (uint j = 0; j < NUM_FACTORS; j++) {
-            os << a.degreeArray[j];
+            os << a.degreeArray[j + NUM_FACTORS * 5];
         }
         os << ") ";
 
@@ -647,8 +664,6 @@ PZsparse PZsparse::operator*(const PZsparse& a) {
 
     // center * center
     res.center = center * a.center;
-
-    cout << res.center << endl;
 
     res.polynomial.reserve(polynomial.size() + a.polynomial.size() + polynomial.size() * a.polynomial.size());
     // a.center * polynomial
