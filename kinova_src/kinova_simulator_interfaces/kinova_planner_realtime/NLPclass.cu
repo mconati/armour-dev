@@ -314,34 +314,34 @@ bool armtd_NLP::eval_g(
 
             //     force
             // get centers and their squares
-            Number f_c_x_center = getCenter(f_c[i].elt[0].slice(x));
-            Number f_c_x_center_2 = f_c_x_center * f_c_x_center;
-            Number f_c_y_center = getCenter(f_c[i].elt[1].slice(x));
-            Number f_c_y_center_2 = f_c_y_center * f_c_y_center;
-            Number f_c_z_center = getCenter(f_c[i].elt[2].slice(x));
-            Number f_c_z_center_2 = f_c_z_center * f_c_z_center;
+            TYPE f_c_x_center = getCenter(f_c[i].elt[0].slice(x));
+            TYPE f_c_x_center_2 = f_c_x_center * f_c_x_center;
+            TYPE f_c_y_center = getCenter(f_c[i].elt[1].slice(x));
+            TYPE f_c_y_center_2 = f_c_y_center * f_c_y_center;
+            TYPE f_c_z_center = getCenter(f_c[i].elt[2].slice(x));
+            TYPE f_c_z_center_2 = f_c_z_center * f_c_z_center;
             // get radii of independent generators and their squares
-            TYPE f_c_x_radius = getRadius(f_c[i].elt[0].slice(x).independent)
+            TYPE f_c_x_radius = getRadius(f_c[i].elt[0].slice(x));  // Bohao says after slicing, this object is an interval so don't need to have .independent for the getRadius()
             TYPE f_c_x_radius_2 = f_c_x_radius * f_c_x_radius;
-            TYPE f_c_y_radius = getRadius(f_c[i].elt[1].slice(x).independent)
+            TYPE f_c_y_radius = getRadius(f_c[i].elt[1].slice(x));
             TYPE f_c_y_radius_2 = f_c_y_radius * f_c_y_radius;
-            TYPE f_c_z_radius = getRadius(f_c[i].elt[2].slice(x).independent)
+            TYPE f_c_z_radius = getRadius(f_c[i].elt[2].slice(x));
             TYPE f_c_z_radius_2 = f_c_z_radius * f_c_z_radius;
 
             //     moment
             // get centers and their squares
-            Number n_c_x_center = getCenter(n_c[i].elt[0].slice(x));
-            Number n_c_x_center_2 = n_c_x_center * n_c_x_center;
-            Number n_c_y_center = getCenter(n_c[i].elt[1].slice(x));
-            Number n_c_y_center_2 = n_c_y_center * n_c_y_center;
-            Number n_c_z_center = getCenter(n_c[i].elt[2].slice(x));
-            Number n_c_z_center_2 = n_c_z_center * n_c_z_center;
+            TYPE n_c_x_center = getCenter(n_c[i].elt[0].slice(x));
+            TYPE n_c_x_center_2 = n_c_x_center * n_c_x_center;
+            TYPE n_c_y_center = getCenter(n_c[i].elt[1].slice(x));
+            TYPE n_c_y_center_2 = n_c_y_center * n_c_y_center;
+            TYPE n_c_z_center = getCenter(n_c[i].elt[2].slice(x));
+            TYPE n_c_z_center_2 = n_c_z_center * n_c_z_center;
             // get radii of independent generators and their squares
-            TYPE n_c_x_radius = getRadius(n_c[i].elt[0].slice(x).independent)
+            TYPE n_c_x_radius = getRadius(n_c[i].elt[0].slice(x))
             TYPE n_c_x_radius_2 = n_c_x_radius * n_c_x_radius;
-            TYPE n_c_y_radius = getRadius(n_c[i].elt[1].slice(x).independent)
+            TYPE n_c_y_radius = getRadius(n_c[i].elt[1].slice(x))
             TYPE n_c_y_radius_2 = n_c_y_radius * n_c_y_radius;
-            TYPE n_c_z_radius = getRadius(n_c[i].elt[2].slice(x).independent)
+            TYPE n_c_z_radius = getRadius(n_c[i].elt[2].slice(x))
             TYPE n_c_z_radius_2 = n_c_z_radius * n_c_z_radius;
 
             //     separation constraint: -inf < -1*f_c_z < 0
@@ -399,64 +399,64 @@ bool armtd_NLP::eval_g(
             vecPZsparse ZMP_top = cross([0;0;1],n_c[i]);
             // extract the x, y and z components, slice by the parameters, then get the centers and radii of independent generators and their squares
             // x-component
-            PZsparse ZMP_top_x = ZMP_top.elt[0].slice(x);
-            ZMP_top_x_center = getCenter(ZMP_top_x);
-            ZMP_top_x_center_2 = ZMP_top_x_center*ZMP_top_x_center;
-            ZMP_top_x_radius = getRadius(ZMP_top_x.independent);
-            ZMP_top_x_radius_2 = ZMP_top_x_radius*ZMP_top_x_radius;
+            Interval ZMP_top_x = ZMP_top.elt[0].slice(x);
+            TYPE ZMP_top_x_center = getCenter(ZMP_top_x);
+            TYPE ZMP_top_x_center_2 = ZMP_top_x_center*ZMP_top_x_center;
+            TYPE ZMP_top_x_radius = getRadius(ZMP_top_x);
+            TYPE ZMP_top_x_radius_2 = ZMP_top_x_radius*ZMP_top_x_radius;
             // y-component
-            ZMP_top_y = ZMP_top.elt[1].slice(x);
-            ZMP_top_y_center = getCenter(ZMP_top_y);
-            ZMP_top_y_center_2 = ZMP_top_y_center*ZMP_top_y_center;
-            ZMP_top_y_radius = getRadius(ZMP_top_y.independent);
-            ZMP_top_y_radius_2 = ZMP_top_y_radius*ZMP_top_y_radius;
+            Interval ZMP_top_y = ZMP_top.elt[1].slice(x);
+            TYPE ZMP_top_y_center = getCenter(ZMP_top_y);
+            TYPE ZMP_top_y_center_2 = ZMP_top_y_center*ZMP_top_y_center;
+            TYPE ZMP_top_y_radius = getRadius(ZMP_top_y);
+            TYPE ZMP_top_y_radius_2 = ZMP_top_y_radius*ZMP_top_y_radius;
             // z-component
-            ZMP_top_z = ZMP_top.elt[2].slice(x); // use for debugging, check this is always equal to zero
+            Interval ZMP_top_z = ZMP_top.elt[2].slice(x); // use for debugging, check this is always equal to zero
             
             // compute the denominator of the ZMP point equation
             // note that if the normal vector corresponds to the body frame z-axis, n=[0;0;1] and the dot product of that normal vector
             // with the moment results in the z-component of the moment.
             // question: is the moment about the contact point like in Matlab RNEA? need to verify this
-            ZMP_bottom = n_c[i].elt[2].slice(x);
+            Interval ZMP_bottom = f_c[i].elt[2].slice(x);
             // extract center and radius of independent generators and their squares
-            ZMP_bottom_center = getCenter(ZMP_bottom);
-            ZMP_bottom_center_2 = ZMP_bottom_center*ZMP_bottom_center;
-            ZMP_bottom_radius = getRadius(ZMP_bottom.independent);
-            ZMP_bottom_radius_2 = ZMP_bottom_radius*ZMP_bottom_radius;
+            TYPE ZMP_bottom_center = getCenter(ZMP_bottom);
+            TYPE ZMP_bottom_center_2 = ZMP_bottom_center*ZMP_bottom_center;
+            TYPE ZMP_bottom_radius = getRadius(ZMP_bottom);
+            TYPE ZMP_bottom_radius_2 = ZMP_bottom_radius*ZMP_bottom_radius;
             
             // check the signs of the centers of the force zonotopes in order to form the constraint
             // condition 1: all positive
             if ( (ZMP_top_x_center >= 0) && (ZMP_top_y_center >= 0) && (ZMP_bottom_center >= 0) ){
                 // Note: double check that the center/radius is a number that can be squared
-                g[i+2*NUM_TIME_STEPS] = ZMP_top_x_center_2 + 2*ZMP_top_x_radius*ZMP_top_x_center + ZMP_top_x_radius_2 + ZMP_top_y_center_2 + 2*ZMP_top_y_radius*ZMP_top_y_center + ZMP_top_y_radius_2 - surf_rad_2 * ( ZMP_bottom_center_2 - 2*ZMP_bottom_radius*ZMP_bottom_center - ZMP_bottom_radius_2); // checked signs
+                g[i+2*NUM_TIME_STEPS] = ZMP_top_x_center_2 + 2*ZMP_top_x_radius*ZMP_top_x_center + ZMP_top_x_radius_2 + ZMP_top_y_center_2 + 2*ZMP_top_y_radius*ZMP_top_y_center + ZMP_top_y_radius_2 - surf_rad*surf_rad * ( ZMP_bottom_center_2 - 2*ZMP_bottom_radius*ZMP_bottom_center - ZMP_bottom_radius_2); // checked signs
             }
             // condition 2: y negative
             else if ( (ZMP_top_x_center >= 0) && (ZMP_top_y_center <= 0) && (ZMP_bottom_center >= 0) ) {
-                g[i+2*NUM_TIME_STEPS] = ZMP_top_x_center_2 + 2*ZMP_top_x_radius*ZMP_top_x_center + ZMP_top_x_radius_2 + ZMP_top_y_center_2 - 2*ZMP_top_y_radius*ZMP_top_y_center + ZMP_top_y_radius_2 - surf_rad_2 * ( ZMP_bottom_center_2 - 2*ZMP_bottom_radius*ZMP_bottom_center - ZMP_bottom_radius_2); // checked signs
+                g[i+2*NUM_TIME_STEPS] = ZMP_top_x_center_2 + 2*ZMP_top_x_radius*ZMP_top_x_center + ZMP_top_x_radius_2 + ZMP_top_y_center_2 - 2*ZMP_top_y_radius*ZMP_top_y_center + ZMP_top_y_radius_2 - surf_rad*surf_rad * ( ZMP_bottom_center_2 - 2*ZMP_bottom_radius*ZMP_bottom_center - ZMP_bottom_radius_2); // checked signs
             }
             // condition 3: z negative
             else if ( (ZMP_top_x_center >= 0) && (ZMP_top_y_center >= 0) && (ZMP_bottom_center <= 0) ) {
-                g[i+2*NUM_TIME_STEPS] = ZMP_top_x_center_2 + 2*ZMP_top_x_radius*ZMP_top_x_center + ZMP_top_x_radius_2 + ZMP_top_y_center_2 + 2*ZMP_top_y_radius*ZMP_top_y_center + ZMP_top_y_radius_2 - surf_rad_2 * ( ZMP_bottom_center_2 + 2*ZMP_bottom_radius*ZMP_bottom_center - ZMP_bottom_radius_2); // checked signs
+                g[i+2*NUM_TIME_STEPS] = ZMP_top_x_center_2 + 2*ZMP_top_x_radius*ZMP_top_x_center + ZMP_top_x_radius_2 + ZMP_top_y_center_2 + 2*ZMP_top_y_radius*ZMP_top_y_center + ZMP_top_y_radius_2 - surf_rad*surf_rad * ( ZMP_bottom_center_2 + 2*ZMP_bottom_radius*ZMP_bottom_center - ZMP_bottom_radius_2); // checked signs
             }
             // condition 4: y and z negative
             else if ( (ZMP_top_x_center >= 0) && (ZMP_top_y_center <= 0) && (ZMP_bottom_center <= 0) ) {
-                g[i+2*NUM_TIME_STEPS] = ZMP_top_x_center_2 + 2*ZMP_top_x_radius*ZMP_top_x_center + ZMP_top_x_radius_2 + ZMP_top_y_center_2 - 2*ZMP_top_y_radius*ZMP_top_y_center + ZMP_top_y_radius_2 - surf_rad_2 * ( ZMP_bottom_center_2 + 2*ZMP_bottom_radius*ZMP_bottom_center - ZMP_bottom_radius_2); // checked signs
+                g[i+2*NUM_TIME_STEPS] = ZMP_top_x_center_2 + 2*ZMP_top_x_radius*ZMP_top_x_center + ZMP_top_x_radius_2 + ZMP_top_y_center_2 - 2*ZMP_top_y_radius*ZMP_top_y_center + ZMP_top_y_radius_2 - surf_rad*surf_rad * ( ZMP_bottom_center_2 + 2*ZMP_bottom_radius*ZMP_bottom_center - ZMP_bottom_radius_2); // checked signs
             }
             // condition 5: x negative
             else if ( (ZMP_top_x_center <= 0) && (ZMP_top_y_center >= 0) && (ZMP_bottom_center >= 0) ) {
-                g[i+2*NUM_TIME_STEPS] = ZMP_top_x_center_2 - 2*ZMP_top_x_radius*ZMP_top_x_center + ZMP_top_x_radius_2 + ZMP_top_y_center_2 + 2*ZMP_top_y_radius*ZMP_top_y_center + ZMP_top_y_radius_2 - surf_rad_2 * ( ZMP_bottom_center_2 - 2*ZMP_bottom_radius*ZMP_bottom_center - ZMP_bottom_radius_2); // checked signs
+                g[i+2*NUM_TIME_STEPS] = ZMP_top_x_center_2 - 2*ZMP_top_x_radius*ZMP_top_x_center + ZMP_top_x_radius_2 + ZMP_top_y_center_2 + 2*ZMP_top_y_radius*ZMP_top_y_center + ZMP_top_y_radius_2 - surf_rad*surf_rad * ( ZMP_bottom_center_2 - 2*ZMP_bottom_radius*ZMP_bottom_center - ZMP_bottom_radius_2); // checked signs
             }
             // condition 6: x and y negative
             else if ( (ZMP_top_x_center <= 0) && (ZMP_top_y_center <= 0) && (ZMP_bottom_center >= 0) ) {
-                g[i+2*NUM_TIME_STEPS] = ZMP_top_x_center_2 - 2*ZMP_top_x_radius*ZMP_top_x_center + ZMP_top_x_radius_2 + ZMP_top_y_center_2 - 2*ZMP_top_y_radius*ZMP_top_y_center + ZMP_top_y_radius_2 - surf_rad_2 * ( ZMP_bottom_center_2 - 2*ZMP_bottom_radius*ZMP_bottom_center - ZMP_bottom_radius_2); // checked signs
+                g[i+2*NUM_TIME_STEPS] = ZMP_top_x_center_2 - 2*ZMP_top_x_radius*ZMP_top_x_center + ZMP_top_x_radius_2 + ZMP_top_y_center_2 - 2*ZMP_top_y_radius*ZMP_top_y_center + ZMP_top_y_radius_2 - surf_rad*surf_rad * ( ZMP_bottom_center_2 - 2*ZMP_bottom_radius*ZMP_bottom_center - ZMP_bottom_radius_2); // checked signs
             }
             // condition 7: x and z negative
             else if ( (ZMP_top_x_center <= 0) && (ZMP_top_y_center >= 0) && (ZMP_bottom_center <= 0) ) {
-                g[i+2*NUM_TIME_STEPS] = ZMP_top_x_center_2 - 2*ZMP_top_x_radius*ZMP_top_x_center + ZMP_top_x_radius_2 + ZMP_top_y_center_2 + 2*ZMP_top_y_radius*ZMP_top_y_center + ZMP_top_y_radius_2 - surf_rad_2 * ( ZMP_bottom_center_2 + 2*ZMP_bottom_radius*ZMP_bottom_center - ZMP_bottom_radius_2); // checked signs
+                g[i+2*NUM_TIME_STEPS] = ZMP_top_x_center_2 - 2*ZMP_top_x_radius*ZMP_top_x_center + ZMP_top_x_radius_2 + ZMP_top_y_center_2 + 2*ZMP_top_y_radius*ZMP_top_y_center + ZMP_top_y_radius_2 - surf_rad*surf_rad * ( ZMP_bottom_center_2 + 2*ZMP_bottom_radius*ZMP_bottom_center - ZMP_bottom_radius_2); // checked signs
             }
             // condition 8: x and y and z negative
             else if ( (ZMP_top_x_center <= 0) && (ZMP_top_y_center <= 0) && (ZMP_bottom_center <= 0) ) {
-                g[i+2*NUM_TIME_STEPS] = ZMP_top_x_center_2 - 2*ZMP_top_x_radius*ZMP_top_x_center + ZMP_top_x_radius_2 + ZMP_top_y_center_2 - 2*ZMP_top_y_radius*ZMP_top_y_center + ZMP_top_y_radius_2 - surf_rad_2 * ( ZMP_bottom_center_2 + 2*ZMP_bottom_radius*ZMP_bottom_center - ZMP_bottom_radius_2); // checked signs
+                g[i+2*NUM_TIME_STEPS] = ZMP_top_x_center_2 - 2*ZMP_top_x_radius*ZMP_top_x_center + ZMP_top_x_radius_2 + ZMP_top_y_center_2 - 2*ZMP_top_y_radius*ZMP_top_y_center + ZMP_top_y_radius_2 - surf_rad*surf_rad * ( ZMP_bottom_center_2 + 2*ZMP_bottom_radius*ZMP_bottom_center - ZMP_bottom_radius_2); // checked signs
             }
 
         }
@@ -511,67 +511,172 @@ bool armtd_NLP::eval_jac_g(
         for(i = 0; i < (NUM_TIME_STEPS * NUM_FACTORS + NUM_TIME_STEPS); i++) { // not *3 for the contact constraints since they're being done at the same time.
 
             if (i < NUM_TIME_STEPS * NUM_FACTORS) {
-            // Part 1. slice the control input PZ to get the center of the input bound, 
-            //         while the radius of the input bound has already been incorporated in ipopt constraint bounds
-            control_input[i].slice(values + i * NUM_FACTORS, x);
+                // Part 1. slice the control input PZ to get the center of the input bound, 
+                //         while the radius of the input bound has already been incorporated in ipopt constraint bounds
+                control_input[i].slice(values + i * NUM_FACTORS, x);
 
-            // Part 2. slice the forward kinematics PZ to get the center of the joint position bound, 
-            //         while the radius of the joint position bound has already been considered in Obstacles class
-            checkJointsPosition[i * 3    ] = getCenter(joint_position[i * 3    ].slice(x));
-            checkJointsPosition[i * 3 + 1] = getCenter(joint_position[i * 3 + 1].slice(x));
-            checkJointsPosition[i * 3 + 2] = getCenter(joint_position[i * 3 + 2].slice(x));
-            joint_position[i * 3    ].slice(dk_checkJointsPosition + (i * 3    ) * NUM_FACTORS, x);
-            joint_position[i * 3 + 1].slice(dk_checkJointsPosition + (i * 3 + 1) * NUM_FACTORS, x);
-            joint_position[i * 3 + 2].slice(dk_checkJointsPosition + (i * 3 + 2) * NUM_FACTORS, x);
+                // Part 2. slice the forward kinematics PZ to get the center of the joint position bound, 
+                //         while the radius of the joint position bound has already been considered in Obstacles class
+                checkJointsPosition[i * 3    ] = getCenter(joint_position[i * 3    ].slice(x));
+                checkJointsPosition[i * 3 + 1] = getCenter(joint_position[i * 3 + 1].slice(x));
+                checkJointsPosition[i * 3 + 2] = getCenter(joint_position[i * 3 + 2].slice(x));
+                joint_position[i * 3    ].slice(dk_checkJointsPosition + (i * 3    ) * NUM_FACTORS, x);
+                joint_position[i * 3 + 1].slice(dk_checkJointsPosition + (i * 3 + 1) * NUM_FACTORS, x);
+                joint_position[i * 3 + 2].slice(dk_checkJointsPosition + (i * 3 + 2) * NUM_FACTORS, x);
             }
             else {
                 // Part 3. Force constraints
-                // how to properly index this part?
 
                 // .slice(##, x) fills the pointer ## with the gradient, so for one instance it fills up by NUM_FACTORS
+                
+                //     force
+                // get centers
+                TYPE f_c_x_center = getCenter(f_c[i].elt[0].slice(x));
+                TYPE f_c_y_center = getCenter(f_c[i].elt[1].slice(x));
+                TYPE f_c_z_center = getCenter(f_c[i].elt[2].slice(x));
+                TYPE f_c_z_center_2 = f_c_z_center * f_c_z_center;
+                // get radii of independent generators
+                TYPE f_c_x_radius = getRadius(f_c[i].elt[0].slice(x));  // Bohao says after slicing, this object is an interval so don't need to have .independent for the getRadius()
+                TYPE f_c_y_radius = getRadius(f_c[i].elt[1].slice(x));
+                TYPE f_c_z_radius = getRadius(f_c[i].elt[2].slice(x));
 
+                //     moment
+                // get centers
+                TYPE n_c_x_center = getCenter(n_c[i].elt[0].slice(x));
+                TYPE n_c_y_center = getCenter(n_c[i].elt[1].slice(x));
+                TYPE n_c_z_center = getCenter(n_c[i].elt[2].slice(x));
+                // get radii of independent generators
+                TYPE n_c_x_radius = getRadius(n_c[i].elt[0].slice(x))
+                TYPE n_c_y_radius = getRadius(n_c[i].elt[1].slice(x))
+                TYPE n_c_z_radius = getRadius(n_c[i].elt[2].slice(x))
 
-                // separation constraint
-                // .slice(values + i*NUM_FACTORS, x)
-                // should be able to use .slice(##, x) here
-                f_c[i].elt[2].slice(values + i*NUM_FACTORS, x)
+                // compute the numerator of the ZMP point equation
+                vecPZsparse ZMP_top = cross([0;0;1],n_c[i]);
+                // extract the x, y and z components, slice by the parameters, then get the centers and radii of independent generators and their squares
+                // x-component
+                TYPE ZMP_top_x_center = getCenter(ZMP_top.elt[0].slice(x));
+                TYPE ZMP_top_x_radius = getRadius(ZMP_top.elt[0].slice(x));
+                // y-component
+                TYPE ZMP_top_y_center = getCenter(ZMP_top.elt[1].slice(x));
+                TYPE ZMP_top_y_radius = getRadius(ZMP_top.elt[1].slice(x));
 
-                // slipping constraint
-                // .slice(values + (NUM_FACTORS*NUM_TIME_STEPS + NUM_TIME_STEPS)*NUM_FACTORS, x)
-                values[(i+NUM_TIME_STEPS)*NUM_FACTORS] = ;
-                // create function for return partial of a passed in index? function(g[i])
-                for (int j=0; j<NUM_FACTORS; j++) {
-                    for (int k=0; k<NUM_FACTORS; k++) {
-                        if (j==k) {
-                            if (degreeArray[j]==0) {
+                // compute the denominator of the ZMP point equation
+                // note that if the normal vector corresponds to the body frame z-axis, n=[0;0;1] and the dot product of that normal vector
+                // with the moment results in the z-component of the moment.
+                // question: is the moment about the contact point like in Matlab RNEA? need to verify this
+                Interval ZMP_bottom = f_c[i].elt[2].slice(x);
+                // extract center and radius of independent generators and their squares
+                TYPE ZMP_bottom_center = getCenter(f_c[i].elt[2].slice(x));
+                TYPE ZMP_bottom_radius = getRadius(f_c[i].elt[2].slice(x));
 
-                            }
-                            else {
-                                
-                            }
-                        }
-                        else {
+                //    gradients
+                // allocate storage
+                double f_c_x_grad[NUM_FACTORS];
+                double f_c_y_grad[NUM_FACTORS];
+                double f_c_z_grad[NUM_FACTORS];
+                // double n_c_x_grad[NUM_FACTORS];
+                // double n_c_y_grad[NUM_FACTORS];
+                // double n_c_z_grad[NUM_FACTORS];
+                double ZMP_top_x_grad[NUM_FACTORS];
+                double ZMP_top_y_grad[NUM_FACTORS];
+                // double ZMP_top_z_grad[NUM_FACTORS];
+                double ZMP_bottom_grad[NUM_FACTORS];
+                // calculate gradients
+                f_c[i].elt[0].slice(f_c_x_grad, x);
+                f_c[i].elt[1].slice(f_c_y_grad, x);
+                f_c[i].elt[2].slice(f_c_z_grad, x);
+                // n_c[i].elt[0].slice(n_c_x_grad,x);
+                // n_c[i].elt[1].slice(n_c_y_grad,x);
+                // n_c[i].elt[2].slice(n_c_z_grad,x);
+                ZMP_top.elt[0].slice(ZMP_top_x_grad, x);
+                ZMP_top.elt[1].slice(ZMP_top_y_grad, x);
+                f_c[i].elt[2].slice(ZMP_bottom_grad, x);
 
-                        }
-                    }
+                //    separation constraint
+                // f_c[i].elt[2].slice(values + i*NUM_FACTORS, x);
+                values[i*NUM_FACTORS] = -1*f_c_z_grad;
+
+                //    slipping constraint                
+                // calculate constraint gradient, depends on the signs of the centers like constraint itself does.
+                if ( (f_c_x_center >= 0) && (f_c_y_center >= 0) && (f_c_z_center >= 0) ){
+                    values[(i+NUM_TIME_STEPS)*NUM_FACTORS] = 2*f_c_x_center*f_c_x_grad + 2*f_c_x_radius*f_c_x_grad + 2*f_c_y_center*f_c_y_grad + 2*f_c_y_radius*f_c_y_grad - u_s*u_s * ( 2*f_c_z_center*f_c_z_grad - 2*f_c_z_radius*f_c_z_grad );
+                }
+                // condition 2: y negative
+                else if ( (f_c_x_center >= 0) && (f_c_y_center <= 0) && (f_c_z_center >= 0) ) {
+                    values[(i+NUM_TIME_STEPS)*NUM_FACTORS] = 2*f_c_x_center*f_c_x_grad + 2*f_c_x_radius*f_c_x_grad + 2*f_c_y_center*f_c_y_grad - 2*f_c_y_radius*f_c_y_grad - u_s*u_s * ( 2*f_c_z_center*f_c_z_grad - 2*f_c_z_radius*f_c_z_grad );
+                }
+                // condition 3: z negative
+                else if ( (f_c_x_center >= 0) && (f_c_y_center >= 0) && (f_c_z_center <= 0) ) {
+                    values[(i+NUM_TIME_STEPS)*NUM_FACTORS] = 2*f_c_x_center*f_c_x_grad + 2*f_c_x_radius*f_c_x_grad + 2*f_c_y_center*f_c_y_grad + 2*f_c_y_radius*f_c_y_grad - u_s*u_s * ( 2*f_c_z_center*f_c_z_grad + 2*f_c_z_radius*f_c_z_grad );
+                }
+                // condition 4: y and z negative
+                else if ( (f_c_x_center >= 0) && (f_c_y_center <= 0) && (f_c_z_center <= 0) ) {
+                    values[(i+NUM_TIME_STEPS)*NUM_FACTORS] = 2*f_c_x_center*f_c_x_grad + 2*f_c_x_radius*f_c_x_grad + 2*f_c_y_center*f_c_y_grad - 2*f_c_y_radius*f_c_y_grad - u_s*u_s * ( 2*f_c_z_center*f_c_z_grad + 2*f_c_z_radius*f_c_z_grad );
+                }
+                // condition 5: x negative
+                else if ( (f_c_x_center <= 0) && (f_c_y_center >= 0) && (f_c_z_center >= 0) ) {
+                    values[(i+NUM_TIME_STEPS)*NUM_FACTORS] = 2*f_c_x_center*f_c_x_grad - 2*f_c_x_radius*f_c_x_grad + 2*f_c_y_center*f_c_y_grad + 2*f_c_y_radius*f_c_y_grad - u_s*u_s * ( 2*f_c_z_center*f_c_z_grad - 2*f_c_z_radius*f_c_z_grad );
+                }
+                // condition 6: x and y negative
+                else if ( (f_c_x_center <= 0) && (f_c_y_center <= 0) && (f_c_z_center >= 0) ) {
+                    values[(i+NUM_TIME_STEPS)*NUM_FACTORS] = 2*f_c_x_center*f_c_x_grad - 2*f_c_x_radius*f_c_x_grad + 2*f_c_y_center*f_c_y_grad - 2*f_c_y_radius*f_c_y_grad - u_s*u_s * ( 2*f_c_z_center*f_c_z_grad - 2*f_c_z_radius*f_c_z_grad );
+                }
+                // condition 7: x and z negative
+                else if ( (f_c_x_center <= 0) && (f_c_y_center >= 0) && (f_c_z_center <= 0) ) {
+                    values[(i+NUM_TIME_STEPS)*NUM_FACTORS] = 2*f_c_x_center*f_c_x_grad - 2*f_c_x_radius*f_c_x_grad + 2*f_c_y_center*f_c_y_grad + 2*f_c_y_radius*f_c_y_grad - u_s*u_s * ( 2*f_c_z_center*f_c_z_grad + 2*f_c_z_radius*f_c_z_grad );
+                }
+                // condition 8: x and y and z negative
+                else if ( (f_c_x_center <= 0) && (f_c_y_center <= 0) && (f_c_z_center <= 0) ) {
+                    values[(i+NUM_TIME_STEPS)*NUM_FACTORS] = 2*f_c_x_center*f_c_x_grad - 2*f_c_x_radius*f_c_x_grad + 2*f_c_y_center*f_c_y_grad - 2*f_c_y_radius*f_c_y_grad - u_s*u_s * ( 2*f_c_z_center*f_c_z_grad + 2*f_c_z_radius*f_c_z_grad );
                 }
 
-                //tipping constraint
-                // .slice(, x)
-                values[(i+2*NUM_TIME_STEPS)*NUM_FACTORS] = ; // need to fill in all the factors here
-                
-                
-            }
+
+                //    tipping constraint
+                // calculate constraint gradient
+                if ( (ZMP_top_x_center >= 0) && (ZMP_top_y_center >= 0) && (ZMP_bottom_center >= 0) ){
+                    // Note: double check that the center/radius is a number that can be squared
+                    values[(i+2*NUM_TIME_STEPS)*NUM_FACTORS] = 2*ZMP_top_x_center*ZMP_top_x_grad + 2*ZMP_top_x_radius*ZMP_top_x_grad + 2*ZMP_top_y_center*ZMP_top_y_grad + 2*ZMP_top_y_radius*ZMP_top_y_grad - surf_rad*surf_rad * ( 2*ZMP_bottom_center*ZMP_bottom_grad - 2*ZMP_bottom_radius*ZMP_bottom_grad);
+                }
+                // condition 2: y negative
+                else if ( (ZMP_top_x_center >= 0) && (ZMP_top_y_center <= 0) && (ZMP_bottom_center >= 0) ) {
+                    values[(i+2*NUM_TIME_STEPS)*NUM_FACTORS] = 2*ZMP_top_x_center*ZMP_top_x_grad + 2*ZMP_top_x_radius*ZMP_top_x_grad + 2*ZMP_top_y_center*ZMP_top_y_grad - 2*ZMP_top_y_radius*ZMP_top_y_grad - surf_rad*surf_rad * ( 2*ZMP_bottom_center*ZMP_bottom_grad - 2*ZMP_bottom_radius*ZMP_bottom_grad);
+                }
+                // condition 3: z negative
+                else if ( (ZMP_top_x_center >= 0) && (ZMP_top_y_center >= 0) && (ZMP_bottom_center <= 0) ) {
+                    values[(i+2*NUM_TIME_STEPS)*NUM_FACTORS] = 2*ZMP_top_x_center*ZMP_top_x_grad + 2*ZMP_top_x_radius*ZMP_top_x_grad + 2*ZMP_top_y_center*ZMP_top_y_grad + 2*ZMP_top_y_radius*ZMP_top_y_grad - surf_rad*surf_rad * ( 2*ZMP_bottom_center*ZMP_bottom_grad + 2*ZMP_bottom_radius*ZMP_bottom_grad);
+                }
+                // condition 4: y and z negative
+                else if ( (ZMP_top_x_center >= 0) && (ZMP_top_y_center <= 0) && (ZMP_bottom_center <= 0) ) {
+                    values[(i+2*NUM_TIME_STEPS)*NUM_FACTORS] = 2*ZMP_top_x_center*ZMP_top_x_grad + 2*ZMP_top_x_radius*ZMP_top_x_grad + 2*ZMP_top_y_center*ZMP_top_y_grad - 2*ZMP_top_y_radius*ZMP_top_y_grad - surf_rad*surf_rad * ( 2*ZMP_bottom_center*ZMP_bottom_grad + 2*ZMP_bottom_radius*ZMP_bottom_grad);
+                }
+                // condition 5: x negative
+                else if ( (ZMP_top_x_center <= 0) && (ZMP_top_y_center >= 0) && (ZMP_bottom_center >= 0) ) {
+                    values[(i+2*NUM_TIME_STEPS)*NUM_FACTORS] = 2*ZMP_top_x_center*ZMP_top_x_grad - 2*ZMP_top_x_radius*ZMP_top_x_grad + 2*ZMP_top_y_center*ZMP_top_y_grad + 2*ZMP_top_y_radius*ZMP_top_y_grad - surf_rad*surf_rad * ( 2*ZMP_bottom_center*ZMP_bottom_grad - 2*ZMP_bottom_radius*ZMP_bottom_grad);
+                }
+                // condition 6: x and y negative
+                else if ( (ZMP_top_x_center <= 0) && (ZMP_top_y_center <= 0) && (ZMP_bottom_center >= 0) ) {
+                    values[(i+2*NUM_TIME_STEPS)*NUM_FACTORS] = 2*ZMP_top_x_center*ZMP_top_x_grad - 2*ZMP_top_x_radius*ZMP_top_x_grad + 2*ZMP_top_y_center*ZMP_top_y_grad - 2*ZMP_top_y_radius*ZMP_top_y_grad - surf_rad*surf_rad * ( 2*ZMP_bottom_center*ZMP_bottom_grad - 2*ZMP_bottom_radius*ZMP_bottom_grad);
+                }
+                // condition 7: x and z negative
+                else if ( (ZMP_top_x_center <= 0) && (ZMP_top_y_center >= 0) && (ZMP_bottom_center <= 0) ) {
+                    values[(i+2*NUM_TIME_STEPS)*NUM_FACTORS] = 2*ZMP_top_x_center*ZMP_top_x_grad - 2*ZMP_top_x_radius*ZMP_top_x_grad + 2*ZMP_top_y_center*ZMP_top_y_grad + 2*ZMP_top_y_radius*ZMP_top_y_grad - surf_rad*surf_rad * ( 2*ZMP_bottom_center*ZMP_bottom_grad + 2*ZMP_bottom_radius*ZMP_bottom_grad);
+                }
+                // condition 8: x and y and z negative
+                else if ( (ZMP_top_x_center <= 0) && (ZMP_top_y_center <= 0) && (ZMP_bottom_center <= 0) ) {
+                    values[(i+2*NUM_TIME_STEPS)*NUM_FACTORS] = 2*ZMP_top_x_center*ZMP_top_x_grad - 2*ZMP_top_x_radius*ZMP_top_x_grad + 2*ZMP_top_y_center*ZMP_top_y_grad - 2*ZMP_top_y_radius*ZMP_top_y_grad - surf_rad*surf_rad * ( 2*ZMP_bottom_center*ZMP_bottom_grad + 2*ZMP_bottom_radius*ZMP_bottom_grad);
+                }
+
+                }
             
 
         }
 
         // Part 4. check collision between joint position reachable set and obstacles (in gpu)
-        obstacles->linkFRSConstraints(checkJointsPosition, dk_checkJointsPosition, nullptr, values + NUM_TIME_STEPS * NUM_FACTORS * NUM_FACTORS); // needs to be updated
+        obstacles->linkFRSConstraints(checkJointsPosition, dk_checkJointsPosition, nullptr, values + (NUM_TIME_STEPS * NUM_FACTORS + NUM_TIME_STEPS*3) * NUM_FACTORS); // needs to be updated
 
         // Part 5. (position & velocity) state limit constraints
-        desired_trajectory->returnJointPositionExtremumGradient(values + (NUM_TIME_STEPS * NUM_FACTORS + (NUM_FACTORS - 1) * NUM_TIME_STEPS * obstacles->num_obstacles) * NUM_FACTORS, x); // needs to be updated
-        desired_trajectory->returnJointVelocityExtremumGradient(values + (NUM_TIME_STEPS * NUM_FACTORS + (NUM_FACTORS - 1) * NUM_TIME_STEPS * obstacles->num_obstacles + NUM_FACTORS * 2) * NUM_FACTORS, x); // needs to be updated
+        desired_trajectory->returnJointPositionExtremumGradient(values + (NUM_TIME_STEPS * NUM_FACTORS + (NUM_FACTORS - 1) * NUM_TIME_STEPS * obstacles->num_obstacles + NUM_TIME_STEPS*3) * NUM_FACTORS, x); // needs to be updated
+        desired_trajectory->returnJointVelocityExtremumGradient(values + (NUM_TIME_STEPS * NUM_FACTORS + (NUM_FACTORS - 1) * NUM_TIME_STEPS * obstacles->num_obstacles + NUM_FACTORS * 2 + NUM_TIME_STEPS*3) * NUM_FACTORS, x); // needs to be updated
     }
 
     return true;
