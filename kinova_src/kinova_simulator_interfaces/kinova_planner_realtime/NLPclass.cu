@@ -319,34 +319,34 @@ bool armtd_NLP::eval_g(
 
             //     force
             // get centers and their squares
-            TYPE f_c_x_center = getCenter(f_c[i].elt[0].slice(x));
+            TYPE f_c_x_center = getCenter(f_c[i].elt[0]->slice(x));
             TYPE f_c_x_center_2 = f_c_x_center * f_c_x_center;
-            TYPE f_c_y_center = getCenter(f_c[i].elt[1].slice(x));
+            TYPE f_c_y_center = getCenter(f_c[i].elt[1]->slice(x));
             TYPE f_c_y_center_2 = f_c_y_center * f_c_y_center;
-            TYPE f_c_z_center = getCenter(f_c[i].elt[2].slice(x));
+            TYPE f_c_z_center = getCenter(f_c[i].elt[2]->slice(x));
             TYPE f_c_z_center_2 = f_c_z_center * f_c_z_center;
             // get radii of independent generators and their squares
-            TYPE f_c_x_radius = getRadius(f_c[i].elt[0].slice(x));  // Bohao says after slicing, this object is an interval so don't need to have .independent for the getRadius()
+            TYPE f_c_x_radius = getRadius(f_c[i].elt[0]->slice(x));  // Bohao says after slicing, this object is an interval so don't need to have .independent for the getRadius()
             TYPE f_c_x_radius_2 = f_c_x_radius * f_c_x_radius;
-            TYPE f_c_y_radius = getRadius(f_c[i].elt[1].slice(x));
+            TYPE f_c_y_radius = getRadius(f_c[i].elt[1]->slice(x));
             TYPE f_c_y_radius_2 = f_c_y_radius * f_c_y_radius;
-            TYPE f_c_z_radius = getRadius(f_c[i].elt[2].slice(x));
+            TYPE f_c_z_radius = getRadius(f_c[i].elt[2]->slice(x));
             TYPE f_c_z_radius_2 = f_c_z_radius * f_c_z_radius;
 
             //     moment
             // get centers and their squares
-            TYPE n_c_x_center = getCenter(n_c[i].elt[0].slice(x));
+            TYPE n_c_x_center = getCenter(n_c[i].elt[0]->slice(x));
             TYPE n_c_x_center_2 = n_c_x_center * n_c_x_center;
-            TYPE n_c_y_center = getCenter(n_c[i].elt[1].slice(x));
+            TYPE n_c_y_center = getCenter(n_c[i].elt[1]->slice(x));
             TYPE n_c_y_center_2 = n_c_y_center * n_c_y_center;
-            TYPE n_c_z_center = getCenter(n_c[i].elt[2].slice(x));
+            TYPE n_c_z_center = getCenter(n_c[i].elt[2]->slice(x));
             TYPE n_c_z_center_2 = n_c_z_center * n_c_z_center;
             // get radii of independent generators and their squares
-            TYPE n_c_x_radius = getRadius(n_c[i].elt[0].slice(x));
+            TYPE n_c_x_radius = getRadius(n_c[i].elt[0]->slice(x));
             TYPE n_c_x_radius_2 = n_c_x_radius * n_c_x_radius;
-            TYPE n_c_y_radius = getRadius(n_c[i].elt[1].slice(x));
+            TYPE n_c_y_radius = getRadius(n_c[i].elt[1]->slice(x));
             TYPE n_c_y_radius_2 = n_c_y_radius * n_c_y_radius;
-            TYPE n_c_z_radius = getRadius(n_c[i].elt[2].slice(x));
+            TYPE n_c_z_radius = getRadius(n_c[i].elt[2]->slice(x));
             TYPE n_c_z_radius_2 = n_c_z_radius * n_c_z_radius;
 
             //     separation constraint: -inf < -1*f_c_z < 0
@@ -401,28 +401,29 @@ bool armtd_NLP::eval_g(
             //     tipping constraint: ZMP_top_x*ZMP_top_x + ZMP_top_y*ZMP_top_y - surf_rad*ZMP_bottom*ZMP_bottom < 0
 
             // compute the numerator of the ZMP point equation
-            vecPZsparse ZMP_top = cross([0;0;1],n_c[i]);
+            double norm_vec[3] = {0,0,1};
+            vecPZsparse ZMP_top = cross(norm_vec,n_c[i]);
             // extract the x, y and z components, slice by the parameters, then get the centers and radii of independent generators and their squares
             // x-component
-            Interval ZMP_top_x = ZMP_top.elt[0].slice(x);
+            Interval ZMP_top_x = ZMP_top.elt[0]->slice(x);
             TYPE ZMP_top_x_center = getCenter(ZMP_top_x);
             TYPE ZMP_top_x_center_2 = ZMP_top_x_center*ZMP_top_x_center;
             TYPE ZMP_top_x_radius = getRadius(ZMP_top_x);
             TYPE ZMP_top_x_radius_2 = ZMP_top_x_radius*ZMP_top_x_radius;
             // y-component
-            Interval ZMP_top_y = ZMP_top.elt[1].slice(x);
+            Interval ZMP_top_y = ZMP_top.elt[1]->slice(x);
             TYPE ZMP_top_y_center = getCenter(ZMP_top_y);
             TYPE ZMP_top_y_center_2 = ZMP_top_y_center*ZMP_top_y_center;
             TYPE ZMP_top_y_radius = getRadius(ZMP_top_y);
             TYPE ZMP_top_y_radius_2 = ZMP_top_y_radius*ZMP_top_y_radius;
             // z-component
-            Interval ZMP_top_z = ZMP_top.elt[2].slice(x); // use for debugging, check this is always equal to zero
+            Interval ZMP_top_z = ZMP_top.elt[2]->slice(x); // use for debugging, check this is always equal to zero
             
             // compute the denominator of the ZMP point equation
             // note that if the normal vector corresponds to the body frame z-axis, n=[0;0;1] and the dot product of that normal vector
             // with the moment results in the z-component of the moment.
             // question: is the moment about the contact point like in Matlab RNEA? need to verify this
-            Interval ZMP_bottom = f_c[i].elt[2].slice(x);
+            Interval ZMP_bottom = f_c[i].elt[2]->slice(x);
             // extract center and radius of independent generators and their squares
             TYPE ZMP_bottom_center = getCenter(ZMP_bottom);
             TYPE ZMP_bottom_center_2 = ZMP_bottom_center*ZMP_bottom_center;
@@ -536,70 +537,75 @@ bool armtd_NLP::eval_jac_g(
                 
                 //     force
                 // get centers
-                TYPE f_c_x_center = getCenter(f_c[i].elt[0].slice(x));
-                TYPE f_c_y_center = getCenter(f_c[i].elt[1].slice(x));
-                TYPE f_c_z_center = getCenter(f_c[i].elt[2].slice(x));
+                TYPE f_c_x_center = getCenter(f_c[i].elt[0]->slice(x));
+                TYPE f_c_y_center = getCenter(f_c[i].elt[1]->slice(x));
+                TYPE f_c_z_center = getCenter(f_c[i].elt[2]->slice(x));
                 TYPE f_c_z_center_2 = f_c_z_center * f_c_z_center;
                 // get radii of independent generators
-                TYPE f_c_x_radius = getRadius(f_c[i].elt[0].slice(x));  // Bohao says after slicing, this object is an interval so don't need to have .independent for the getRadius()
-                TYPE f_c_y_radius = getRadius(f_c[i].elt[1].slice(x));
-                TYPE f_c_z_radius = getRadius(f_c[i].elt[2].slice(x));
+                TYPE f_c_x_radius = getRadius(f_c[i].elt[0]->slice(x));  // Bohao says after slicing, this object is an interval so don't need to have .independent for the getRadius()
+                TYPE f_c_y_radius = getRadius(f_c[i].elt[1]->slice(x));
+                TYPE f_c_z_radius = getRadius(f_c[i].elt[2]->slice(x));
 
                 //     moment
                 // get centers
-                TYPE n_c_x_center = getCenter(n_c[i].elt[0].slice(x));
-                TYPE n_c_y_center = getCenter(n_c[i].elt[1].slice(x));
-                TYPE n_c_z_center = getCenter(n_c[i].elt[2].slice(x));
+                TYPE n_c_x_center = getCenter(n_c[i].elt[0]->slice(x));
+                TYPE n_c_y_center = getCenter(n_c[i].elt[1]->slice(x));
+                TYPE n_c_z_center = getCenter(n_c[i].elt[2]->slice(x));
                 // get radii of independent generators
-                TYPE n_c_x_radius = getRadius(n_c[i].elt[0].slice(x))
-                TYPE n_c_y_radius = getRadius(n_c[i].elt[1].slice(x))
-                TYPE n_c_z_radius = getRadius(n_c[i].elt[2].slice(x))
+                TYPE n_c_x_radius = getRadius(n_c[i].elt[0]->slice(x));
+                TYPE n_c_y_radius = getRadius(n_c[i].elt[1]->slice(x));
+                TYPE n_c_z_radius = getRadius(n_c[i].elt[2]->slice(x));
 
                 // compute the numerator of the ZMP point equation
-                vecPZsparse ZMP_top = cross([0;0;1],n_c[i]);
+                double norm_vec[3] = {0,0,1};
+                vecPZsparse ZMP_top = cross(norm_vec,n_c[i]); // define a normal vector for the cross product
                 // extract the x, y and z components, slice by the parameters, then get the centers and radii of independent generators and their squares
                 // x-component
-                TYPE ZMP_top_x_center = getCenter(ZMP_top.elt[0].slice(x));
-                TYPE ZMP_top_x_radius = getRadius(ZMP_top.elt[0].slice(x));
+                TYPE ZMP_top_x_center = getCenter(ZMP_top.elt[0]->slice(x));
+                TYPE ZMP_top_x_radius = getRadius(ZMP_top.elt[0]->slice(x));
                 // y-component
-                TYPE ZMP_top_y_center = getCenter(ZMP_top.elt[1].slice(x));
-                TYPE ZMP_top_y_radius = getRadius(ZMP_top.elt[1].slice(x));
+                TYPE ZMP_top_y_center = getCenter(ZMP_top.elt[1]->slice(x));
+                TYPE ZMP_top_y_radius = getRadius(ZMP_top.elt[1]->slice(x));
 
                 // compute the denominator of the ZMP point equation
                 // note that if the normal vector corresponds to the body frame z-axis, n=[0;0;1] and the dot product of that normal vector
                 // with the moment results in the z-component of the moment.
                 // question: is the moment about the contact point like in Matlab RNEA? need to verify this
-                Interval ZMP_bottom = f_c[i].elt[2].slice(x);
+                Interval ZMP_bottom = f_c[i].elt[2]->slice(x);
                 // extract center and radius of independent generators and their squares
-                TYPE ZMP_bottom_center = getCenter(f_c[i].elt[2].slice(x));
-                TYPE ZMP_bottom_radius = getRadius(f_c[i].elt[2].slice(x));
+                TYPE ZMP_bottom_center = getCenter(f_c[i].elt[2]->slice(x));
+                TYPE ZMP_bottom_radius = getRadius(f_c[i].elt[2]->slice(x));
 
                 //    gradients
                 // allocate storage
-                double f_c_x_grad[NUM_FACTORS];
-                double f_c_y_grad[NUM_FACTORS];
-                double f_c_z_grad[NUM_FACTORS];
-                // double n_c_x_grad[NUM_FACTORS];
-                // double n_c_y_grad[NUM_FACTORS];
-                // double n_c_z_grad[NUM_FACTORS];
-                double ZMP_top_x_grad[NUM_FACTORS];
-                double ZMP_top_y_grad[NUM_FACTORS];
-                // double ZMP_top_z_grad[NUM_FACTORS];
-                double ZMP_bottom_grad[NUM_FACTORS];
+                TYPE f_c_x_grad[NUM_FACTORS];
+                TYPE f_c_y_grad[NUM_FACTORS];
+                TYPE f_c_z_grad[NUM_FACTORS];
+                // TYPE n_c_x_grad[NUM_FACTORS];
+                // TYPE n_c_y_grad[NUM_FACTORS];
+                // TYPE n_c_z_grad[NUM_FACTORS];
+                TYPE ZMP_top_x_grad[NUM_FACTORS];
+                TYPE ZMP_top_y_grad[NUM_FACTORS];
+                // TYPE ZMP_top_z_grad[NUM_FACTORS];
+                TYPE ZMP_bottom_grad[NUM_FACTORS];
                 // calculate gradients
-                f_c[i].elt[0].slice(f_c_x_grad, x);
-                f_c[i].elt[1].slice(f_c_y_grad, x);
-                f_c[i].elt[2].slice(f_c_z_grad, x);
+                f_c[i].elt[0]->slice(f_c_x_grad, x);
+                f_c[i].elt[1]->slice(f_c_y_grad, x);
+                f_c[i].elt[2]->slice(f_c_z_grad, x);
                 // n_c[i].elt[0].slice(n_c_x_grad,x);
                 // n_c[i].elt[1].slice(n_c_y_grad,x);
                 // n_c[i].elt[2].slice(n_c_z_grad,x);
-                ZMP_top.elt[0].slice(ZMP_top_x_grad, x);
-                ZMP_top.elt[1].slice(ZMP_top_y_grad, x);
-                f_c[i].elt[2].slice(ZMP_bottom_grad, x);
+                ZMP_top.elt[0]->slice(ZMP_top_x_grad, x);
+                ZMP_top.elt[1]->slice(ZMP_top_y_grad, x);
+                f_c[i].elt[2]->slice(ZMP_bottom_grad, x);
 
                 //    separation constraint
                 // f_c[i].elt[2].slice(values + i*NUM_FACTORS, x);
-                values[i*NUM_FACTORS] = -1*f_c_z_grad;
+                int offset = i*NUM_FACTORS;
+                for (int j = offset;j<offset+NUM_FACTORS;j++) {
+                    values[j] = -1*f_c_z_grad[j];
+                }
+                // values[i*NUM_FACTORS] = -1*f_c_z_grad;
 
                 //    slipping constraint                
                 // calculate constraint gradient, depends on the signs of the centers like constraint itself does.
