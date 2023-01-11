@@ -225,7 +225,7 @@ void PZsparse::makeRotationMatrix(Eigen::MatrixXd& R, const double cosElt, const
     }
 }
 
-bool PZsparse::checkDimensions() {
+bool PZsparse::checkDimensions() const {
     if (center.rows() != NRows) {
         WARNING_PRINT("PZsparse warning: center matrix number of rows not consistent!");
         return false;
@@ -309,11 +309,8 @@ MatrixXInt PZsparse::slice(const double* factor) {
     assert(checkDimensions());
 
     MatrixXInt res(NRows, NCols);
-    Eigen::MatrixXd res_center;
-    Eigen::MatrixXd res_radius;
-
-    res_center = center;
-    res_radius = independent;
+    Eigen::MatrixXd res_center = center;
+    Eigen::MatrixXd res_radius = independent;
 
     for (auto it : polynomial) {
         Eigen::MatrixXd resTemp = it.coeff;
@@ -375,24 +372,31 @@ void PZsparse::slice(Eigen::Array<Eigen::MatrixXd, NUM_FACTORS, 1>& gradient, co
                 }
             }
 
-            // for (uint k = 0; k < NUM_FACTORS; k++) {
-            //     gradient[k] += resTemp[k];
-            // }
             gradient += resTemp;
         }
     }
 }
 
-// Interval PZsparse::toInterval() {
-//     Interval res = independent + center;
+MatrixXInt PZsparse::toInterval() {
+    assert(checkDimensions());
 
-//     for (auto it : polynomial) {
-//         double resTemp = it.coeff;
-//         res += Interval(-fabs(resTemp), fabs(resTemp));
-//     }
+    MatrixXInt res(NRows, NCols);
+    Eigen::MatrixXd res_center = center;
+    Eigen::MatrixXd res_radius = independent;
 
-//     return res;
-// }
+    for (auto it : polynomial) {
+        res_radius += it.coeff.cwiseAbs();
+    }
+
+    for (uint i = 0; i < NRows; i++) {
+        for (uint j = 0; j < NCols; j++) {
+            res(i,j) = Interval(res_center(i,j) - res_radius(i,j),
+                                res_center(i,j) + res_radius(i,j));
+        }
+    }
+
+    return res;
+}
 
 void PZsparse::convertHashToDegree(uint64_t degree) {
     uint64_t move_bit = 0;
@@ -481,9 +485,41 @@ std::ostream& operator<<(std::ostream& os, PZsparse& a) {
     return os;
 }
 
+std::ostream& operator<<(std::ostream& os, const MatrixXInt& a) {
+    for (uint i = 0; i < a.rows(); i++) {
+        for (uint j = 0; j < a.cols(); j++) {
+            os << "[ " << a(i,j).lower() << ", " << a(i,j).upper() << "] ";
+        }
+        os << '\n';
+    }
+
+    return os;
+}
+
 /*
 Arithmetic
 */
+
+PZsparse PZsparse::operator() (int row_id, int col_id) const {
+    assert(checkDimensions());
+    assert(0 <= row_id && row_id < NRows);
+    assert(0 <= col_id && col_id < NCols);
+
+    PZsparse res(1, 1);
+    
+    res.center = center.block(row_id, col_id, 1, 1);
+
+    res.polynomial.reserve(polynomial.size());
+
+    for (auto it : polynomial) {
+        res.polynomial.emplace_back(it.coeff.block(row_id, col_id, 1, 1), it.degree);
+    }
+
+    res.independent = independent.block(row_id, col_id, 1, 1);
+
+    return res;
+
+}
 
 PZsparse PZsparse::operator=(const double a) {
     NRows = 1;
@@ -531,9 +567,7 @@ PZsparse PZsparse::operator-() {
 
 PZsparse PZsparse::operator+(const PZsparse& a) {
     assert(checkDimensions());
-
-    // check if they are add-able
-    assert(a.NRows == NRows || a.NCols == NCols);
+    assert(a.NRows == NRows || a.NCols == NCols); // check if they are add-able
 
     PZsparse res(NRows, NCols);
 
@@ -569,7 +603,7 @@ PZsparse PZsparse::operator+(const double a) {
 }
 
 PZsparse operator+(const double a, const PZsparse& b) {
-    // assert(checkDimensions());
+    assert(b.checkDimensions());
 
     PZsparse res = b;
 
@@ -584,8 +618,7 @@ PZsparse operator+(const double a, const PZsparse& b) {
 
 PZsparse PZsparse::operator+=(const PZsparse& a) {
     assert(checkDimensions());
-
-    assert(a.NRows == NRows || a.NCols == NCols);
+    assert(a.NRows == NRows || a.NCols == NCols); // check if they are add-able
 
     center += a.center;
 
@@ -603,10 +636,8 @@ PZsparse PZsparse::operator+=(const PZsparse& a) {
 }
 
 PZsparse PZsparse::operator-(const PZsparse& a) {
-    assert(checkDimensions());
-
-    // check if they are add-able
-    assert(a.NRows == NRows || a.NCols == NCols);
+    assert(checkDimensions());    
+    assert(a.NRows == NRows || a.NCols == NCols); // check if they are add-able
 
     PZsparse res(NRows, NCols);
 
@@ -642,7 +673,7 @@ PZsparse PZsparse::operator-(const double a) {
 }
 
 PZsparse operator-(const double a, const PZsparse& b) {
-    // assert(checkDimensions());
+    assert(b.checkDimensions());
 
     PZsparse res = b;
 
@@ -657,31 +688,77 @@ PZsparse operator-(const double a, const PZsparse& b) {
 
 PZsparse PZsparse::operator*(const PZsparse& a) {
     assert(checkDimensions());
+    assert(NCols == a.NRows || (NRows == 1 && NCols == 1) || (a.NRows == 1 && a.NCols == 1));
 
-    assert(NCols == a.NRows);
+    PZsparse res;
 
-    PZsparse res(NRows, a.NCols);
+    if (NRows == 1 && NCols == 1) {
+        res.NRows = a.NRows;
+        res.NCols = a.NCols;
+    }
+    else if (a.NRows == 1 && a.NCols == 1) {
+        res.NRows = NRows;
+        res.NCols = NCols;
+    }
+    else {
+        res.NRows = NRows;
+        res.NCols = a.NCols;
+    }
 
     // center * center
-    res.center = center * a.center;
+    if (NRows == 1 && NCols == 1) {
+        res.center = center(0) * a.center;
+    }
+    else if (a.NRows == 1 && a.NCols == 1) {
+        res.center = center * a.center(0);
+    }
+    else {
+        res.center = center * a.center;
+    }
 
     res.polynomial.reserve(polynomial.size() + a.polynomial.size() + polynomial.size() * a.polynomial.size());
     // a.center * polynomial
     for (auto it : polynomial) {
-        res.polynomial.emplace_back(it.coeff * a.center, it.degree);
+        if (NRows == 1 && NCols == 1) {
+            res.polynomial.emplace_back(it.coeff(0) * a.center, it.degree);
+        }
+        else if (a.NRows == 1 && a.NCols == 1) {
+            res.polynomial.emplace_back(it.coeff * a.center(0), it.degree);
+        }
+        else {
+            res.polynomial.emplace_back(it.coeff * a.center, it.degree);
+        }
     }
 
     // center * a.polynomial
     for (auto it : a.polynomial) {
-        res.polynomial.emplace_back(it.coeff * center, it.degree);
+        if (NRows == 1 && NCols == 1) {
+            res.polynomial.emplace_back(center(0) * it.coeff, it.degree);
+        }
+        else if (a.NRows == 1 && a.NCols == 1) {
+            res.polynomial.emplace_back(center * it.coeff(0), it.degree);
+        }
+        else {
+            res.polynomial.emplace_back(center * it.coeff, it.degree);
+        }
     }
 
     // polynomial * a.polynomial (degree for each factor shouldn't be larger than 1)
-    Eigen::MatrixXd reduce_amount_1 = Eigen::MatrixXd::Zero(NRows, a.NCols);
+    // Eigen::MatrixXd reduce_amount_1 = Eigen::MatrixXd::Zero(NRows, a.NCols);
 
     for (auto it1 : polynomial) {
         for (auto it2 : a.polynomial) {
             Eigen::MatrixXd multiply_coeff = it1.coeff * it2.coeff;
+
+            if (NRows == 1 && NCols == 1) {
+                multiply_coeff = it1.coeff(0) * it2.coeff;
+            }
+            else if (a.NRows == 1 && a.NCols == 1) {
+                multiply_coeff = it1.coeff * it2.coeff(0);
+            }
+            else {
+                multiply_coeff = it1.coeff * it2.coeff;
+            }
 
             // Do not have to check carry
             // if we already know the maximum degree in the polynomial
@@ -696,21 +773,45 @@ PZsparse PZsparse::operator*(const PZsparse& a) {
         reduce_amount_2 += it.coeff.cwiseAbs();
     }
 
-    reduce_amount_2 *= a.independent;
-
+    if (NRows == 1 && NCols == 1) {
+        reduce_amount_2 = reduce_amount_2(0) * a.independent;
+    }
+    else if (a.NRows == 1 && a.NCols == 1) {
+        reduce_amount_2 *= a.independent(0);
+    }
+    else {
+        reduce_amount_2 *= a.independent;
+    }
+    
     // independent * (a.center + a.polynomial)
     Eigen::MatrixXd reduce_amount_3 = a.center.cwiseAbs();
 
     for (auto it : a.polynomial) {
         reduce_amount_3 += it.coeff.cwiseAbs();
     }
-
-    reduce_amount_3 = independent * reduce_amount_3;
+    
+    if (NRows == 1 && NCols == 1) {
+        reduce_amount_3 = independent(0) * reduce_amount_3;
+    }
+    else if (a.NRows == 1 && a.NCols == 1) {
+        reduce_amount_3 = independent * reduce_amount_3(0);
+    }
+    else {
+        reduce_amount_3 = independent * reduce_amount_3;
+    }
 
     // independent * a.independent + add reduced intervals
-    Eigen::MatrixXd reduce_amount = reduce_amount_1 + reduce_amount_2 + reduce_amount_3;
+    Eigen::MatrixXd reduce_amount = reduce_amount_2 + reduce_amount_3;
 
-    res.independent = independent * a.independent + reduce_amount;
+    if (NRows == 1 && NCols == 1) {
+        res.independent = independent(0) * a.independent + reduce_amount;
+    }
+    else if (a.NRows == 1 && a.NCols == 1) {
+        res.independent = independent * a.independent(0) + reduce_amount;
+    }
+    else {
+        res.independent = independent * a.independent + reduce_amount;
+    }
 
     res.simplify();
     
@@ -736,7 +837,7 @@ PZsparse PZsparse::operator*(const double a) {
 }
 
 PZsparse operator*(const double a, const PZsparse& b) {
-    // assert(b.checkDimensions());
+    assert(b.checkDimensions());
 
     PZsparse res(b.NRows, b.NCols);
 
@@ -787,6 +888,92 @@ PZsparse PZsparse::transpose() {
     res.independent = independent.transpose();
 
     return res;
+}
+
+void PZsparse::addOneDimPZ(const PZsparse& a, uint row_id, uint col_id) {
+    assert(checkDimensions());
+    assert(a.NRows == 1 && a.NCols == 1);
+    assert(0 <= row_id && row_id < NRows);
+    assert(0 <= col_id && col_id < NCols);
+
+    center(row_id, col_id) += a.center(0);
+
+    for (auto it : a.polynomial) {
+        Eigen::MatrixXd temp_coeff = Eigen::MatrixXd::Zero(NRows, NCols);
+        temp_coeff(row_id, col_id) = it.coeff(0);
+        polynomial.emplace_back(temp_coeff, it.degree);
+    }
+
+    independent(row_id, col_id) += a.independent(0);
+
+    simplify();
+}
+
+PZsparse stack(const PZsparseArray& a) {
+    assert(a.cols() == 1);
+
+    for (uint i = 0; i < a.rows(); i++) {
+        assert(a(i, 0).NRows == 1 && a(i, 0).NCols == 1);
+    }
+
+    PZsparse res(a.rows(), 1);
+
+    for (uint i = 0; i < a.rows(); i++) {
+        res.center(i, 0) = a(i, 0).center(0);
+    }
+
+    res.polynomial.reserve(a.rows() * a(0, 0).polynomial.size());
+    for (uint i = 0; i < a.rows(); i++) {
+        for (auto it : a(i, 0).polynomial) {
+            Eigen::MatrixXd temp_coeff = Eigen::MatrixXd::Zero(a.rows(), 1);
+            temp_coeff(i) = it.coeff(0);
+            res.polynomial.emplace_back(temp_coeff, it.degree);
+        }
+    }
+
+    for (uint i = 0; i < a.rows(); i++) {
+        res.independent(i, 0) = a(i, 0).independent(0);
+    }
+
+    res.simplify();
+
+    return res;
+}
+
+PZsparse cross(const Eigen::MatrixXd& a, const PZsparse& b) {
+    assert(a.rows() == 3 && a.cols() == 1 && b.NRows == 3 && b.NCols == 1);
+
+    PZsparseArray res(3, 1);
+
+    res(0, 0) = a(1, 0) * b(2, 0) - a(2, 0) * b(1, 0);
+    res(1, 0) = a(2, 0) * b(0, 0) - a(0, 0) * b(2, 0);
+    res(2, 0) = a(0, 0) * b(1, 0) - a(1, 0) * b(0, 0);
+
+    return stack(res);
+}
+
+PZsparse cross(const PZsparse& a, const PZsparse& b) {
+    assert(a.NRows == 3 && a.NCols == 1 && b.NRows == 3 && b.NCols == 1);
+
+    PZsparseArray res(3, 1);
+
+    res(0, 0) = a(1, 0) * b(2, 0) - a(2, 0) * b(1, 0);
+    res(1, 0) = a(2, 0) * b(0, 0) - a(0, 0) * b(2, 0);
+    res(2, 0) = a(0, 0) * b(1, 0) - a(1, 0) * b(0, 0);
+
+    return stack(res);
+}
+
+PZsparse cross(const PZsparse& a, const Eigen::MatrixXd& b) {
+    assert(a.NRows == 3 && a.NCols == 1 && b.rows() == 3 && b.cols() == 1);
+
+    PZsparseArray res(3, 1);
+
+    res(0, 0) = a(1, 0) * b(2, 0) - a(2, 0) * b(1, 0);
+    res(1, 0) = a(2, 0) * b(0, 0) - a(0, 0) * b(2, 0);
+    res(2, 0) = a(0, 0) * b(1, 0) - a(1, 0) * b(0, 0);
+
+    return stack(res);
 }
 
 #endif

@@ -7,8 +7,6 @@
 #define QDD_DES_K_DEP_MAXIMA (0.5 - sqrt(3) / 6)
 #define QDD_DES_K_DEP_MINIMA (0.5 + sqrt(3) / 6)
 
-typedef Eigen::Array<PZsparse, Eigen::Dynamic, Eigen::Dynamic> PZsparseArray;
-
 // 5th order Bezier curve
 // The initial position/velocity/acceleration is equal to q0/qd0/qdd0
 // The end position is equal to q0 + k

@@ -9,7 +9,7 @@ BezierCurve::BezierCurve(double* q0_inp, double* qd0_inp, double* qdd0_inp) {
     qdd0 = qdd0_inp;    
 
     // pre-allocate memory
-    R = PZsparseArray(NUM_JOINTS, NUM_TIME_STEPS);
+    R = PZsparseArray(NUM_JOINTS + 1, NUM_TIME_STEPS);
     R_t = PZsparseArray(NUM_JOINTS, NUM_TIME_STEPS);
     qd_des = PZsparseArray(NUM_FACTORS, NUM_TIME_STEPS);
     qda_des = PZsparseArray(NUM_FACTORS, NUM_TIME_STEPS);
@@ -115,16 +115,13 @@ void BezierCurve::makePolyZono(int t_ind) {
 
         // sin_q_des[t_ind * NUM_FACTORS + i] = PZsparse(sin_q_des_center, sin_q_des_coeff, sin_q_des_degree, 2);
 
-        // R(i, t_ind) = PZsparse(rots[i * 3], rots[i * 3 + 1], rots[i * 3 + 2]);
+        R(i, t_ind) = PZsparse(rots[i * 3], rots[i * 3 + 1], rots[i * 3 + 2]);
 
-        // if (axes[i] != 0) {
-        //     R(i, t_ind) = R(i, t_ind) * PZsparse(cos_q_des_center, cos_q_des_coeff, cos_q_des_degree, 2,
-        //                                          sin_q_des_center, sin_q_des_coeff, sin_q_des_degree, 2,
-        //                                          axes[i]);
-        // }
-        R(i, t_ind) = PZsparse(cos_q_des_center, cos_q_des_coeff, cos_q_des_degree, 2,
+        if (axes[i] != 0) {
+            R(i, t_ind) = R(i, t_ind) * PZsparse(cos_q_des_center, cos_q_des_coeff, cos_q_des_degree, 2,
                                                  sin_q_des_center, sin_q_des_coeff, sin_q_des_degree, 2,
                                                  axes[i]);
+        }
 
         R_t(i, t_ind) = R(i, t_ind).transpose();
         
@@ -234,6 +231,8 @@ void BezierCurve::makePolyZono(int t_ind) {
         R(i, t_ind) = PZsparse(rots[i * 3], rots[i * 3 + 1], rots[i * 3 + 2]);
         R(i, t_ind) = R(i, t_ind).transpose();
     }
+
+    R(NUM_JOINTS, t_ind) = PZsparse(0, 0, 0);
 }
 
 void BezierCurve::returnJointPositionExtremum(double* extremum, const double* k) {

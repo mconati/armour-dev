@@ -3,23 +3,34 @@
 
 #include "Dynamics.h"
 
-KinematicsDynamics::KinematicsDynamics(const BezierCurve* traj_input) {
+KinematicsDynamics::KinematicsDynamics(BezierCurve* traj_input) {
     traj = traj_input;
 
     links = PZsparseArray(NUM_FACTORS * 3, NUM_TIME_STEPS);
-    mass_arr = PZsparseArray(NUM_JOINTS, 1);
+    mass_nominal_arr = PZsparseArray(NUM_JOINTS, 1);
+    mass_uncertain_arr = PZsparseArray(NUM_JOINTS, 1);
     I_nominal_arr = PZsparseArray(NUM_JOINTS, 1);
     I_uncertain_arr = PZsparseArray(NUM_JOINTS, 1);
     u_nom = PZsparseArray(NUM_FACTORS, NUM_TIME_STEPS);
     u_nom_int = PZsparseArray(NUM_FACTORS, NUM_TIME_STEPS);
     r = PZsparseArray(NUM_FACTORS, 1);
     Mr = PZsparseArray(NUM_FACTORS, NUM_TIME_STEPS);
-    // V = PZsparseArray(NUM_TIME_STEPS, 1);
 
     for (int i = 0; i < NUM_JOINTS; i++) {
+        trans_matrix(i, 0) = Eigen::MatrixXd::Zero(3, 1);
+        trans_matrix(i, 0)(0) = trans[3 * i];
+        trans_matrix(i, 0)(1) = trans[3 * i + 1];
+        trans_matrix(i, 0)(2) = trans[3 * i + 2];
+
+        com_matrix(i, 0) = Eigen::MatrixXd::Zero(3, 1);
+        com_matrix(i, 0)(0) = com[3 * i];
+        com_matrix(i, 0)(1) = com[3 * i + 1];
+        com_matrix(i, 0)(2) = com[3 * i + 2];
+
         Eigen::MatrixXd mass_matrix(1, 1);
         mass_matrix(0) = mass[i];
-        mass_arr(i) = PZsparse(mass_matrix, mass_uncertainty);
+        mass_nominal_arr(i) = PZsparse(mass_matrix);
+        mass_uncertain_arr(i) = PZsparse(mass_matrix, mass_uncertainty);
 
         Eigen::Matrix3d inertia_matrix;
         for (int j = 0; j < 9; j++) {
@@ -32,17 +43,20 @@ KinematicsDynamics::KinematicsDynamics(const BezierCurve* traj_input) {
             r(i) = PZsparse(0, Interval(-eps, eps));
         }
     }
+
+    trans_matrix(NUM_JOINTS, 0) = Eigen::MatrixXd::Zero(3, 1);
+    trans_matrix(NUM_JOINTS, 0)(0) = trans[3 * NUM_JOINTS];
+    trans_matrix(NUM_JOINTS, 0)(1) = trans[3 * NUM_JOINTS + 1];
+    trans_matrix(NUM_JOINTS, 0)(2) = trans[3 * NUM_JOINTS + 2];
 }
 
-void KinematicsDynamics::fk() {
+void KinematicsDynamics::fk(uint t_ind) {
     PZsparse FK_R(3, 3);
     PZsparse FK_T(3, 1);
     int j = 0;
 
     for (int i = 0; i < NUM_JOINTS; i++) {
-        Eigen::MatrixXd trans_matrix(3, 1);
-        trans_matrix << trans[3 * i], trans[3 * i + 1], trans[3 * i + 2];
-        PZsparse P(trans_matrix);
+        PZsparse P(trans_matrix(i, 0));
         
         FK_T = FK_T + FK_R * P;
         // FK_R = FK_R * R[i];
@@ -56,124 +70,104 @@ void KinematicsDynamics::fk() {
     }
 }
 
-// void KinematicsDynamics::rnea(PZsparseArray* R,
-//                               PZsparseArray* R_t,
-//                               PZsparseArray* v_arr,
-//                               PZsparseArray* v_aux_arr,
-//                               PZsparseArray* a_arr,
-//                               PZsparseArray* mass_arr,
-//                               PZsparseArray* I_arr,
-//                               PZsparseArray* u,
-//                               bool setGravity) {
-//     PZsparse w(3, 1);
-//     PZsparse wdot(3, 1);
-//     PZsparse w_aux(3, 1);
-//     PZsparse linear_acc(3, 1);
+void KinematicsDynamics::rnea(uint t_ind,
+                              PZsparseArray& mass_arr,
+                              PZsparseArray& I_arr,
+                              PZsparseArray& u,
+                              bool setGravity) {
+    PZsparse w(3, 1);
+    PZsparse wdot(3, 1);
+    PZsparse w_aux(3, 1);
+    PZsparse linear_acc(3, 1);
 
-//     PZsparseArray F(NUM_JOINTS, 1);
-//     PZsparseArray N(NUM_JOINTS, 1);
+    PZsparseArray F(NUM_JOINTS, 1);
+    PZsparseArray N(NUM_JOINTS, 1);
 
-//     if (setGravity) { // set gravity
-//         // directly modify the center of the PZ instance
-//         linear_acc.center(2) = gravity;
-//     }
+    if (setGravity) { // set gravity
+        // directly modify the center of the PZ instance
+        linear_acc.center(2) = gravity;
+    }
 
-//     // RNEA forward recursion
-//     for (int i = 0; i < NUM_JOINTS; i++) {
-//         // NOTE:
-//         // This is just a simplified implementation!!!
-//         // We assume all fixed joints are at the end and the revolute joints are consecutive
-//         if (axes[i] != 0) { // revolute joints
-//             // line 16
-//             linear_acc = R_t[i] * (linear_acc 
-//                                     + cross(wdot, trans + i * 3) 
-//                                     + cross(w, cross(w_aux, trans + i * 3)));
+    // RNEA forward recursion
+    for (int i = 0; i < NUM_JOINTS; i++) {
+        // NOTE:
+        // This is just a simplified implementation!!!
+        // We assume all fixed joints are at the end and the revolute joints are consecutive
+        if (axes[i] != 0) { // revolute joints
+            // line 16
+            linear_acc = traj->R_t(i, t_ind) * (linear_acc 
+                                                 + cross(wdot, trans_matrix(i, 0)) 
+                                                 + cross(w, cross(w_aux, trans_matrix(i, 0))));
 
-//             // line 13
-//             w = R_t[i] * w;
-//             if (v_arr != nullptr) { // non-zero velocity input
-//                 *(w.elt[abs(axes[i]) - 1]) += v_arr[i];
-//             }
+            // line 13
+            w = traj->R_t(i, t_ind) * w;
+            w.addOneDimPZ(traj->qd_des(i, t_ind), abs(axes[i]) - 1, 0);
 
-//             // line 14
-//             w_aux = R_t[i] * w_aux;
+            // line 14
+            w_aux = traj->R_t(i, t_ind) * w_aux;
 
-//             // line 15
-//             wdot = R_t[i] * wdot;
+            // line 15
+            wdot = traj->R_t(i, t_ind) * wdot;
 
-//             vecPZsparse temp; // temp = joint_vel(robot_params.q_index(i))*z(:,i)
-//             if (v_arr != nullptr) { // non-zero velocity input
-//                 *(temp.elt[abs(axes[i]) - 1]) = v_arr[i];
-//             }
+            PZsparse temp(3, 1); // temp = joint_vel(robot_params.q_index(i))*z(:,i)
+            temp.addOneDimPZ(traj->qd_des(i, t_ind), abs(axes[i]) - 1, 0);
 
-//             wdot = wdot + cross(w_aux, temp);
+            wdot = wdot + cross(w_aux, temp);
 
-//             if (a_arr != nullptr) { // non-zero acceleration input
-//                 *(wdot.elt[abs(axes[i]) - 1]) += a_arr[i];
-//             }
+            wdot.addOneDimPZ(traj->qdda_des(i, t_ind), abs(axes[i]) - 1, 0);
 
-//             // line 14
-//             if (v_aux_arr != nullptr) { // non-zero auxiliary velocity input
-//                 *(w_aux.elt[abs(axes[i]) - 1]) += v_aux_arr[i];
-//             }
-//         }
-//         else { // fixed joints
-//             // line 16
-//             linear_acc = R_t[i] * (linear_acc 
-//                                     + cross(wdot, trans + i * 3) 
-//                                     + cross(w, cross(w_aux, trans + i * 3)));
+            // line 14
+            w_aux.addOneDimPZ(traj->qda_des(i, t_ind), abs(axes[i]) - 1, 0);
+        }
+        else { // fixed joints
+            // line 16
+            linear_acc = traj->R_t(i, t_ind) * (linear_acc 
+                                                 + cross(wdot, trans_matrix(i, 0)) 
+                                                 + cross(w, cross(w_aux, trans_matrix(i, 0))));
 
-//             // line 13
-//             w = R_t[i] * w;
+            // line 13
+            w = traj->R_t(i, t_ind) * w;
 
-//             // line 14
-//             w_aux = R_t[i] * w_aux;
+            // line 14
+            w_aux = traj->R_t(i, t_ind) * w_aux;
 
-//             // line 15
-//             wdot = R_t[i] * wdot;
-//         }
+            // line 15
+            wdot = traj->R_t(i, t_ind) * wdot;
+        }
 
-//         // line 23 & 27
-//         if (mass_arr != nullptr) { // uncertain mass parameter
-//             F[i] = mass_arr[i] * (linear_acc 
-//                                     + cross(wdot, com + i * 3)
-//                                     + cross(w, cross(w_aux, com + i * 3)));
-//         }
-//         else { // nominal mass parameter
-//             F[i] = mass[i] * (linear_acc 
-//                                 + cross(wdot, com + i * 3)
-//                                 + cross(w, cross(w_aux, com + i * 3)));
-//         }
+        // line 23 & 27
+        F(i, 0) = mass_arr(i, 0) * (linear_acc
+                                     + cross(wdot, com_matrix(i, 0))
+                                     + cross(w, cross(w_aux, com_matrix(i, 0))));
 
-//         // line 29
-//         N[i] = I_arr[i] * wdot
-//                 + cross(w_aux, (I_arr[i] * w));
-//     }
+        // line 29
+        N(i, 0) = I_arr(i, 0) * wdot + cross(w_aux, (I_arr(i, 0) * w));
+    }
 
-//     PZsparse f(3, 1);
-//     PZsparse n(3, 1);
+    PZsparse f(3, 1);
+    PZsparse n(3, 1);
 
-//     // RNEA reverse recursion
-//     for (int i = NUM_JOINTS - 1; i >= 0; i--) {
-//         // line 29
-//         n = N[i]
-//             + R[i + 1] * n
-//             + cross(com + i * 3, F[i])
-//             + cross(trans + (i + 1) * 3, R[i + 1] * f);
+    // RNEA reverse recursion
+    for (int i = NUM_JOINTS - 1; i >= 0; i--) {
+        // line 29
+        n = N(i, 0)
+            + traj->R(i + 1, t_ind) * n
+            + cross(com_matrix(i, 0), F(i, 0))
+            + cross(trans_matrix(i + 1, 0), traj->R(i + 1, t_ind) * f);
 
-//         // line 28
-//         f = R[i + 1] * f + F[i];
+        // line 28
+        f = traj->R(i + 1, t_ind) * f + F(i, 0);
 
-//         if (axes[i] != 0) {
-//             u[i] = *(n.elt[abs(axes[i]) - 1]);
+        if (axes[i] != 0) {
+            u(i, t_ind) = n(abs(axes[i]) - 1, 0);
 
-//             u[i] = u[i] + armature[i] * a_arr[i];
+            u(i, t_ind) = u(i, t_ind) + armature[i] * traj->qdda_des(i, t_ind);
 
-//             u[i] = u[i] + damping[i] * v_arr[i];
+            u(i, t_ind) = u(i, t_ind) + damping[i] * traj->qd_des(i, t_ind);
 
-//             // haven't implemented friction yet, this is more complicated...
-//         }
-//     }
-// }
+            // friction is directly cut on the torque limits
+        }
+    }
+}
 
 #endif

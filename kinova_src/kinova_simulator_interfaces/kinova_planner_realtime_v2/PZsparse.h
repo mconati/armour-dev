@@ -117,7 +117,7 @@ public:
 
     void makeRotationMatrix(Eigen::MatrixXd& R, const double cos_elt, const double sin_elt, const uint axis, bool startFromZero = false);
 
-    bool checkDimensions();
+    bool checkDimensions() const;
 
     void simplify();
 
@@ -127,13 +127,15 @@ public:
 
     void slice(Eigen::Array<Eigen::MatrixXd, NUM_FACTORS, 1>& gradient, const double* factor); // 1st-order gradient of slice
 
-    // Interval toInterval();
+    MatrixXInt toInterval();
 
     void convertHashToDegree(const uint64_t degree);
 
     /*
     Arithmetic
     */
+
+    PZsparse operator() (int row_id, int col_id) const;
 
     PZsparse operator=(const double a);
     
@@ -160,11 +162,18 @@ public:
     PZsparse operator/(const double a);
 
     PZsparse transpose();
+
+    // add a one dim PZ to a certain entry
+    void addOneDimPZ(const PZsparse& a, uint row_id, uint col_id);
 };
+
+typedef Eigen::Array<PZsparse, Eigen::Dynamic, Eigen::Dynamic> PZsparseArray;
 
 uint64_t convertDegreeToHash(const uint64_t* degreeArray);
 
 std::ostream& operator<<(std::ostream& os, PZsparse& a);
+
+std::ostream& operator<<(std::ostream& os, const MatrixXInt& a);
 
 /*
 Arithmetic
@@ -175,5 +184,14 @@ PZsparse operator+(const double a, const PZsparse& b);
 PZsparse operator-(const double a, const PZsparse& b);
 
 PZsparse operator*(const double a, const PZsparse& b);
+
+// stack N 1-dim PZs to an N-dim PZ 
+PZsparse stack(const PZsparseArray& a);
+
+PZsparse cross(const Eigen::MatrixXd& a, const PZsparse& b);
+
+PZsparse cross(const PZsparse& a, const PZsparse& b);
+
+PZsparse cross(const PZsparse& a, const Eigen::MatrixXd& b);
 
 #endif
