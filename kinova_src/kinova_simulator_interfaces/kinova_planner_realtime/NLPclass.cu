@@ -601,80 +601,113 @@ bool armtd_NLP::eval_jac_g(
 
                 //    separation constraint
                 // f_c[i].elt[2].slice(values + i*NUM_FACTORS, x);
-                int offset = i*NUM_FACTORS;
-                for (int j = offset;j<offset+NUM_FACTORS;j++) {
+                int offset1 = i*NUM_FACTORS;
+                for (int j = offset1;j<offset1+NUM_FACTORS;j++) {
                     values[j] = -1*f_c_z_grad[j];
                 }
                 // values[i*NUM_FACTORS] = -1*f_c_z_grad;
 
                 //    slipping constraint                
                 // calculate constraint gradient, depends on the signs of the centers like constraint itself does.
+                int offset2 = (i+NUM_TIME_STEPS)*NUM_FACTORS;
                 if ( (f_c_x_center >= 0) && (f_c_y_center >= 0) && (f_c_z_center >= 0) ){
-                    values[(i+NUM_TIME_STEPS)*NUM_FACTORS] = 2*f_c_x_center*f_c_x_grad + 2*f_c_x_radius*f_c_x_grad + 2*f_c_y_center*f_c_y_grad + 2*f_c_y_radius*f_c_y_grad - u_s*u_s * ( 2*f_c_z_center*f_c_z_grad - 2*f_c_z_radius*f_c_z_grad );
+                    for (int j=offset2;j<offset2+NUM_FACTORS;j++) {
+                        values[j] = 2*f_c_x_center*f_c_x_grad[j] + 2*f_c_x_radius*f_c_x_grad[j] + 2*f_c_y_center*f_c_y_grad[j] + 2*f_c_y_radius*f_c_y_grad[j] - u_s*u_s * ( 2*f_c_z_center*f_c_z_grad[j] - 2*f_c_z_radius*f_c_z_grad[j] );
+                    }
                 }
                 // condition 2: y negative
                 else if ( (f_c_x_center >= 0) && (f_c_y_center <= 0) && (f_c_z_center >= 0) ) {
-                    values[(i+NUM_TIME_STEPS)*NUM_FACTORS] = 2*f_c_x_center*f_c_x_grad + 2*f_c_x_radius*f_c_x_grad + 2*f_c_y_center*f_c_y_grad - 2*f_c_y_radius*f_c_y_grad - u_s*u_s * ( 2*f_c_z_center*f_c_z_grad - 2*f_c_z_radius*f_c_z_grad );
+                    for (int j=offset2;j<offset2+NUM_FACTORS;j++) {
+                        values[j] = 2*f_c_x_center*f_c_x_grad[j] + 2*f_c_x_radius*f_c_x_grad[j] + 2*f_c_y_center*f_c_y_grad[j] - 2*f_c_y_radius*f_c_y_grad[j] - u_s*u_s * ( 2*f_c_z_center*f_c_z_grad[j] - 2*f_c_z_radius*f_c_z_grad[j] );
+                    }
                 }
                 // condition 3: z negative
                 else if ( (f_c_x_center >= 0) && (f_c_y_center >= 0) && (f_c_z_center <= 0) ) {
-                    values[(i+NUM_TIME_STEPS)*NUM_FACTORS] = 2*f_c_x_center*f_c_x_grad + 2*f_c_x_radius*f_c_x_grad + 2*f_c_y_center*f_c_y_grad + 2*f_c_y_radius*f_c_y_grad - u_s*u_s * ( 2*f_c_z_center*f_c_z_grad + 2*f_c_z_radius*f_c_z_grad );
+                    for (int j=offset2;j<offset2+NUM_FACTORS;j++) {
+                        values[j] = 2*f_c_x_center*f_c_x_grad[j] + 2*f_c_x_radius*f_c_x_grad[j] + 2*f_c_y_center*f_c_y_grad[j] + 2*f_c_y_radius*f_c_y_grad[j] - u_s*u_s * ( 2*f_c_z_center*f_c_z_grad[j] + 2*f_c_z_radius*f_c_z_grad[j] );
+                    }
                 }
                 // condition 4: y and z negative
                 else if ( (f_c_x_center >= 0) && (f_c_y_center <= 0) && (f_c_z_center <= 0) ) {
-                    values[(i+NUM_TIME_STEPS)*NUM_FACTORS] = 2*f_c_x_center*f_c_x_grad + 2*f_c_x_radius*f_c_x_grad + 2*f_c_y_center*f_c_y_grad - 2*f_c_y_radius*f_c_y_grad - u_s*u_s * ( 2*f_c_z_center*f_c_z_grad + 2*f_c_z_radius*f_c_z_grad );
+                    for (int j=offset2;j<offset2+NUM_FACTORS;j++) {
+                        values[j] = 2*f_c_x_center*f_c_x_grad[j] + 2*f_c_x_radius*f_c_x_grad[j] + 2*f_c_y_center*f_c_y_grad[j] - 2*f_c_y_radius*f_c_y_grad[j] - u_s*u_s * ( 2*f_c_z_center*f_c_z_grad[j] + 2*f_c_z_radius*f_c_z_grad[j] );
+                    }
                 }
                 // condition 5: x negative
                 else if ( (f_c_x_center <= 0) && (f_c_y_center >= 0) && (f_c_z_center >= 0) ) {
-                    values[(i+NUM_TIME_STEPS)*NUM_FACTORS] = 2*f_c_x_center*f_c_x_grad - 2*f_c_x_radius*f_c_x_grad + 2*f_c_y_center*f_c_y_grad + 2*f_c_y_radius*f_c_y_grad - u_s*u_s * ( 2*f_c_z_center*f_c_z_grad - 2*f_c_z_radius*f_c_z_grad );
+                    for (int j=offset2;j<offset2+NUM_FACTORS;j++) {
+                        values[j] = 2*f_c_x_center*f_c_x_grad[j] - 2*f_c_x_radius*f_c_x_grad[j] + 2*f_c_y_center*f_c_y_grad[j] + 2*f_c_y_radius*f_c_y_grad[j] - u_s*u_s * ( 2*f_c_z_center*f_c_z_grad[j] - 2*f_c_z_radius*f_c_z_grad[j] );
+                    }
                 }
                 // condition 6: x and y negative
                 else if ( (f_c_x_center <= 0) && (f_c_y_center <= 0) && (f_c_z_center >= 0) ) {
-                    values[(i+NUM_TIME_STEPS)*NUM_FACTORS] = 2*f_c_x_center*f_c_x_grad - 2*f_c_x_radius*f_c_x_grad + 2*f_c_y_center*f_c_y_grad - 2*f_c_y_radius*f_c_y_grad - u_s*u_s * ( 2*f_c_z_center*f_c_z_grad - 2*f_c_z_radius*f_c_z_grad );
+                    for (int j=offset2;j<offset2+NUM_FACTORS;j++) {
+                        values[j] = 2*f_c_x_center*f_c_x_grad[j] - 2*f_c_x_radius*f_c_x_grad[j] + 2*f_c_y_center*f_c_y_grad[j] - 2*f_c_y_radius*f_c_y_grad[j] - u_s*u_s * ( 2*f_c_z_center*f_c_z_grad[j] - 2*f_c_z_radius*f_c_z_grad[j] );
+                    }
                 }
                 // condition 7: x and z negative
                 else if ( (f_c_x_center <= 0) && (f_c_y_center >= 0) && (f_c_z_center <= 0) ) {
-                    values[(i+NUM_TIME_STEPS)*NUM_FACTORS] = 2*f_c_x_center*f_c_x_grad - 2*f_c_x_radius*f_c_x_grad + 2*f_c_y_center*f_c_y_grad + 2*f_c_y_radius*f_c_y_grad - u_s*u_s * ( 2*f_c_z_center*f_c_z_grad + 2*f_c_z_radius*f_c_z_grad );
+                    for (int j=offset2;j<offset2+NUM_FACTORS;j++) {
+                        values[j] = 2*f_c_x_center*f_c_x_grad[j] - 2*f_c_x_radius*f_c_x_grad[j] + 2*f_c_y_center*f_c_y_grad[j] + 2*f_c_y_radius*f_c_y_grad[j] - u_s*u_s * ( 2*f_c_z_center*f_c_z_grad[j] + 2*f_c_z_radius*f_c_z_grad[j] );
+                    }
                 }
                 // condition 8: x and y and z negative
                 else if ( (f_c_x_center <= 0) && (f_c_y_center <= 0) && (f_c_z_center <= 0) ) {
-                    values[(i+NUM_TIME_STEPS)*NUM_FACTORS] = 2*f_c_x_center*f_c_x_grad - 2*f_c_x_radius*f_c_x_grad + 2*f_c_y_center*f_c_y_grad - 2*f_c_y_radius*f_c_y_grad - u_s*u_s * ( 2*f_c_z_center*f_c_z_grad + 2*f_c_z_radius*f_c_z_grad );
+                    for (int j=offset2;j<offset2+NUM_FACTORS;j++) {
+                        values[j] = 2*f_c_x_center*f_c_x_grad[j] - 2*f_c_x_radius*f_c_x_grad[j] + 2*f_c_y_center*f_c_y_grad[j] - 2*f_c_y_radius*f_c_y_grad[j] - u_s*u_s * ( 2*f_c_z_center*f_c_z_grad[j] + 2*f_c_z_radius*f_c_z_grad[j] );
+                    }
                 }
 
 
                 //    tipping constraint
                 // calculate constraint gradient
+                int offset3 = (i+2*NUM_TIME_STEPS)*NUM_FACTORS;
                 if ( (ZMP_top_x_center >= 0) && (ZMP_top_y_center >= 0) && (ZMP_bottom_center >= 0) ){
-                    // Note: double check that the center/radius is a number that can be squared
-                    values[(i+2*NUM_TIME_STEPS)*NUM_FACTORS] = 2*ZMP_top_x_center*ZMP_top_x_grad + 2*ZMP_top_x_radius*ZMP_top_x_grad + 2*ZMP_top_y_center*ZMP_top_y_grad + 2*ZMP_top_y_radius*ZMP_top_y_grad - surf_rad*surf_rad * ( 2*ZMP_bottom_center*ZMP_bottom_grad - 2*ZMP_bottom_radius*ZMP_bottom_grad);
+                    for (int j=offset3;j<offset3+NUM_FACTORS;j++) {
+                        values[j] = 2*ZMP_top_x_center*ZMP_top_x_grad[j] + 2*ZMP_top_x_radius*ZMP_top_x_grad[j] + 2*ZMP_top_y_center*ZMP_top_y_grad[j] + 2*ZMP_top_y_radius*ZMP_top_y_grad[j] - surf_rad*surf_rad * ( 2*ZMP_bottom_center*ZMP_bottom_grad[j] - 2*ZMP_bottom_radius*ZMP_bottom_grad[j]);
+                    }
                 }
                 // condition 2: y negative
                 else if ( (ZMP_top_x_center >= 0) && (ZMP_top_y_center <= 0) && (ZMP_bottom_center >= 0) ) {
-                    values[(i+2*NUM_TIME_STEPS)*NUM_FACTORS] = 2*ZMP_top_x_center*ZMP_top_x_grad + 2*ZMP_top_x_radius*ZMP_top_x_grad + 2*ZMP_top_y_center*ZMP_top_y_grad - 2*ZMP_top_y_radius*ZMP_top_y_grad - surf_rad*surf_rad * ( 2*ZMP_bottom_center*ZMP_bottom_grad - 2*ZMP_bottom_radius*ZMP_bottom_grad);
+                    for (int j=offset3;j<offset3+NUM_FACTORS;j++) {
+                        values[j] = 2*ZMP_top_x_center*ZMP_top_x_grad[j] + 2*ZMP_top_x_radius*ZMP_top_x_grad[j] + 2*ZMP_top_y_center*ZMP_top_y_grad[j] - 2*ZMP_top_y_radius*ZMP_top_y_grad[j] - surf_rad*surf_rad * ( 2*ZMP_bottom_center*ZMP_bottom_grad[j] - 2*ZMP_bottom_radius*ZMP_bottom_grad[j]);
+                    }
                 }
                 // condition 3: z negative
                 else if ( (ZMP_top_x_center >= 0) && (ZMP_top_y_center >= 0) && (ZMP_bottom_center <= 0) ) {
-                    values[(i+2*NUM_TIME_STEPS)*NUM_FACTORS] = 2*ZMP_top_x_center*ZMP_top_x_grad + 2*ZMP_top_x_radius*ZMP_top_x_grad + 2*ZMP_top_y_center*ZMP_top_y_grad + 2*ZMP_top_y_radius*ZMP_top_y_grad - surf_rad*surf_rad * ( 2*ZMP_bottom_center*ZMP_bottom_grad + 2*ZMP_bottom_radius*ZMP_bottom_grad);
+                    for (int j=offset3;j<offset3+NUM_FACTORS;j++) {
+                        values[j] = 2*ZMP_top_x_center*ZMP_top_x_grad[j] + 2*ZMP_top_x_radius*ZMP_top_x_grad[j] + 2*ZMP_top_y_center*ZMP_top_y_grad[j] + 2*ZMP_top_y_radius*ZMP_top_y_grad[j] - surf_rad*surf_rad * ( 2*ZMP_bottom_center*ZMP_bottom_grad[j] + 2*ZMP_bottom_radius*ZMP_bottom_grad[j]);
+                    }
                 }
                 // condition 4: y and z negative
                 else if ( (ZMP_top_x_center >= 0) && (ZMP_top_y_center <= 0) && (ZMP_bottom_center <= 0) ) {
-                    values[(i+2*NUM_TIME_STEPS)*NUM_FACTORS] = 2*ZMP_top_x_center*ZMP_top_x_grad + 2*ZMP_top_x_radius*ZMP_top_x_grad + 2*ZMP_top_y_center*ZMP_top_y_grad - 2*ZMP_top_y_radius*ZMP_top_y_grad - surf_rad*surf_rad * ( 2*ZMP_bottom_center*ZMP_bottom_grad + 2*ZMP_bottom_radius*ZMP_bottom_grad);
+                    for (int j=offset3;j<offset3+NUM_FACTORS;j++) {
+                        values[j] = 2*ZMP_top_x_center*ZMP_top_x_grad[j] + 2*ZMP_top_x_radius*ZMP_top_x_grad[j] + 2*ZMP_top_y_center*ZMP_top_y_grad[j] - 2*ZMP_top_y_radius*ZMP_top_y_grad[j] - surf_rad*surf_rad * ( 2*ZMP_bottom_center*ZMP_bottom_grad[j] + 2*ZMP_bottom_radius*ZMP_bottom_grad[j]);
+                    }
                 }
                 // condition 5: x negative
                 else if ( (ZMP_top_x_center <= 0) && (ZMP_top_y_center >= 0) && (ZMP_bottom_center >= 0) ) {
-                    values[(i+2*NUM_TIME_STEPS)*NUM_FACTORS] = 2*ZMP_top_x_center*ZMP_top_x_grad - 2*ZMP_top_x_radius*ZMP_top_x_grad + 2*ZMP_top_y_center*ZMP_top_y_grad + 2*ZMP_top_y_radius*ZMP_top_y_grad - surf_rad*surf_rad * ( 2*ZMP_bottom_center*ZMP_bottom_grad - 2*ZMP_bottom_radius*ZMP_bottom_grad);
+                    for (int j=offset3;j<offset3+NUM_FACTORS;j++) {
+                        values[j] = 2*ZMP_top_x_center*ZMP_top_x_grad[j] - 2*ZMP_top_x_radius*ZMP_top_x_grad[j] + 2*ZMP_top_y_center*ZMP_top_y_grad[j] + 2*ZMP_top_y_radius*ZMP_top_y_grad[j] - surf_rad*surf_rad * ( 2*ZMP_bottom_center*ZMP_bottom_grad[j] - 2*ZMP_bottom_radius*ZMP_bottom_grad[j]);
+                    }
                 }
                 // condition 6: x and y negative
                 else if ( (ZMP_top_x_center <= 0) && (ZMP_top_y_center <= 0) && (ZMP_bottom_center >= 0) ) {
-                    values[(i+2*NUM_TIME_STEPS)*NUM_FACTORS] = 2*ZMP_top_x_center*ZMP_top_x_grad - 2*ZMP_top_x_radius*ZMP_top_x_grad + 2*ZMP_top_y_center*ZMP_top_y_grad - 2*ZMP_top_y_radius*ZMP_top_y_grad - surf_rad*surf_rad * ( 2*ZMP_bottom_center*ZMP_bottom_grad - 2*ZMP_bottom_radius*ZMP_bottom_grad);
+                    for (int j=offset3;j<offset3+NUM_FACTORS;j++) {
+                        values[j] = 2*ZMP_top_x_center*ZMP_top_x_grad[j] - 2*ZMP_top_x_radius*ZMP_top_x_grad[j] + 2*ZMP_top_y_center*ZMP_top_y_grad[j] - 2*ZMP_top_y_radius*ZMP_top_y_grad[j] - surf_rad*surf_rad * ( 2*ZMP_bottom_center*ZMP_bottom_grad[j] - 2*ZMP_bottom_radius*ZMP_bottom_grad[j]);
+                    }
                 }
                 // condition 7: x and z negative
                 else if ( (ZMP_top_x_center <= 0) && (ZMP_top_y_center >= 0) && (ZMP_bottom_center <= 0) ) {
-                    values[(i+2*NUM_TIME_STEPS)*NUM_FACTORS] = 2*ZMP_top_x_center*ZMP_top_x_grad - 2*ZMP_top_x_radius*ZMP_top_x_grad + 2*ZMP_top_y_center*ZMP_top_y_grad + 2*ZMP_top_y_radius*ZMP_top_y_grad - surf_rad*surf_rad * ( 2*ZMP_bottom_center*ZMP_bottom_grad + 2*ZMP_bottom_radius*ZMP_bottom_grad);
+                    for (int j=offset3;j<offset3+NUM_FACTORS;j++) {
+                        values[j] = 2*ZMP_top_x_center*ZMP_top_x_grad[j] - 2*ZMP_top_x_radius*ZMP_top_x_grad[j] + 2*ZMP_top_y_center*ZMP_top_y_grad[j] + 2*ZMP_top_y_radius*ZMP_top_y_grad[j] - surf_rad*surf_rad * ( 2*ZMP_bottom_center*ZMP_bottom_grad[j] + 2*ZMP_bottom_radius*ZMP_bottom_grad[j]);
+                    }
                 }
                 // condition 8: x and y and z negative
                 else if ( (ZMP_top_x_center <= 0) && (ZMP_top_y_center <= 0) && (ZMP_bottom_center <= 0) ) {
-                    values[(i+2*NUM_TIME_STEPS)*NUM_FACTORS] = 2*ZMP_top_x_center*ZMP_top_x_grad - 2*ZMP_top_x_radius*ZMP_top_x_grad + 2*ZMP_top_y_center*ZMP_top_y_grad - 2*ZMP_top_y_radius*ZMP_top_y_grad - surf_rad*surf_rad * ( 2*ZMP_bottom_center*ZMP_bottom_grad + 2*ZMP_bottom_radius*ZMP_bottom_grad);
+                    for (int j=offset3;j<offset3+NUM_FACTORS;j++) {
+                        values[j] = 2*ZMP_top_x_center*ZMP_top_x_grad[j] - 2*ZMP_top_x_radius*ZMP_top_x_grad[j] + 2*ZMP_top_y_center*ZMP_top_y_grad[j] - 2*ZMP_top_y_radius*ZMP_top_y_grad[j] - surf_rad*surf_rad * ( 2*ZMP_bottom_center*ZMP_bottom_grad[j] + 2*ZMP_bottom_radius*ZMP_bottom_grad[j]);
+                    }
                 }
 
                 }

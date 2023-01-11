@@ -50,7 +50,8 @@ max_sim_iter = 600 ;
 stop_threshold = 4 ; % number of failed iterations before exiting
 
 %%% for world
-start = [-1; -1; -1; -1; -1; -1; -1]; % start configuration
+% start = [-1; -1; -1; -1; -1; -1; -1]; % start configuration
+start = zeros(7,1);
 goal = [1; 1; 1; 1; 1; 1; 1]; % goal configuration
 obstacles{1} = box_obstacle_zonotope('center', [0; 0; 0.6],...
                                      'side_lengths', [0.1; 0.1; 0.1]) ;

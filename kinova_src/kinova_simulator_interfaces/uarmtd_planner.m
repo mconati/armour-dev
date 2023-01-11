@@ -186,7 +186,8 @@ classdef uarmtd_planner < robot_arm_generic_planner
     
                     % call cuda program in terminal
                     % you have to be in the proper path!
-                    terminal_output = system('./../kinova_simulator_interfaces/kinova_planner_realtime/armour_main');
+%                     terminal_output = system('./../kinova_simulator_interfaces/kinova_planner_realtime/armour_main'); % armour path
+                    terminal_output = system('./../kinova_simulator_interfaces/kinova_planner_realtime/rtd_force_main'); % rtd-force path
     
                     if terminal_output == 0
                         data = readmatrix('armour.out', 'FileType', 'text');

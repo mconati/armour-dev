@@ -53,8 +53,8 @@ void KinematicsDynamics::rnea(PZsparse* v_arr,
                               PZsparse* mass_arr,
                               matPZsparse* I_arr,
                               PZsparse* u,
-                              vecPZsparse* f_c;
-                              vecPZsparse* n_c;
+                              vecPZsparse* f_c,
+                              vecPZsparse* n_c,
                               bool setGravity) {
     vecPZsparse w;
     vecPZsparse wdot;
@@ -168,9 +168,9 @@ void KinematicsDynamics::rnea(PZsparse* v_arr,
         // passing out the contact joint RNEA outputs
         // ERROR! this needs to be NUM_JOINTS, i.e. 10th joint, but this for loop doesn't go that far.
         // I think the recursion is wrong? or the definition of NUM_JOINTS is wrong
-        if (i = NUM_JOINTS-1) {
-            f_c = f;
-            n_c = n;
+        if (i = NUM_JOINTS) {
+            *f_c = f; // not sure how to assign these
+            *n_c = n; // not sure how to assign these
         }
     }
 }
