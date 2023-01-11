@@ -28,8 +28,8 @@ public:
         Obstacles* Obstacle_input,
         vecPZsparse* f_c_input,
         vecPZsparse* n_c_input,
-        const Number* u_s,
-        const Number* surf_rad
+        double u_s_input,
+        double surf_rad_input
     );
 
     /**@name Overloaded from TNLP */
@@ -188,9 +188,13 @@ private:
 
     Obstacles* obstacles = nullptr;
 
-    vecPZsparse* = nullptr;
+    vecPZsparse* f_c = nullptr;
 
-    vecPZsparse* nullptr;
+    vecPZsparse* n_c = nullptr;
+
+    double u_s = 0.5; // is this correct or needed?
+
+    double surf_rad = 0.0762; // is this correct or needed?
 
     //@}
 };

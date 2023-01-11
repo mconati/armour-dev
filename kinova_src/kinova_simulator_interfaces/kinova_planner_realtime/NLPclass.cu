@@ -30,8 +30,8 @@ bool armtd_NLP::set_parameters(
     Obstacles* obstacles_input,
     vecPZsparse* f_c_input,
     vecPZsparse* n_c_input,
-    const Number* u_s,
-    const Number* surf_rad
+    double u_s_input,
+    double surf_rad_input
  ) 
  {
     q_des = q_des_input;
@@ -43,6 +43,11 @@ bool armtd_NLP::set_parameters(
     obstacles = obstacles_input;
     f_c = f_c_input;
     n_c = n_c_input;
+    u_s = u_s_input;
+    surf_rad = surf_rad_input;
+
+    // double u_s = 0.5;
+    // double surf_rad = 0.0762;
 
     constraint_number = NUM_FACTORS * NUM_TIME_STEPS +
                         (NUM_FACTORS - 1) * NUM_TIME_STEPS * obstacles->num_obstacles + 
@@ -337,11 +342,11 @@ bool armtd_NLP::eval_g(
             TYPE n_c_z_center = getCenter(n_c[i].elt[2].slice(x));
             TYPE n_c_z_center_2 = n_c_z_center * n_c_z_center;
             // get radii of independent generators and their squares
-            TYPE n_c_x_radius = getRadius(n_c[i].elt[0].slice(x))
+            TYPE n_c_x_radius = getRadius(n_c[i].elt[0].slice(x));
             TYPE n_c_x_radius_2 = n_c_x_radius * n_c_x_radius;
-            TYPE n_c_y_radius = getRadius(n_c[i].elt[1].slice(x))
+            TYPE n_c_y_radius = getRadius(n_c[i].elt[1].slice(x));
             TYPE n_c_y_radius_2 = n_c_y_radius * n_c_y_radius;
-            TYPE n_c_z_radius = getRadius(n_c[i].elt[2].slice(x))
+            TYPE n_c_z_radius = getRadius(n_c[i].elt[2].slice(x));
             TYPE n_c_z_radius_2 = n_c_z_radius * n_c_z_radius;
 
             //     separation constraint: -inf < -1*f_c_z < 0
