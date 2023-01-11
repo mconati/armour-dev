@@ -299,7 +299,7 @@ bool armtd_NLP::eval_g(
     }
 
     Index i;
-    #pragma omp parallel for private(i) schedule(static, (NUM_TIME_STEPS * NUM_FACTORS + NUM_TIME_STEPS) / NUM_THREADS)
+    // #pragma omp parallel for private(i) schedule(static, (NUM_TIME_STEPS * NUM_FACTORS + NUM_TIME_STEPS) / NUM_THREADS)
     for(i = 0; i < (NUM_TIME_STEPS * NUM_FACTORS + NUM_TIME_STEPS); i++) {  // took out the times 3 here since I am calculating all three contact constraints at the same time, but they still fill up all the same space
         
         if(i < (NUM_TIME_STEPS * NUM_FACTORS)) {
@@ -319,34 +319,34 @@ bool armtd_NLP::eval_g(
 
             //     force
             // get centers and their squares
-            TYPE f_c_x_center = getCenter(f_c[i].elt[0]->slice(x));
+            TYPE f_c_x_center = getCenter(f_c[i-NUM_TIME_STEPS*NUM_FACTORS].elt[0]->slice(x));
             TYPE f_c_x_center_2 = f_c_x_center * f_c_x_center;
-            TYPE f_c_y_center = getCenter(f_c[i].elt[1]->slice(x));
+            TYPE f_c_y_center = getCenter(f_c[i-NUM_TIME_STEPS*NUM_FACTORS].elt[1]->slice(x));
             TYPE f_c_y_center_2 = f_c_y_center * f_c_y_center;
-            TYPE f_c_z_center = getCenter(f_c[i].elt[2]->slice(x));
+            TYPE f_c_z_center = getCenter(f_c[i-NUM_TIME_STEPS*NUM_FACTORS].elt[2]->slice(x));
             TYPE f_c_z_center_2 = f_c_z_center * f_c_z_center;
             // get radii of independent generators and their squares
-            TYPE f_c_x_radius = getRadius(f_c[i].elt[0]->slice(x));  // Bohao says after slicing, this object is an interval so don't need to have .independent for the getRadius()
+            TYPE f_c_x_radius = getRadius(f_c[i-NUM_TIME_STEPS*NUM_FACTORS].elt[0]->slice(x));  // Bohao says after slicing, this object is an interval so don't need to have .independent for the getRadius()
             TYPE f_c_x_radius_2 = f_c_x_radius * f_c_x_radius;
-            TYPE f_c_y_radius = getRadius(f_c[i].elt[1]->slice(x));
+            TYPE f_c_y_radius = getRadius(f_c[i-NUM_TIME_STEPS*NUM_FACTORS].elt[1]->slice(x));
             TYPE f_c_y_radius_2 = f_c_y_radius * f_c_y_radius;
-            TYPE f_c_z_radius = getRadius(f_c[i].elt[2]->slice(x));
+            TYPE f_c_z_radius = getRadius(f_c[i-NUM_TIME_STEPS*NUM_FACTORS].elt[2]->slice(x));
             TYPE f_c_z_radius_2 = f_c_z_radius * f_c_z_radius;
 
             //     moment
             // get centers and their squares
-            TYPE n_c_x_center = getCenter(n_c[i].elt[0]->slice(x));
+            TYPE n_c_x_center = getCenter(n_c[i-NUM_TIME_STEPS*NUM_FACTORS].elt[0]->slice(x));
             TYPE n_c_x_center_2 = n_c_x_center * n_c_x_center;
-            TYPE n_c_y_center = getCenter(n_c[i].elt[1]->slice(x));
+            TYPE n_c_y_center = getCenter(n_c[i-NUM_TIME_STEPS*NUM_FACTORS].elt[1]->slice(x));
             TYPE n_c_y_center_2 = n_c_y_center * n_c_y_center;
-            TYPE n_c_z_center = getCenter(n_c[i].elt[2]->slice(x));
+            TYPE n_c_z_center = getCenter(n_c[i-NUM_TIME_STEPS*NUM_FACTORS].elt[2]->slice(x));
             TYPE n_c_z_center_2 = n_c_z_center * n_c_z_center;
             // get radii of independent generators and their squares
-            TYPE n_c_x_radius = getRadius(n_c[i].elt[0]->slice(x));
+            TYPE n_c_x_radius = getRadius(n_c[i-NUM_TIME_STEPS*NUM_FACTORS].elt[0]->slice(x));
             TYPE n_c_x_radius_2 = n_c_x_radius * n_c_x_radius;
-            TYPE n_c_y_radius = getRadius(n_c[i].elt[1]->slice(x));
+            TYPE n_c_y_radius = getRadius(n_c[i-NUM_TIME_STEPS*NUM_FACTORS].elt[1]->slice(x));
             TYPE n_c_y_radius_2 = n_c_y_radius * n_c_y_radius;
-            TYPE n_c_z_radius = getRadius(n_c[i].elt[2]->slice(x));
+            TYPE n_c_z_radius = getRadius(n_c[i-NUM_TIME_STEPS*NUM_FACTORS].elt[2]->slice(x));
             TYPE n_c_z_radius_2 = n_c_z_radius * n_c_z_radius;
 
             //     separation constraint: -inf < -1*f_c_z < 0
@@ -402,7 +402,7 @@ bool armtd_NLP::eval_g(
 
             // compute the numerator of the ZMP point equation
             double norm_vec[3] = {0,0,1};
-            vecPZsparse ZMP_top = cross(norm_vec,n_c[i]);
+            vecPZsparse ZMP_top = cross(norm_vec,n_c[i-NUM_TIME_STEPS*NUM_FACTORS]);
             // extract the x, y and z components, slice by the parameters, then get the centers and radii of independent generators and their squares
             // x-component
             Interval ZMP_top_x = ZMP_top.elt[0]->slice(x);
@@ -423,7 +423,7 @@ bool armtd_NLP::eval_g(
             // note that if the normal vector corresponds to the body frame z-axis, n=[0;0;1] and the dot product of that normal vector
             // with the moment results in the z-component of the moment.
             // question: is the moment about the contact point like in Matlab RNEA? need to verify this
-            Interval ZMP_bottom = f_c[i].elt[2]->slice(x);
+            Interval ZMP_bottom = f_c[i-NUM_TIME_STEPS*NUM_FACTORS].elt[2]->slice(x);
             // extract center and radius of independent generators and their squares
             TYPE ZMP_bottom_center = getCenter(ZMP_bottom);
             TYPE ZMP_bottom_center_2 = ZMP_bottom_center*ZMP_bottom_center;
@@ -537,28 +537,31 @@ bool armtd_NLP::eval_jac_g(
                 
                 //     force
                 // get centers
-                TYPE f_c_x_center = getCenter(f_c[i].elt[0]->slice(x));
-                TYPE f_c_y_center = getCenter(f_c[i].elt[1]->slice(x));
-                TYPE f_c_z_center = getCenter(f_c[i].elt[2]->slice(x));
+                // cout << f_c[i-NUM_TIME_STEPS*NUM_FACTORS] << endl;
+                // cout << f_c[i-NUM_TIME_STEPS*NUM_FACTORS].elt[0] << endl;
+                // cout << getCenter(f_c[i].elt[0]->slice(x)) << '\n';
+                TYPE f_c_x_center = getCenter(f_c[i-NUM_TIME_STEPS*NUM_FACTORS].elt[0]->slice(x));
+                TYPE f_c_y_center = getCenter(f_c[i-NUM_TIME_STEPS*NUM_FACTORS].elt[1]->slice(x));
+                TYPE f_c_z_center = getCenter(f_c[i-NUM_TIME_STEPS*NUM_FACTORS].elt[2]->slice(x));
                 TYPE f_c_z_center_2 = f_c_z_center * f_c_z_center;
                 // get radii of independent generators
-                TYPE f_c_x_radius = getRadius(f_c[i].elt[0]->slice(x));  // Bohao says after slicing, this object is an interval so don't need to have .independent for the getRadius()
-                TYPE f_c_y_radius = getRadius(f_c[i].elt[1]->slice(x));
-                TYPE f_c_z_radius = getRadius(f_c[i].elt[2]->slice(x));
+                TYPE f_c_x_radius = getRadius(f_c[i-NUM_TIME_STEPS*NUM_FACTORS].elt[0]->slice(x));  // Bohao says after slicing, this object is an interval so don't need to have .independent for the getRadius()
+                TYPE f_c_y_radius = getRadius(f_c[i-NUM_TIME_STEPS*NUM_FACTORS].elt[1]->slice(x));
+                TYPE f_c_z_radius = getRadius(f_c[i-NUM_TIME_STEPS*NUM_FACTORS].elt[2]->slice(x));
 
                 //     moment
                 // get centers
-                TYPE n_c_x_center = getCenter(n_c[i].elt[0]->slice(x));
-                TYPE n_c_y_center = getCenter(n_c[i].elt[1]->slice(x));
-                TYPE n_c_z_center = getCenter(n_c[i].elt[2]->slice(x));
+                TYPE n_c_x_center = getCenter(n_c[i-NUM_TIME_STEPS*NUM_FACTORS].elt[0]->slice(x));
+                TYPE n_c_y_center = getCenter(n_c[i-NUM_TIME_STEPS*NUM_FACTORS].elt[1]->slice(x));
+                TYPE n_c_z_center = getCenter(n_c[i-NUM_TIME_STEPS*NUM_FACTORS].elt[2]->slice(x));
                 // get radii of independent generators
-                TYPE n_c_x_radius = getRadius(n_c[i].elt[0]->slice(x));
-                TYPE n_c_y_radius = getRadius(n_c[i].elt[1]->slice(x));
-                TYPE n_c_z_radius = getRadius(n_c[i].elt[2]->slice(x));
+                TYPE n_c_x_radius = getRadius(n_c[i-NUM_TIME_STEPS*NUM_FACTORS].elt[0]->slice(x));
+                TYPE n_c_y_radius = getRadius(n_c[i-NUM_TIME_STEPS*NUM_FACTORS].elt[1]->slice(x));
+                TYPE n_c_z_radius = getRadius(n_c[i-NUM_TIME_STEPS*NUM_FACTORS].elt[2]->slice(x));
 
                 // compute the numerator of the ZMP point equation
                 double norm_vec[3] = {0,0,1};
-                vecPZsparse ZMP_top = cross(norm_vec,n_c[i]); // define a normal vector for the cross product
+                vecPZsparse ZMP_top = cross(norm_vec,n_c[i-NUM_TIME_STEPS*NUM_FACTORS]); // define a normal vector for the cross product
                 // extract the x, y and z components, slice by the parameters, then get the centers and radii of independent generators and their squares
                 // x-component
                 TYPE ZMP_top_x_center = getCenter(ZMP_top.elt[0]->slice(x));
@@ -571,10 +574,10 @@ bool armtd_NLP::eval_jac_g(
                 // note that if the normal vector corresponds to the body frame z-axis, n=[0;0;1] and the dot product of that normal vector
                 // with the moment results in the z-component of the moment.
                 // question: is the moment about the contact point like in Matlab RNEA? need to verify this
-                Interval ZMP_bottom = f_c[i].elt[2]->slice(x);
+                Interval ZMP_bottom = f_c[i-NUM_TIME_STEPS*NUM_FACTORS].elt[2]->slice(x);
                 // extract center and radius of independent generators and their squares
-                TYPE ZMP_bottom_center = getCenter(f_c[i].elt[2]->slice(x));
-                TYPE ZMP_bottom_radius = getRadius(f_c[i].elt[2]->slice(x));
+                TYPE ZMP_bottom_center = getCenter(f_c[i-NUM_TIME_STEPS*NUM_FACTORS].elt[2]->slice(x));
+                TYPE ZMP_bottom_radius = getRadius(f_c[i-NUM_TIME_STEPS*NUM_FACTORS].elt[2]->slice(x));
 
                 //    gradients
                 // allocate storage
@@ -589,21 +592,21 @@ bool armtd_NLP::eval_jac_g(
                 // TYPE ZMP_top_z_grad[NUM_FACTORS];
                 TYPE ZMP_bottom_grad[NUM_FACTORS];
                 // calculate gradients
-                f_c[i].elt[0]->slice(f_c_x_grad, x);
-                f_c[i].elt[1]->slice(f_c_y_grad, x);
-                f_c[i].elt[2]->slice(f_c_z_grad, x);
+                f_c[i-NUM_TIME_STEPS*NUM_FACTORS].elt[0]->slice(f_c_x_grad, x);
+                f_c[i-NUM_TIME_STEPS*NUM_FACTORS].elt[1]->slice(f_c_y_grad, x);
+                f_c[i-NUM_TIME_STEPS*NUM_FACTORS].elt[2]->slice(f_c_z_grad, x);
                 // n_c[i].elt[0].slice(n_c_x_grad,x);
                 // n_c[i].elt[1].slice(n_c_y_grad,x);
                 // n_c[i].elt[2].slice(n_c_z_grad,x);
                 ZMP_top.elt[0]->slice(ZMP_top_x_grad, x);
                 ZMP_top.elt[1]->slice(ZMP_top_y_grad, x);
-                f_c[i].elt[2]->slice(ZMP_bottom_grad, x);
+                f_c[i-NUM_TIME_STEPS*NUM_FACTORS].elt[2]->slice(ZMP_bottom_grad, x);
 
                 //    separation constraint
                 // f_c[i].elt[2].slice(values + i*NUM_FACTORS, x);
                 int offset1 = i*NUM_FACTORS;
                 for (int j = offset1;j<offset1+NUM_FACTORS;j++) {
-                    values[j] = -1*f_c_z_grad[j];
+                    values[j] = -1*f_c_z_grad[j-offset1];
                 }
                 // values[i*NUM_FACTORS] = -1*f_c_z_grad;
 
@@ -612,49 +615,49 @@ bool armtd_NLP::eval_jac_g(
                 int offset2 = (i+NUM_TIME_STEPS)*NUM_FACTORS;
                 if ( (f_c_x_center >= 0) && (f_c_y_center >= 0) && (f_c_z_center >= 0) ){
                     for (int j=offset2;j<offset2+NUM_FACTORS;j++) {
-                        values[j] = 2*f_c_x_center*f_c_x_grad[j] + 2*f_c_x_radius*f_c_x_grad[j] + 2*f_c_y_center*f_c_y_grad[j] + 2*f_c_y_radius*f_c_y_grad[j] - u_s*u_s * ( 2*f_c_z_center*f_c_z_grad[j] - 2*f_c_z_radius*f_c_z_grad[j] );
+                        values[j] = 2*f_c_x_center*f_c_x_grad[j-offset2] + 2*f_c_x_radius*f_c_x_grad[j-offset2] + 2*f_c_y_center*f_c_y_grad[j-offset2] + 2*f_c_y_radius*f_c_y_grad[j-offset2] - u_s*u_s * ( 2*f_c_z_center*f_c_z_grad[j-offset2] - 2*f_c_z_radius*f_c_z_grad[j-offset2] );
                     }
                 }
                 // condition 2: y negative
                 else if ( (f_c_x_center >= 0) && (f_c_y_center <= 0) && (f_c_z_center >= 0) ) {
                     for (int j=offset2;j<offset2+NUM_FACTORS;j++) {
-                        values[j] = 2*f_c_x_center*f_c_x_grad[j] + 2*f_c_x_radius*f_c_x_grad[j] + 2*f_c_y_center*f_c_y_grad[j] - 2*f_c_y_radius*f_c_y_grad[j] - u_s*u_s * ( 2*f_c_z_center*f_c_z_grad[j] - 2*f_c_z_radius*f_c_z_grad[j] );
+                        values[j] = 2*f_c_x_center*f_c_x_grad[j-offset2] + 2*f_c_x_radius*f_c_x_grad[j-offset2] + 2*f_c_y_center*f_c_y_grad[j-offset2] - 2*f_c_y_radius*f_c_y_grad[j-offset2] - u_s*u_s * ( 2*f_c_z_center*f_c_z_grad[j-offset2] - 2*f_c_z_radius*f_c_z_grad[j-offset2] );
                     }
                 }
                 // condition 3: z negative
                 else if ( (f_c_x_center >= 0) && (f_c_y_center >= 0) && (f_c_z_center <= 0) ) {
                     for (int j=offset2;j<offset2+NUM_FACTORS;j++) {
-                        values[j] = 2*f_c_x_center*f_c_x_grad[j] + 2*f_c_x_radius*f_c_x_grad[j] + 2*f_c_y_center*f_c_y_grad[j] + 2*f_c_y_radius*f_c_y_grad[j] - u_s*u_s * ( 2*f_c_z_center*f_c_z_grad[j] + 2*f_c_z_radius*f_c_z_grad[j] );
+                        values[j] = 2*f_c_x_center*f_c_x_grad[j-offset2] + 2*f_c_x_radius*f_c_x_grad[j-offset2] + 2*f_c_y_center*f_c_y_grad[j-offset2] + 2*f_c_y_radius*f_c_y_grad[j-offset2] - u_s*u_s * ( 2*f_c_z_center*f_c_z_grad[j-offset2] + 2*f_c_z_radius*f_c_z_grad[j-offset2] );
                     }
                 }
                 // condition 4: y and z negative
                 else if ( (f_c_x_center >= 0) && (f_c_y_center <= 0) && (f_c_z_center <= 0) ) {
                     for (int j=offset2;j<offset2+NUM_FACTORS;j++) {
-                        values[j] = 2*f_c_x_center*f_c_x_grad[j] + 2*f_c_x_radius*f_c_x_grad[j] + 2*f_c_y_center*f_c_y_grad[j] - 2*f_c_y_radius*f_c_y_grad[j] - u_s*u_s * ( 2*f_c_z_center*f_c_z_grad[j] + 2*f_c_z_radius*f_c_z_grad[j] );
+                        values[j] = 2*f_c_x_center*f_c_x_grad[j-offset2] + 2*f_c_x_radius*f_c_x_grad[j-offset2] + 2*f_c_y_center*f_c_y_grad[j-offset2] - 2*f_c_y_radius*f_c_y_grad[j-offset2] - u_s*u_s * ( 2*f_c_z_center*f_c_z_grad[j-offset2] + 2*f_c_z_radius*f_c_z_grad[j-offset2] );
                     }
                 }
                 // condition 5: x negative
                 else if ( (f_c_x_center <= 0) && (f_c_y_center >= 0) && (f_c_z_center >= 0) ) {
                     for (int j=offset2;j<offset2+NUM_FACTORS;j++) {
-                        values[j] = 2*f_c_x_center*f_c_x_grad[j] - 2*f_c_x_radius*f_c_x_grad[j] + 2*f_c_y_center*f_c_y_grad[j] + 2*f_c_y_radius*f_c_y_grad[j] - u_s*u_s * ( 2*f_c_z_center*f_c_z_grad[j] - 2*f_c_z_radius*f_c_z_grad[j] );
+                        values[j] = 2*f_c_x_center*f_c_x_grad[j-offset2] - 2*f_c_x_radius*f_c_x_grad[j-offset2] + 2*f_c_y_center*f_c_y_grad[j-offset2] + 2*f_c_y_radius*f_c_y_grad[j-offset2] - u_s*u_s * ( 2*f_c_z_center*f_c_z_grad[j-offset2] - 2*f_c_z_radius*f_c_z_grad[j-offset2] );
                     }
                 }
                 // condition 6: x and y negative
                 else if ( (f_c_x_center <= 0) && (f_c_y_center <= 0) && (f_c_z_center >= 0) ) {
                     for (int j=offset2;j<offset2+NUM_FACTORS;j++) {
-                        values[j] = 2*f_c_x_center*f_c_x_grad[j] - 2*f_c_x_radius*f_c_x_grad[j] + 2*f_c_y_center*f_c_y_grad[j] - 2*f_c_y_radius*f_c_y_grad[j] - u_s*u_s * ( 2*f_c_z_center*f_c_z_grad[j] - 2*f_c_z_radius*f_c_z_grad[j] );
+                        values[j] = 2*f_c_x_center*f_c_x_grad[j-offset2] - 2*f_c_x_radius*f_c_x_grad[j-offset2] + 2*f_c_y_center*f_c_y_grad[j-offset2] - 2*f_c_y_radius*f_c_y_grad[j-offset2] - u_s*u_s * ( 2*f_c_z_center*f_c_z_grad[j-offset2] - 2*f_c_z_radius*f_c_z_grad[j-offset2] );
                     }
                 }
                 // condition 7: x and z negative
                 else if ( (f_c_x_center <= 0) && (f_c_y_center >= 0) && (f_c_z_center <= 0) ) {
                     for (int j=offset2;j<offset2+NUM_FACTORS;j++) {
-                        values[j] = 2*f_c_x_center*f_c_x_grad[j] - 2*f_c_x_radius*f_c_x_grad[j] + 2*f_c_y_center*f_c_y_grad[j] + 2*f_c_y_radius*f_c_y_grad[j] - u_s*u_s * ( 2*f_c_z_center*f_c_z_grad[j] + 2*f_c_z_radius*f_c_z_grad[j] );
+                        values[j] = 2*f_c_x_center*f_c_x_grad[j-offset2] - 2*f_c_x_radius*f_c_x_grad[j-offset2] + 2*f_c_y_center*f_c_y_grad[j-offset2] + 2*f_c_y_radius*f_c_y_grad[j-offset2] - u_s*u_s * ( 2*f_c_z_center*f_c_z_grad[j-offset2] + 2*f_c_z_radius*f_c_z_grad[j-offset2] );
                     }
                 }
                 // condition 8: x and y and z negative
                 else if ( (f_c_x_center <= 0) && (f_c_y_center <= 0) && (f_c_z_center <= 0) ) {
                     for (int j=offset2;j<offset2+NUM_FACTORS;j++) {
-                        values[j] = 2*f_c_x_center*f_c_x_grad[j] - 2*f_c_x_radius*f_c_x_grad[j] + 2*f_c_y_center*f_c_y_grad[j] - 2*f_c_y_radius*f_c_y_grad[j] - u_s*u_s * ( 2*f_c_z_center*f_c_z_grad[j] + 2*f_c_z_radius*f_c_z_grad[j] );
+                        values[j] = 2*f_c_x_center*f_c_x_grad[j-offset2] - 2*f_c_x_radius*f_c_x_grad[j-offset2] + 2*f_c_y_center*f_c_y_grad[j-offset2] - 2*f_c_y_radius*f_c_y_grad[j-offset2] - u_s*u_s * ( 2*f_c_z_center*f_c_z_grad[j-offset2] + 2*f_c_z_radius*f_c_z_grad[j-offset2] );
                     }
                 }
 
@@ -664,49 +667,49 @@ bool armtd_NLP::eval_jac_g(
                 int offset3 = (i+2*NUM_TIME_STEPS)*NUM_FACTORS;
                 if ( (ZMP_top_x_center >= 0) && (ZMP_top_y_center >= 0) && (ZMP_bottom_center >= 0) ){
                     for (int j=offset3;j<offset3+NUM_FACTORS;j++) {
-                        values[j] = 2*ZMP_top_x_center*ZMP_top_x_grad[j] + 2*ZMP_top_x_radius*ZMP_top_x_grad[j] + 2*ZMP_top_y_center*ZMP_top_y_grad[j] + 2*ZMP_top_y_radius*ZMP_top_y_grad[j] - surf_rad*surf_rad * ( 2*ZMP_bottom_center*ZMP_bottom_grad[j] - 2*ZMP_bottom_radius*ZMP_bottom_grad[j]);
+                        values[j] = 2*ZMP_top_x_center*ZMP_top_x_grad[j-offset3] + 2*ZMP_top_x_radius*ZMP_top_x_grad[j-offset3] + 2*ZMP_top_y_center*ZMP_top_y_grad[j-offset3] + 2*ZMP_top_y_radius*ZMP_top_y_grad[j-offset3] - surf_rad*surf_rad * ( 2*ZMP_bottom_center*ZMP_bottom_grad[j-offset3] - 2*ZMP_bottom_radius*ZMP_bottom_grad[j-offset3]);
                     }
                 }
                 // condition 2: y negative
                 else if ( (ZMP_top_x_center >= 0) && (ZMP_top_y_center <= 0) && (ZMP_bottom_center >= 0) ) {
                     for (int j=offset3;j<offset3+NUM_FACTORS;j++) {
-                        values[j] = 2*ZMP_top_x_center*ZMP_top_x_grad[j] + 2*ZMP_top_x_radius*ZMP_top_x_grad[j] + 2*ZMP_top_y_center*ZMP_top_y_grad[j] - 2*ZMP_top_y_radius*ZMP_top_y_grad[j] - surf_rad*surf_rad * ( 2*ZMP_bottom_center*ZMP_bottom_grad[j] - 2*ZMP_bottom_radius*ZMP_bottom_grad[j]);
+                        values[j] = 2*ZMP_top_x_center*ZMP_top_x_grad[j-offset3] + 2*ZMP_top_x_radius*ZMP_top_x_grad[j-offset3] + 2*ZMP_top_y_center*ZMP_top_y_grad[j-offset3] - 2*ZMP_top_y_radius*ZMP_top_y_grad[j-offset3] - surf_rad*surf_rad * ( 2*ZMP_bottom_center*ZMP_bottom_grad[j-offset3] - 2*ZMP_bottom_radius*ZMP_bottom_grad[j-offset3]);
                     }
                 }
                 // condition 3: z negative
                 else if ( (ZMP_top_x_center >= 0) && (ZMP_top_y_center >= 0) && (ZMP_bottom_center <= 0) ) {
                     for (int j=offset3;j<offset3+NUM_FACTORS;j++) {
-                        values[j] = 2*ZMP_top_x_center*ZMP_top_x_grad[j] + 2*ZMP_top_x_radius*ZMP_top_x_grad[j] + 2*ZMP_top_y_center*ZMP_top_y_grad[j] + 2*ZMP_top_y_radius*ZMP_top_y_grad[j] - surf_rad*surf_rad * ( 2*ZMP_bottom_center*ZMP_bottom_grad[j] + 2*ZMP_bottom_radius*ZMP_bottom_grad[j]);
+                        values[j] = 2*ZMP_top_x_center*ZMP_top_x_grad[j-offset3] + 2*ZMP_top_x_radius*ZMP_top_x_grad[j-offset3] + 2*ZMP_top_y_center*ZMP_top_y_grad[j-offset3] + 2*ZMP_top_y_radius*ZMP_top_y_grad[j-offset3] - surf_rad*surf_rad * ( 2*ZMP_bottom_center*ZMP_bottom_grad[j-offset3] + 2*ZMP_bottom_radius*ZMP_bottom_grad[j-offset3]);
                     }
                 }
                 // condition 4: y and z negative
                 else if ( (ZMP_top_x_center >= 0) && (ZMP_top_y_center <= 0) && (ZMP_bottom_center <= 0) ) {
                     for (int j=offset3;j<offset3+NUM_FACTORS;j++) {
-                        values[j] = 2*ZMP_top_x_center*ZMP_top_x_grad[j] + 2*ZMP_top_x_radius*ZMP_top_x_grad[j] + 2*ZMP_top_y_center*ZMP_top_y_grad[j] - 2*ZMP_top_y_radius*ZMP_top_y_grad[j] - surf_rad*surf_rad * ( 2*ZMP_bottom_center*ZMP_bottom_grad[j] + 2*ZMP_bottom_radius*ZMP_bottom_grad[j]);
+                        values[j] = 2*ZMP_top_x_center*ZMP_top_x_grad[j-offset3] + 2*ZMP_top_x_radius*ZMP_top_x_grad[j-offset3] + 2*ZMP_top_y_center*ZMP_top_y_grad[j-offset3] - 2*ZMP_top_y_radius*ZMP_top_y_grad[j-offset3] - surf_rad*surf_rad * ( 2*ZMP_bottom_center*ZMP_bottom_grad[j-offset3] + 2*ZMP_bottom_radius*ZMP_bottom_grad[j-offset3]);
                     }
                 }
                 // condition 5: x negative
                 else if ( (ZMP_top_x_center <= 0) && (ZMP_top_y_center >= 0) && (ZMP_bottom_center >= 0) ) {
                     for (int j=offset3;j<offset3+NUM_FACTORS;j++) {
-                        values[j] = 2*ZMP_top_x_center*ZMP_top_x_grad[j] - 2*ZMP_top_x_radius*ZMP_top_x_grad[j] + 2*ZMP_top_y_center*ZMP_top_y_grad[j] + 2*ZMP_top_y_radius*ZMP_top_y_grad[j] - surf_rad*surf_rad * ( 2*ZMP_bottom_center*ZMP_bottom_grad[j] - 2*ZMP_bottom_radius*ZMP_bottom_grad[j]);
+                        values[j] = 2*ZMP_top_x_center*ZMP_top_x_grad[j-offset3] - 2*ZMP_top_x_radius*ZMP_top_x_grad[j-offset3] + 2*ZMP_top_y_center*ZMP_top_y_grad[j-offset3] + 2*ZMP_top_y_radius*ZMP_top_y_grad[j-offset3] - surf_rad*surf_rad * ( 2*ZMP_bottom_center*ZMP_bottom_grad[j-offset3] - 2*ZMP_bottom_radius*ZMP_bottom_grad[j-offset3]);
                     }
                 }
                 // condition 6: x and y negative
                 else if ( (ZMP_top_x_center <= 0) && (ZMP_top_y_center <= 0) && (ZMP_bottom_center >= 0) ) {
                     for (int j=offset3;j<offset3+NUM_FACTORS;j++) {
-                        values[j] = 2*ZMP_top_x_center*ZMP_top_x_grad[j] - 2*ZMP_top_x_radius*ZMP_top_x_grad[j] + 2*ZMP_top_y_center*ZMP_top_y_grad[j] - 2*ZMP_top_y_radius*ZMP_top_y_grad[j] - surf_rad*surf_rad * ( 2*ZMP_bottom_center*ZMP_bottom_grad[j] - 2*ZMP_bottom_radius*ZMP_bottom_grad[j]);
+                        values[j] = 2*ZMP_top_x_center*ZMP_top_x_grad[j-offset3] - 2*ZMP_top_x_radius*ZMP_top_x_grad[j-offset3] + 2*ZMP_top_y_center*ZMP_top_y_grad[j-offset3] - 2*ZMP_top_y_radius*ZMP_top_y_grad[j-offset3] - surf_rad*surf_rad * ( 2*ZMP_bottom_center*ZMP_bottom_grad[j-offset3] - 2*ZMP_bottom_radius*ZMP_bottom_grad[j-offset3]);
                     }
                 }
                 // condition 7: x and z negative
                 else if ( (ZMP_top_x_center <= 0) && (ZMP_top_y_center >= 0) && (ZMP_bottom_center <= 0) ) {
                     for (int j=offset3;j<offset3+NUM_FACTORS;j++) {
-                        values[j] = 2*ZMP_top_x_center*ZMP_top_x_grad[j] - 2*ZMP_top_x_radius*ZMP_top_x_grad[j] + 2*ZMP_top_y_center*ZMP_top_y_grad[j] + 2*ZMP_top_y_radius*ZMP_top_y_grad[j] - surf_rad*surf_rad * ( 2*ZMP_bottom_center*ZMP_bottom_grad[j] + 2*ZMP_bottom_radius*ZMP_bottom_grad[j]);
+                        values[j] = 2*ZMP_top_x_center*ZMP_top_x_grad[j-offset3] - 2*ZMP_top_x_radius*ZMP_top_x_grad[j-offset3] + 2*ZMP_top_y_center*ZMP_top_y_grad[j-offset3] + 2*ZMP_top_y_radius*ZMP_top_y_grad[j-offset3] - surf_rad*surf_rad * ( 2*ZMP_bottom_center*ZMP_bottom_grad[j-offset3] + 2*ZMP_bottom_radius*ZMP_bottom_grad[j-offset3]);
                     }
                 }
                 // condition 8: x and y and z negative
                 else if ( (ZMP_top_x_center <= 0) && (ZMP_top_y_center <= 0) && (ZMP_bottom_center <= 0) ) {
                     for (int j=offset3;j<offset3+NUM_FACTORS;j++) {
-                        values[j] = 2*ZMP_top_x_center*ZMP_top_x_grad[j] - 2*ZMP_top_x_radius*ZMP_top_x_grad[j] + 2*ZMP_top_y_center*ZMP_top_y_grad[j] - 2*ZMP_top_y_radius*ZMP_top_y_grad[j] - surf_rad*surf_rad * ( 2*ZMP_bottom_center*ZMP_bottom_grad[j] + 2*ZMP_bottom_radius*ZMP_bottom_grad[j]);
+                        values[j] = 2*ZMP_top_x_center*ZMP_top_x_grad[j-offset3] - 2*ZMP_top_x_radius*ZMP_top_x_grad[j-offset3] + 2*ZMP_top_y_center*ZMP_top_y_grad[j-offset3] - 2*ZMP_top_y_radius*ZMP_top_y_grad[j-offset3] - surf_rad*surf_rad * ( 2*ZMP_bottom_center*ZMP_bottom_grad[j-offset3] + 2*ZMP_bottom_radius*ZMP_bottom_grad[j-offset3]);
                     }
                 }
 

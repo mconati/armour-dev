@@ -254,6 +254,7 @@ Section III:
     app->Options()->SetStringValue("mu_strategy", IPOPT_MU_STRATEGY);
     app->Options()->SetStringValue("linear_solver", IPOPT_LINEAR_SOLVER);
 	app->Options()->SetStringValue("hessian_approximation", "limited-memory");
+    app->Options()->SetStringValue("print_timing_statistics","yes");
 
     // For gradient checking
     // app->Options()->SetStringValue("output_file", "ipopt.out");
