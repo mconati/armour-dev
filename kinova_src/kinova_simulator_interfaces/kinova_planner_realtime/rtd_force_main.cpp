@@ -69,6 +69,7 @@ Section I:
         outputstream1.close();
         throw;
     }
+    num_obstacles = 0;
     if (num_obstacles > 0) {
         for (int i = 0; i < num_obstacles * (MAX_OBSTACLE_GENERATOR_NUM + 1) * 3; i++) {
             inputstream >> obstacles[i];

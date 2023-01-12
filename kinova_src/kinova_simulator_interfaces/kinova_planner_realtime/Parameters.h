@@ -3,7 +3,8 @@
 
 // #include "FetchInfo.h"
 // #include "KinovaInfo.h"
-#include "KinovaWithoutGripperInfo.h"
+// #include "KinovaWithoutGripperInfo.h"
+#include "KinovaForceInfo.h"
 
 // Parameters for PZsparse.h:
     // monomials with a coefficient smaller than this number will be reduced

@@ -353,7 +353,10 @@ bool armtd_NLP::eval_g(
             // storing separation constraint value, not sure what index to use here?
             // question: not sure what to do with the radius here?
             // g[i] = -1*getCenter(f_c_z);
-            g[i] = -1*f_c_z_center;
+            // g[i] = -1*f_c_z_center;
+            // cout << "f_c_z at time: " << i << endl;
+            // f_c[i-NUM_TIME_STEPS*NUM_FACTORS].elt[2]->print();
+            // cout << endl << endl;
 
             //     slipping constraint: -inf < f_c_x*f_c_x + f_c_y*f_c_y - u_s^2*f_c_z*f_c_z < 0
             // need to write this constraint differently than matlab implementation as we need to 
