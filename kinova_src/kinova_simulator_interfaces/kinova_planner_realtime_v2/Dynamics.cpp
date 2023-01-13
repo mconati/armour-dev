@@ -6,6 +6,7 @@
 KinematicsDynamics::KinematicsDynamics(BezierCurve* traj_input) {
     traj = traj_input;
 
+    // pre-allocate memory
     links = PZsparseArray(NUM_FACTORS * 3, NUM_TIME_STEPS);
     mass_nominal_arr = PZsparseArray(NUM_JOINTS, 1);
     mass_uncertain_arr = PZsparseArray(NUM_JOINTS, 1);
@@ -16,6 +17,7 @@ KinematicsDynamics::KinematicsDynamics(BezierCurve* traj_input) {
     r = PZsparseArray(NUM_FACTORS, 1);
     Mr = PZsparseArray(NUM_FACTORS, NUM_TIME_STEPS);
 
+    // initialize robot properties
     for (int i = 0; i < NUM_JOINTS; i++) {
         trans_matrix(i, 0) = Eigen::MatrixXd::Zero(3, 1);
         trans_matrix(i, 0)(0) = trans[3 * i];
@@ -48,10 +50,30 @@ KinematicsDynamics::KinematicsDynamics(BezierCurve* traj_input) {
     trans_matrix(NUM_JOINTS, 0)(0) = trans[3 * NUM_JOINTS];
     trans_matrix(NUM_JOINTS, 0)(1) = trans[3 * NUM_JOINTS + 1];
     trans_matrix(NUM_JOINTS, 0)(2) = trans[3 * NUM_JOINTS + 2];
+
+    // define original link PZs
+    links = PZsparseArray(NUM_JOINTS, NUM_TIME_STEPS);
+
+    for (int i = 0; i < NUM_JOINTS; i++) {
+        PZsparseArray link(3, 1);
+
+        for (int j = 0; j < 3; j++) {
+            uint64_t degree[1][NUM_FACTORS * 6] = {0};
+            degree[0][NUM_FACTORS * (j + 1)] = 1; // use qde, qdae, qdde for x, y, z generator
+            double temp = link_zonotope_generators[i][j];
+            link(j, 0) = PZsparse(link_zonotope_center[i][j], &temp, degree, 1);
+        }
+
+        links(i, 0) = stack(link);
+
+        for (int j = 1; j < NUM_TIME_STEPS; j++) {
+            links(i, j) = links(i, 0);
+        }
+    }
 }
 
 void KinematicsDynamics::fk(uint t_ind) {
-    PZsparse FK_R(3, 3);
+    PZsparse FK_R = PZsparse(0, 0, 0); // identity matrix
     PZsparse FK_T(3, 1);
     int j = 0;
 
@@ -59,14 +81,9 @@ void KinematicsDynamics::fk(uint t_ind) {
         PZsparse P(trans_matrix(i, 0));
         
         FK_T = FK_T + FK_R * P;
-        // FK_R = FK_R * R[i];
+        FK_R = FK_R * traj->R(i, t_ind);
         
-        // if (JOINTS_WE_CARE_IN_COLLISION_AVOIDANCE[i]) {
-        //     p[j * 3 + 0] = *(FK_T.elt[0]);
-        //     p[j * 3 + 1] = *(FK_T.elt[1]);
-        //     p[j * 3 + 2] = *(FK_T.elt[2]);
-        //     j++;
-        // }
+        links(i, t_ind) = FK_R * links(i, t_ind) + FK_T;
     }
 }
 

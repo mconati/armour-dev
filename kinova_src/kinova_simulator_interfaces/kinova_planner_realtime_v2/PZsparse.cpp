@@ -225,28 +225,36 @@ void PZsparse::makeRotationMatrix(Eigen::MatrixXd& R, const double cosElt, const
     }
 }
 
-bool PZsparse::checkDimensions() const {
+bool PZsparse::internalCheck() const {
     if (center.rows() != NRows) {
-        WARNING_PRINT("PZsparse warning: center matrix number of rows not consistent!");
+        WARNING_PRINT("PZsparse error: center matrix number of rows not consistent!");
         return false;
     }
     if (center.cols() != NCols) {
-        WARNING_PRINT("PZsparse warning: center matrix number of columns not consistent!");
+        WARNING_PRINT("PZsparse error: center matrix number of columns not consistent!");
         return false;
     }
     if (independent.rows() != NRows) {
-        WARNING_PRINT("PZsparse warning: independent generator matrix number of rows not consistent!");
+        WARNING_PRINT("PZsparse error: independent generator matrix number of rows not consistent!");
         return false;
     }
     if (independent.cols() != NCols) {
-        WARNING_PRINT("PZsparse warning: independent generator matrix number of columns not consistent!");
+        WARNING_PRINT("PZsparse error: independent generator matrix number of columns not consistent!");
         return false;
+    }
+    for (uint i = 0; i < independent.rows(); i++) {
+        for (uint j = 0; j < independent.cols(); j++) {
+            if (independent(i, j) < 0) {
+                WARNING_PRINT("PZsparse error: independent generator matrix has negative entry!");
+                return false;
+            }
+        }
     }
     return true;
 }
 
 void PZsparse::simplify() {
-    assert(checkDimensions());
+    assert(internalCheck());
 
     sort(polynomial.begin(), polynomial.end(), Monomial_sorter_degree);
 
@@ -288,13 +296,13 @@ void PZsparse::simplify() {
 }
 
 void PZsparse::reduce() {
-    assert(checkDimensions());
+    assert(internalCheck());
 
     vector<Monomial> polynomial_new;
     polynomial_new.reserve(polynomial.size());
 
     for (auto it : polynomial) {
-        if (it.degree <= (1 << (2 * NUM_FACTORS))) { // only dependent on k
+        if (it.degree < max_hash_dependent_k_only) { // only dependent on k
             polynomial_new.emplace_back(it.coeff, it.degree);
         }
         else {
@@ -305,8 +313,37 @@ void PZsparse::reduce() {
     polynomial = polynomial_new;
 }
 
+Eigen::Matrix3d PZsparse::reduce_link_PZ() {
+    assert(internalCheck());
+    assert(NRows == 3 && NCols == 1);
+
+    Eigen::Matrix3d link_independent_generators;
+
+    vector<Monomial> polynomial_new;
+    polynomial_new.reserve(polynomial.size());
+
+    int j = 0;
+
+    for (auto it : polynomial) {
+        if (it.degree < max_hash_dependent_k_only) { // only dependent on k
+            polynomial_new.emplace_back(it.coeff, it.degree);
+        }
+        else if (it.degree < max_hash_dependent_k_links_only && (it.degree & dependent_k_mask) == 0) { // only dependent on link x, y, z generators
+            assert(j < 3);
+            link_independent_generators.col(j++) = it.coeff;
+        }
+        else {
+            independent += it.coeff.cwiseAbs();
+        }
+    }
+
+    polynomial = polynomial_new;
+
+    return link_independent_generators;
+}
+
 MatrixXInt PZsparse::slice(const double* factor) {
-    assert(checkDimensions());
+    assert(internalCheck());
 
     MatrixXInt res(NRows, NCols);
     Eigen::MatrixXd res_center = center;
@@ -340,7 +377,7 @@ MatrixXInt PZsparse::slice(const double* factor) {
 }
 
 void PZsparse::slice(Eigen::Array<Eigen::MatrixXd, NUM_FACTORS, 1>& gradient, const double* factor) {
-    assert(checkDimensions());
+    assert(internalCheck());
 
     for (uint k = 0; k < NUM_FACTORS; k++) {
         gradient[k] = Eigen::MatrixXd::Zero(NRows, NCols);
@@ -378,7 +415,7 @@ void PZsparse::slice(Eigen::Array<Eigen::MatrixXd, NUM_FACTORS, 1>& gradient, co
 }
 
 MatrixXInt PZsparse::toInterval() {
-    assert(checkDimensions());
+    assert(internalCheck());
 
     MatrixXInt res(NRows, NCols);
     Eigen::MatrixXd res_center = center;
@@ -447,31 +484,31 @@ std::ostream& operator<<(std::ostream& os, PZsparse& a) {
         }
         os << ") ";
 
-        os << " * cosqe^(";
+        os << " * qde^(";
         for (uint j = 0; j < NUM_FACTORS; j++) {
             os << a.degreeArray[j + NUM_FACTORS * 1];
         }
         os << ") ";
 
-        os << " * sinqe^(";
+        os << " * qdae^(";
         for (uint j = 0; j < NUM_FACTORS; j++) {
             os << a.degreeArray[j + NUM_FACTORS * 2];
         }
         os << ") ";
 
-        os << " * qde^(";
+        os << " * qddae^(";
         for (uint j = 0; j < NUM_FACTORS; j++) {
             os << a.degreeArray[j + NUM_FACTORS * 3];
         }
         os << ") ";
 
-        os << " * qdae^(";
+        os << " * cosqe^(";
         for (uint j = 0; j < NUM_FACTORS; j++) {
             os << a.degreeArray[j + NUM_FACTORS * 4];
         }
         os << ") ";
 
-        os << " * qddae^(";
+        os << " * sinqe^(";
         for (uint j = 0; j < NUM_FACTORS; j++) {
             os << a.degreeArray[j + NUM_FACTORS * 5];
         }
@@ -501,7 +538,7 @@ Arithmetic
 */
 
 PZsparse PZsparse::operator() (int row_id, int col_id) const {
-    assert(checkDimensions());
+    assert(internalCheck());
     assert(0 <= row_id && row_id < NRows);
     assert(0 <= col_id && col_id < NCols);
 
@@ -548,7 +585,7 @@ PZsparse PZsparse::operator=(const PZsparse& a) {
 }
 
 PZsparse PZsparse::operator-() {
-    assert(checkDimensions());
+    assert(internalCheck());
 
     PZsparse res(NRows, NCols);
     
@@ -566,7 +603,7 @@ PZsparse PZsparse::operator-() {
 }
 
 PZsparse PZsparse::operator+(const PZsparse& a) {
-    assert(checkDimensions());
+    assert(internalCheck());
     assert(a.NRows == NRows || a.NCols == NCols); // check if they are add-able
 
     PZsparse res(NRows, NCols);
@@ -589,7 +626,7 @@ PZsparse PZsparse::operator+(const PZsparse& a) {
 }
 
 PZsparse PZsparse::operator+(const double a) {
-    assert(checkDimensions());
+    assert(internalCheck());
 
     PZsparse res = *this;
 
@@ -603,7 +640,7 @@ PZsparse PZsparse::operator+(const double a) {
 }
 
 PZsparse operator+(const double a, const PZsparse& b) {
-    assert(b.checkDimensions());
+    assert(b.internalCheck());
 
     PZsparse res = b;
 
@@ -617,7 +654,7 @@ PZsparse operator+(const double a, const PZsparse& b) {
 }
 
 PZsparse PZsparse::operator+=(const PZsparse& a) {
-    assert(checkDimensions());
+    assert(internalCheck());
     assert(a.NRows == NRows || a.NCols == NCols); // check if they are add-able
 
     center += a.center;
@@ -636,7 +673,7 @@ PZsparse PZsparse::operator+=(const PZsparse& a) {
 }
 
 PZsparse PZsparse::operator-(const PZsparse& a) {
-    assert(checkDimensions());    
+    assert(internalCheck());    
     assert(a.NRows == NRows || a.NCols == NCols); // check if they are add-able
 
     PZsparse res(NRows, NCols);
@@ -659,7 +696,7 @@ PZsparse PZsparse::operator-(const PZsparse& a) {
 }
 
 PZsparse PZsparse::operator-(const double a) {
-    assert(checkDimensions());
+    assert(internalCheck());
 
     PZsparse res = *this;
 
@@ -673,7 +710,7 @@ PZsparse PZsparse::operator-(const double a) {
 }
 
 PZsparse operator-(const double a, const PZsparse& b) {
-    assert(b.checkDimensions());
+    assert(b.internalCheck());
 
     PZsparse res = b;
 
@@ -687,7 +724,7 @@ PZsparse operator-(const double a, const PZsparse& b) {
 }
 
 PZsparse PZsparse::operator*(const PZsparse& a) {
-    assert(checkDimensions());
+    assert(internalCheck());
     assert(NCols == a.NRows || (NRows == 1 && NCols == 1) || (a.NRows == 1 && a.NCols == 1));
 
     PZsparse res;
@@ -819,7 +856,7 @@ PZsparse PZsparse::operator*(const PZsparse& a) {
 }
 
 PZsparse PZsparse::operator*(const double a) {
-    assert(checkDimensions());
+    assert(internalCheck());
 
     PZsparse res(NRows, NCols);
 
@@ -837,7 +874,7 @@ PZsparse PZsparse::operator*(const double a) {
 }
 
 PZsparse operator*(const double a, const PZsparse& b) {
-    assert(b.checkDimensions());
+    assert(b.internalCheck());
 
     PZsparse res(b.NRows, b.NCols);
 
@@ -855,7 +892,7 @@ PZsparse operator*(const double a, const PZsparse& b) {
 }
 
 PZsparse PZsparse::operator/(const double a) {
-    assert(checkDimensions());
+    assert(internalCheck());
 
     PZsparse res(NRows, NCols);
 
@@ -873,7 +910,7 @@ PZsparse PZsparse::operator/(const double a) {
 }
 
 PZsparse PZsparse::transpose() {
-    assert(checkDimensions());
+    assert(internalCheck());
 
     PZsparse res(NCols, NRows);
 
@@ -891,7 +928,7 @@ PZsparse PZsparse::transpose() {
 }
 
 void PZsparse::addOneDimPZ(const PZsparse& a, uint row_id, uint col_id) {
-    assert(checkDimensions());
+    assert(internalCheck());
     assert(a.NRows == 1 && a.NCols == 1);
     assert(0 <= row_id && row_id < NRows);
     assert(0 <= col_id && col_id < NCols);

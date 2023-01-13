@@ -87,7 +87,6 @@ Section II:
 
     // Obstacles O(obstacles, num_obstacles); 
 
-    // do not count time for memory allocation
     auto start1 = std::chrono::high_resolution_clock::now();
 
     omp_set_num_threads(NUM_THREADS);
@@ -99,7 +98,7 @@ Section II:
     BezierCurve traj(q0, qd0, qdd0);
 
     try {
-        // #pragma omp parallel for shared(traj) private(openmp_t_ind) schedule(static, NUM_TIME_STEPS / NUM_THREADS)
+        #pragma omp parallel for shared(traj) private(openmp_t_ind) schedule(static, NUM_TIME_STEPS / NUM_THREADS)
         for(openmp_t_ind = 0; openmp_t_ind < NUM_TIME_STEPS; openmp_t_ind++) {
             traj.makePolyZono(openmp_t_ind);
         }
@@ -113,25 +112,35 @@ Section II:
     Section II.B: Compute link PZs and nominal torque PZs
     */
     KinematicsDynamics kd(&traj);
+    Eigen::Array<Eigen::Matrix3d, NUM_JOINTS, NUM_TIME_STEPS> link_independent_generators_array;
 
     try {
-        // #pragma omp parallel for shared(kd) private(openmp_t_ind) schedule(static, NUM_TIME_STEPS / NUM_THREADS)
-        for(openmp_t_ind = 0; openmp_t_ind < NUM_TIME_STEPS; openmp_t_ind++) {
-            // compute nominal torque
-            kd.rnea_nominal(openmp_t_ind);
-
-            // compute interval torque
-            kd.rnea_interval(openmp_t_ind);
-
-            // compute max disturbance (stored in u_nom_int)
-            for (int i = 0; i < NUM_FACTORS; i++) {
-                kd.u_nom_int(i, openmp_t_ind) = kd.u_nom_int(i, openmp_t_ind) - kd.u_nom(i, openmp_t_ind);
-            }
+        // #pragma omp parallel for shared(kd, link_independent_generators_array) private(openmp_t_ind) schedule(static, NUM_TIME_STEPS / NUM_THREADS)
+        for(openmp_t_ind = NUM_TIME_STEPS - 1; openmp_t_ind < NUM_TIME_STEPS; openmp_t_ind++) {
+            // compute link PZs through forward kinematics
+            kd.fk(openmp_t_ind);
 
             // reduce non-only-k-dependent generators so that slice takes less time
-            for (int i = 0; i < NUM_FACTORS; i++) {
-                kd.u_nom(i, openmp_t_ind).reduce();
+            
+            for (int i = 0; i < NUM_JOINTS; i++) {
+                link_independent_generators_array(i, openmp_t_ind) = kd.links(i, openmp_t_ind).reduce_link_PZ();
             }
+
+            // // compute nominal torque
+            // kd.rnea_nominal(openmp_t_ind);
+
+            // // compute interval torque
+            // kd.rnea_interval(openmp_t_ind);
+
+            // // compute max disturbance (stored in u_nom_int)
+            // for (int i = 0; i < NUM_FACTORS; i++) {
+            //     kd.u_nom_int(i, openmp_t_ind) = kd.u_nom_int(i, openmp_t_ind) - kd.u_nom(i, openmp_t_ind);
+            // }
+
+            // // reduce non-only-k-dependent generators so that slice takes less time
+            // for (int i = 0; i < NUM_FACTORS; i++) {
+            //     kd.u_nom(i, openmp_t_ind).reduce();
+            // }
         }
     }
     catch (int errorCode) {
@@ -142,45 +151,47 @@ Section II:
     /*
     Section II.C: Compute robust input bound
     */
-
     // the radius of the torque PZs
-    Eigen::MatrixXd v_norm(NUM_FACTORS, NUM_TIME_STEPS);
-    v_norm.setZero();
+    // Eigen::MatrixXd v_norm(NUM_FACTORS, NUM_TIME_STEPS);
+    // v_norm.setZero();
 
-    try {
-        for(int t_ind = 0; t_ind < NUM_TIME_STEPS; t_ind++) {
-            // (1) add the bound of robust input
-            Interval rho_max_temp = Interval(0.0);
-            for (int i = 0; i < NUM_FACTORS; i++) {
-                // compute norm of disturbance
-                MatrixXInt temp = kd.u_nom_int(i, t_ind).toInterval(); // should be a 1-dim Interval
-                rho_max_temp += temp(0) * temp(0);
+    // try {
+    //     for(int t_ind = 0; t_ind < NUM_TIME_STEPS; t_ind++) {
+    //         // (1) add the bound of robust input
+    //         Interval rho_max_temp = Interval(0.0);
+    //         for (int i = 0; i < NUM_FACTORS; i++) {
+    //             // compute norm of disturbance
+    //             MatrixXInt temp = kd.u_nom_int(i, t_ind).toInterval(); // should be a 1-dim Interval
+    //             rho_max_temp += temp(0) * temp(0);
 
-                v_norm(i, t_ind) = alpha * (M_max - M_min) * eps + 0.5 * max(abs(temp(0).lower()), abs(temp(0).upper()));
-            }
-            rho_max_temp = sqrt(rho_max_temp);
+    //             v_norm(i, t_ind) = alpha * (M_max - M_min) * eps + 0.5 * max(abs(temp(0).lower()), abs(temp(0).upper()));
+    //         }
+    //         rho_max_temp = sqrt(rho_max_temp);
             
-            for (int i = 0; i < NUM_FACTORS; i++) {
-                v_norm(i, t_ind) += 0.5 * rho_max_temp.upper();
-            }
+    //         for (int i = 0; i < NUM_FACTORS; i++) {
+    //             v_norm(i, t_ind) += 0.5 * rho_max_temp.upper();
+    //         }
 
-            // (2) add the radius of the nominal input PZ (after reducing)
-            for (int i = 0; i < NUM_FACTORS; i++) {
-                v_norm(i, t_ind) += kd.u_nom(i, t_ind).independent(0);
-            }
+    //         // (2) add the radius of the nominal input PZ (after reducing)
+    //         for (int i = 0; i < NUM_FACTORS; i++) {
+    //             v_norm(i, t_ind) += kd.u_nom(i, t_ind).independent(0);
+    //         }
 
-            // (3) add friction
-            for (int i = 0; i < NUM_FACTORS; i++) {
-                v_norm(i, t_ind) += friction[i];
-            }
+    //         // (3) add friction
+    //         for (int i = 0; i < NUM_FACTORS; i++) {
+    //             v_norm(i, t_ind) += friction[i];
+    //         }
 
-            // so that v_norm would be the radius of the total control input PZ from now
-        }
-    }
-    catch (int errorCode) {
-        WARNING_PRINT("Error computing torque PZs! Check previous error message!");
-        return -1;
-    }
+    //         // so that v_norm would be the radius of the total control input PZ from now
+    //     }
+    // }
+    // catch (int errorCode) {
+    //     WARNING_PRINT("Error computing torque PZs! Check previous error message!");
+    //     return -1;
+    // }
+
+    cout << kd.links(2, NUM_TIME_STEPS - 1) << endl;
+    cout << link_independent_generators_array(6, NUM_TIME_STEPS - 1) << endl;
 
     // double factors[NUM_FACTORS] = {0.5, 0.6, 0.7, -0.5, -0.6, -0.7, 0.0};
     // for (int l = 0; l < NUM_FACTORS; l++) {

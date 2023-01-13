@@ -82,28 +82,33 @@ const double torque_limits[NUM_FACTORS] = { 56.7, 56.7, 56.7, 56.7, 29.4, 29.4, 
 
 const double gravity = 9.81;
 
-const double link_radius[NUM_FACTORS][3] = {{0.0675, 0.0675, 0.0675}, 
-									        {0.0675, 0.0675, 0.0675}, 
-										    {0.0675, 0.0675, 0.0675}, 
-										    {0.0675, 0.0675, 0.0675}, 
-									        {0.0675, 0.0675, 0.0675}, 
-										    {0.0675, 0.0675, 0.0675}, 
-										    {0.10, 0.10, 0.10}};
+// link zonotope information
+const double link_zonotope_center[NUM_JOINTS][3] = {{ 0.000000, -0.001297, -0.088375 },
+													{ 0.000000, -0.089400, -0.007877 },
+													{ 0.000000, -0.001502, -0.129375 },
+													{ 0.000000, -0.087450, -0.013648 },
+													{ 0.000001, -0.009023, -0.071752 },
+													{ 0.000000, -0.041661, -0.009251 },
+													{ 0.000000, -0.018585, -0.033462 }};
+
+const double link_zonotope_generators[NUM_JOINTS][3] = {{ 0.046358, 0.047354, 0.086000 },
+														{ 0.046000, 0.135400, 0.047501 },
+														{ 0.046000, 0.047501, 0.127000 },
+														{ 0.046000, 0.133450, 0.042293 },
+														{ 0.034999, 0.044023, 0.069252 },
+														{ 0.035000, 0.076739, 0.044076 },
+														{ 0.045500, 0.056085, 0.030963 }};
 
 // ultimate bound
 const double alpha = 1.0;
 const double V_m = 5e-5;
 const double M_max = 15.79635774;
 const double M_min = 5.095620491878957;
-const double eps = 0; // sqrt(2 * V_m / M_min);
+const double eps = sqrt(2 * V_m / M_min);
 const double K = 10.0;
 const double qe = eps / K;
 const double qde = 2 * eps;
 const double qdae = eps;
 const double qddae = 2 * K * eps;
-
-// We define this in order to deal with the fixed joints at the end (end effector) in kinova
-// The number of 1 should be strictly equal to NUM_FACTORS !!!
-const bool JOINTS_WE_CARE_IN_COLLISION_AVOIDANCE[NUM_JOINTS] = {1, 1, 1, 1, 1, 1, 1};
 
 #endif

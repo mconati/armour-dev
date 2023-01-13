@@ -94,7 +94,7 @@ void BezierCurve::makePolyZono(int t_ind) {
         // cos_q_des_int = cos_q_des_center + cos_q_des_coeff[0] * k + cos_q_des_coeff[1] * cosqe;
         uint64_t cos_q_des_degree[2][NUM_FACTORS * 6] = {0};
         cos_q_des_degree[0][i] = 1; // k
-        cos_q_des_degree[1][i + NUM_FACTORS * 1] = 1; // cosqe
+        cos_q_des_degree[1][i + NUM_FACTORS * 4] = 1; // cosqe
 
         // cos_q_des[t_ind * NUM_FACTORS + i] = PZsparse(cos_q_des_center, cos_q_des_coeff, cos_q_des_degree, 2);
 
@@ -111,7 +111,7 @@ void BezierCurve::makePolyZono(int t_ind) {
         // sin_q_des_int = sin_q_des_center + sin_q_des_coeff[0] * k + sin_q_des_coeff[1] * sinqe;
         uint64_t sin_q_des_degree[2][NUM_FACTORS * 6] = {0};
         sin_q_des_degree[0][i] = 1; // k
-        sin_q_des_degree[1][i + NUM_FACTORS * 2] = 1; // sinqe
+        sin_q_des_degree[1][i + NUM_FACTORS * 5] = 1; // sinqe
 
         // sin_q_des[t_ind * NUM_FACTORS + i] = PZsparse(sin_q_des_center, sin_q_des_coeff, sin_q_des_degree, 2);
 
@@ -159,7 +159,7 @@ void BezierCurve::makePolyZono(int t_ind) {
 
         uint64_t qd_des_degree[2][NUM_FACTORS * 6] = {0};
         qd_des_degree[0][i] = 1; // k
-        qd_des_degree[1][i + NUM_FACTORS * 3] = 1; // qde
+        qd_des_degree[1][i + NUM_FACTORS * 1] = 1; // qde
 
         // qd_des_int = qd_des_center + qd_des_coeff[0] * k + qd_des_coeff[1] * qde;
         qd_des(i, t_ind) = PZsparse(qd_des_center, qd_des_coeff, qd_des_degree, 2);
@@ -168,7 +168,7 @@ void BezierCurve::makePolyZono(int t_ind) {
 
         uint64_t qda_des_degree[2][NUM_FACTORS * 6] = {0};
         qda_des_degree[0][i] = 1; // k
-        qda_des_degree[1][i + NUM_FACTORS * 4] = 1; // qdae
+        qda_des_degree[1][i + NUM_FACTORS * 2] = 1; // qdae
 
         // qda_des_int = qd_des_center + qda_des_coeff[0] * k + qda_des_coeff[1] * qdae;
         qda_des(i, t_ind) = PZsparse(qd_des_center, qda_des_coeff, qda_des_degree, 2);
@@ -220,7 +220,7 @@ void BezierCurve::makePolyZono(int t_ind) {
 
         uint64_t qdd_des_degree[2][NUM_FACTORS * 6] = {0};
         qdd_des_degree[0][i] = 1; // k
-        qdd_des_degree[1][i + NUM_FACTORS * 5] = 1; // qadae
+        qdd_des_degree[1][i + NUM_FACTORS * 3] = 1; // qddae
 
         // qdd_des_int = qdd_des_center + qdd_des_coeff[0] * k + qdd_des_coeff[1] * qdde;
         qdda_des(i, t_ind) = PZsparse(qdd_des_center, qdd_des_coeff, qdd_des_degree, 2);

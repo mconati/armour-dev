@@ -12,27 +12,32 @@
 // cosqe
 // k
 // 6 * 7 = 42 variables in total
+// sinqe (maximum degree 2 bits (3))
+// cosqe (maximum degree 2 bits (3))
 // qddae (maximum degree 1 bit (1))
 // qdae  (maximum degree 1 bit (1))
 // qde   (maximum degree 1 bit (1))
-// sinqe (maximum degree 2 bits (3))
-// cosqe (maximum degree 2 bits (3))
 // k     (maximum degree 2 bits (3))
 // 9 * 7 = 63 digits stored in one uint64_t
 
 const uint64_t MOVE_BIT_INC[NUM_FACTORS * 6] = {2, 2, 2, 2, 2, 2, 2,
-                                                2, 2, 2, 2, 2, 2, 2,
-                                                2, 2, 2, 2, 2, 2, 2,
                                                 1, 1, 1, 1, 1, 1, 1,
                                                 1, 1, 1, 1, 1, 1, 1,
-                                                1, 1, 1, 1, 1, 1, 1};
+                                                1, 1, 1, 1, 1, 1, 1,
+                                                2, 2, 2, 2, 2, 2, 2,
+                                                2, 2, 2, 2, 2, 2, 2};
 
 const uint64_t DEGREE_MASK[NUM_FACTORS * 6] = {3, 3, 3, 3, 3, 3, 3,
-                                               3, 3, 3, 3, 3, 3, 3,
-                                               3, 3, 3, 3, 3, 3, 3,
                                                1, 1, 1, 1, 1, 1, 1,
                                                1, 1, 1, 1, 1, 1, 1,
-                                               1, 1, 1, 1, 1, 1, 1};
+                                               1, 1, 1, 1, 1, 1, 1,
+                                               3, 3, 3, 3, 3, 3, 3,
+                                               3, 3, 3, 3, 3, 3, 3,};
+
+const uint64_t max_hash_dependent_k_only = ((uint64_t)1 << (uint64_t)(2 * NUM_FACTORS));
+
+const uint64_t max_hash_dependent_k_links_only = ((uint64_t)1 << (uint64_t)(5 * NUM_FACTORS));
+const uint64_t dependent_k_mask = max_hash_dependent_k_only - 1;
 
 double getCenter(Interval a);
 
@@ -117,11 +122,13 @@ public:
 
     void makeRotationMatrix(Eigen::MatrixXd& R, const double cos_elt, const double sin_elt, const uint axis, bool startFromZero = false);
 
-    bool checkDimensions() const;
+    bool internalCheck() const;
 
     void simplify();
 
     void reduce();
+
+    Eigen::Matrix3d reduce_link_PZ(); // special implementation for link PZs
 
     MatrixXInt slice(const double* factor);
 
