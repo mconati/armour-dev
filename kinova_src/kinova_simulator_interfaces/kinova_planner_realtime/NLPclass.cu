@@ -350,10 +350,9 @@ bool armtd_NLP::eval_g(
             TYPE n_c_z_radius_2 = n_c_z_radius * n_c_z_radius;
 
             //     separation constraint: -inf < -1*f_c_z < 0
-            // storing separation constraint value, not sure what index to use here?
             // question: not sure what to do with the radius here?
-            // g[i] = -1*getCenter(f_c_z);
-            // g[i] = -1*f_c_z_center;
+            g[i] = -1*f_c_z_center;
+
             // cout << "f_c_z at time: " << i << endl;
             // f_c[i-NUM_TIME_STEPS*NUM_FACTORS].elt[2]->print();
             // cout << endl << endl;

@@ -21,7 +21,8 @@ verbosity = 10;
 traj_type = 'bernstein'; % pick 'orig' (ARMTD) or 'bernstein' (ARMOUR)
 
 %%% for agent
-agent_urdf = 'kinova_without_gripper.urdf';
+% agent_urdf = 'kinova_without_gripper.urdf';
+agent_urdf = 'Kinova_Grasp_URDF.urdf';
 
 add_uncertainty_to = 'all'; % choose 'all', 'link', or 'none'
 links_with_uncertainty = {}; % if add_uncertainty_to = 'link', specify links here.
@@ -55,8 +56,8 @@ stop_threshold = 4 ; % number of failed iterations before exiting
 % start = [-pi/6;-pi/2;-pi/2;pi/2;0;pi/2;pi/2];
 % goal = [pi/6; -pi/2; pi/2; pi/2; pi; -pi/2; pi/2]; % goal configuration
 
-start = [0;pi/2;0;0;0;0;0];
-goal = [pi/8;pi/2;0;0;0;0;0];
+start = [0;-pi/2;0;0;0;0;0];
+goal = [pi/8;-pi/2;0;0;0;0;0];
 
 % obstacles = {};
 obstacles{1} = box_obstacle_zonotope('center', [3; 0; 0.6],...

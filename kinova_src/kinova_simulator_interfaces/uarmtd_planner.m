@@ -135,7 +135,7 @@ classdef uarmtd_planner < robot_arm_generic_planner
                     k_opt = nan;
                 end
                 toc(planning_time);
-            else
+            else % if using cuda
                 if strcmp(P.traj_type, 'bernstein')
                     P.jrs_info.n_t = 128;
                     P.jrs_info.n_q = 7;
