@@ -299,7 +299,7 @@ bool armtd_NLP::eval_g(
     }
 
     Index i;
-    // #pragma omp parallel for private(i) schedule(static, (NUM_TIME_STEPS * NUM_FACTORS + NUM_TIME_STEPS) / NUM_THREADS)
+    #pragma omp parallel for private(i) schedule(static, (NUM_TIME_STEPS * NUM_FACTORS + NUM_TIME_STEPS) / NUM_THREADS)
     for(i = 0; i < (NUM_TIME_STEPS * NUM_FACTORS + NUM_TIME_STEPS); i++) {  // took out the times 3 here since I am calculating all three contact constraints at the same time, but they still fill up all the same space
         
         if(i < (NUM_TIME_STEPS * NUM_FACTORS)) {
