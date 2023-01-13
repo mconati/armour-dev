@@ -57,7 +57,7 @@ stop_threshold = 4 ; % number of failed iterations before exiting
 % goal = [pi/6; -pi/2; pi/2; pi/2; pi; -pi/2; pi/2]; % goal configuration
 
 start = [0;-pi/2;0;0;0;0;0];
-goal = [pi/8;-pi/2;0;0;0;0;0];
+goal = [0;-pi/2;pi/2;0;0;0;0];
 
 % obstacles = {};
 obstacles{1} = box_obstacle_zonotope('center', [3; 0; 0.6],...
@@ -84,7 +84,7 @@ use_cuda_flag = true;
 
 %% automated from here
 if plot_while_running
-    figure(1); clf; view(3); grid on;
+    figure(1); clf; view(3); grid on; xlim([-2 2]); ylim([-2 2]);
 end
 
 % run loop
@@ -153,7 +153,7 @@ S = simulator_armtd(A,W,P, ...
 
 % %% plotting
 if plot_while_running
-    figure(1) ; clf ; axis equal ; xlim([-1 1]); ylim([-1 1]); zlim([0 2]); grid on; hold on ;
+    figure(1) ; clf ; axis equal ; xlim([-2 2]); ylim([-2 2]); zlim([0 2]); grid on; hold on ;
 
     if dimension == 3
         view(3);

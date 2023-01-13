@@ -219,8 +219,8 @@ classdef uarmtd_planner < robot_arm_generic_planner
                         k_opt = nan;
                     end
 
-                    fprintf('paused, check armour_constraints.out and press key to continue')
-                    pause()
+%                     fprintf('paused, check armour_constraints.out and press key to continue')
+%                     pause()
 
                 elseif strcmp(P.traj_type, 'orig')
                     P.jrs_info.n_t = 100;

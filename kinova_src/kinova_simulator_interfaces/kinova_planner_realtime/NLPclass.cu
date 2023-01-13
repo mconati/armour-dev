@@ -817,24 +817,29 @@ void armtd_NLP::finalize_solution(
 
     // NOTE: need to add force constraints here and adjust the indices offsets after this
     Index offset = NUM_FACTORS * NUM_TIME_STEPS;
-    for( Index i = offset; i < NUM_TIME_STEPS; i++) {
+    for( Index i = offset; i < offset + NUM_TIME_STEPS; i++) {
         // separation constraint
+        // bool sep_constraint = (g_copy[i] > SEPARATION_CONSTRAINT_VIOLATION_THRESHOLD);
+        // cout << sep_constraint << endl;
         if(g_copy[i] > SEPARATION_CONSTRAINT_VIOLATION_THRESHOLD) {
             feasible = false;
             double t_violation = i - offset;
             cout << "        CUDA & C++: Ipopt: Separation constraint violated at time interval: " << t_violation << " \n";
+            return;
         }
         // slipping constraint
         if(g_copy[i+NUM_TIME_STEPS] > SLIPPING_CONSTRAINT_VIOLATION_THRESHOLD){
             feasible = false;
             double t_violation = i - offset;
             cout << "        CUDA & C++: Ipopt: Slipping constraint violated at time interval: " << t_violation << " \n";
+            return;
         }
         // tipping constraint
         if(g_copy[i+2*NUM_TIME_STEPS] > TIPPING_CONSTRAINT_VIOLATION_THRESHOLD){
             feasible = false;
             double t_violation = i - offset;
             cout << "        CUDA & C++: Ipopt: Tipping constraint violated at time interval: " << t_violation << " \n";
+            return;
         }
     }
     offset +=  NUM_TIME_STEPS*3;
