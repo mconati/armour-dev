@@ -7,7 +7,7 @@
 
 // Parameters for PZsparse.h:
     // monomials with a coefficient smaller than this number will be reduced
-    #define SIMPLIFY_THRESHOLD 1e-4
+    #define SIMPLIFY_THRESHOLD 1e-6
 
 // Parameters for Trajectories.h:
     // number of time steps (This should be an EVEN number!!!)

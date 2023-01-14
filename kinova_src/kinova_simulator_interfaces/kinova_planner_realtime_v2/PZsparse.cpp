@@ -7,12 +7,36 @@
 Helper functions
 */
 
-double getCenter(Interval a) {
+double getCenter(const Interval& a) {
     return (a.lower() + a.upper()) * 0.5;
 }
 
-double getRadius(Interval a) {
+double getRadius(const Interval& a) {
     return (a.upper() - a.lower()) * 0.5;
+}
+
+Eigen::MatrixXd getCenter(const MatrixXInt& a) {
+    Eigen::MatrixXd res(a.rows(), a.cols());
+
+    for (uint i = 0; i < a.rows(); i++) {
+        for (uint j = 0; j < a.cols(); j++) {
+            res(i, j) = getCenter(a(i, j));
+        }
+    }
+
+    return res;
+}
+
+Eigen::MatrixXd getRadius(const MatrixXInt& a) {
+    Eigen::MatrixXd res(a.rows(), a.cols());
+
+    for (uint i = 0; i < a.rows(); i++) {
+        for (uint j = 0; j < a.cols(); j++) {
+            res(i, j) = getRadius(a(i, j));
+        }
+    }
+
+    return res;
 }
 
 bool Monomial_sorter_degree(Monomial const& lhs, Monomial const& rhs) {

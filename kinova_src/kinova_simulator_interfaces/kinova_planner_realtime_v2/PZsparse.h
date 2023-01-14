@@ -39,9 +39,13 @@ const uint64_t max_hash_dependent_k_only = ((uint64_t)1 << (uint64_t)(2 * NUM_FA
 const uint64_t max_hash_dependent_k_links_only = ((uint64_t)1 << (uint64_t)(5 * NUM_FACTORS));
 const uint64_t dependent_k_mask = max_hash_dependent_k_only - 1;
 
-double getCenter(Interval a);
+double getCenter(const Interval& a);
 
-double getRadius(Interval a);
+double getRadius(const Interval& a);
+
+Eigen::MatrixXd getCenter(const MatrixXInt& a);
+
+Eigen::MatrixXd getRadius(const MatrixXInt& a);
 
 class Monomial {
 public:

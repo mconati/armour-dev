@@ -1,4 +1,5 @@
-clear; clc;
+% clear; clc;
+clc;
 
 robot = importrobot('kinova_without_gripper.urdf');
 robot.DataFormat = 'col';
@@ -25,7 +26,7 @@ beta = match_deg5_bernstein_coefficients({q0, qd0, qdd0, q1, qd1, qdd1});
 
 tspan = linspace(0, 1, 128 + 1);
 
-for i = 64:64
+for i = 128:128
     t_lb = tspan(i);
     t_ub = tspan(i + 1);
 
