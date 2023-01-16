@@ -337,11 +337,12 @@ void PZsparse::reduce() {
     polynomial = polynomial_new;
 }
 
-Eigen::Matrix3d PZsparse::reduce_link_PZ() {
+Eigen::MatrixXd PZsparse::reduce_link_PZ() {
     assert(internalCheck());
     assert(NRows == 3 && NCols == 1);
 
-    Eigen::Matrix3d link_independent_generators;
+    Eigen::MatrixXd link_independent_generators(3, 3 + 3);
+    link_independent_generators.setZero();
 
     vector<Monomial> polynomial_new;
     polynomial_new.reserve(polynomial.size());
@@ -362,6 +363,10 @@ Eigen::Matrix3d PZsparse::reduce_link_PZ() {
     }
 
     polynomial = polynomial_new;
+
+    link_independent_generators(0, 3) = independent(0);
+    link_independent_generators(1, 4) = independent(1);
+    link_independent_generators(2, 5) = independent(2);
 
     return link_independent_generators;
 }

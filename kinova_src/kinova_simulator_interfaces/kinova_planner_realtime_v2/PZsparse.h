@@ -132,7 +132,7 @@ public:
 
     void reduce();
 
-    Eigen::Matrix3d reduce_link_PZ(); // special implementation for link PZs
+    Eigen::MatrixXd reduce_link_PZ(); // special implementation for link PZs
 
     MatrixXInt slice(const double* factor);
 

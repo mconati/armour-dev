@@ -41,7 +41,7 @@ const double mass[NUM_JOINTS] = { 1.3773, 1.1636, 1.1636, 0.9302, 0.6781, 0.6781
 const double mass_uncertainty = 0.03;
 
 // link center of mass
-const double com[NUM_JOINTS * 3] = {  -0.000023, -0.010364,  -0.07336,
+const double com[NUM_JOINTS * 3] = {-0.000023, -0.010364,  -0.07336,
 									-0.000044,  -0.09958, -0.013278,
 									-0.000044, -0.006641, -0.117892,
 									-0.000018, -0.075478, -0.015006,
@@ -104,7 +104,7 @@ const double alpha = 1.0;
 const double V_m = 5e-5;
 const double M_max = 15.79635774;
 const double M_min = 5.095620491878957;
-const double eps = sqrt(2 * V_m / M_min);
+const double eps = 0; // sqrt(2 * V_m / M_min);
 const double K = 10.0;
 const double qe = eps / K;
 const double qde = 2 * eps;
