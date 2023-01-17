@@ -137,75 +137,76 @@ end
 % !!!!!!
 % P.jrs_info.g_k_bernstein = [pi/72; pi/72; pi/72; pi/72; pi/72; pi/72; pi/72];
 
-% for idx_real = 1:num_conditions
-% 
-%     % organize input to cuda program
-%     fprintf('Calling CUDA & C++ Program!')
-%     cuda_input_file = fopen('/home/roahmlab/Documents/armour-dev/kinova_src/kinova_simulator_interfaces/kinova_planner_realtime/buffer/armour.in', 'w');
-%     
-%     for ind = 1:length(q_0)
-%         fprintf(cuda_input_file, '%.10f ', q_0(idx_real,ind));
-%     end
-%     fprintf(cuda_input_file, '\n');
-%     for ind = 1:length(q_dot_0)
-%         fprintf(cuda_input_file, '%.10f ', q_dot_0(idx_real,ind));
-%     end
-%     fprintf(cuda_input_file, '\n');
-%     for ind = 1:length(q_ddot_0)
-%         fprintf(cuda_input_file, '%.10f ', q_ddot_0(idx_real,ind));
-%     end
-%     fprintf(cuda_input_file, '\n');
-%     for ind = 1:length(q_des)
-%         fprintf(cuda_input_file, '%.10f ', q_des(idx_real,ind));
-%     end
-%     fprintf(cuda_input_file, '\n');
-%     fprintf(cuda_input_file, '%d\n', max(length(obstacles), 0));
-%     for obs_ind = 1:length(obstacles)
-%         temp = reshape(obstacles{obs_ind}.Z, [1,size(obstacles{obs_ind}.Z,1) * size(obstacles{obs_ind}.Z,2)]); %world_info.
-%         for ind = 1:length(temp)
-%             fprintf(cuda_input_file, '%.10f ', temp(ind));
-%         end
-%         fprintf(cuda_input_file, '\n');
-%     end
-%     
-%     fclose(cuda_input_file);
-%     
-%     % call cuda program in terminal
-%     % you have to be in the proper path!
-%     %                     terminal_output = system('./../kinova_simulator_interfaces/kinova_planner_realtime/armour_main'); % armour path
-%     terminal_output = system('/home/roahmlab/Documents/armour-dev/kinova_src/kinova_simulator_interfaces/kinova_planner_realtime/rtd_force_main'); % rtd-force path
-%     
-%     % To do, figure out how to read and store output for comparison
-%     
-%     if terminal_output == 0
-%         data = readmatrix('armour.out', 'FileType', 'text');
-%         k_opt = data(1:end-1);
-%         planning_time{i} = data(end) / 1000.0; % original data is milliseconds
-%     
-%         if length(k_opt) == 1
-%             fprintf('Unable to find new trajectory!')
-%             k_opt{i} = nan;
-%         else
-%             fprintf('New trajectory found!');
-%             for i = 1:length(k_opt)
-%                 fprintf('%7.6f ', k_opt(i));
-%             end
-%             fprintf('\n');
-%         end
-%     else
-%         error('CUDA program error! Check the executable path in armour-dev/kinova_src/kinova_simulator_interfaces/uarmtd_planner');
-%     end
-%     
-%     if terminal_output == 0
-%         % read FRS information if needed
-%         joint_frs_center{i} = readmatrix('armour_joint_position_center.out', 'FileType', 'text');
-%         joint_frs_radius{i} = readmatrix('armour_joint_position_radius.out', 'FileType', 'text');
-%         control_input_radius{i} = readmatrix('armour_control_input_radius.out', 'FileType', 'text');
-%         constraints_value{i} = readmatrix('armour_constraints.out', 'FileType', 'text');
-%     else
-%         k_opt{i} = nan;
-%     end
-% end
+for idx_real = 1:num_conditions
+
+    % organize input to cuda program
+    fprintf('Calling CUDA & C++ Program!')
+    cuda_input_file = fopen('/home/roahmlab/Documents/armour-dev/kinova_src/kinova_simulator_interfaces/kinova_planner_realtime/buffer/armour.in', 'w');
+    
+    for ind = 1:length(q_0)
+        fprintf(cuda_input_file, '%.10f ', q_0(idx_real,ind));
+    end
+    fprintf(cuda_input_file, '\n');
+    for ind = 1:length(q_dot_0)
+        fprintf(cuda_input_file, '%.10f ', q_dot_0(idx_real,ind));
+    end
+    fprintf(cuda_input_file, '\n');
+    for ind = 1:length(q_ddot_0)
+        fprintf(cuda_input_file, '%.10f ', q_ddot_0(idx_real,ind));
+    end
+    fprintf(cuda_input_file, '\n');
+    for ind = 1:length(q_des)
+        fprintf(cuda_input_file, '%.10f ', q_des(idx_real,ind));
+    end
+    fprintf(cuda_input_file, '\n');
+    fprintf(cuda_input_file, '%d\n', max(length(obstacles), 0));
+    for obs_ind = 1:length(obstacles)
+        temp = reshape(obstacles{obs_ind}.Z, [1,size(obstacles{obs_ind}.Z,1) * size(obstacles{obs_ind}.Z,2)]); %world_info.
+        for ind = 1:length(temp)
+            fprintf(cuda_input_file, '%.10f ', temp(ind));
+        end
+        fprintf(cuda_input_file, '\n');
+    end
+    
+    fclose(cuda_input_file);
+    
+    % call cuda program in terminal
+    % you have to be in the proper path!
+    %                     terminal_output = system('./../kinova_simulator_interfaces/kinova_planner_realtime/armour_main'); % armour path
+    terminal_output = system('/home/roahmlab/Documents/armour-dev/kinova_src/kinova_simulator_interfaces/kinova_planner_realtime/rtd_force_main'); % rtd-force path
+    
+    % To do, figure out how to read and store output for comparison
+    
+    if terminal_output == 0
+        data = readmatrix('armour.out', 'FileType', 'text');
+        k_opt = data(1:end-1);
+        planning_time(i) = data(end) / 1000.0; % original data is milliseconds
+    
+        if length(k_opt) == 1
+            fprintf('Unable to find new trajectory!')
+            k_opt = nan;
+        else
+            fprintf('New trajectory found!');
+            for i = 1:length(k_opt)
+                fprintf('%7.6f ', k_opt);
+            end
+            fprintf('\n');
+        end
+    else
+        error('CUDA program error! Check the executable path in armour-dev/kinova_src/kinova_simulator_interfaces/uarmtd_planner');
+    end
+    
+    if terminal_output == 0
+        % read FRS information if needed
+        joint_frs_center(:,i) = readmatrix('armour_joint_position_center.out', 'FileType', 'text');
+        joint_frs_radius(:,i) = readmatrix('armour_joint_position_radius.out', 'FileType', 'text');
+        control_input_radius(:,i) = readmatrix('armour_control_input_radius.out', 'FileType', 'text');
+        constraints_value(:,i) = readmatrix('armour_constraints.out', 'FileType', 'text');
+    else
+        k_opt = nan;
+    end
+    k_opt_storage(:,i) = k_opt;
+end
 
 
 %% Matlab Method
