@@ -1,4 +1,5 @@
 #include "Dynamics.h"
+#include "CollisionChecking.h"
 
 const std::string pathname = "/home/roahmlab/Documents/armour-dev/kinova_src/kinova_simulator_interfaces/kinova_planner_realtime_v2/buffer/";
 const std::string inputfilename = pathname + "armour.in";
@@ -83,10 +84,6 @@ Section I:
 Section II:
     Initialize all polynomial zonotopes, including links and torques
 */
-    double jointPositionRadius[NUM_TIME_STEPS * NUM_FACTORS * 3] = {0.0};
-
-    // Obstacles O(obstacles, num_obstacles); 
-
     auto start1 = std::chrono::high_resolution_clock::now();
 
     omp_set_num_threads(NUM_THREADS);
@@ -112,7 +109,7 @@ Section II:
     Section II.B: Compute link PZs and nominal torque PZs
     */
     KinematicsDynamics kd(&traj);
-    Eigen::Array<Eigen::Matrix<double, 3, 3 + 3>, NUM_JOINTS, NUM_TIME_STEPS> link_independent_generators;
+    Eigen::Matrix<double, 3, 3 + 3> link_independent_generators[NUM_TIME_STEPS * NUM_JOINTS];
 
     try {
         #pragma omp parallel for shared(kd, link_independent_generators) private(openmp_t_ind) schedule(static, NUM_TIME_STEPS / NUM_THREADS)
@@ -122,7 +119,7 @@ Section II:
 
             // reduce non-only-k-dependent generators so that slice takes less time
             for (int i = 0; i < NUM_JOINTS; i++) {
-                link_independent_generators(i, openmp_t_ind) = kd.links(i, openmp_t_ind).reduce_link_PZ();
+                link_independent_generators[openmp_t_ind * NUM_JOINTS + i] = kd.links(i, openmp_t_ind).reduce_link_PZ();
             }
 
             // compute nominal torque
@@ -201,7 +198,7 @@ Section III:
     double factors[NUM_FACTORS] = {0.5, 0.6, 0.7, 0.0, -0.5, -0.6, -0.7};
 
     Eigen::MatrixXd torque_sliced_center(NUM_FACTORS, NUM_TIME_STEPS);
-    Eigen::Array<Eigen::Vector3d, NUM_JOINTS, NUM_TIME_STEPS> link_sliced_center;
+    Eigen::Vector3d link_sliced_center[NUM_TIME_STEPS * NUM_JOINTS];
 
     #pragma omp parallel for shared(kd, factors, torque_sliced_center, link_sliced_center) private(openmp_t_ind) schedule(static, NUM_TIME_STEPS / NUM_THREADS)
     for(openmp_t_ind = 0; openmp_t_ind < NUM_TIME_STEPS; openmp_t_ind++) {
@@ -212,7 +209,7 @@ Section III:
 
         for (int l = 0; l < NUM_JOINTS; l++) {
             MatrixXInt res = kd.links(l, openmp_t_ind).slice(factors);
-            link_sliced_center(l, openmp_t_ind) = getCenter(res);
+            link_sliced_center[openmp_t_ind * NUM_JOINTS + l] = getCenter(res);
         }
     }
 
@@ -227,7 +224,7 @@ Section IV:
     for (int i = 0; i < NUM_TIME_STEPS; i++) {
         for (int j = 0; j < NUM_JOINTS; j++) {
             for (int l = 0; l < 3; l++) {
-                outputstream2 << link_sliced_center(j, i)(l) << ' ';
+                outputstream2 << link_sliced_center[i * NUM_JOINTS + j](l) << ' ';
             }
             outputstream2 << '\n';
         }
@@ -241,7 +238,7 @@ Section IV:
         for (int j = 0; j < NUM_JOINTS; j++) {
             for (int k = 0; k < 3; k++) {
                 for (int l = 0; l < 3 + 3; l++) {
-                    outputstream3 << link_independent_generators(j, i)(k, l) << ' ';
+                    outputstream3 << link_independent_generators[i * NUM_JOINTS + j](k, l) << ' ';
                 }
                 outputstream3 << '\n';
             }

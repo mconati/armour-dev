@@ -49,10 +49,10 @@ torque_reachset_center = readmatrix('buffer/armour_constraints.out', 'FileType',
 torque_reachset_radius = readmatrix('buffer/armour_control_input_radius.out', 'FileType', 'text');
 
 %% verification
-figure; view(3); axis equal; hold on;
+figure; view(3); axis equal; hold on; axis on;
 
 % for tid = 1:128
-tid = 88;
+tid = 128;
 
 % choose a random time inside this time interval
 t_lb = tspan(tid);
@@ -70,7 +70,7 @@ for j = 1:7
     g = link_reachset_generators( ((tid-1)*7+j-1)*3+1 : ((tid-1)*7+j)*3, :);
     Z = zonotope(c, g);
     Z_v = vertices(Z)';
-    trisurf(convhulln(Z_v),Z_v(:,1),Z_v(:,2),Z_v(:,3),'FaceColor',[0,0,1],'FaceAlpha',0.2,'EdgeColor',[0,0,1],'EdgeAlpha',0.6);
+    trisurf(convhulln(Z_v),Z_v(:,1),Z_v(:,2),Z_v(:,3),'FaceColor',[0,0,1],'FaceAlpha',0.1,'EdgeColor',[0,0,1],'EdgeAlpha',0.3);
 end
 
 % end
@@ -101,6 +101,8 @@ for i = 1:7
     plot(ts, u_lb(:,i), 'b');
     plot(ts, u_ub(:,i), 'b');
     title(['link ', num2str(i)]);
+    xlabel('time (sec)');
+    ylabel('torque (N*m)');
 end
 sgtitle('sliced torque reachable set');
 

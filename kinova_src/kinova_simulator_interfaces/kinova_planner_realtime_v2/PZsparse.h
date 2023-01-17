@@ -136,7 +136,11 @@ public:
 
     MatrixXInt slice(const double* factor);
 
-    void slice(Eigen::Array<Eigen::MatrixXd, NUM_FACTORS, 1>& gradient, const double* factor); // 1st-order gradient of slice
+    void slice(Eigen::MatrixXd* gradient, const double* factor); // 1st-order gradient of slice
+
+    void slice(Eigen::Vector3d* gradient, const double* factor); // 1st-order gradient of slice
+
+    void slice(double* gradient, const double* factor); // 1st-order gradient of slice of a 1-dim PZ
 
     MatrixXInt toInterval();
 

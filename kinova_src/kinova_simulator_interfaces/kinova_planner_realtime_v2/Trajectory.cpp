@@ -235,7 +235,7 @@ void BezierCurve::makePolyZono(int t_ind) {
     R(NUM_JOINTS, t_ind) = PZsparse(0, 0, 0);
 }
 
-void BezierCurve::returnJointPositionExtremum(double* extremum, const double* k) {
+void BezierCurve::returnJointPositionExtremum(double* extremum, const double* k) const {
     for (int i = 0; i < NUM_FACTORS; i++) {
         // k[i] range is [-1,1] since it is defined for PZ, the following is the actual k
         double k_actual = k_range[i] * k[i];
@@ -269,7 +269,7 @@ void BezierCurve::returnJointPositionExtremum(double* extremum, const double* k)
     }
 }
 
-void BezierCurve::returnJointPositionExtremumGradient(double* extremumGradient, const double* k) {
+void BezierCurve::returnJointPositionExtremumGradient(double* extremumGradient, const double* k) const {
     for (int i = 0; i < NUM_FACTORS; i++) {
         // k[i] range is [-1,1] since it is defined for PZ, the following is the actual k
         double k_actual = k_range[i] * k[i];
@@ -378,7 +378,7 @@ void BezierCurve::returnJointPositionExtremumGradient(double* extremumGradient, 
     }
 }
 
-void BezierCurve::returnJointVelocityExtremum(double* extremum, const double* k) {
+void BezierCurve::returnJointVelocityExtremum(double* extremum, const double* k) const {
     for (int i = 0; i < NUM_FACTORS; i++) {
         // k[i] range is [-1,1] since it is defined for PZ, the following is the actual k
         double k_actual = k_range[i] * k[i];
@@ -412,7 +412,7 @@ void BezierCurve::returnJointVelocityExtremum(double* extremum, const double* k)
     }
 }
 
-void BezierCurve::returnJointVelocityExtremumGradient(double* extremumGradient, const double* k) {
+void BezierCurve::returnJointVelocityExtremumGradient(double* extremumGradient, const double* k) const {
     for (int i = 0; i < NUM_FACTORS; i++) {
         // k[i] range is [-1,1] since it is defined for PZ, the following is the actual k
         double k_actual = k_range[i] * k[i];

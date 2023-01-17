@@ -78,16 +78,16 @@ public:
     void makePolyZono(int t_ind);
 
     // return the min and max of the joint position throughout the whole desired trajectory
-    void returnJointPositionExtremum(double* extremum, const double* k);
+    void returnJointPositionExtremum(double* extremum, const double* k) const;
 
     // return the gradient of min and max of the joint position throughout the whole desired trajectory
-    void returnJointPositionExtremumGradient(double* extremumGradient, const double* k);
+    void returnJointPositionExtremumGradient(double* extremumGradient, const double* k) const;
 
     // return the min and max of the joint velocity throughout the whole desired trajectory
-    void returnJointVelocityExtremum(double* extremum, const double* k);
+    void returnJointVelocityExtremum(double* extremum, const double* k) const;
 
     // return the gradient of min and max of the joint velocity throughout the whole desired trajectory
-    void returnJointVelocityExtremumGradient(double* extremumGradient, const double* k);
+    void returnJointVelocityExtremumGradient(double* extremumGradient, const double* k) const;
 };
 
 // helper functions

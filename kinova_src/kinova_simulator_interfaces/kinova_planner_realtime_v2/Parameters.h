@@ -5,6 +5,8 @@
 // #include "KinovaInfo.h"
 #include "KinovaWithoutGripperInfo.h"
 
+#define DEBUG_MODE true
+
 // Parameters for PZsparse.h:
     // monomials with a coefficient smaller than this number will be reduced
     #define SIMPLIFY_THRESHOLD 1e-4

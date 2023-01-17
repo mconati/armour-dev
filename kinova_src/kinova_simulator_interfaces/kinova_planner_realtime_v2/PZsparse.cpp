@@ -405,7 +405,7 @@ MatrixXInt PZsparse::slice(const double* factor) {
     return res;
 }
 
-void PZsparse::slice(Eigen::Array<Eigen::MatrixXd, NUM_FACTORS, 1>& gradient, const double* factor) {
+void PZsparse::slice(Eigen::MatrixXd* gradient, const double* factor) {
     assert(internalCheck());
 
     for (uint k = 0; k < NUM_FACTORS; k++) {
@@ -438,7 +438,89 @@ void PZsparse::slice(Eigen::Array<Eigen::MatrixXd, NUM_FACTORS, 1>& gradient, co
                 }
             }
 
-            gradient += resTemp;
+            for (uint k = 0; k < NUM_FACTORS; k++) {
+                gradient[k] += resTemp[k];
+            }
+        }
+    }
+}
+
+void PZsparse::slice(Eigen::Vector3d* gradient, const double* factor) {
+    assert(internalCheck());
+
+    for (uint k = 0; k < NUM_FACTORS; k++) {
+        gradient[k] = Eigen::MatrixXd::Zero(NRows, NCols);
+    }
+
+    Eigen::Array<Eigen::Vector3d, NUM_FACTORS, 1> resTemp;
+
+    for (auto it : polynomial) {
+        if (it.degree <= (1 << (2 * NUM_FACTORS))) { // only dependent on k
+            for (uint k = 0; k < NUM_FACTORS; k++) {
+                resTemp[k] = it.coeff;
+            }
+
+            convertHashToDegree(it.degree);
+
+            for (uint j = 0; j < NUM_FACTORS; j++) {
+                for (uint k = 0; k < NUM_FACTORS; k++) {
+                    if (j == k) { // differentiate this!
+                        if (degreeArray[j] == 0) { // monomial unrelated to k
+                            resTemp[k] = Eigen::Vector3d::Zero();
+                        }
+                        else {
+                            resTemp[k] *= degreeArray[j] * pow(factor[j], degreeArray[j] - 1);
+                        }
+                    }
+                    else {
+                        resTemp[k] *= pow(factor[j], degreeArray[j]);
+                    }
+                }
+            }
+
+            for (uint k = 0; k < NUM_FACTORS; k++) {
+                gradient[k] += resTemp[k];
+            }
+        }
+    }
+}
+
+void PZsparse::slice(double* gradient, const double* factor) {
+    cout << NRows << ' ' << NCols << endl; 
+    assert(internalCheck());
+    assert(NRows == 1 && NCols == 1);
+
+    memset(gradient, 0, NUM_FACTORS * sizeof(double));
+
+    double resTemp[NUM_FACTORS] = {0};
+
+    for (auto it : polynomial) {
+        if (it.degree <= (1 << (2 * NUM_FACTORS))) { // only dependent on k
+            for (uint k = 0; k < NUM_FACTORS; k++) {
+                resTemp[k] = it.coeff(0);
+            }
+
+            convertHashToDegree(it.degree);
+
+            for (uint j = 0; j < NUM_FACTORS; j++) {
+                for (uint k = 0; k < NUM_FACTORS; k++) {
+                    if (j == k) { // differentiate this!
+                        if (degreeArray[j] == 0) { // monomial unrelated to k
+                            resTemp[k] = 0;
+                        }
+                        else {
+                            resTemp[k] *= degreeArray[j] * pow(factor[j], degreeArray[j] - 1);
+                        }
+                    }
+                    else {
+                        resTemp[k] *= pow(factor[j], degreeArray[j]);
+                    }
+                }
+            }
+
+            for (uint k = 0; k < NUM_FACTORS; k++) {
+                gradient[k] += resTemp[k];
+            }
         }
     }
 }
