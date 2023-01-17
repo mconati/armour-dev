@@ -34,6 +34,10 @@ classdef uarmtd_planner < robot_arm_generic_planner
         smooth_obstacle_constraints_flag = false;
         use_robust_input = true; % turn this off to only consider nominal passivity-based controller
 
+        % parameters for grasp constraints
+        u_s = NaN; % coefficient of friction
+        db2 = NaN; % diameter of a circular contact area
+
         % for obstacle avoidance:
         combs;
 
@@ -533,6 +537,167 @@ classdef uarmtd_planner < robot_arm_generic_planner
                 end
             end
 
+            if P.grasp_constraints_flag
+                % need to add a check somewhere to see if constraint is
+                % trivially satisfied
+                u_s = P.u_s; % A.u_s; 0.5
+                db2 = P.db2; % 0.0762; % A.db2 0.0762
+
+                % iterate through all of the time steps
+                for i = 1:jrs_info.n_t
+                    
+                    % only checking one contact joint (for now)
+                    % ASSUMING SURFACE NORMAL IS POSITIVE Z-DIRECTION
+
+                    % ! this depends on the robot urdf being used!
+                    % for fetch_waiter_Zac.urdf, f_int{i,1}(10), 
+                    % n_int{i,1}(10) are the forces/moments
+                    % polyzonotopes at the contact point between 
+                    % tray and cup.
+
+                    % if input constraint flag is off, need to call PZ rnea,
+                    % otherwise it should already be in the workspace
+                    if ~P.input_constraints_flag
+                        [tau_int{i, 1}, f_int{i, 1}, n_int{i, 1}] = poly_zonotope_rnea(R{i}, R_t{i}, dq{i}, dq_a{i}, ddq_a{i}, true, P.agent_info.params.pz_interval);
+                    end
+        
+                    % extract relevant polyzonotope from f_int{i,1}
+                    % ! depends on robot urdf!
+                    contact_poly = f_int{i,1}{10};
+
+                    
+                    % create individual force polyzonotopes
+                    % 1. collapse grest at end of forming constraints 
+                    % where <0 so can always add and it doesn't affect 
+                    % calculations.
+                    % 2. the reduce operation that is performed in the
+                    % poly_zonotope_rnea() call means that the PZs output
+                    % might not have G (and therefore expMat and id) or
+                    % Grest so that is why there is if statements below
+                    % handling empty components of the output PZs.
+                    
+                    % centers
+                    Fx_poly_c = contact_poly.c(1);
+                    Fy_poly_c = contact_poly.c(2);
+                    Fz_poly_c = contact_poly.c(3);
+                    % generators
+                    if isempty(contact_poly.G)
+                        Fx_poly_G = [];
+                        Fy_poly_G = [];
+                        Fz_poly_G = [];
+                    else
+                        Fx_poly_G = contact_poly.G(1,:);
+                        Fy_poly_G = contact_poly.G(2,:);
+                        Fz_poly_G = contact_poly.G(3,:);
+                    end
+                    % Grest generators
+                    if isempty(contact_poly.Grest)
+                        Fx_poly_Grest = [];
+                        Fy_poly_Grest = [];
+                        Fz_poly_Grest = [];
+                    else
+                        Fx_poly_Grest = contact_poly.Grest(1,:);
+                        Fy_poly_Grest = contact_poly.Grest(2,:);
+                        Fz_poly_Grest = contact_poly.Grest(3,:);
+                    end
+                    % exponent matrices
+                    if isempty(contact_poly.expMat)
+                        Fx_poly_expMat = [];
+                        Fy_poly_expMat = [];
+                        Fz_poly_expMat = [];
+                    else
+                        Fx_poly_expMat = contact_poly.expMat;
+                        Fy_poly_expMat = contact_poly.expMat;
+                        Fz_poly_expMat = contact_poly.expMat;
+                    end
+                    % id matrix
+                    if isempty(contact_poly.id)
+                        Fx_poly_id = [];
+                        Fy_poly_id = [];
+                        Fz_poly_id = [];
+                    else
+                        Fx_poly_id = contact_poly.id;
+                        Fy_poly_id = contact_poly.id;
+                        Fz_poly_id = contact_poly.id;
+                    end
+                    % creating individual force polyzonotopes
+                    Fx_poly = polyZonotope_ROAHM(Fx_poly_c,Fx_poly_G,Fx_poly_Grest,Fx_poly_expMat,Fx_poly_id);
+                    Fy_poly = polyZonotope_ROAHM(Fy_poly_c,Fy_poly_G,Fy_poly_Grest,Fy_poly_expMat,Fy_poly_id);
+                    Fz_poly = polyZonotope_ROAHM(Fz_poly_c,Fz_poly_G,Fz_poly_Grest,Fz_poly_expMat,Fz_poly_id);
+
+                    % which way is the Fz/normal returned by rnea
+                    % pointing? upwards out of the tray
+
+                    % Need to create the correct moment vectors for the ZMP
+                    % calculation. The moments need to have the
+                    % cross(distance,force) added to them.
+%                     ZMP_Moment{i,1} = n_int{i,1}{10} + cross([0;0;cup_height],f_int{i,1}{10});
+
+                    % separation constraint: Fnormal < 0
+                    % ? does this need to be multiplied by -1? yes 
+                    % looking at the testing in
+                    % Waiter_urdf_RNEA_Testing.m, the cup upright on
+                    % the tray has RNEA output a positive normal force
+                    % in the z-axis. This means that Fz>0 is the
+                    % constraint so to rewrite as -1.*Fz<0 it
+                    % needs to be multiplied by a -1.
+                    sep_poly_temp = -1.*Fz_poly; % verified (matches regular rnea and constraint, but slightly more negative (safer) than regular value. should subtract Grest instead?)
+%                     sep_poly_temp = reduce(sep_poly_temp, 'girard', P.agent_info.params.pz_interval.zono_order);
+                    sep_poly{i,1} = polyZonotope_ROAHM(sep_poly_temp.c + sum(abs(sep_poly_temp.Grest)),sep_poly_temp.G,[],sep_poly_temp.expMat,sep_poly_temp.id);
+                    % create new pz with grest collapsed
+
+                    % slipping constraint: Ftanx^2+Ftany^2 < u_s^2*Fnorm^2
+                    % this is rewritten as:
+                    % Ftanx^2+Ftany^2 - u_s^2*Fnorm^2 < 0
+
+                    slip_poly_temp = Fx_poly.*Fx_poly + Fy_poly.*Fy_poly - u_s^2*Fz_poly.*Fz_poly;
+%                     slip_poly_temp = reduce(slip_poly_temp, 'girard', P.agent_info.params.pz_interval.zono_order);
+                    slip_poly{i,1} = polyZonotope_ROAHM(slip_poly_temp.c + sum(abs(slip_poly_temp.Grest)),slip_poly_temp.G,[],slip_poly_temp.expMat,slip_poly_temp.id);
+                    % create new pz with grest collapsed
+                    
+                    % tipping constraint version 1
+%                     ZMP_top = cross(n_int{i,1}{10},[0;0;1]); % verified (same center as normal rnea)
+                    ZMP_top = cross([0;0;1],n_int{i,1}{10});
+%                     ZMP_top = reduce(ZMP_top, 'girard', P.agent_info.params.pz_interval.zono_order);
+                    % for the bottom component: 
+                    ZMP_bottom = f_int{i,1}{10}*[0,0,1]; % verified (same center as normal rnea)
+%                     ZMP_bottom = reduce(ZMP_bottom, 'girard', P.agent_info.params.pz_interval.zono_order);
+                    ZMP_temp = (ZMP_bottom.*ZMP_bottom).*(db2/2)^2;
+%                     ZMP_temp = reduce(ZMP_temp, 'girard', P.agent_info.params.pz_interval.zono_order);
+                    
+                    % there should either be only G, only Grest or both.
+                    % this should handle those three cases.
+                    if isempty(ZMP_top.G)
+                        ZMP_topx = polyZonotope_ROAHM(ZMP_top.c(1),[],ZMP_top.Grest(1,:),[],[]);
+                        ZMP_topy = polyZonotope_ROAHM(ZMP_top.c(2),[],ZMP_top.Grest(2,:),[],[]);
+                    elseif isempty(ZMP_top.Grest)
+                        ZMP_topx = polyZonotope_ROAHM(ZMP_top.c(1),ZMP_top.G(1,:),[],ZMP_top.expMat,ZMP_top.id);
+                        ZMP_topy = polyZonotope_ROAHM(ZMP_top.c(2),ZMP_top.G(2,:),[],ZMP_top.expMat,ZMP_top.id);
+                    else
+                        ZMP_topx = polyZonotope_ROAHM(ZMP_top.c(1),ZMP_top.G(1,:),ZMP_top.Grest(1,:),ZMP_top.expMat,ZMP_top.id);
+                        ZMP_topy = polyZonotope_ROAHM(ZMP_top.c(2),ZMP_top.G(2,:),ZMP_top.Grest(2,:),ZMP_top.expMat,ZMP_top.id);
+                    end
+
+                    tip_poly_full = ZMP_topx.*ZMP_topx + ZMP_topy.*ZMP_topy - ZMP_temp;
+%                     tip_poly_full = reduce(tip_poly_full, 'girard', P.agent_info.params.pz_interval.zono_order);
+                    
+                    % don't necessarily need to do this if statement since
+                    % not trying to pull out things that aren't there.
+%                     if isempty(tip_poly_full.G)
+%                         tip_poly{i,1} = polyZonotope_ROAHM(tip_poly_full.c + sum(abs(tip_poly_full.Grest)),[],tip_poly_full.Grest,[],[]);
+%                     elseif isempty(tip_poly_full.Grest)
+%                         tip_poly{i,1} = polyZonotope_ROAHM(tip_poly_full.c + sum(abs(tip_poly_full.Grest)),tip_poly_full.G,[],tip_poly_full.expMat,tip_poly_full.id);
+%                     else
+                    tip_poly{i,1} = polyZonotope_ROAHM(tip_poly_full.c + sum(abs(tip_poly_full.Grest)),tip_poly_full.G,[],tip_poly_full.expMat,tip_poly_full.id);
+%                     end
+
+                    % remove dependence of grasp constraints
+                    sep_poly{i,1} = remove_dependence(sep_poly{i,1},jrs_info.k_id(end));
+                    tip_poly{i,1} = remove_dependence(tip_poly{i,1},jrs_info.k_id(end));
+                    slip_poly{i,1} = remove_dependence(slip_poly{i,1},jrs_info.k_id(end));
+                end
+            end
+
             %% start making constraints
             P.constraints = {};
             P.grad_constraints = {};
@@ -626,6 +791,39 @@ classdef uarmtd_planner < robot_arm_generic_planner
                 end
             end
             
+            if P.grasp_constraints_flag
+                % add the grasp constraints here
+                for i = 1:jrs_info.n_t                  
+                    % adding separation constraints
+                    sep_int = interval(sep_poly{i,1});
+                    % First check if the constraint is necessary
+                    if ~(sep_int.sup < 0)
+                        fprintf('ADDED GRASP SEPARATION CONSTRAINT \n')
+                        P.constraints{end+1,1} = @(k) slice(sep_poly{i,1},k);
+                        grad_sep_poly = grad(sep_poly{i,1},P.jrs_info.n_q);
+                        P.grad_constraints{end+1, 1} = @(k) cellfun(@(C) slice(C, k), grad_sep_poly);
+                    end
+                    
+                    % adding slipping constraints
+                    slip_int = interval(slip_poly{i,1});
+                    if ~(slip_int.sup < 0)
+                        fprintf('ADDED GRASP SLIPPING CONSTRAINT \n')
+                        P.constraints{end+1,1} = @(k) slice(slip_poly{i,1},k);
+                        grad_slip_poly = grad(slip_poly{i,1},P.jrs_info.n_q);
+                        P.grad_constraints{end+1, 1} = @(k) cellfun(@(C) slice(C, k), grad_slip_poly);
+                    end
+                    
+                    % adding tipping constraints
+                    tip_int = interval(tip_poly{i,1});
+                    if ~(tip_int.sup < 0)
+                        fprintf('ADDED GRASP TIPPING CONSTRAINT \n')
+                        P.constraints{end+1,1} = @(k) slice(tip_poly{i,1},k);
+                        grad_tip_poly = grad(tip_poly{i,1},P.jrs_info.n_q);
+                        P.grad_constraints{end+1, 1} = @(k) cellfun(@(C) slice(C, k), grad_tip_poly);
+                    end
+                end
+            end
+
             % joint limit constraints
             for i = 1:jrs_info.n_t
                 for j = 1:jrs_info.n_q

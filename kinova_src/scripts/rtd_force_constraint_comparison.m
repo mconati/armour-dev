@@ -261,3 +261,20 @@ for i=1:num_conditions
 
 end
 
+
+%% Comparison
+
+for i = 1:num_conditions
+    % Real-time: 
+    % pull out constraints values
+    rt_sep = constraints_value(##:,i);
+    rt_slip = constraints_value(##:,i);
+    rt_tip = constraints_value(##:,i);
+
+    % Matlab:
+    % pull out constraint values
+    ml_constraints = matlab_constraints{i};
+
+    % Calculate difference
+
+end
