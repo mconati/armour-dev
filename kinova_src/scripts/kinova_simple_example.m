@@ -36,7 +36,7 @@ use_robust_input = false;
 LLC_V_max = 5e-5;
 
 %%% for HLP
-if_use_RRT = true;
+if_use_RRT = false;
 HLP_grow_tree_mode = 'new' ; % pick 'new' or 'keep'
 plot_waypoint_flag = true ;
 plot_waypoint_arm_flag  = true ;
@@ -53,11 +53,11 @@ stop_threshold = 4 ; % number of failed iterations before exiting
 %%% for world
 % start = [-1; -1; -1; -1; -1; -1; -1]; % start configuration
 % goal = [1; 1; 1; 1; 1; 1; 1]; % goal configuration
-% start = [-pi/6;-pi/2;-pi/2;pi/2;0;pi/2;pi/2];
-% goal = [pi/6; -pi/2; pi/2; pi/2; pi; -pi/2; pi/2]; % goal configuration
+start = [-pi/6;-pi/2;-pi/2;pi/2;0;pi/2;pi/2];
+goal = [pi/6; -pi/2; pi/2; pi/2; pi; -pi/2; pi/2]; % goal configuration
 
-start = [0;-pi/2;0;0;0;0;0];
-goal = [0;-pi/2;pi/2;0;0;0;0];
+% start = [0;-pi/2;0;0;0;0;0];
+% goal = [pi/8;-pi/2;0;0;0;0;0];
 
 % obstacles = {};
 obstacles{1} = box_obstacle_zonotope('center', [3; 0; 0.6],...

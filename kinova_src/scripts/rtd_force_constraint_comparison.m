@@ -148,15 +148,15 @@ for idx_real = 1:num_conditions
     if terminal_output == 0
         data = readmatrix('armour.out', 'FileType', 'text');
         k_opt = data(1:end-1);
-        planning_time{i} = data(end) / 1000.0; % original data is milliseconds
+        planning_time(i) = data(end) / 1000.0; % original data is milliseconds
     
         if length(k_opt) == 1
             fprintf('Unable to find new trajectory!')
-            k_opt{i} = nan;
+            k_opt = nan;
         else
             fprintf('New trajectory found!');
             for i = 1:length(k_opt)
-                fprintf('%7.6f ', k_opt(i));
+                fprintf('%7.6f ', k_opt);
             end
             fprintf('\n');
         end
@@ -166,13 +166,14 @@ for idx_real = 1:num_conditions
     
     if terminal_output == 0
         % read FRS information if needed
-        joint_frs_center{i} = readmatrix('armour_joint_position_center.out', 'FileType', 'text');
-        joint_frs_radius{i} = readmatrix('armour_joint_position_radius.out', 'FileType', 'text');
-        control_input_radius{i} = readmatrix('armour_control_input_radius.out', 'FileType', 'text');
-        constraints_value{i} = readmatrix('armour_constraints.out', 'FileType', 'text');
+        joint_frs_center(:,i) = readmatrix('armour_joint_position_center.out', 'FileType', 'text');
+        joint_frs_radius(:,i) = readmatrix('armour_joint_position_radius.out', 'FileType', 'text');
+        control_input_radius(:,i) = readmatrix('armour_control_input_radius.out', 'FileType', 'text');
+        constraints_value(:,i) = readmatrix('armour_constraints.out', 'FileType', 'text');
     else
-        k_opt{i} = nan;
+        k_opt = nan;
     end
+    k_opt_storage(:,i) = k_opt;
 end
 
 
