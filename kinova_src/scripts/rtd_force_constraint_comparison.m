@@ -11,6 +11,8 @@ agent_urdf = 'Kinova_Grasp_URDF.urdf';
 u_s = 0.609382421; % static coefficient of friction
 db2 = 0.058; % 58; % (m) diameter of circular contact area (inscribed in square base of motion tracking cube)
 
+input_constraints_flag = false;
+
 add_uncertainty_to = 'all'; % choose 'all', 'link', or 'none'
 links_with_uncertainty = {}; % if add_uncertainty_to = 'link', specify links here.
 uncertain_mass_range = [0.97, 1.03];
@@ -50,12 +52,61 @@ goal_type = 'configuration'; % pick 'end_effector_location' or 'configuration'
 goal_radius = pi/30;
 dimension = 3 ;
 verbosity = 10;
-use_robust_input = false;
+use_robust_input = true;
+LLC_V_max = 5e-5;
 agent_move_mode = 'integrator' ; % pick 'direct' or 'integrator'
 use_CAD_flag = true;
 specify_color_flag = false;
 link_color_data = {[],[],[],[],[],[],[],[],[169 169 169]./255,[255 22 12]./255};
 % link_FaceAlpha = {[],[],[],[],[],[],[],[],[],[0]};
+
+%% Create list of random conditions to test
+
+num_conditions = 1;
+
+% for i = 1:num_conditions
+%     % r = a + (b-a).*rand(N,1)
+%     for j = 1:7
+%         
+%         if joint_position_limits(2,j) > 100
+%             % random start positions
+%             q_0(i,j) = rand();
+%             % random goal positions
+%             q_goal(i,j) = rand();
+%         else
+%             % random start positions
+%             q_0(i,j) = joint_position_limits(1,j) + (joint_position_limits(2,j)-joint_position_limits(1,j))*rand();
+%             % random goal positions
+%             q_goal(i,j) = joint_position_limits(1,j) + (joint_position_limits(2,j)-joint_position_limits(1,j))*rand();
+%         end
+%         
+%         % generate waypoint for desired position
+%         dir = q_goal(i,j)-q_0(i,j);
+%         dir = dir./norm(dir);
+%         q_des(i,j) = q_0(i,j)+max_travel*dir;
+%         % random start velocity
+%         q_dot_0(i,j) = joint_speed_limits(1,j) + (joint_speed_limits(2,j)-joint_speed_limits(1,j))*rand(1,1);
+%         % random start acceleration (what interval?)
+%         q_ddot_0(i,j) = -1 + (1+1)*rand(1,1);
+%     end
+% end
+
+% debugging: fail, success, fail
+% q_0 = [0,pi/2,0,0,0,0,0;0,-pi/2,0,0,0,0,0;0,pi/2,0,0,0,0,0];
+% q_dot_0 = zeros(3,7);
+% q_ddot_0 = zeros(3,7);
+% q_des = zeros(3,7);
+
+% debugging: success
+q_0 = [0,-pi/2,0,0,0,0,0];
+q_dot_0 = zeros(1,7);
+q_ddot_0 = zeros(1,7);
+q_des = zeros(1,7);
+
+%%
+
+W = kinova_world_static('create_random_obstacles_flag', false, 'goal_radius', goal_radius, 'N_obstacles',length(obstacles),'dimension',dimension,'workspace_goal_check', 0,...
+                        'verbose',verbosity, 'start', q_0, 'goal', q_des, 'obstacles', obstacles, 'goal_type', goal_type) ;
 
 % agent
 A = uarmtd_agent(robot, params,...
@@ -64,60 +115,47 @@ A = uarmtd_agent(robot, params,...
                  'animation_set_view_flag', 0,...
                  'move_mode', agent_move_mode,...
                  'use_CAD_flag', use_CAD_flag,...
-                 'specify_color_flag',specify_color_flag,...
-                 'link_color_data',link_color_data,...
                  'joint_speed_limits', joint_speed_limits, ...
                  'joint_input_limits', joint_input_limits, ...
                  'add_measurement_noise_', add_measurement_noise_, ...
                  'measurement_noise_size_', measurement_noise_size_, ...
                  'M_min_eigenvalue', M_min_eigenvalue, ...
                  'animation_playback_rate',1, ...
-                 'animation_time_discretization',0.05, ...
-                 'u_s', u_s, ...
-                 'db2', db2);
+                 'animation_time_discretization',0.05);
+%                  'u_s', u_s, ...
+%                  'db2', db2);
+                %'specify_color_flag',specify_color_flag,...
+                 %'link_color_data',link_color_data,...
+
+% LLC
+if use_robust_input
+    A.LLC = uarmtd_robust_CBF_LLC('verbose', verbosity, ...
+                                  'use_true_params_for_robust', false, ...
+                                  'V_max', LLC_V_max, ...
+                                  'if_use_mex_controller', false);
+else
+    A.LLC = uarmtd_nominal_passivity_LLC('verbose', verbosity);
+end
+
+A.LLC.setup(A);
 
 P = uarmtd_planner('verbose', verbosity, ...
                    'first_iter_pause_flag', true, ...
                    'use_q_plan_for_cost', true, ...
-                   'input_constraints_flag', true, ...
+                   'input_constraints_flag', input_constraints_flag, ...
                    'use_robust_input', use_robust_input, ...
                    'traj_type', 'bernstein', ...
-                   'use_cuda', false) ;
+                   'use_cuda', false,...
+                   'use_waypoint_for_bernstein_center',true) ;
 
+agent_info = A.get_agent_info() ;
+agent_info.LLC_info = A.LLC.get_LLC_info();
+world_info = W.get_world_info(agent_info,P) ;
+P.setup(agent_info,world_info) ;
+P.agent_info = agent_info;
 % W = kinova_world_static('create_random_obstacles_flag', false, 'goal_radius', goal_radius, 'N_obstacles',length(obstacles),'dimension',dimension,'workspace_goal_check', 0,...
 %                         'verbose',verbosity, 'start', start, 'goal', goal, 'obstacles', obstacles, 'goal_type', goal_type) ;
 
-
-%% Create list of random conditions to test
-
-num_conditions = 1;
-
-for i = 1:num_conditions
-    % r = a + (b-a).*rand(N,1)
-    for j = 1:7
-        
-        if joint_position_limits(2,j) > 100
-            % random start positions
-            q_0(i,j) = rand();
-            % random goal positions
-            q_goal(i,j) = rand();
-        else
-            % random start positions
-            q_0(i,j) = joint_position_limits(1,j) + (joint_position_limits(2,j)-joint_position_limits(1,j))*rand();
-            % random goal positions
-            q_goal(i,j) = joint_position_limits(1,j) + (joint_position_limits(2,j)-joint_position_limits(1,j))*rand();
-        end
-        
-        % generate waypoint for desired position
-        dir = q_goal(i,j)-q_0(i,j);
-        dir = dir./norm(dir);
-        q_des(i,j) = q_0(i,j)+max_travel*dir;
-        % random start velocity
-        q_dot_0(i,j) = joint_speed_limits(1,j) + (joint_speed_limits(2,j)-joint_speed_limits(1,j))*rand(1,1);
-        % random start acceleration (what interval?)
-        q_ddot_0(i,j) = -1 + (1+1)*rand(1,1);
-    end
-end
 
 %% C++ Method
 
@@ -143,19 +181,19 @@ for idx_real = 1:num_conditions
     fprintf('Calling CUDA & C++ Program!')
     cuda_input_file = fopen('/home/roahmlab/Documents/armour-dev/kinova_src/kinova_simulator_interfaces/kinova_planner_realtime/buffer/armour.in', 'w');
     
-    for ind = 1:length(q_0)
+    for ind = 1:size(q_0,2)
         fprintf(cuda_input_file, '%.10f ', q_0(idx_real,ind));
     end
     fprintf(cuda_input_file, '\n');
-    for ind = 1:length(q_dot_0)
+    for ind = 1:size(q_dot_0,2)
         fprintf(cuda_input_file, '%.10f ', q_dot_0(idx_real,ind));
     end
     fprintf(cuda_input_file, '\n');
-    for ind = 1:length(q_ddot_0)
+    for ind = 1:size(q_ddot_0,2)
         fprintf(cuda_input_file, '%.10f ', q_ddot_0(idx_real,ind));
     end
     fprintf(cuda_input_file, '\n');
-    for ind = 1:length(q_des)
+    for ind = 1:size(q_des,2)
         fprintf(cuda_input_file, '%.10f ', q_des(idx_real,ind));
     end
     fprintf(cuda_input_file, '\n');
@@ -180,7 +218,7 @@ for idx_real = 1:num_conditions
     if terminal_output == 0
         data = readmatrix('armour.out', 'FileType', 'text');
         k_opt = data(1:end-1);
-        planning_time(i) = data(end) / 1000.0; % original data is milliseconds
+        planning_time(idx_real) = data(end) / 1000.0; % original data is milliseconds
     
         if length(k_opt) == 1
             fprintf('Unable to find new trajectory!')
@@ -198,14 +236,17 @@ for idx_real = 1:num_conditions
     
     if terminal_output == 0
         % read FRS information if needed
-        joint_frs_center(:,i) = readmatrix('armour_joint_position_center.out', 'FileType', 'text');
-        joint_frs_radius(:,i) = readmatrix('armour_joint_position_radius.out', 'FileType', 'text');
-        control_input_radius(:,i) = readmatrix('armour_control_input_radius.out', 'FileType', 'text');
-        constraints_value(:,i) = readmatrix('armour_constraints.out', 'FileType', 'text');
+        joint_frs_center{idx_real} = readmatrix('armour_joint_position_center.out', 'FileType', 'text');
+        joint_frs_radius{idx_real} = readmatrix('armour_joint_position_radius.out', 'FileType', 'text');
+        control_input_radius(:,idx_real) = readmatrix('armour_control_input_radius.out', 'FileType', 'text');
+        constraints_value(:,idx_real) = readmatrix('armour_constraints.out', 'FileType', 'text');
     else
         k_opt = nan;
     end
-    k_opt_storage(:,i) = k_opt;
+    for kk = 1:length(k_opt)
+        k_opt_storage(kk,idx_real) = k_opt(kk);
+    end
+    fprintf('\n \n')
 end
 
 
@@ -216,7 +257,7 @@ end
 
 for i=1:num_conditions
 
-    matlab_constraints{i} = generate_constraints(P, q_0, q_dot_0, q_ddot_0, obstacles, q_des);
+    matlab_constraints{i} = generate_constraints(P, q_0(i,:), q_dot_0(i,:), q_ddot_0(i,:), obstacles, q_des(i,:));
 
 end
 

@@ -38,13 +38,13 @@
     #define TORQUE_INPUT_CONSTRAINT_VIOLATION_THRESHOLD 1e-4
 
     // threshold for separation constraint (unit: Newton)
-    #define SEPARATION_CONSTRAINT_VIOLATION_THRESHOLD 1e-4
+    #define SEPARATION_CONSTRAINT_VIOLATION_THRESHOLD -1e-6
 
     // threshold for slipping constraint violation (unit: Newton) // squared?
-    #define SLIPPING_CONSTRAINT_VIOLATION_THRESHOLD 1e-4
+    #define SLIPPING_CONSTRAINT_VIOLATION_THRESHOLD -1e-6
 
     // threshold for tipping constraint violation (unit: meter) // squared?
-    #define TIPPING_CONSTRAINT_VIOLATION_THRESHOLD 1e-6
+    #define TIPPING_CONSTRAINT_VIOLATION_THRESHOLD -1e-6
 
 // Parameters for armour_main.cpp
     #define IPOPT_OPTIMIZATION_TOLERANCE 1e-6

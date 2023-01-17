@@ -98,8 +98,9 @@ Section II:
     vecPZsparse n_c_nom[NUM_TIME_STEPS]; // may not be needed (can pass in nullptr instead)
     vecPZsparse f_c_int[NUM_TIME_STEPS];
     vecPZsparse n_c_int[NUM_TIME_STEPS];
-    double u_s = 0.5; // static coefficient of friction between tray and object
-    double surf_rad = 0.0762; // radius of contact area between tray and object (area assumed to be circular)
+    // Kinova Hardware Demo Values: u_s = 0.609382421; surf_rad =  0.058;
+    double u_s = 0.609382421; // 0.5; // static coefficient of friction between tray and object
+    double surf_rad =  0.058; // 0.0762; // radius of contact area between tray and object (area assumed to be circular)
     // Note: might want to change this to be input to the C++ code from matlab?
     
     for (int i = 0; i < NUM_JOINTS; i++) {
