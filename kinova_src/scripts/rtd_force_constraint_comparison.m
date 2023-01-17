@@ -7,6 +7,10 @@ clear all; close all; clc;
 %% Robot Parameters
 agent_urdf = 'Kinova_Grasp_URDF.urdf';
 
+% Kinova Ford Demo Values
+u_s = 0.609382421; % static coefficient of friction
+db2 = 0.058; % 58; % (m) diameter of circular contact area (inscribed in square base of motion tracking cube)
+
 add_uncertainty_to = 'all'; % choose 'all', 'link', or 'none'
 links_with_uncertainty = {}; % if add_uncertainty_to = 'link', specify links here.
 uncertain_mass_range = [0.97, 1.03];
@@ -33,6 +37,9 @@ joint_input_limits = [-56.7, -56.7, -56.7, -56.7, -29.4, -29.4, -29.4;
 transmision_inertia = [8.02999999999999936 11.99620246153036440 9.00254278617515169 11.58064393167063599 8.46650409179141228 8.85370693737424297 8.85873036646853151]; % matlab doesn't import these from urdf so hard code into class
 M_min_eigenvalue = 5.095620491878957; % matlab doesn't import these from urdf so hard code into class
 
+add_measurement_noise_ = false;
+measurement_noise_size_ = [];
+
 max_travel = 0.4;
 
 % obstacles = {};
@@ -43,14 +50,39 @@ goal_type = 'configuration'; % pick 'end_effector_location' or 'configuration'
 goal_radius = pi/30;
 dimension = 3 ;
 verbosity = 10;
+use_robust_input = false;
+agent_move_mode = 'integrator' ; % pick 'direct' or 'integrator'
+use_CAD_flag = true;
+specify_color_flag = false;
+link_color_data = {[],[],[],[],[],[],[],[],[169 169 169]./255,[255 22 12]./255};
+% link_FaceAlpha = {[],[],[],[],[],[],[],[],[],[0]};
 
-% P = uarmtd_planner('verbose', verbosity, ...
-%                    'first_iter_pause_flag', true, ...
-%                    'use_q_plan_for_cost', true, ...
-%                    'input_constraints_flag', true, ...
-%                    'use_robust_input', use_robust_input, ...
-%                    'traj_type', 'bernstein', ...
-%                    'use_cuda', false) ;
+% agent
+A = uarmtd_agent(robot, params,...
+                 'verbose', verbosity,...
+                 'animation_set_axes_flag', 0,... 
+                 'animation_set_view_flag', 0,...
+                 'move_mode', agent_move_mode,...
+                 'use_CAD_flag', use_CAD_flag,...
+                 'specify_color_flag',specify_color_flag,...
+                 'link_color_data',link_color_data,...
+                 'joint_speed_limits', joint_speed_limits, ...
+                 'joint_input_limits', joint_input_limits, ...
+                 'add_measurement_noise_', add_measurement_noise_, ...
+                 'measurement_noise_size_', measurement_noise_size_, ...
+                 'M_min_eigenvalue', M_min_eigenvalue, ...
+                 'animation_playback_rate',1, ...
+                 'animation_time_discretization',0.05, ...
+                 'u_s', u_s, ...
+                 'db2', db2);
+
+P = uarmtd_planner('verbose', verbosity, ...
+                   'first_iter_pause_flag', true, ...
+                   'use_q_plan_for_cost', true, ...
+                   'input_constraints_flag', true, ...
+                   'use_robust_input', use_robust_input, ...
+                   'traj_type', 'bernstein', ...
+                   'use_cuda', false) ;
 
 % W = kinova_world_static('create_random_obstacles_flag', false, 'goal_radius', goal_radius, 'N_obstacles',length(obstacles),'dimension',dimension,'workspace_goal_check', 0,...
 %                         'verbose',verbosity, 'start', start, 'goal', goal, 'obstacles', obstacles, 'goal_type', goal_type) ;
@@ -105,75 +137,75 @@ end
 % !!!!!!
 % P.jrs_info.g_k_bernstein = [pi/72; pi/72; pi/72; pi/72; pi/72; pi/72; pi/72];
 
-for idx_real = 1:num_conditions
-
-    % organize input to cuda program
-    fprintf('Calling CUDA & C++ Program!')
-    cuda_input_file = fopen('/home/roahmlab/Documents/armour-dev/kinova_src/kinova_simulator_interfaces/kinova_planner_realtime/buffer/armour.in', 'w');
-    
-    for ind = 1:length(q_0)
-        fprintf(cuda_input_file, '%.10f ', q_0(idx_real,ind));
-    end
-    fprintf(cuda_input_file, '\n');
-    for ind = 1:length(q_dot_0)
-        fprintf(cuda_input_file, '%.10f ', q_dot_0(idx_real,ind));
-    end
-    fprintf(cuda_input_file, '\n');
-    for ind = 1:length(q_ddot_0)
-        fprintf(cuda_input_file, '%.10f ', q_ddot_0(idx_real,ind));
-    end
-    fprintf(cuda_input_file, '\n');
-    for ind = 1:length(q_des)
-        fprintf(cuda_input_file, '%.10f ', q_des(idx_real,ind));
-    end
-    fprintf(cuda_input_file, '\n');
-    fprintf(cuda_input_file, '%d\n', max(length(obstacles), 0));
-    for obs_ind = 1:length(obstacles)
-        temp = reshape(obstacles{obs_ind}.Z, [1,size(obstacles{obs_ind}.Z,1) * size(obstacles{obs_ind}.Z,2)]); %world_info.
-        for ind = 1:length(temp)
-            fprintf(cuda_input_file, '%.10f ', temp(ind));
-        end
-        fprintf(cuda_input_file, '\n');
-    end
-    
-    fclose(cuda_input_file);
-    
-    % call cuda program in terminal
-    % you have to be in the proper path!
-    %                     terminal_output = system('./../kinova_simulator_interfaces/kinova_planner_realtime/armour_main'); % armour path
-    terminal_output = system('/home/roahmlab/Documents/armour-dev/kinova_src/kinova_simulator_interfaces/kinova_planner_realtime/rtd_force_main'); % rtd-force path
-    
-    % To do, figure out how to read and store output for comparison
-    
-    if terminal_output == 0
-        data = readmatrix('armour.out', 'FileType', 'text');
-        k_opt = data(1:end-1);
-        planning_time{i} = data(end) / 1000.0; % original data is milliseconds
-    
-        if length(k_opt) == 1
-            fprintf('Unable to find new trajectory!')
-            k_opt{i} = nan;
-        else
-            fprintf('New trajectory found!');
-            for i = 1:length(k_opt)
-                fprintf('%7.6f ', k_opt(i));
-            end
-            fprintf('\n');
-        end
-    else
-        error('CUDA program error! Check the executable path in armour-dev/kinova_src/kinova_simulator_interfaces/uarmtd_planner');
-    end
-    
-    if terminal_output == 0
-        % read FRS information if needed
-        joint_frs_center{i} = readmatrix('armour_joint_position_center.out', 'FileType', 'text');
-        joint_frs_radius{i} = readmatrix('armour_joint_position_radius.out', 'FileType', 'text');
-        control_input_radius{i} = readmatrix('armour_control_input_radius.out', 'FileType', 'text');
-        constraints_value{i} = readmatrix('armour_constraints.out', 'FileType', 'text');
-    else
-        k_opt{i} = nan;
-    end
-end
+% for idx_real = 1:num_conditions
+% 
+%     % organize input to cuda program
+%     fprintf('Calling CUDA & C++ Program!')
+%     cuda_input_file = fopen('/home/roahmlab/Documents/armour-dev/kinova_src/kinova_simulator_interfaces/kinova_planner_realtime/buffer/armour.in', 'w');
+%     
+%     for ind = 1:length(q_0)
+%         fprintf(cuda_input_file, '%.10f ', q_0(idx_real,ind));
+%     end
+%     fprintf(cuda_input_file, '\n');
+%     for ind = 1:length(q_dot_0)
+%         fprintf(cuda_input_file, '%.10f ', q_dot_0(idx_real,ind));
+%     end
+%     fprintf(cuda_input_file, '\n');
+%     for ind = 1:length(q_ddot_0)
+%         fprintf(cuda_input_file, '%.10f ', q_ddot_0(idx_real,ind));
+%     end
+%     fprintf(cuda_input_file, '\n');
+%     for ind = 1:length(q_des)
+%         fprintf(cuda_input_file, '%.10f ', q_des(idx_real,ind));
+%     end
+%     fprintf(cuda_input_file, '\n');
+%     fprintf(cuda_input_file, '%d\n', max(length(obstacles), 0));
+%     for obs_ind = 1:length(obstacles)
+%         temp = reshape(obstacles{obs_ind}.Z, [1,size(obstacles{obs_ind}.Z,1) * size(obstacles{obs_ind}.Z,2)]); %world_info.
+%         for ind = 1:length(temp)
+%             fprintf(cuda_input_file, '%.10f ', temp(ind));
+%         end
+%         fprintf(cuda_input_file, '\n');
+%     end
+%     
+%     fclose(cuda_input_file);
+%     
+%     % call cuda program in terminal
+%     % you have to be in the proper path!
+%     %                     terminal_output = system('./../kinova_simulator_interfaces/kinova_planner_realtime/armour_main'); % armour path
+%     terminal_output = system('/home/roahmlab/Documents/armour-dev/kinova_src/kinova_simulator_interfaces/kinova_planner_realtime/rtd_force_main'); % rtd-force path
+%     
+%     % To do, figure out how to read and store output for comparison
+%     
+%     if terminal_output == 0
+%         data = readmatrix('armour.out', 'FileType', 'text');
+%         k_opt = data(1:end-1);
+%         planning_time{i} = data(end) / 1000.0; % original data is milliseconds
+%     
+%         if length(k_opt) == 1
+%             fprintf('Unable to find new trajectory!')
+%             k_opt{i} = nan;
+%         else
+%             fprintf('New trajectory found!');
+%             for i = 1:length(k_opt)
+%                 fprintf('%7.6f ', k_opt(i));
+%             end
+%             fprintf('\n');
+%         end
+%     else
+%         error('CUDA program error! Check the executable path in armour-dev/kinova_src/kinova_simulator_interfaces/uarmtd_planner');
+%     end
+%     
+%     if terminal_output == 0
+%         % read FRS information if needed
+%         joint_frs_center{i} = readmatrix('armour_joint_position_center.out', 'FileType', 'text');
+%         joint_frs_radius{i} = readmatrix('armour_joint_position_radius.out', 'FileType', 'text');
+%         control_input_radius{i} = readmatrix('armour_control_input_radius.out', 'FileType', 'text');
+%         constraints_value{i} = readmatrix('armour_constraints.out', 'FileType', 'text');
+%     else
+%         k_opt{i} = nan;
+%     end
+% end
 
 
 %% Matlab Method
@@ -183,7 +215,7 @@ end
 
 for i=1:num_conditions
 
-    matlab_constraints{i} = generate_constraints(P, q_0, q_dot_0, q_ddot_0, O, q_des);
+    matlab_constraints{i} = generate_constraints(P, q_0, q_dot_0, q_ddot_0, obstacles, q_des);
 
 end
 
