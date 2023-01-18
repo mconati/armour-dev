@@ -1,2 +1,0 @@
-# g++ -o test PZ_tests.cpp Dynamics.cpp Trajectory.cpp PZsparse.cpp -fopenmp -std=c++14 -lstdc++ -ldl -lm -lc -lgomp -g -O2
-nvcc -o test PZ_tests.cpp CollisionChecking.cu Dynamics.cpp Trajectory.cpp PZsparse.cpp -Xcompiler -fopenmp -std=c++14 -O2 -I/usr/local/include -I/usr/local/include/coin-or -L/usr/local/lib -L/usr/lib -lipopt  -lgfortran -lquadmath -lstdc++ -ldl -lm -lc -lgomp
