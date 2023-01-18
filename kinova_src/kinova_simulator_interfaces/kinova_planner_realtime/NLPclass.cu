@@ -6,40 +6,34 @@
 // constructor
 armtd_NLP::armtd_NLP()
 {
-    checkJointsPosition = new TYPE[NUM_TIME_STEPS * NUM_FACTORS * 3];
-    dk_checkJointsPosition = new TYPE[NUM_TIME_STEPS * NUM_FACTORS * 3 * NUM_FACTORS];
 }
 
 
 // destructor
 armtd_NLP::~armtd_NLP()
 {
-    delete[] checkJointsPosition;
-    delete[] dk_checkJointsPosition;
     delete[] g_copy;
 }
 
 
 bool armtd_NLP::set_parameters(
-    TYPE* q_des_input,
-    TYPE t_plan_input,
-    BezierCurve* desired_trajectory_input,
-    PZsparse* joint_position_input,
-    PZsparse* control_input_input,
-    TYPE* v_norm_input,
+    double* q_des_input,
+    double t_plan_input,
+    const BezierCurve* desired_trajectory_input,
+    KinematicsDynamics* kinematics_dynamics_result_input,
+    const Eigen::MatrixXd* torque_radius_input,
     Obstacles* obstacles_input
  ) 
  {
     q_des = q_des_input;
     t_plan = t_plan_input;
     desired_trajectory = desired_trajectory_input;
-    joint_position = joint_position_input;
-    control_input = control_input_input;
-    v_norm = v_norm_input;
+    kinematics_dynamics_result = kinematics_dynamics_result_input;
+    torque_radius = torque_radius_input;
     obstacles = obstacles_input;
 
     constraint_number = NUM_FACTORS * NUM_TIME_STEPS +
-                        (NUM_FACTORS - 1) * NUM_TIME_STEPS * obstacles->num_obstacles + 
+                        NUM_JOINTS * NUM_TIME_STEPS * obstacles->num_obstacles + 
                         NUM_FACTORS * 4;
 
     g_copy = new Number[constraint_number];
@@ -104,18 +98,18 @@ bool armtd_NLP::get_bounds_info(
     // control input constraints
     for( Index i = 0; i < NUM_TIME_STEPS; i++ ) {
         for( Index j = 0; j < NUM_FACTORS; j++ ) {
-            g_l[i * NUM_FACTORS + j] = -torque_limits[j] + v_norm[i * NUM_FACTORS + j];
-            g_u[i * NUM_FACTORS + j] = torque_limits[j] - v_norm[i * NUM_FACTORS + j];
+            g_l[i * NUM_FACTORS + j] = -torque_limits[j] + (*torque_radius)(j, i);
+            g_u[i * NUM_FACTORS + j] = torque_limits[j] - (*torque_radius)(j, i);
         }
     }    
 
     // collision avoidance constraints
     Index offset = NUM_FACTORS * NUM_TIME_STEPS;
-    for( Index i = offset; i < offset + (NUM_FACTORS - 1) * NUM_TIME_STEPS * obstacles->num_obstacles; i++ ) {
+    for( Index i = offset; i < offset + NUM_TIME_STEPS * NUM_JOINTS * obstacles->num_obstacles; i++ ) {
         g_l[i] = -1e19;
         g_u[i] = 0;
     }
-    offset += (NUM_FACTORS - 1) * NUM_TIME_STEPS * obstacles->num_obstacles;
+    offset += NUM_TIME_STEPS * NUM_JOINTS * obstacles->num_obstacles;
 
     // state limit constraints
     //     minimum joint position
@@ -202,7 +196,7 @@ bool armtd_NLP::eval_f(
     // obj_value = sum((q_plan - q_des).^2);
     obj_value = 0; 
     for(Index i = 0; i < n; i++){
-        TYPE q_plan = q_des_func(desired_trajectory->q0[i], desired_trajectory->qd0[i], desired_trajectory->qdd0[i], k_range[i] * x[i], t_plan);
+        double q_plan = q_des_func(desired_trajectory->q0[i], desired_trajectory->qd0[i], desired_trajectory->qdd0[i], k_range[i] * x[i], t_plan);
         obj_value += pow(q_plan - q_des[i], 2);
     }
 
@@ -226,8 +220,8 @@ bool armtd_NLP::eval_grad_f(
     }
 
     for(Index i = 0; i < n; i++){
-        TYPE q_plan = q_des_func(desired_trajectory->q0[i], desired_trajectory->qd0[i], desired_trajectory->qdd0[i], k_range[i] * x[i], t_plan);
-        TYPE dk_q_plan = pow(t_plan,3) * (6 * pow(t_plan,2) - 15 * t_plan + 10);
+        double q_plan = q_des_func(desired_trajectory->q0[i], desired_trajectory->qd0[i], desired_trajectory->qdd0[i], k_range[i] * x[i], t_plan);
+        double dk_q_plan = pow(t_plan,3) * (6 * pow(t_plan,2) - 15 * t_plan + 10);
         grad_f[i] = (2 * (q_plan - q_des[i]) * dk_q_plan * k_range[i]) * 100.0;
     }
 
@@ -253,25 +247,25 @@ bool armtd_NLP::eval_g(
     }
 
     Index i;
-    #pragma omp parallel for private(i) schedule(static, NUM_TIME_STEPS * NUM_FACTORS / NUM_THREADS)
-    for(i = 0; i < NUM_TIME_STEPS * NUM_FACTORS; i++) {
-        // Part 1. slice the control input PZ to get the center of the input bound, 
-        //         while the radius of the input bound has already been incorporated in ipopt constraint bounds
-        g[i] = getCenter(control_input[i].slice(x));
+    #pragma omp parallel for shared(kinematics_dynamics_result, x, g, link_sliced_center) private(i) schedule(static, NUM_TIME_STEPS / NUM_THREADS)
+    for(i = 0; i < NUM_TIME_STEPS; i++) {
+        for (int k = 0; k < NUM_FACTORS; k++) {
+            MatrixXInt res = kinematics_dynamics_result->u_nom(k, i).slice(x);
+            g[i * NUM_FACTORS + k] = getCenter(res(0));
+        }
 
-        // Part 2. slice the forward kinematics PZ to get the center of the joint position bound, 
-        //         while the radius of the joint position bound has already been considered in Obstacles class
-        checkJointsPosition[i * 3    ] = getCenter(joint_position[i * 3    ].slice(x));
-        checkJointsPosition[i * 3 + 1] = getCenter(joint_position[i * 3 + 1].slice(x));
-        checkJointsPosition[i * 3 + 2] = getCenter(joint_position[i * 3 + 2].slice(x));
+        for (int l = 0; l < NUM_JOINTS; l++) {
+            MatrixXInt res = kinematics_dynamics_result->links(l, i).slice(x);
+            link_sliced_center[i * NUM_JOINTS + l] = getCenter(res);
+        }
     }
 
     // Part 3. check collision between joint position reachable set and obstacles (in gpu)
-    obstacles->linkFRSConstraints(checkJointsPosition, nullptr, g + NUM_TIME_STEPS * NUM_FACTORS, nullptr);
+    obstacles->linkFRSConstraints(link_sliced_center, nullptr, g + NUM_TIME_STEPS * NUM_FACTORS, nullptr);
 
     // Part 4. (position & velocity) state limit constraints
-    desired_trajectory->returnJointPositionExtremum(g + NUM_TIME_STEPS * NUM_FACTORS + (NUM_FACTORS - 1) * NUM_TIME_STEPS * obstacles->num_obstacles, x);
-    desired_trajectory->returnJointVelocityExtremum(g + NUM_TIME_STEPS * NUM_FACTORS + (NUM_FACTORS - 1) * NUM_TIME_STEPS * obstacles->num_obstacles + NUM_FACTORS * 2, x);
+    desired_trajectory->returnJointPositionExtremum(g + NUM_TIME_STEPS * NUM_FACTORS + NUM_TIME_STEPS * NUM_JOINTS * obstacles->num_obstacles, x);
+    desired_trajectory->returnJointVelocityExtremum(g + NUM_TIME_STEPS * NUM_FACTORS + NUM_TIME_STEPS * NUM_JOINTS * obstacles->num_obstacles + NUM_FACTORS * 2, x);
 
     return true;
 }
@@ -310,28 +304,24 @@ bool armtd_NLP::eval_jac_g(
     }
     else {
         Index i;
-        #pragma omp parallel for private(i) schedule(static, NUM_TIME_STEPS * NUM_FACTORS / NUM_THREADS)
-        for(i = 0; i < NUM_TIME_STEPS * NUM_FACTORS; i++) {
-            // Part 1. slice the control input PZ to get the center of the input bound, 
-            //         while the radius of the input bound has already been incorporated in ipopt constraint bounds
-            control_input[i].slice(values + i * NUM_FACTORS, x);
+        #pragma omp parallel for shared(kinematics_dynamics_result, x, values, link_sliced_center, dk_link_sliced_center) private(i) schedule(static, NUM_TIME_STEPS / NUM_THREADS)
+        for(i = 0; i < NUM_TIME_STEPS; i++) {
+            for (int k = 0; k < NUM_FACTORS; k++) {
+                kinematics_dynamics_result->u_nom(k, i).slice(values + (i * NUM_FACTORS + k) * NUM_FACTORS, x);
+            }
 
-            // Part 2. slice the forward kinematics PZ to get the center of the joint position bound, 
-            //         while the radius of the joint position bound has already been considered in Obstacles class
-            checkJointsPosition[i * 3    ] = getCenter(joint_position[i * 3    ].slice(x));
-            checkJointsPosition[i * 3 + 1] = getCenter(joint_position[i * 3 + 1].slice(x));
-            checkJointsPosition[i * 3 + 2] = getCenter(joint_position[i * 3 + 2].slice(x));
-            joint_position[i * 3    ].slice(dk_checkJointsPosition + (i * 3    ) * NUM_FACTORS, x);
-            joint_position[i * 3 + 1].slice(dk_checkJointsPosition + (i * 3 + 1) * NUM_FACTORS, x);
-            joint_position[i * 3 + 2].slice(dk_checkJointsPosition + (i * 3 + 2) * NUM_FACTORS, x);
+            for (int l = 0; l < NUM_JOINTS; l++) {
+                link_sliced_center[i * NUM_JOINTS + l] = getCenter(kinematics_dynamics_result->links(l, i).slice(x));
+                kinematics_dynamics_result->links(l, i).slice(dk_link_sliced_center + (i * NUM_JOINTS + l) * NUM_FACTORS, x);
+            }
         }
 
         // Part 3. check collision between joint position reachable set and obstacles (in gpu)
-        obstacles->linkFRSConstraints(checkJointsPosition, dk_checkJointsPosition, nullptr, values + NUM_TIME_STEPS * NUM_FACTORS * NUM_FACTORS);
+        obstacles->linkFRSConstraints(link_sliced_center, dk_link_sliced_center, nullptr, values + NUM_TIME_STEPS * NUM_FACTORS * NUM_FACTORS);
 
         // Part 4. (position & velocity) state limit constraints
-        desired_trajectory->returnJointPositionExtremumGradient(values + (NUM_TIME_STEPS * NUM_FACTORS + (NUM_FACTORS - 1) * NUM_TIME_STEPS * obstacles->num_obstacles) * NUM_FACTORS, x);
-        desired_trajectory->returnJointVelocityExtremumGradient(values + (NUM_TIME_STEPS * NUM_FACTORS + (NUM_FACTORS - 1) * NUM_TIME_STEPS * obstacles->num_obstacles + NUM_FACTORS * 2) * NUM_FACTORS, x);
+        desired_trajectory->returnJointPositionExtremumGradient(values + (NUM_TIME_STEPS * NUM_FACTORS + NUM_TIME_STEPS * NUM_JOINTS * obstacles->num_obstacles) * NUM_FACTORS, x);
+        desired_trajectory->returnJointVelocityExtremumGradient(values + (NUM_TIME_STEPS * NUM_FACTORS + NUM_TIME_STEPS * NUM_JOINTS * obstacles->num_obstacles + NUM_FACTORS * 2) * NUM_FACTORS, x);
     }
 
     return true;
@@ -380,7 +370,7 @@ void armtd_NLP::finalize_solution(
 
     // store the solution
     for( Index i = 0; i < n; i++ ) {
-        solution[i] = (TYPE)x[i];
+        solution[i] = (double)x[i];
     }
 
     // check constraint violation manually for Maximum_CpuTime_Exceeded case
@@ -391,13 +381,13 @@ void armtd_NLP::finalize_solution(
     // control input constraints
     for( Index i = 0; i < NUM_TIME_STEPS; i++ ) {
         for( Index j = 0; j < NUM_FACTORS; j++ ) {
-            if (g_copy[i * NUM_FACTORS + j] < -torque_limits[j] + v_norm[i * NUM_FACTORS + j] - TORQUE_INPUT_CONSTRAINT_VIOLATION_THRESHOLD || 
-                g_copy[i * NUM_FACTORS + j] > torque_limits[j] - v_norm[i * NUM_FACTORS + j] + TORQUE_INPUT_CONSTRAINT_VIOLATION_THRESHOLD) {
+            if (g_copy[i * NUM_FACTORS + j] < -torque_limits[j] + (*torque_radius)(j, i) - TORQUE_INPUT_CONSTRAINT_VIOLATION_THRESHOLD || 
+                g_copy[i * NUM_FACTORS + j] > torque_limits[j] - (*torque_radius)(j, i) + TORQUE_INPUT_CONSTRAINT_VIOLATION_THRESHOLD) {
                 feasible = false;
                 cout << "        CUDA & C++: Ipopt: Control torque of joint " << j << " at time interval " << i << " exceeds limit!\n";
                 cout << "                        value: " << g_copy[i * NUM_FACTORS + j] << "\n";
-                cout << "                        range: [ " << -torque_limits[j] + v_norm[i * NUM_FACTORS + j] << ", "
-                                                            << torque_limits[j] - v_norm[i * NUM_FACTORS + j] << " ]\n";
+                cout << "                        range: [ " << -torque_limits[j] + (*torque_radius)(j, i) << ", "
+                                                            << torque_limits[j] - (*torque_radius)(j, i) << " ]\n";
                 return;
             }
         }
@@ -405,7 +395,7 @@ void armtd_NLP::finalize_solution(
 
     // collision avoidance constraints
     Index offset = NUM_FACTORS * NUM_TIME_STEPS;
-    for( Index i = 0; i < NUM_FACTORS - 1; i++ ) {
+    for( Index i = 0; i < NUM_JOINTS; i++ ) {
         for( Index j = 0; j < NUM_TIME_STEPS; j++ ) {
             for( Index h = 0; h < obstacles->num_obstacles; h++ ) {
                 if (g_copy[(i * NUM_TIME_STEPS + j) * obstacles->num_obstacles + h + offset] > COLLISION_AVOIDANCE_CONSTRAINT_VIOLATION_THRESHOLD) {
@@ -417,7 +407,7 @@ void armtd_NLP::finalize_solution(
             }
         }
     }
-    offset += (NUM_FACTORS - 1) * NUM_TIME_STEPS * obstacles->num_obstacles;
+    offset += NUM_JOINTS * NUM_TIME_STEPS * obstacles->num_obstacles;
 
     // state limit constraints
     //     minimum joint position

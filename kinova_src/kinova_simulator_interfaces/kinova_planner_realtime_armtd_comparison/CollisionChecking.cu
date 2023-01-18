@@ -229,10 +229,8 @@ __global__ void polytope_PH(TYPE* buffered_c, TYPE* buffered_G, TYPE* A, TYPE* d
 	// delta = sum(abs(C * G))
 	TYPE delta_res = 0.0;
 
-	for (unsigned int i = 0; i < 3; i++) {
-		for (unsigned int j = 0; j < MAX_OBSTACLE_GENERATOR_NUM + 3; j++) {
-			delta_res += fabs(C[p_id][i] * G[i][j]);
-		}
+	for (unsigned int j = 0; j < MAX_OBSTACLE_GENERATOR_NUM + 3; j++) {
+		delta_res += fabs(C[p_id][0] * G[0][j] + C[p_id][1] * G[1][j] + C[p_id][2] * G[2][j]);
 	}
 
 	delta[((time_id * NUM_FACTORS + link_id) * num_obstacles + obs_id) * COMB_NUM + p_id] = delta_res;

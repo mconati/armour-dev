@@ -31,36 +31,46 @@
 //
 class BezierCurve{
 public:
-    TYPE* q0 = nullptr;
-    TYPE* qd0 = nullptr;
-    TYPE* qdd0 = nullptr;
+    double* q0 = nullptr;
+    double* qd0 = nullptr;
+    double* qdd0 = nullptr;
 
-    TYPE q_des_k_indep_extrema_1[NUM_FACTORS] = {0.0};
-    TYPE q_des_k_indep_extrema_2[NUM_FACTORS] = {0.0};
-    TYPE q_des_k_indep_extremum_1[NUM_FACTORS] = {0.0};
-    TYPE q_des_k_indep_extremum_2[NUM_FACTORS] = {0.0};
+    double q_des_k_indep_extrema_1[NUM_FACTORS] = {0.0};
+    double q_des_k_indep_extrema_2[NUM_FACTORS] = {0.0};
+    double q_des_k_indep_extremum_1[NUM_FACTORS] = {0.0};
+    double q_des_k_indep_extremum_2[NUM_FACTORS] = {0.0};
 
-    TYPE qd_des_k_indep_extrema_1[NUM_FACTORS] = {0.0};
-    TYPE qd_des_k_indep_extrema_2[NUM_FACTORS] = {0.0};
-    TYPE qd_des_k_indep_extremum_1[NUM_FACTORS] = {0.0};
-    TYPE qd_des_k_indep_extremum_2[NUM_FACTORS] = {0.0};
+    double qd_des_k_indep_extrema_1[NUM_FACTORS] = {0.0};
+    double qd_des_k_indep_extrema_2[NUM_FACTORS] = {0.0};
+    double qd_des_k_indep_extremum_1[NUM_FACTORS] = {0.0};
+    double qd_des_k_indep_extremum_2[NUM_FACTORS] = {0.0};
 
-    TYPE qdd_des_k_indep_extrema_1[NUM_FACTORS] = {0.0};
-    TYPE qdd_des_k_indep_extrema_2[NUM_FACTORS] = {0.0};
-    TYPE qdd_des_k_indep_extremum_1[NUM_FACTORS] = {0.0};
-    TYPE qdd_des_k_indep_extremum_2[NUM_FACTORS] = {0.0};
+    double qdd_des_k_indep_extrema_1[NUM_FACTORS] = {0.0};
+    double qdd_des_k_indep_extrema_2[NUM_FACTORS] = {0.0};
+    double qdd_des_k_indep_extremum_1[NUM_FACTORS] = {0.0};
+    double qdd_des_k_indep_extremum_2[NUM_FACTORS] = {0.0};
 
-    TYPE dt;
+    double dt;
 
-    PZsparse cos_q_des[NUM_TIME_STEPS * NUM_FACTORS];
-    PZsparse sin_q_des[NUM_TIME_STEPS * NUM_FACTORS];
-    PZsparse qd_des[NUM_TIME_STEPS * NUM_FACTORS];
-    PZsparse qda_des[NUM_TIME_STEPS * NUM_FACTORS];
-    PZsparse qdda_des[NUM_TIME_STEPS * NUM_FACTORS];
+    // PZsparse cos_q_des[NUM_TIME_STEPS * NUM_FACTORS];
+    // PZsparse sin_q_des[NUM_TIME_STEPS * NUM_FACTORS];
+
+    // // rotation matrix (and its transpose) of each joint
+    PZsparseArray R;
+    PZsparseArray R_t;
+
+    // joint velocity
+    PZsparseArray qd_des;
+
+    // auxiliary joint velocity
+    PZsparseArray qda_des;
+
+    // joint acceleration
+    PZsparseArray qdda_des;
 
     BezierCurve() {};
 
-    BezierCurve(TYPE* q0_inp, TYPE* qd0_inp, TYPE* qdd0_inp);
+    BezierCurve(double* q0_inp, double* qd0_inp, double* qdd0_inp);
 
     ~BezierCurve() {};
 
@@ -68,45 +78,45 @@ public:
     void makePolyZono(int t_ind);
 
     // return the min and max of the joint position throughout the whole desired trajectory
-    void returnJointPositionExtremum(TYPE* extremum, const TYPE* k);
+    void returnJointPositionExtremum(double* extremum, const double* k) const;
 
     // return the gradient of min and max of the joint position throughout the whole desired trajectory
-    void returnJointPositionExtremumGradient(TYPE* extremumGradient, const TYPE* k);
+    void returnJointPositionExtremumGradient(double* extremumGradient, const double* k) const;
 
     // return the min and max of the joint velocity throughout the whole desired trajectory
-    void returnJointVelocityExtremum(TYPE* extremum, const TYPE* k);
+    void returnJointVelocityExtremum(double* extremum, const double* k) const;
 
     // return the gradient of min and max of the joint velocity throughout the whole desired trajectory
-    void returnJointVelocityExtremumGradient(TYPE* extremumGradient, const TYPE* k);
+    void returnJointVelocityExtremumGradient(double* extremumGradient, const double* k) const;
 };
 
 // helper functions
 // q0, qd0, qdd0, k here are scalars since all joints are using the same Bezier curve representation
-TYPE q_des_func(TYPE q0, TYPE qd0, TYPE qdd0, TYPE k, TYPE t);
+double q_des_func(double q0, double qd0, double qdd0, double k, double t);
 
-TYPE qd_des_func(TYPE q0, TYPE qd0, TYPE qdd0, TYPE k, TYPE t);
+double qd_des_func(double q0, double qd0, double qdd0, double k, double t);
 
-TYPE qdd_des_func(TYPE q0, TYPE qd0, TYPE qdd0, TYPE k, TYPE t);
+double qdd_des_func(double q0, double qd0, double qdd0, double k, double t);
 
 // derivative of the second extrema of q_des (when qd_des = 0) w.r.t k 
-TYPE q_des_extrema2_k_derivative(TYPE q0, TYPE qd0, TYPE qdd0, TYPE k);
+double q_des_extrema2_k_derivative(double q0, double qd0, double qdd0, double k);
 
 // derivative of the third extrema of q_des (when qd_des = 0) w.r.t k 
-TYPE q_des_extrema3_k_derivative(TYPE q0, TYPE qd0, TYPE qdd0, TYPE k);
+double q_des_extrema3_k_derivative(double q0, double qd0, double qdd0, double k);
 
 // derivative of the second extrema of qd_des (when qd_des = 0) w.r.t k 
-TYPE qd_des_extrema2_k_derivative(TYPE q0, TYPE qd0, TYPE qdd0, TYPE k);
+double qd_des_extrema2_k_derivative(double q0, double qd0, double qdd0, double k);
 
 // derivative of the third extrema of qd_des (when qd_des = 0) w.r.t k 
-TYPE qd_des_extrema3_k_derivative(TYPE q0, TYPE qd0, TYPE qdd0, TYPE k);
+double qd_des_extrema3_k_derivative(double q0, double qd0, double qdd0, double k);
 
 // k-independent part of q_des
-TYPE q_des_k_indep(TYPE q0, TYPE qd0, TYPE qdd0, TYPE t);
+double q_des_k_indep(double q0, double qd0, double qdd0, double t);
 
 // k-independent part of qd_des
-TYPE qd_des_k_indep(TYPE q0, TYPE qd0, TYPE qdd0, TYPE t);
+double qd_des_k_indep(double q0, double qd0, double qdd0, double t);
 
 // k-independent part of qdd_des
-TYPE qdd_des_k_indep(TYPE q0, TYPE qd0, TYPE qdd0, TYPE t);
+double qdd_des_k_indep(double q0, double qd0, double qdd0, double t);
 
 #endif

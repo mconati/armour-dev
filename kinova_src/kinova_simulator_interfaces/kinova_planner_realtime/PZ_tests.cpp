@@ -1,6 +1,7 @@
-#include "NLPclass.h"
-#include "BufferPath.h"
+#include "Dynamics.h"
+#include "CollisionChecking.h"
 
+const std::string pathname = "/home/roahmlab/Documents/armour-dev/kinova_src/kinova_simulator_interfaces/kinova_planner_realtime/buffer/";
 const std::string inputfilename = pathname + "armour.in";
 const std::string outputfilename1 = pathname + "armour.out";
 const std::string outputfilename2 = pathname + "armour_joint_position_center.out";
@@ -14,7 +15,7 @@ Section I:
     Parse input
     There is no check and warning, so be careful!
 */
-    // Here is an example of required input
+    // Here is an example of the required input
     // double q0[NUM_FACTORS] = {0.6543, -0.0876, -0.4837, -1.2278, -1.5735, -1.0720, 0};
     // double qd0[NUM_FACTORS] = {0, 0, 0, 0, 0, 0, 0};
     // double qdd0[NUM_FACTORS] = {0, 0, 0, 0, 0, 0, 0};
@@ -64,7 +65,7 @@ Section I:
     }
     inputstream >> num_obstacles;
     if (num_obstacles > MAX_OBSTACLE_NUM || num_obstacles < 0) {
-        WARNING_PRINT("Number of obstacles larger than MAX_OBSTACLE_NUM !\n");
+        WARNING_PRINT("        CUDA & C++: Number of obstacles larger than MAX_OBSTACLE_NUM !\n");
         outputstream1 << -1;
         outputstream1.close();
         throw;
@@ -79,12 +80,10 @@ Section I:
 
     double t_plan = 1.0; // optimize the distance between q_des and the desired trajectories at t_plan
      
-    /*
+/*
 Section II:
     Initialize all polynomial zonotopes, including links and torques
 */
-    Obstacles O(obstacles, num_obstacles); 
-
     auto start1 = std::chrono::high_resolution_clock::now();
 
     omp_set_num_threads(NUM_THREADS);
@@ -187,104 +186,37 @@ Section II:
         return -1;
     }
 
-    /*
-    Section II.D: Buffer obstacles and initialize collision checking hyperplanes
-    */
-    try {
-        O.initializeHyperPlane(link_independent_generators);
-    }
-    catch (int errorCode) {
-        WARNING_PRINT("        CUDA & C++: Error initializing collision checking hyperplanes! Check previous error message!");
-        return -1;
-    }
-
     auto stop1 = std::chrono::high_resolution_clock::now();
     auto duration1 = std::chrono::duration_cast<std::chrono::milliseconds>(stop1 - start1);
     cout << "        CUDA & C++: Time taken by generating reachable sets: " << duration1.count() << " milliseconds" << endl;
 
 /*
 Section III:
-    Solve the optimization problem using IPOPT
+    Slice reachable sets at some point
 */
-    auto start2 = std::chrono::high_resolution_clock::now();
 
-    SmartPtr<armtd_NLP> mynlp = new armtd_NLP();
-    try {
-	    mynlp->set_parameters(q_des, t_plan, &traj, &kd, &torque_radius, &O);
-    }
-    catch (int errorCode) {
-        WARNING_PRINT("        CUDA & C++: Error initializing Ipopt! Check previous error message!");
-        return -1;
-    }
+    double factors[NUM_FACTORS] = {0.5, 0.6, 0.7, 0.0, -0.5, -0.6, -0.7};
 
-    SmartPtr<IpoptApplication> app = IpoptApplicationFactory();
+    Eigen::MatrixXd torque_sliced_center(NUM_FACTORS, NUM_TIME_STEPS);
+    Eigen::Vector3d link_sliced_center[NUM_TIME_STEPS * NUM_JOINTS];
 
-    app->Options()->SetNumericValue("tol", IPOPT_OPTIMIZATION_TOLERANCE);
-	app->Options()->SetNumericValue("max_cpu_time", IPOPT_MAX_CPU_TIME);
-	app->Options()->SetIntegerValue("print_level", IPOPT_PRINT_LEVEL);
-    app->Options()->SetStringValue("mu_strategy", IPOPT_MU_STRATEGY);
-    app->Options()->SetStringValue("linear_solver", IPOPT_LINEAR_SOLVER);
-	app->Options()->SetStringValue("hessian_approximation", "limited-memory");
+    #pragma omp parallel for shared(kd, factors, torque_sliced_center, link_sliced_center) private(openmp_t_ind) schedule(static, NUM_TIME_STEPS / NUM_THREADS)
+    for(openmp_t_ind = 0; openmp_t_ind < NUM_TIME_STEPS; openmp_t_ind++) {
+        for (int k = 0; k < NUM_FACTORS; k++) {
+            MatrixXInt res = kd.u_nom(k, openmp_t_ind).slice(factors);
+            torque_sliced_center(k, openmp_t_ind) = getCenter(res(0));
+        }
 
-    // For gradient checking
-    // app->Options()->SetStringValue("output_file", "ipopt.out");
-    // app->Options()->SetStringValue("derivative_test", "first-order");
-    // app->Options()->SetNumericValue("derivative_test_perturbation", 1e-8);
-    // app->Options()->SetNumericValue("derivative_test_tol", 1e-6);
-
-    // Initialize the IpoptApplication and process the options
-    ApplicationReturnStatus status;
-    status = app->Initialize();
-    if( status != Solve_Succeeded ) {
-		WARNING_PRINT("Error during initialization!");
-        outputstream1 << -1 << '\n';
-        outputstream1.close();
-        throw;
-    }
-
-    try {
-        // Ask Ipopt to solve the problem
-        status = app->OptimizeTNLP(mynlp);
-    }
-    catch (int errorCode) {
-        WARNING_PRINT("        CUDA & C++: Error solving optimization problem! Check previous error message!");
-        return -1;
-    }
-	
-    auto stop2 = std::chrono::high_resolution_clock::now();
-    auto duration2 = std::chrono::duration_cast<std::chrono::milliseconds>(stop2 - start2);
-
-    if (status == Maximum_CpuTime_Exceeded) {
-        cout << "        CUDA & C++: Ipopt maximum CPU time exceeded!\n";
-    }
-    
-    if (status == Invalid_Option) {
-        cout << "        CUDA & C++: Cannot find HSL library! Need to put libcoinhsl.so in proper path!\n";
-    }
-    else {
-        cout << "        CUDA & C++: Time taken by Ipopt: " << duration2.count() << " milliseconds" << endl;
+        for (int l = 0; l < NUM_JOINTS; l++) {
+            MatrixXInt res = kd.links(l, openmp_t_ind).slice(factors);
+            link_sliced_center[openmp_t_ind * NUM_JOINTS + l] = getCenter(res);
+        }
     }
 
 /*
 Section IV:
     Prepare output
 */
-    // set precision to 10 decimal digits
-    outputstream1 << std::setprecision(10);
-
-    // output k_opt
-    if (mynlp->feasible) {
-        for (int i = 0; i < NUM_FACTORS; i++) {
-            outputstream1 << mynlp->solution[i] << '\n';
-        }
-    }
-    else {
-        outputstream1 << -1 << '\n';
-    }
-
-    // output time cost (in milliseconds) in C++
-    outputstream1 << duration1.count() + duration2.count();
-    outputstream1.close();
 
     // output FRS and other information, you can comment them if they are unnecessary
     std::ofstream outputstream2(outputfilename2);
@@ -292,7 +224,7 @@ Section IV:
     for (int i = 0; i < NUM_TIME_STEPS; i++) {
         for (int j = 0; j < NUM_JOINTS; j++) {
             for (int l = 0; l < 3; l++) {
-                outputstream2 << mynlp->link_sliced_center[i * NUM_JOINTS + j](l) << ' ';
+                outputstream2 << link_sliced_center[i * NUM_JOINTS + j](l) << ' ';
             }
             outputstream2 << '\n';
         }
@@ -320,18 +252,20 @@ Section IV:
     outputstream4 << std::setprecision(10);
     for (int i = 0; i < NUM_TIME_STEPS; i++) {
         for (int j = 0; j < NUM_FACTORS; j++) {
-            outputstream4 << torque_radius(j, i) << ' '; // this is radius of final control input
+            // outputstream4 << torque_radius(j, i) << ' '; // this is radius of final control input
+            outputstream4 << kd.u_nom(j, i).independent(0) << ' '; // this is radius nominal torque
         }
         outputstream4 << '\n';
     }
     outputstream4.close();
 
     std::ofstream outputstream5(outputfilename5);
-    outputstream5 << std::setprecision(6);
-    for (int i = 0; i < mynlp->constraint_number; i++) {
-        outputstream5 << mynlp->g_copy[i] << '\n';
+    outputstream5 << std::setprecision(10);
+    for (int i = 0; i < NUM_TIME_STEPS; i++) {
+        for (int j = 0; j < NUM_FACTORS; j++) {
+            outputstream5 << torque_sliced_center(j, i) << ' ';
+        }
+        outputstream5 << '\n';
     }
     outputstream5.close();
-
-    return 0;
 }

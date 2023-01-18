@@ -143,7 +143,7 @@ classdef uarmtd_planner < robot_arm_generic_planner
                     P.jrs_info.c_k_bernstein = zeros(7,1);
                     % !!!!!!
                     % Make sure this is consistent with the k_range in
-                    % cuda-dev/PZsparse-Bernstein/Trajectory.h 
+                    % kinova_src/kinova_simulator_interfaces/kinova_planner_realtime/Parameters.h 
                     % !!!!!!
                     P.jrs_info.g_k_bernstein = [pi/24; pi/24; pi/24; pi/24; pi/24; pi/24; pi/30];
     
@@ -209,8 +209,8 @@ classdef uarmtd_planner < robot_arm_generic_planner
     
                     if terminal_output == 0
                         % read FRS information if needed
-                        joint_frs_center = readmatrix('armour_joint_position_center.out', 'FileType', 'text');
-                        joint_frs_radius = readmatrix('armour_joint_position_radius.out', 'FileType', 'text');
+                        link_frs_center = readmatrix('armour_joint_position_center.out', 'FileType', 'text');
+                        link_frs_generators = readmatrix('armour_joint_position_radius.out', 'FileType', 'text');
                         control_input_radius = readmatrix('armour_control_input_radius.out', 'FileType', 'text');
                         constraints_value = readmatrix('armour_constraints.out', 'FileType', 'text');
                     else
@@ -338,12 +338,12 @@ classdef uarmtd_planner < robot_arm_generic_planner
     
                     if terminal_output == 0
                         % read FRS information if needed
-                        joint_frs_center = readmatrix('armtd_main_joint_position_center.out', 'FileType', 'text');
+                        link_frs_center = readmatrix('armtd_main_joint_position_center.out', 'FileType', 'text');
                         joint_frs_radius = readmatrix('armtd_main_joint_position_radius.out', 'FileType', 'text');
                         constraints_value = readmatrix('armtd_main_constraints.out', 'FileType', 'text');
                     else
                         k_opt = nan;
-                        joint_frs_center = [];
+                        link_frs_center = [];
                         joint_frs_radius = [];
                         constraints_value = [];
                     end
@@ -379,7 +379,8 @@ classdef uarmtd_planner < robot_arm_generic_planner
                     P.info.FO_zono = [P.info.FO_zono, {FO_zono}];
                     P.info.sliced_FO_zono = [P.info.sliced_FO_zono, {sliced_FO_zono}];
                 else
-                    P.info.sliced_FO_zono = [P.info.sliced_FO_zono, {[joint_frs_center, joint_frs_radius]}];
+%                     P.info.sliced_FO_zono = [P.info.sliced_FO_zono, {[link_frs_center, link_frs_generators]}];
+                    P.info.sliced_FO_zono = [P.info.sliced_FO_zono, {[]}]; % disable recording for now
                 end
             end
 

@@ -19,6 +19,7 @@ verbosity = 10;
 
 %%% for planner
 traj_type = 'bernstein'; % pick 'orig' (ARMTD) or 'bernstein' (ARMOUR)
+use_cuda_flag = true;
 
 %%% for agent
 agent_urdf = 'kinova_without_gripper.urdf';
@@ -35,7 +36,7 @@ use_robust_input = true;
 LLC_V_max = 5e-5;
 
 %%% for HLP
-if_use_RRT = true;
+if_use_RRT = false;
 HLP_grow_tree_mode = 'new' ; % pick 'new' or 'keep'
 plot_waypoint_flag = true ;
 plot_waypoint_arm_flag  = true ;
@@ -71,8 +72,6 @@ joint_input_limits = [-56.7, -56.7, -56.7, -56.7, -29.4, -29.4, -29.4;
                        56.7,  56.7,  56.7,  56.7,  29.4,  29.4,  29.4]; % matlab doesn't import these from urdf so hard code into class
 transmision_inertia = [8.02999999999999936 11.99620246153036440 9.00254278617515169 11.58064393167063599 8.46650409179141228 8.85370693737424297 8.85873036646853151]; % matlab doesn't import these from urdf so hard code into class
 M_min_eigenvalue = 5.095620491878957; % matlab doesn't import these from urdf so hard code into class
-
-use_cuda_flag = true;
 
 %% automated from here
 if plot_while_running

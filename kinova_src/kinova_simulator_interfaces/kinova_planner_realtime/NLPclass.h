@@ -19,13 +19,12 @@ public:
 
     // [set_parameters]
     bool set_parameters(
-        TYPE* q_des_input,
-        TYPE t_plan_input,
-        BezierCurve* desired_trajectory_input,
-        PZsparse* joint_position_input,
-        PZsparse* control_input_input,
-        TYPE* v_norm_input,
-        Obstacles* Obstacle_input
+        double* q_des_input,
+        double t_plan_input,
+        const BezierCurve* desired_trajectory_input,
+        KinematicsDynamics* kinematics_dynamics_result_input,
+        const Eigen::MatrixXd* torque_radius_input,
+        Obstacles* obstacles_input
     );
 
     /**@name Overloaded from TNLP */
@@ -136,9 +135,9 @@ public:
     );
     //@}
 
-    TYPE t_plan = 1.0;
+    double t_plan = 1.0;
 
-    TYPE solution[NUM_FACTORS];
+    double solution[NUM_FACTORS];
 
     bool ifFeasible = true;
 
@@ -148,8 +147,8 @@ public:
 
     bool feasible = false;
 
-    TYPE* checkJointsPosition = nullptr;
-    TYPE* dk_checkJointsPosition = nullptr;
+    Eigen::Vector3d link_sliced_center[NUM_TIME_STEPS * NUM_JOINTS];
+    Eigen::Vector3d dk_link_sliced_center[NUM_TIME_STEPS * NUM_JOINTS * NUM_FACTORS];
 
 private:
     /**@name Methods to block default compiler methods.
@@ -171,15 +170,13 @@ private:
        const armtd_NLP&
     );
 
-    TYPE* q_des = nullptr;
+    double* q_des = nullptr;
 
-    BezierCurve* desired_trajectory = nullptr;
+    const BezierCurve* desired_trajectory = nullptr;
 
-    PZsparse* joint_position = nullptr;
+    KinematicsDynamics* kinematics_dynamics_result = nullptr;
 
-    PZsparse* control_input = nullptr;
-
-    TYPE* v_norm = nullptr;
+    const Eigen::MatrixXd* torque_radius = nullptr;
 
     Obstacles* obstacles = nullptr;
 
