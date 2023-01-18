@@ -513,29 +513,23 @@ classdef uarmtd_planner < robot_arm_generic_planner
                         u_lb{i, 1}{j, 1} = -1*polyZonotope_ROAHM(u_lb_tmp.c + u_lb_buff, u_lb_tmp.G, [], u_lb_tmp.expMat, u_lb_tmp.id) + P.agent_info.joint_input_limits(1, j);
                     end
                 end
-                
-                % grasp constraints:
-                if P.grasp_constraints_flag
-                    % ASSUMING SURFACE NORMAL IS POSITIVE Z-DIRECTION
-                    % fill this out still
-                end
             end
             
             % joint limit constraint setup
-            for i = 1:jrs_info.n_t
-                for j = 1:jrs_info.n_q
-                    q_lim_tmp = q{i, 1}{j, 1};
-                    dq_lim_tmp = dq{i, 1}{j, 1};
-                    q_lim_tmp = remove_dependence(q_lim_tmp, jrs_info.k_id(end));
-                    dq_lim_tmp = remove_dependence(dq_lim_tmp, jrs_info.k_id(end));
-                    q_buf = sum(abs(q_lim_tmp.Grest));
-                    dq_buf = sum(abs(dq_lim_tmp.Grest));
-                    q_ub{i, 1}{j, 1} = polyZonotope_ROAHM(q_lim_tmp.c + q_buf, q_lim_tmp.G, [], q_lim_tmp.expMat, q_lim_tmp.id) - P.agent_info.joint_state_limits(2, j);
-                    q_lb{i, 1}{j, 1} = -1*polyZonotope_ROAHM(q_lim_tmp.c + q_buf, q_lim_tmp.G, [], q_lim_tmp.expMat, q_lim_tmp.id) + P.agent_info.joint_state_limits(1, j);
-                    dq_ub{i, 1}{j, 1} = polyZonotope_ROAHM(dq_lim_tmp.c + dq_buf, dq_lim_tmp.G, [], dq_lim_tmp.expMat, dq_lim_tmp.id) - P.agent_info.joint_speed_limits(2, j);
-                    dq_lb{i, 1}{j, 1} = -1*polyZonotope_ROAHM(dq_lim_tmp.c + dq_buf, dq_lim_tmp.G, [], dq_lim_tmp.expMat, dq_lim_tmp.id) + P.agent_info.joint_speed_limits(1, j);
-                end
-            end
+%             for i = 1:jrs_info.n_t
+%                 for j = 1:jrs_info.n_q
+%                     q_lim_tmp = q{i, 1}{j, 1};
+%                     dq_lim_tmp = dq{i, 1}{j, 1};
+%                     q_lim_tmp = remove_dependence(q_lim_tmp, jrs_info.k_id(end));
+%                     dq_lim_tmp = remove_dependence(dq_lim_tmp, jrs_info.k_id(end));
+%                     q_buf = sum(abs(q_lim_tmp.Grest));
+%                     dq_buf = sum(abs(dq_lim_tmp.Grest));
+%                     q_ub{i, 1}{j, 1} = polyZonotope_ROAHM(q_lim_tmp.c + q_buf, q_lim_tmp.G, [], q_lim_tmp.expMat, q_lim_tmp.id) - P.agent_info.joint_state_limits(2, j);
+%                     q_lb{i, 1}{j, 1} = -1*polyZonotope_ROAHM(q_lim_tmp.c + q_buf, q_lim_tmp.G, [], q_lim_tmp.expMat, q_lim_tmp.id) + P.agent_info.joint_state_limits(1, j);
+%                     dq_ub{i, 1}{j, 1} = polyZonotope_ROAHM(dq_lim_tmp.c + dq_buf, dq_lim_tmp.G, [], dq_lim_tmp.expMat, dq_lim_tmp.id) - P.agent_info.joint_speed_limits(2, j);
+%                     dq_lb{i, 1}{j, 1} = -1*polyZonotope_ROAHM(dq_lim_tmp.c + dq_buf, dq_lim_tmp.G, [], dq_lim_tmp.expMat, dq_lim_tmp.id) + P.agent_info.joint_speed_limits(1, j);
+%                 end
+%             end
 
             if P.grasp_constraints_flag
                 % need to add a check somewhere to see if constraint is
@@ -797,70 +791,70 @@ classdef uarmtd_planner < robot_arm_generic_planner
                     % adding separation constraints
                     sep_int = interval(sep_poly{i,1});
                     % First check if the constraint is necessary
-                    if ~(sep_int.sup < 0)
+%                     if ~(sep_int.sup < 0)
                         fprintf('ADDED GRASP SEPARATION CONSTRAINT \n')
                         P.constraints{end+1,1} = @(k) slice(sep_poly{i,1},k);
                         grad_sep_poly = grad(sep_poly{i,1},P.jrs_info.n_q);
                         P.grad_constraints{end+1, 1} = @(k) cellfun(@(C) slice(C, k), grad_sep_poly);
-                    end
+%                     end
                     
                     % adding slipping constraints
                     slip_int = interval(slip_poly{i,1});
-                    if ~(slip_int.sup < 0)
+%                     if ~(slip_int.sup < 0)
                         fprintf('ADDED GRASP SLIPPING CONSTRAINT \n')
                         P.constraints{end+1,1} = @(k) slice(slip_poly{i,1},k);
                         grad_slip_poly = grad(slip_poly{i,1},P.jrs_info.n_q);
                         P.grad_constraints{end+1, 1} = @(k) cellfun(@(C) slice(C, k), grad_slip_poly);
-                    end
+%                     end
                     
                     % adding tipping constraints
                     tip_int = interval(tip_poly{i,1});
-                    if ~(tip_int.sup < 0)
+%                     if ~(tip_int.sup < 0)
                         fprintf('ADDED GRASP TIPPING CONSTRAINT \n')
                         P.constraints{end+1,1} = @(k) slice(tip_poly{i,1},k);
                         grad_tip_poly = grad(tip_poly{i,1},P.jrs_info.n_q);
                         P.grad_constraints{end+1, 1} = @(k) cellfun(@(C) slice(C, k), grad_tip_poly);
-                    end
+%                     end
                 end
             end
 
             % joint limit constraints
-            for i = 1:jrs_info.n_t
-                for j = 1:jrs_info.n_q
-                    % check if constraint necessary, then add
-                    q_ub_int = interval(q_ub{i, 1}{j, 1});
-                    if ~(q_ub_int.sup < 0)
-                        fprintf('ADDED UPPER BOUND JOINT POSITION CONSTRAINT ON JOINT %d AT TIME %d \n', j, i);
-                        P.constraints{end+1, 1} = @(k) slice(q_ub{i, 1}{j, 1}, k);
-                        grad_q_ub = grad(q_ub{i, 1}{j, 1}, P.jrs_info.n_q);
-                        P.grad_constraints{end+1, 1} = @(k) cellfun(@(C) slice(C, k), grad_q_ub);
-                    end
-                    
-                    q_lb_int = interval(q_lb{i, 1}{j, 1});
-                    if ~(q_lb_int.sup < 0)
-                        fprintf('ADDED LOWER BOUND JOINT POSITION CONSTRAINT ON JOINT %d AT TIME %d \n', j, i);
-                        P.constraints{end+1, 1} = @(k) slice(q_lb{i, 1}{j, 1}, k);
-                        grad_q_lb = grad(q_lb{i, 1}{j, 1}, P.jrs_info.n_q);
-                        P.grad_constraints{end+1, 1} = @(k) cellfun(@(C) slice(C, k), grad_q_lb);
-                    end
-                    
-                    dq_ub_int = interval(dq_ub{i, 1}{j, 1});
-                    if ~(dq_ub_int.sup < 0)
-                        fprintf('ADDED UPPER BOUND JOINT VELOCITY CONSTRAINT ON JOINT %d AT TIME %d \n', j, i);
-                        P.constraints{end+1, 1} = @(k) slice(dq_ub{i, 1}{j, 1}, k);
-                        grad_dq_ub = grad(dq_ub{i, 1}{j, 1}, P.jrs_info.n_q);
-                        P.grad_constraints{end+1, 1} = @(k) cellfun(@(C) slice(C, k), grad_dq_ub);
-                    end
-                    
-                    dq_lb_int = interval(dq_lb{i, 1}{j, 1});
-                    if ~(dq_lb_int.sup < 0)
-                        fprintf('ADDED LOWER BOUND JOINT VELOCITY CONSTRAINT ON JOINT %d AT TIME %d \n', j, i);
-                        P.constraints{end+1, 1} = @(k) slice(dq_lb{i, 1}{j, 1}, k);
-                        grad_dq_lb = grad(dq_lb{i, 1}{j, 1}, P.jrs_info.n_q);
-                        P.grad_constraints{end+1, 1} = @(k) cellfun(@(C) slice(C, k), grad_dq_lb);
-                    end
-                end
-            end
+%             for i = 1:jrs_info.n_t
+%                 for j = 1:jrs_info.n_q
+%                     % check if constraint necessary, then add
+%                     q_ub_int = interval(q_ub{i, 1}{j, 1});
+%                     if ~(q_ub_int.sup < 0)
+%                         fprintf('ADDED UPPER BOUND JOINT POSITION CONSTRAINT ON JOINT %d AT TIME %d \n', j, i);
+%                         P.constraints{end+1, 1} = @(k) slice(q_ub{i, 1}{j, 1}, k);
+%                         grad_q_ub = grad(q_ub{i, 1}{j, 1}, P.jrs_info.n_q);
+%                         P.grad_constraints{end+1, 1} = @(k) cellfun(@(C) slice(C, k), grad_q_ub);
+%                     end
+%                     
+%                     q_lb_int = interval(q_lb{i, 1}{j, 1});
+%                     if ~(q_lb_int.sup < 0)
+%                         fprintf('ADDED LOWER BOUND JOINT POSITION CONSTRAINT ON JOINT %d AT TIME %d \n', j, i);
+%                         P.constraints{end+1, 1} = @(k) slice(q_lb{i, 1}{j, 1}, k);
+%                         grad_q_lb = grad(q_lb{i, 1}{j, 1}, P.jrs_info.n_q);
+%                         P.grad_constraints{end+1, 1} = @(k) cellfun(@(C) slice(C, k), grad_q_lb);
+%                     end
+%                     
+%                     dq_ub_int = interval(dq_ub{i, 1}{j, 1});
+%                     if ~(dq_ub_int.sup < 0)
+%                         fprintf('ADDED UPPER BOUND JOINT VELOCITY CONSTRAINT ON JOINT %d AT TIME %d \n', j, i);
+%                         P.constraints{end+1, 1} = @(k) slice(dq_ub{i, 1}{j, 1}, k);
+%                         grad_dq_ub = grad(dq_ub{i, 1}{j, 1}, P.jrs_info.n_q);
+%                         P.grad_constraints{end+1, 1} = @(k) cellfun(@(C) slice(C, k), grad_dq_ub);
+%                     end
+%                     
+%                     dq_lb_int = interval(dq_lb{i, 1}{j, 1});
+%                     if ~(dq_lb_int.sup < 0)
+%                         fprintf('ADDED LOWER BOUND JOINT VELOCITY CONSTRAINT ON JOINT %d AT TIME %d \n', j, i);
+%                         P.constraints{end+1, 1} = @(k) slice(dq_lb{i, 1}{j, 1}, k);
+%                         grad_dq_lb = grad(dq_lb{i, 1}{j, 1}, P.jrs_info.n_q);
+%                         P.grad_constraints{end+1, 1} = @(k) cellfun(@(C) slice(C, k), grad_dq_lb);
+%                     end
+%                 end
+%             end
 
             % more constraints to add:
             % 1) orientation constraints

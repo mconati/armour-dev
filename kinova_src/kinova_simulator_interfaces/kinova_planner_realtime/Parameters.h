@@ -12,7 +12,7 @@
 
 // Parameters for Trajectories.h:
     // number of time steps (This should be an EVEN number!!!)
-    #define NUM_TIME_STEPS 128
+    #define NUM_TIME_STEPS 100
 
     // range of parameters (size of generators in PZ).
     // const TYPE k_range[NUM_FACTORS] = { M_PI / 72, M_PI / 72, M_PI / 72, M_PI / 72, M_PI / 72, M_PI / 72, M_PI / 72 }; // (radian)

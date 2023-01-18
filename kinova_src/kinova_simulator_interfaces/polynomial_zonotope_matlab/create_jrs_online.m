@@ -52,7 +52,7 @@ else
 	bernstein_center = bernstein_waypoint - q;
 end
 
-bernstein_final_range = pi/72*ones(n_q, 1);
+bernstein_final_range = pi/24*ones(n_q, 1);
 % bernstein_final_range = [pi/24; pi/72; pi/24; pi/72; pi/72; pi/72; pi/72];
 
 t_f = 1;

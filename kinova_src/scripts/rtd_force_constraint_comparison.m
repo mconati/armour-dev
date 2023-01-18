@@ -12,6 +12,7 @@ u_s = 0.609382421; % static coefficient of friction
 db2 = 0.058; % 58; % (m) diameter of circular contact area (inscribed in square base of motion tracking cube)
 
 input_constraints_flag = false;
+grasp_constraints_flag = true;
 
 add_uncertainty_to = 'all'; % choose 'all', 'link', or 'none'
 links_with_uncertainty = {}; % if add_uncertainty_to = 'link', specify links here.
@@ -24,6 +25,7 @@ params = load_robot_params(robot, ...
                            'add_uncertainty_to', add_uncertainty_to, ...
                            'links_with_uncertainty', links_with_uncertainty,...
                            'uncertain_mass_range', uncertain_mass_range);
+use_gravity = true;
 
 for i=1:7
     % lower limit
@@ -143,10 +145,13 @@ P = uarmtd_planner('verbose', verbosity, ...
                    'first_iter_pause_flag', true, ...
                    'use_q_plan_for_cost', true, ...
                    'input_constraints_flag', input_constraints_flag, ...
+                   'grasp_constraints_flag', grasp_constraints_flag,...
                    'use_robust_input', use_robust_input, ...
                    'traj_type', 'bernstein', ...
                    'use_cuda', false,...
-                   'use_waypoint_for_bernstein_center',true) ;
+                   'use_waypoint_for_bernstein_center',true,...
+                   'u_s', u_s, ...
+                   'db2', db2);
 
 agent_info = A.get_agent_info() ;
 agent_info.LLC_info = A.LLC.get_LLC_info();
@@ -254,27 +259,76 @@ end
 
 
 % generate constraints
+% note that the if statements in this function in the uarmtd_planner.m file need to be commented out to
+% save all of the constraints for comparison.
 
 for i=1:num_conditions
 
-    matlab_constraints{i} = generate_constraints(P, q_0(i,:), q_dot_0(i,:), q_ddot_0(i,:), obstacles, q_des(i,:));
+%     matlab_constraints{i} = generate_constraints(P, q_0(i,:), q_dot_0(i,:), q_ddot_0(i,:), obstacles, q_des(i,:));
 
+    % Ground Truth
+
+    [u{i}, f{i}, n{i}] = rnea(q_0(i,:), q_dot_0(i,:), q_dot_0(i,:), q_ddot_0(i,:), use_gravity, params.nominal)
 end
 
 
 %% Comparison
+clear ml_slip ml_tip ml_sep ml_constraints ml_constraints_sliced sep_error slip_error tip_error max_slip_error max_tip_error max_sep_error
+
+counter = 1;
 
 for i = 1:num_conditions
     % Real-time: 
     % pull out constraints values
-    rt_sep = constraints_value(##:,i);
-    rt_slip = constraints_value(##:,i);
-    rt_tip = constraints_value(##:,i);
+    rt_sep = constraints_value(701:800,i);
+    rt_slip = constraints_value(801:900,i);
+    rt_tip = constraints_value(901:1000,i);
 
     % Matlab:
     % pull out constraint values
-    ml_constraints = matlab_constraints{i};
+    ml_constraints = matlab_constraints{i}.constraints;
+    % slice with respect to the k found by the real-time
+    for j = 1:length(ml_constraints)
+        ml_constraints_sliced{j,i} = ml_constraints{j}(k_opt_storage(:,i))';
+    end
 
+    % replace uarmtd_planner.m constraint functions with zonotope_slice()
+    % instead of slice()?
+
+    ml_constraints_sliced = cell2mat(ml_constraints_sliced);
+    ml_sep = ml_constraints_sliced(1:3:end);
+    ml_slip = ml_constraints_sliced(2:3:end);
+    ml_tip = ml_constraints_sliced(3:3:end);
+%     for j = 1:length(ml_constraints_sliced)
+%         if counter == 1
+%             ml_sep(j,i) = ml_constraints_sliced(j,i);
+%             counter = counter + 1;
+%         end
+%         if counter == 2
+%             ml_slip(j,i) = ml_constraints_sliced(j,i);
+%             counter = counter + 1;
+%         end
+%         if counter == 3
+%             ml_tip(j,i) = ml_constraints_sliced(j,i);
+%             counter = counter + 1;
+%         end
+%         if counter == 4
+%             counter = 1;
+%         end
+%     end
+    
     % Calculate difference
+    sep_error = (rt_sep - ml_sep)./ml_sep;
+    slip_error = (rt_slip - ml_slip)./ml_slip;
+    tip_error = (rt_tip - ml_tip)./ml_tip;
+
+    max_sep_error = max(sep_error)
+    max_slip_error = max(slip_error)
+    max_tip_error = max(tip_error)
+
+    %% Check Ground Truth Exist In the Overapproximations
+
+    gt_sep = -1*f{i}(3,10);
+    
 
 end
