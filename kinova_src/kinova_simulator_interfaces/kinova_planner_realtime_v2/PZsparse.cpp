@@ -373,7 +373,6 @@ Eigen::MatrixXd PZsparse::reduce_link_PZ() {
 
 MatrixXInt PZsparse::slice(const double* factor) {
     assert(internalCheck());
-
     MatrixXInt res(NRows, NCols);
     Eigen::MatrixXd res_center = center;
     Eigen::MatrixXd res_radius = independent;
@@ -446,10 +445,11 @@ void PZsparse::slice(Eigen::MatrixXd* gradient, const double* factor) {
 }
 
 void PZsparse::slice(Eigen::Vector3d* gradient, const double* factor) {
+    assert(NRows == 3 && NCols == 1);
     assert(internalCheck());
 
     for (uint k = 0; k < NUM_FACTORS; k++) {
-        gradient[k] = Eigen::MatrixXd::Zero(NRows, NCols);
+        gradient[k].setZero();
     }
 
     Eigen::Array<Eigen::Vector3d, NUM_FACTORS, 1> resTemp;
@@ -466,7 +466,7 @@ void PZsparse::slice(Eigen::Vector3d* gradient, const double* factor) {
                 for (uint k = 0; k < NUM_FACTORS; k++) {
                     if (j == k) { // differentiate this!
                         if (degreeArray[j] == 0) { // monomial unrelated to k
-                            resTemp[k] = Eigen::Vector3d::Zero();
+                            resTemp[k].setZero();
                         }
                         else {
                             resTemp[k] *= degreeArray[j] * pow(factor[j], degreeArray[j] - 1);
@@ -486,7 +486,6 @@ void PZsparse::slice(Eigen::Vector3d* gradient, const double* factor) {
 }
 
 void PZsparse::slice(double* gradient, const double* factor) {
-    cout << NRows << ' ' << NCols << endl; 
     assert(internalCheck());
     assert(NRows == 1 && NCols == 1);
 

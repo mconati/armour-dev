@@ -247,16 +247,15 @@ bool armtd_NLP::eval_g(
     }
 
     Index i;
-    KinematicsDynamics& kd = (*kinematics_dynamics_result);
-    #pragma omp parallel for shared(kd, x, g, link_sliced_center) private(i) schedule(static, NUM_TIME_STEPS / NUM_THREADS)
+    #pragma omp parallel for shared(kinematics_dynamics_result, x, g, link_sliced_center) private(i) schedule(static, NUM_TIME_STEPS / NUM_THREADS)
     for(i = 0; i < NUM_TIME_STEPS; i++) {
         for (int k = 0; k < NUM_FACTORS; k++) {
-            MatrixXInt res = kd.u_nom(k, i).slice(x);
+            MatrixXInt res = kinematics_dynamics_result->u_nom(k, i).slice(x);
             g[i * NUM_FACTORS + k] = getCenter(res(0));
         }
 
         for (int l = 0; l < NUM_JOINTS; l++) {
-            MatrixXInt res = kd.links(l, i).slice(x);
+            MatrixXInt res = kinematics_dynamics_result->links(l, i).slice(x);
             link_sliced_center[i * NUM_JOINTS + l] = getCenter(res);
         }
     }
@@ -305,16 +304,15 @@ bool armtd_NLP::eval_jac_g(
     }
     else {
         Index i;
-        KinematicsDynamics& kd = (*kinematics_dynamics_result);
-        // #pragma omp parallel for shared(kd, x, values, link_sliced_center, dk_link_sliced_center) private(i) schedule(static, NUM_TIME_STEPS / NUM_THREADS)
+        #pragma omp parallel for shared(kinematics_dynamics_result, x, values, link_sliced_center, dk_link_sliced_center) private(i) schedule(static, NUM_TIME_STEPS / NUM_THREADS)
         for(i = 0; i < NUM_TIME_STEPS; i++) {
             for (int k = 0; k < NUM_FACTORS; k++) {
-                kd.u_nom(k, i).slice(values + (i * NUM_FACTORS + k) * NUM_FACTORS, x);
+                kinematics_dynamics_result->u_nom(k, i).slice(values + (i * NUM_FACTORS + k) * NUM_FACTORS, x);
             }
 
             for (int l = 0; l < NUM_JOINTS; l++) {
-                link_sliced_center[i * NUM_JOINTS + l] = getCenter(kd.links(l, i).slice(x));
-                kd.links(l, i).slice(dk_link_sliced_center + (i * NUM_JOINTS + l) * NUM_FACTORS, x);
+                link_sliced_center[i * NUM_JOINTS + l] = getCenter(kinematics_dynamics_result->links(l, i).slice(x));
+                kinematics_dynamics_result->links(l, i).slice(dk_link_sliced_center + (i * NUM_JOINTS + l) * NUM_FACTORS, x);
             }
         }
 

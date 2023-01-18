@@ -275,7 +275,9 @@ __global__ void checkCollisionKernel(Eigen::Vector3d* A,
 			}
 		}
 
-		link_c[time_id * num_obstacles + obs_id] = -max_elt;
+		if (link_c != nullptr) {
+			link_c[time_id * num_obstacles + obs_id] = -max_elt;
+		}
 
 		if (dk_link_sliced_center != nullptr && grad_link_c != nullptr) {
 			Eigen::Vector3d max_A_elt = A[(((time_id * NUM_FACTORS + link_id) * num_obstacles + obs_id) * COMB_NUM + max_id)];
