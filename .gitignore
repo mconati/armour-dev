@@ -25,3 +25,4 @@ kinova_src/kinova_simulator_interfaces/kinova_planner_realtime_armtd_comparison/
 kinova_src/kinova_simulator_interfaces/kinova_planner_realtime_v2/.vscode/
 kinova_src/kinova_simulator_interfaces/kinova_planner_realtime_v2/buffer/
 kinova_src/kinova_simulator_interfaces/kinova_planner_realtime/build/
+kinova_src/kinova_simulator_interfaces/kinova_planner_realtime/reachsets/

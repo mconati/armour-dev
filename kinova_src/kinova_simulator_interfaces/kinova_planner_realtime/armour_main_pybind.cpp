@@ -1,6 +1,5 @@
 #include "NLPclass.h"
-// #include "BufferPath.h"
-#include <string>
+#include "ReachsetsPath.h"
 #include <cmath>
 
 #include <pybind11/pybind11.h>
@@ -9,9 +8,13 @@
 
 namespace py = pybind11;
 
-const std::string pathname = "../results/";
-const std::string reachset = "/home/baiyuew/baiyue/ROAHM/rtd-pybullet/armtd-dev/cuda-dev/PZsparse-Bernstein/reachsets/reachset";
-const std::string outputfilename1 = pathname + "armtd_main.out";
+
+const std::string inputfilename = pathname + "armour.in";
+const std::string outputfilename1 = pathname + "armour.out";
+const std::string outputfilename2 = pathname + "armour_joint_position_center.out";
+const std::string outputfilename3 = pathname + "armour_joint_position_radius.out";
+const std::string outputfilename4 = pathname + "armour_control_input_radius.out";
+const std::string outputfilename5 = pathname + "armour_constraints.out";
 
 
 class pzsparse {
@@ -338,34 +341,35 @@ class pzsparse {
             // outputstream1.close();
 
             // output FRS and other information, you can comment them if they are unnecessary
-            // std::ofstream outputstream2(outputfilename2);
-            // outputstream2 << std::setprecision(10);
-            // for (int i = 0; i < NUM_TIME_STEPS; i++) {
-            //     for (int j = 0; j < NUM_JOINTS; j++) {
-            //         for (int l = 0; l < 3; l++) {
-            //             outputstream2 << mynlp->link_sliced_center[i * NUM_JOINTS + j](l) << ' ';
-            //         }
-            //         outputstream2 << '\n';
-            //     }
-            //     outputstream2 << '\n';
-            // }
-            // outputstream2.close();
+            cout << "saving reach sets ..." << endl;
+            std::ofstream outputstream2(outputfilename2);
+            outputstream2 << std::setprecision(10);
+            for (int i = 0; i < NUM_TIME_STEPS; i++) {
+                for (int j = 0; j < NUM_JOINTS; j++) {
+                    for (int l = 0; l < 3; l++) {
+                        outputstream2 << mynlp->link_sliced_center[i * NUM_JOINTS + j](l) << ' ';
+                    }
+                    outputstream2 << '\n';
+                }
+                outputstream2 << '\n';
+            }
+            outputstream2.close();
 
-            // std::ofstream outputstream3(outputfilename3);
-            // outputstream3 << std::setprecision(10);
-            // for (int i = 0; i < NUM_TIME_STEPS; i++) {
-            //     for (int j = 0; j < NUM_JOINTS; j++) {
-            //         for (int k = 0; k < 3; k++) {
-            //             for (int l = 0; l < 3 + 3; l++) {
-            //                 outputstream3 << link_independent_generators[i * NUM_JOINTS + j](k, l) << ' ';
-            //             }
-            //             outputstream3 << '\n';
-            //         }
-            //         outputstream3 << '\n';
-            //     }
-            //     outputstream3 << '\n';
-            // }
-            // outputstream3.close();
+            std::ofstream outputstream3(outputfilename3);
+            outputstream3 << std::setprecision(10);
+            for (int i = 0; i < NUM_TIME_STEPS; i++) {
+                for (int j = 0; j < NUM_JOINTS; j++) {
+                    for (int k = 0; k < 3; k++) {
+                        for (int l = 0; l < 3 + 3; l++) {
+                            outputstream3 << link_independent_generators[i * NUM_JOINTS + j](k, l) << ' ';
+                        }
+                        outputstream3 << '\n';
+                    }
+                    outputstream3 << '\n';
+                }
+                outputstream3 << '\n';
+            }
+            outputstream3.close();
 
             // std::ofstream outputstream4(outputfilename4);
             // outputstream4 << std::setprecision(10);
