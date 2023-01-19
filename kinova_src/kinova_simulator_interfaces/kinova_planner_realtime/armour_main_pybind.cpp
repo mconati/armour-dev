@@ -39,7 +39,8 @@ class pzsparse {
 
         void set_obstacles(py::array_t<double> obstacle_vec){
             auto obstacle_ = obstacle_vec.unchecked<2>();
-            num_obstacles = obstacle_.shape(0);
+            // num_obstacles = obstacle_.shape(0);
+            num_obstacles = 0;
             int row = 0;
             int col = 0;
             int obs_dim = (MAX_OBSTACLE_GENERATOR_NUM + 1) * 3;
@@ -59,6 +60,7 @@ class pzsparse {
             cout << '\n' << endl;
             std::cout << "allocating obstacles..." << std::endl;
             O.initialize(obstacles, num_obstacles);
+            std::cout << "Obstacles allocated!" << std::endl;
         }
 
         void set_goal(py::array_t<double> qdes_vec){
