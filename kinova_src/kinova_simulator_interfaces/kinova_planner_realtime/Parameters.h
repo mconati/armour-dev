@@ -6,17 +6,18 @@
 // #include "KinovaWithoutGripperInfo.h"
 #include "KinovaForceInfo.h"
 
+#define DEBUG_MODE true
+
 // Parameters for PZsparse.h:
     // monomials with a coefficient smaller than this number will be reduced
-    #define SIMPLIFY_THRESHOLD 1e-4
+    #define SIMPLIFY_THRESHOLD 2e-4
 
 // Parameters for Trajectories.h:
     // number of time steps (This should be an EVEN number!!!)
     #define NUM_TIME_STEPS 100
 
     // range of parameters (size of generators in PZ).
-    // const TYPE k_range[NUM_FACTORS] = { M_PI / 72, M_PI / 72, M_PI / 72, M_PI / 72, M_PI / 72, M_PI / 72, M_PI / 72 }; // (radian)
-    const TYPE k_range[NUM_FACTORS] = { M_PI / 24, M_PI / 24, M_PI / 24, M_PI / 24, M_PI / 24, M_PI / 24, M_PI / 24 }; // (radian)
+    const double k_range[NUM_FACTORS] = { M_PI / 24, M_PI / 24, M_PI / 24, M_PI / 24, M_PI / 24, M_PI / 24, M_PI / 24 }; // (radian)
 
 // Parameters for CollisionChecking.h:
     // maximum number of obstacles (used for memory pre-allocation)

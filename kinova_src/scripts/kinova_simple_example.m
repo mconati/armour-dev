@@ -19,10 +19,10 @@ verbosity = 10;
 
 %%% for planner
 traj_type = 'bernstein'; % pick 'orig' (ARMTD) or 'bernstein' (ARMOUR)
+use_cuda_flag = true;
 
 %%% for agent
-% agent_urdf = 'kinova_without_gripper.urdf';
-agent_urdf = 'Kinova_Grasp_URDF.urdf';
+agent_urdf = 'kinova_without_gripper.urdf';
 
 add_uncertainty_to = 'all'; % choose 'all', 'link', or 'none'
 links_with_uncertainty = {}; % if add_uncertainty_to = 'link', specify links here.
@@ -32,7 +32,7 @@ agent_move_mode = 'integrator' ; % pick 'direct' or 'integrator'
 use_CAD_flag = true; % plot robot with CAD or bounding boxes
 
 %%% for LLC
-use_robust_input = false;
+use_robust_input = true;
 LLC_V_max = 5e-5;
 
 %%% for HLP
@@ -51,19 +51,12 @@ max_sim_iter = 600 ;
 stop_threshold = 4 ; % number of failed iterations before exiting
 
 %%% for world
-% start = [-1; -1; -1; -1; -1; -1; -1]; % start configuration
-% goal = [1; 1; 1; 1; 1; 1; 1]; % goal configuration
-% start = [-pi/6;-pi/2;-pi/2;pi/2;0;pi/2;pi/2];
-% goal = [pi/6; -pi/2; pi/2; pi/2; pi; -pi/2; pi/2]; % goal configuration
-
-start = [0;-pi/2;0;0;0;0;0];
-goal = [pi/8;-pi/2;0;0;0;0;0];
-
-% obstacles = {};
-obstacles{1} = box_obstacle_zonotope('center', [3; 0; 0.6],...
+start = [-1; -1; -1; -1; -1; -1; -1]; % start configuration
+goal = [1; 1; 1; 1; 1; 1; 1]; % goal configuration
+obstacles{1} = box_obstacle_zonotope('center', [0; 0; 0.6],...
                                      'side_lengths', [0.1; 0.1; 0.1]) ;
-% obstacles{2} = box_obstacle_zonotope('center', [0.3; 0; 0.4],...
-%                                      'side_lengths', [0.1; 0.8; 0.05]) ;
+obstacles{2} = box_obstacle_zonotope('center', [0.3; 0; 0.4],...
+                                     'side_lengths', [0.1; 0.8; 0.05]) ;
 
 %% robot params:
 robot = importrobot(agent_urdf);
@@ -80,11 +73,9 @@ joint_input_limits = [-56.7, -56.7, -56.7, -56.7, -29.4, -29.4, -29.4;
 transmision_inertia = [8.02999999999999936 11.99620246153036440 9.00254278617515169 11.58064393167063599 8.46650409179141228 8.85370693737424297 8.85873036646853151]; % matlab doesn't import these from urdf so hard code into class
 M_min_eigenvalue = 5.095620491878957; % matlab doesn't import these from urdf so hard code into class
 
-use_cuda_flag = true;
-
 %% automated from here
 if plot_while_running
-    figure(1); clf; view(3); grid on; xlim([-2 2]); ylim([-2 2]);
+    figure(1); clf; view(3); grid on;
 end
 
 % run loop
@@ -111,7 +102,7 @@ if use_robust_input
     A.LLC = uarmtd_robust_CBF_LLC('verbose', verbosity, ...
                                   'use_true_params_for_robust', false, ...
                                   'V_max', LLC_V_max, ...
-                                  'if_use_mex_controller', false);
+                                  'if_use_mex_controller', true);
 else
     A.LLC = uarmtd_nominal_passivity_LLC('verbose', verbosity);
 end
@@ -119,7 +110,7 @@ end
 A.LLC.setup(A);
 
 P = uarmtd_planner('verbose', verbosity, ...
-                   'first_iter_pause_flag', true, ...
+                   'first_iter_pause_flag', false, ...
                    'use_q_plan_for_cost', true, ...
                    'input_constraints_flag', true, ...
                    'use_robust_input', use_robust_input, ...
@@ -153,7 +144,7 @@ S = simulator_armtd(A,W,P, ...
 
 % %% plotting
 if plot_while_running
-    figure(1) ; clf ; axis equal ; xlim([-2 2]); ylim([-2 2]); zlim([0 2]); grid on; hold on ;
+    figure(1) ; clf ; axis equal ; xlim([-1 1]); ylim([-1 1]); zlim([0 2]); grid on; hold on ;
 
     if dimension == 3
         view(3);

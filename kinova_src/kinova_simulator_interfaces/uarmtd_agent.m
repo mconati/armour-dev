@@ -142,7 +142,7 @@ classdef uarmtd_agent < robot_arm_agent
             % add robot params and LLC info
             agent_info.params = A.params;
             agent_info.link_poly_zonotopes = A.link_poly_zonotopes;
-            if isfield(A, 'LLC')
+            if isprop(A, 'LLC')
                 agent_info.LLC_info = A.LLC.get_LLC_info();
             end
         end
@@ -255,7 +255,7 @@ classdef uarmtd_agent < robot_arm_agent
                         error('Prismatic joints are not yet supported!')
                     case 'fixed'
                         if d == 3
-                            R_succ = R_pred*A.robot.Bodies{idx}.Joint.JointToParentTransform(1:3, 1:3); % * ; % this rotation matrix might be wrong? (Zac: 01/13/2023)
+                            R_succ = A.robot.Bodies{idx}.Joint.JointToParentTransform(1:3, 1:3)*R_pred ;
                         else
                             % rotation matrix of current link assumed same as predecessor
                             R_succ = R_pred ;
