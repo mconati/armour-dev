@@ -75,8 +75,7 @@ KinematicsDynamics::KinematicsDynamics(BezierCurve* traj_input) {
 void KinematicsDynamics::fk(uint t_ind) {
     PZsparse FK_R = PZsparse(0, 0, 0); // identity matrix
     PZsparse FK_T(3, 1);
-    int j = 0;
-
+    
     for (int i = 0; i < NUM_JOINTS; i++) {
         PZsparse P(trans_matrix(i, 0));
         

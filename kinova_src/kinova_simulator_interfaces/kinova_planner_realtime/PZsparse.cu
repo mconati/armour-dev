@@ -546,8 +546,6 @@ MatrixXInt PZsparse::toInterval() {
 }
 
 void PZsparse::convertHashToDegree(uint64_t degree) {
-    uint64_t move_bit = 0;
-    
     for (uint64_t i = 0; i < NUM_FACTORS * 6; i++) {
         degreeArray[i] = degree & DEGREE_MASK[i];    
         degree >>= MOVE_BIT_INC[i];
@@ -649,8 +647,8 @@ Arithmetic
 
 PZsparse PZsparse::operator() (int row_id, int col_id) const {
     assert(internalCheck());
-    assert(0 <= row_id && row_id < NRows);
-    assert(0 <= col_id && col_id < NCols);
+    assert(row_id < NRows);
+    assert(col_id < NCols);
 
     PZsparse res(1, 1);
     
@@ -1040,8 +1038,8 @@ PZsparse PZsparse::transpose() {
 void PZsparse::addOneDimPZ(const PZsparse& a, uint row_id, uint col_id) {
     assert(internalCheck());
     assert(a.NRows == 1 && a.NCols == 1);
-    assert(0 <= row_id && row_id < NRows);
-    assert(0 <= col_id && col_id < NCols);
+    assert(row_id < NRows);
+    assert(col_id < NCols);
 
     center(row_id, col_id) += a.center(0);
 
