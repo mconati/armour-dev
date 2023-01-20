@@ -14,6 +14,8 @@ KinematicsDynamics::KinematicsDynamics(BezierCurve* traj_input) {
     I_uncertain_arr = PZsparseArray(NUM_JOINTS, 1);
     u_nom = PZsparseArray(NUM_FACTORS, NUM_TIME_STEPS);
     u_nom_int = PZsparseArray(NUM_FACTORS, NUM_TIME_STEPS);
+    f_c = PZsparseArray(1,NUM_TIME_STEPS);
+    n_c = PZsparseArray(1,NUM_TIME_STEPS);
     r = PZsparseArray(NUM_FACTORS, 1);
     Mr = PZsparseArray(NUM_FACTORS, NUM_TIME_STEPS);
 
@@ -188,8 +190,8 @@ void KinematicsDynamics::rnea(uint t_ind,
         }
 
         if (i = NUM_JOINTS - 1 && f_c && n_c) {
-            f_c(i,t_ind) = f; // not sure how to assign these
-            n_c(i,t_ind) = n; // not sure how to assign these
+            f_c(0,t_ind) = f; // not sure how to assign these
+            n_c(0,t_ind) = n; // not sure how to assign these
             // note: should change this at some point to be 
             // specifically for a specified list of contact 
             // joints and not just the last joint.

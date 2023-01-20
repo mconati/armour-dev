@@ -102,9 +102,33 @@ bool armtd_NLP::get_bounds_info(
             g_u[i * NUM_FACTORS + j] = torque_limits[j] - (*torque_radius)(j, i);
         }
     }    
+    Index offset = NUM_FACTORS * NUM_TIME_STEPS;
+
+    //     separation constraint
+    // upper bound should be zero and lower bound should be -inf
+    for( Index i = offset; i < offset + NUM_TIME_STEPS; i++){
+        g_l[i] = -1e19;
+        g_u[i] = 0;
+    }
+    offset += NUM_TIME_STEPS;
+
+    //     slipping constraint
+    // upper bound should be zero and lower bound should be -inf for the reformulated constraint (not the normal friction law?)
+    for( Index i = offset; i < offset + NUM_TIME_STEPS; i++){
+        g_l[i] = -1e19;
+        g_u[i] = 0;
+    }
+    offset += NUM_TIME_STEPS;
+
+    //     tipping constraint
+    // upper bound should be zero and lower bound should be -inf for the reformulated constraint
+    for( Index i = offset; i < offset + NUM_TIME_STEPS; i++){
+        g_l[i] = -1e19;
+        g_u[i] = 0;
+    }
+    offset += NUM_TIME_STEPS;
 
     // collision avoidance constraints
-    Index offset = NUM_FACTORS * NUM_TIME_STEPS;
     for( Index i = offset; i < offset + NUM_TIME_STEPS * NUM_JOINTS * obstacles->num_obstacles; i++ ) {
         g_l[i] = -1e19;
         g_u[i] = 0;

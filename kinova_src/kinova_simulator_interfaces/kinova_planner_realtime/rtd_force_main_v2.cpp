@@ -145,6 +145,11 @@ Section II:
         return -1;
     }
 
+
+    // kd.f_c(127)(2,0).slice(storage*, x) takes the last 3x1 and then takes the third element and slices it
+    // in NLPclass use -> instead of . 
+    
+    
     /*
     Section II.C: Compute robust input bound
     */

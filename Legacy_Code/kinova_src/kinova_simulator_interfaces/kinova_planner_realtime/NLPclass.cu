@@ -126,11 +126,6 @@ bool armtd_NLP::get_bounds_info(
     }    
     Index offset = NUM_FACTORS * NUM_TIME_STEPS;
 
-    // force constraints on contact joint between tray and cup
-    // need to add the radius of the constraints here (like how is done with the torque constraints, v_norm passes out the radius I think)
-    // double check signs and how the torque constraints are buffered using the radius
-    // for v_norm in armour_main.cpp : getRadius(u_nom[t_ind * NUM_FACTORS + i].independent)
-
     //     separation constraint
     // upper bound should be zero and lower bound should be -inf
     for( Index i = offset; i < offset + NUM_TIME_STEPS; i++){
