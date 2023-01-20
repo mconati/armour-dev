@@ -192,9 +192,9 @@ private:
 
     vecPZsparse* n_c = nullptr;
 
-    double u_s = 0.5; // is this correct or needed?
+    double u_s = nullptr; // is this correct or needed?
 
-    double surf_rad = 0.0762; // is this correct or needed?
+    double surf_rad = nullptr; // is this correct or needed?
 
     //@}
 };

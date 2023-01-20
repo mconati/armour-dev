@@ -24,7 +24,9 @@ public:
         const BezierCurve* desired_trajectory_input,
         KinematicsDynamics* kinematics_dynamics_result_input,
         const Eigen::MatrixXd* torque_radius_input,
-        Obstacles* obstacles_input
+        Obstacles* obstacles_input,
+        double u_s_input,
+        double surf_rad_input
     );
 
     /**@name Overloaded from TNLP */
@@ -152,9 +154,7 @@ public:
 
 private:
     /**@name Methods to block default compiler methods.
-    *
-    * The compiler automatically generates the following three methods.
-    *  Since the default compiler implementation is generally not what
+    *kinematics_dynamics_results generally not what
     *  you want (for all but the most simple classes), we usually
     *  put the declarations of these methods in the private section
     *  and never implement them. This prevents the compiler from
@@ -179,6 +179,10 @@ private:
     const Eigen::MatrixXd* torque_radius = nullptr;
 
     Obstacles* obstacles = nullptr;
+
+    double u_s = 0; // is this correct or needed?
+
+    double surf_rad = 0; // is this correct or needed?
 
     //@}
 };

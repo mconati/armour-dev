@@ -27,8 +27,10 @@ public:
     PZsparseArray u_nom_int;
 
 	// contact wrench PZs
-	PZsparseArray f_c;
-	PZsparseArray n_c;
+	PZsparseArray f_c_nom;
+	PZsparseArray n_c_nom;
+	PZsparseArray f_c_int;
+	PZsparseArray n_c_int;
 
 	// other PZs
     PZsparseArray r;
@@ -51,11 +53,11 @@ public:
 			  bool setGravity = true);
 
 	void rnea_nominal(uint t_ind) {
-		rnea(t_ind, mass_nominal_arr, I_nominal_arr, u_nom, nullptr, nullptr);
+		rnea(t_ind, mass_nominal_arr, I_nominal_arr, u_nom, f_c_nom, n_c_nom);
 	}
 
 	void rnea_interval(uint t_ind) {
-		rnea(t_ind, mass_uncertain_arr, I_uncertain_arr, u_nom_int, f_c, n_c);
+		rnea(t_ind, mass_uncertain_arr, I_uncertain_arr, u_nom_int, f_c_int, n_c_int);
 	}
 };
 
