@@ -61,7 +61,7 @@ plot_while_running = false ;
 
 % simulation
 max_sim_time = 172800 ; % 48 hours
-max_sim_iter = 100 ;
+max_sim_iter = 300 ;
 stop_threshold = 4 ; % number of failed iterations before exiting
 
 % file handling
