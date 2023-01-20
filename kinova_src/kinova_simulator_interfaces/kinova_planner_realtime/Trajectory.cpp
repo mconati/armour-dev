@@ -229,7 +229,7 @@ void BezierCurve::makePolyZono(int t_ind) {
     // assume all fixed joints are at the end of the kinematics chain
     for (int i = NUM_FACTORS; i < NUM_JOINTS; i++) {
         R(i, t_ind) = PZsparse(rots[i * 3], rots[i * 3 + 1], rots[i * 3 + 2]);
-        R(i, t_ind) = R(i, t_ind).transpose();
+        R_t(i, t_ind) = R(i, t_ind).transpose();
     }
 
     R(NUM_JOINTS, t_ind) = PZsparse(0, 0, 0);

@@ -213,6 +213,16 @@ classdef uarmtd_planner < robot_arm_generic_planner
                         link_frs_generators = readmatrix('armour_joint_position_radius.out', 'FileType', 'text');
                         control_input_radius = readmatrix('armour_control_input_radius.out', 'FileType', 'text');
                         constraints_value = readmatrix('armour_constraints.out', 'FileType', 'text');
+
+                        link_frs_vertices = cell(7,1);
+                        for tid = 1:10:128
+                            for j = 1:7
+                                c = link_frs_center((tid-1)*7+j, :)';
+                                g = link_frs_generators( ((tid-1)*7+j-1)*3+1 : ((tid-1)*7+j)*3, :);
+                                Z = zonotope(c, g);
+                                link_frs_vertices{j} = [link_frs_vertices{j}; vertices(Z)'];
+                            end
+                        end
                     else
                         k_opt = nan;
                     end
@@ -380,7 +390,7 @@ classdef uarmtd_planner < robot_arm_generic_planner
                     P.info.sliced_FO_zono = [P.info.sliced_FO_zono, {sliced_FO_zono}];
                 else
 %                     P.info.sliced_FO_zono = [P.info.sliced_FO_zono, {[link_frs_center, link_frs_generators]}];
-                    P.info.sliced_FO_zono = [P.info.sliced_FO_zono, {[]}]; % disable recording for now
+                    P.info.sliced_FO_zono = [P.info.sliced_FO_zono, {link_frs_vertices}]; % disable recording for now
                 end
             end
 
