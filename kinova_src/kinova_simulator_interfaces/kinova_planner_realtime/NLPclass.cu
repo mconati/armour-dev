@@ -282,14 +282,152 @@ bool armtd_NLP::eval_g(
             MatrixXInt res = kinematics_dynamics_result->links(l, i).slice(x);
             link_sliced_center[i * NUM_JOINTS + l] = getCenter(res);
         }
+
+        // ask Bohao how these for loops are parallelized
+        // also ask why there is a +k in the indexing above
+        
+        // kd.f_c(127)(2,0).slice(storage*, x) takes the last 3x1 and then takes the third element and slices it
+        // in NLPclass use -> instead of . 
+
+        // Contact Force Constraints
+
+        // Extract the force PZs, slice, and get the centers and radii
+        MatrixXInt f_c_x = kinematics_dynamics_result -> f_c(i)(0,0).slice(x);
+        Number f_c_x_center = getCenter(f_c_x);
+        Number f_c_x_radius = getRadius(f_c_x);
+
+        MatrixXInt f_c_y = kinematics_dynamics_result -> f_c(i)(1,0).slice(x);
+        Number f_c_y_center = getCenter(f_c_y);
+        Number f_c_y_radius = getRadius(f_c_y);
+
+        MatrixXInt f_c_z = kinematics_dynamics_result -> f_c(i)(2,0).slice(x);
+        Number f_c_z_center = getCenter(f_c_z);
+        Number f_c_z_radius = getRadius(f_c_z);
+        // f_c_x_radius_2 = f_c_x_radius*f_c_x_radius;
+        // f_c_x_center_2 = f_c_x_center*f_c_x_center;
+
+        // Extract the moment PZs
+        MatrixXInt n_c_x = kinematics_dynamics_result -> n_c(i)(0,0).slice(x);
+        Number n_c_x_center = getCenter(n_c_x);
+        Number n_c_x_radius = getRadius(n_c_x);
+
+        MatrixXInt n_c_y = kinematics_dynamics_result -> n_c(i)(1,0).slice(x);
+        Number n_c_y_center = getCenter(n_c_y);
+        Number n_c_y_radius = getRadius(n_c_y);
+
+        MatrixXInt n_c_z = kinematics_dynamics_result -> n_c(i)(2,0).slice(x);
+        Number n_c_z_center = getCenter(n_c_z);
+        Number n_c_z_radius = getRadius(n_c_z);
+
+        double idx_offset = NUM_FACTORS*NUM_TIME_STEPS;
+        // Separation constraint
+        g[i+idx_offset] = -1*f_c_z_center + f_c_z_radius;
+        // ask Bohao about adding the radius here
+        // the radius drops out in the derivative
+
+        idx_offset += NUM_TIME_STEPS;
+        // slipping constraint
+        if ( (f_c_x_center >= 0) && (f_c_y_center >= 0) && (f_c_z_center >= 0) ){
+            // Note: double check that the center/radius is a number that can be squared
+            g[i+idx_offset] = pow(f_c_x_center,2) + 2*f_c_x_radius*f_c_x_center + pow(f_c_x_radius,2) + pow(f_c_y_center,2) + 2*f_c_y_radius*f_c_y_center + pow(f_c_y_radius,2) - pow(u_s,2) * ( pow(f_c_z_center,2) - 2*f_c_z_radius*f_c_z_center - pow(f_c_z_radius,2)); // checked signs
+        }
+        // condition 2: y negative
+        else if ( (f_c_x_center >= 0) && (f_c_y_center <= 0) && (f_c_z_center >= 0) ) {
+            g[i+idx_offset] = pow(f_c_x_center,2) + 2*f_c_x_radius*f_c_x_center + pow(f_c_x_radius,2) + pow(f_c_y_center,2) - 2*f_c_y_radius*f_c_y_center + pow(f_c_y_radius,2) - pow(u_s,2) * ( pow(f_c_z_center,2) - 2*f_c_z_radius*f_c_z_center - pow(f_c_z_radius,2)); // checked signs
+        }
+        // condition 3: z negative
+        else if ( (f_c_x_center >= 0) && (f_c_y_center >= 0) && (f_c_z_center <= 0) ) {
+            g[i+idx_offset] = pow(f_c_x_center,2) + 2*f_c_x_radius*f_c_x_center + pow(f_c_x_radius,2) + pow(f_c_y_center,2) + 2*f_c_y_radius*f_c_y_center + pow(f_c_y_radius,2) - pow(u_s,2) * ( pow(f_c_z_center,2) + 2*f_c_z_radius*f_c_z_center - pow(f_c_z_radius,2)); // checked signs
+        }
+        // condition 4: y and z negative
+        else if ( (f_c_x_center >= 0) && (f_c_y_center <= 0) && (f_c_z_center <= 0) ) {
+            g[i+idx_offset] = pow(f_c_x_center,2) + 2*f_c_x_radius*f_c_x_center + pow(f_c_x_radius,2) + pow(f_c_y_center,2) - 2*f_c_y_radius*f_c_y_center + pow(f_c_y_radius,2) - pow(u_s,2) * ( pow(f_c_z_center,2) + 2*f_c_z_radius*f_c_z_center - pow(f_c_z_radius,2)); // checked signs
+        }
+        // condition 5: x negative
+        else if ( (f_c_x_center <= 0) && (f_c_y_center >= 0) && (f_c_z_center >= 0) ) {
+            g[i+idx_offset] = pow(f_c_x_center,2) - 2*f_c_x_radius*f_c_x_center + pow(f_c_x_radius,2) + pow(f_c_y_center,2) + 2*f_c_y_radius*f_c_y_center + pow(f_c_y_radius,2) - pow(u_s,2) * ( pow(f_c_z_center,2) - 2*f_c_z_radius*f_c_z_center - pow(f_c_z_radius,2)); // checked signs
+        }
+        // condition 6: x and y negative
+        else if ( (f_c_x_center <= 0) && (f_c_y_center <= 0) && (f_c_z_center >= 0) ) {
+            g[i+idx_offset] = pow(f_c_x_center,2) - 2*f_c_x_radius*f_c_x_center + pow(f_c_x_radius,2) + pow(f_c_y_center,2) - 2*f_c_y_radius*f_c_y_center + pow(f_c_y_radius,2) - pow(u_s,2) * ( pow(f_c_z_center,2) - 2*f_c_z_radius*f_c_z_center - pow(f_c_z_radius,2)); // checked signs
+        }
+        // condition 7: x and z negative
+        else if ( (f_c_x_center <= 0) && (f_c_y_center >= 0) && (f_c_z_center <= 0) ) {
+            g[i+idx_offset] = pow(f_c_x_center,2) - 2*f_c_x_radius*f_c_x_center + pow(f_c_x_radius,2) + pow(f_c_y_center,2) + 2*f_c_y_radius*f_c_y_center + pow(f_c_y_radius,2) - pow(u_s,2) * ( pow(f_c_z_center,2) + 2*f_c_z_radius*f_c_z_center - pow(f_c_z_radius,2)); // checked signs
+        }
+        // condition 8: x and y and z negative
+        else if ( (f_c_x_center <= 0) && (f_c_y_center <= 0) && (f_c_z_center <= 0) ) {
+            g[i+idx_offset] = pow(f_c_x_center,2) - 2*f_c_x_radius*f_c_x_center + pow(f_c_x_radius,2) + pow(f_c_y_center,2) - 2*f_c_y_radius*f_c_y_center + pow(f_c_y_radius,2) - pow(u_s,2) * ( pow(f_c_z_center,2) + 2*f_c_z_radius*f_c_z_center - pow(f_c_z_radius,2)); // checked signs
+        }
+
+        idx_offset += NUM_TIME_STEPS;
+        // tipping constraint
+
+        // compute the numerator of the ZMP point equation
+        double norm_vec[3] = {0,0,1};
+        PZsparse ZMP_top = cross(norm_vec,kinematics_dynamics_result->n_c(i));
+        // extract the x, y and z components, slice by the parameters, then get the centers and radii of independent generators
+        // x-component
+        MatrixXInt ZMP_top_x = ZMP_top(0).slice(x); // ->?
+        Number ZMP_top_x_center = getCenter(ZMP_top_x);
+        Number ZMP_top_x_radius = getRadius(ZMP_top_x);
+        // y-component
+        MatrixXInt ZMP_top_y = ZMP_top(1).slice(x); // ->?
+        Number ZMP_top_y_center = getCenter(ZMP_top_y);
+        Number ZMP_top_y_radius = getRadius(ZMP_top_y);
+        // z-component (for verification, this should be zero always.)
+        MatrixXInt ZMP_top_z = ZMP_top(2).slice(x); // ->?
+        Number ZMP_top_z_center = getCenter(ZMP_top_z);
+        Number ZMP_top_z_radius = getRadius(ZMP_top_z);
+
+        // compute the denominator of the ZMP point equation
+        MatrixXInt ZMP_bottom = kinematics_dynamics_result->f_c(i)(2,0).slice(x);
+        TYPE ZMP_bottom_center = getCenter(ZMP_bottom);
+        TYPE ZMP_bottom_radius = getRadius(ZMP_bottom);
+
+        // condition 1: all positive
+        if ( (ZMP_top_x_center >= 0) && (ZMP_top_y_center >= 0) && (ZMP_bottom_center >= 0) ){
+            // Note: double check that the center/radius is a number that can be squared
+            g[i+idx_offset] = pow(ZMP_top_x_center,2) + 2*ZMP_top_x_radius*ZMP_top_x_center + pow(ZMP_top_x_radius,2) + pow(ZMP_top_y_center,2) + 2*ZMP_top_y_radius*ZMP_top_y_center + pow(ZMP_top_y_radius,2) - pow(surf_rad,2) * ( pow(ZMP_bottom_center,2) - 2*ZMP_bottom_radius*ZMP_bottom_center - pow(ZMP_bottom_radius,2)); // checked signs
+        }
+        // condition 2: y negative
+        else if ( (ZMP_top_x_center >= 0) && (ZMP_top_y_center <= 0) && (ZMP_bottom_center >= 0) ) {
+            g[i+idx_offset] = pow(ZMP_top_x_center,2) + 2*ZMP_top_x_radius*ZMP_top_x_center + pow(ZMP_top_x_radius,2) + pow(ZMP_top_y_center,2) - 2*ZMP_top_y_radius*ZMP_top_y_center + pow(ZMP_top_y_radius,2) - pow(surf_rad,2) * ( pow(ZMP_bottom_center,2) - 2*ZMP_bottom_radius*ZMP_bottom_center - pow(ZMP_bottom_radius,2)); // checked signs
+        }
+        // condition 3: z negative
+        else if ( (ZMP_top_x_center >= 0) && (ZMP_top_y_center >= 0) && (ZMP_bottom_center <= 0) ) {
+            g[i+idx_offset] = pow(ZMP_top_x_center,2) + 2*ZMP_top_x_radius*ZMP_top_x_center + pow(ZMP_top_x_radius,2) + pow(ZMP_top_y_center,2) + 2*ZMP_top_y_radius*ZMP_top_y_center + pow(ZMP_top_y_radius,2) - pow(surf_rad,2) * ( pow(ZMP_bottom_center,2) + 2*ZMP_bottom_radius*ZMP_bottom_center - pow(ZMP_bottom_radius,2)); // checked signs
+        }
+        // condition 4: y and z negative
+        else if ( (ZMP_top_x_center >= 0) && (ZMP_top_y_center <= 0) && (ZMP_bottom_center <= 0) ) {
+            g[i+idx_offset] = pow(ZMP_top_x_center,2) + 2*ZMP_top_x_radius*ZMP_top_x_center + pow(ZMP_top_x_radius,2) + pow(ZMP_top_y_center,2) - 2*ZMP_top_y_radius*ZMP_top_y_center + pow(ZMP_top_y_radius,2) - pow(surf_rad,2) * ( pow(ZMP_bottom_center,2) + 2*ZMP_bottom_radius*ZMP_bottom_center - pow(ZMP_bottom_radius,2)); // checked signs
+        }
+        // condition 5: x negative
+        else if ( (ZMP_top_x_center <= 0) && (ZMP_top_y_center >= 0) && (ZMP_bottom_center >= 0) ) {
+            g[i+idx_offset] = pow(ZMP_top_x_center,2) - 2*ZMP_top_x_radius*ZMP_top_x_center + pow(ZMP_top_x_radius,2) + pow(ZMP_top_y_center,2) + 2*ZMP_top_y_radius*ZMP_top_y_center + pow(ZMP_top_y_radius,2) - pow(surf_rad,2) * ( pow(ZMP_bottom_center,2) - 2*ZMP_bottom_radius*ZMP_bottom_center - pow(ZMP_bottom_radius,2)); // checked signs
+        }
+        // condition 6: x and y negative
+        else if ( (ZMP_top_x_center <= 0) && (ZMP_top_y_center <= 0) && (ZMP_bottom_center >= 0) ) {
+            g[i+idx_offset] = pow(ZMP_top_x_center,2) - 2*ZMP_top_x_radius*ZMP_top_x_center + pow(ZMP_top_x_radius,2) + pow(ZMP_top_y_center,2) - 2*ZMP_top_y_radius*ZMP_top_y_center + pow(ZMP_top_y_radius,2) - pow(surf_rad,2) * ( pow(ZMP_bottom_center,2) - 2*ZMP_bottom_radius*ZMP_bottom_center - pow(ZMP_bottom_radius,2)); // checked signs
+        }
+        // condition 7: x and z negative
+        else if ( (ZMP_top_x_center <= 0) && (ZMP_top_y_center >= 0) && (ZMP_bottom_center <= 0) ) {
+            g[i+idx_offset] = pow(ZMP_top_x_center,2) - 2*ZMP_top_x_radius*ZMP_top_x_center + pow(ZMP_top_x_radius,2) + pow(ZMP_top_y_center,2) + 2*ZMP_top_y_radius*ZMP_top_y_center + pow(ZMP_top_y_radius,2) - pow(surf_rad,2) * ( pow(ZMP_bottom_center,2) + 2*ZMP_bottom_radius*ZMP_bottom_center - pow(ZMP_bottom_radius,2)); // checked signs
+        }
+        // condition 8: x and y and z negative
+        else if ( (ZMP_top_x_center <= 0) && (ZMP_top_y_center <= 0) && (ZMP_bottom_center <= 0) ) {
+            g[i+idx_offset] = pow(ZMP_top_x_center,2) - 2*ZMP_top_x_radius*ZMP_top_x_center + pow(ZMP_top_x_radius,2) + pow(ZMP_top_y_center,2) - 2*ZMP_top_y_radius*ZMP_top_y_center + pow(ZMP_top_y_radius,2) - pow(surf_rad,2) * ( pow(ZMP_bottom_center,2) + 2*ZMP_bottom_radius*ZMP_bottom_center - pow(ZMP_bottom_radius,2)); // checked signs
+        }
+
     }
 
+    idx_offset += NUM_TIME_STEPS;
     // Part 3. check collision between joint position reachable set and obstacles (in gpu)
-    obstacles->linkFRSConstraints(link_sliced_center, nullptr, g + NUM_TIME_STEPS * NUM_FACTORS, nullptr);
+    obstacles->linkFRSConstraints(link_sliced_center, nullptr, g + idx_offset, nullptr);
 
     // Part 4. (position & velocity) state limit constraints
-    desired_trajectory->returnJointPositionExtremum(g + NUM_TIME_STEPS * NUM_FACTORS + NUM_TIME_STEPS * NUM_JOINTS * obstacles->num_obstacles, x);
-    desired_trajectory->returnJointVelocityExtremum(g + NUM_TIME_STEPS * NUM_FACTORS + NUM_TIME_STEPS * NUM_JOINTS * obstacles->num_obstacles + NUM_FACTORS * 2, x);
+    desired_trajectory->returnJointPositionExtremum(g + NUM_TIME_STEPS * NUM_JOINTS * obstacles->num_obstacles + idx_offset, x);
+    desired_trajectory->returnJointVelocityExtremum(g + NUM_TIME_STEPS * NUM_JOINTS * obstacles->num_obstacles + NUM_FACTORS * 2 + idx_offset, x);
 
     return true;
 }
@@ -338,6 +476,82 @@ bool armtd_NLP::eval_jac_g(
                 link_sliced_center[i * NUM_JOINTS + l] = getCenter(kinematics_dynamics_result->links(l, i).slice(x));
                 kinematics_dynamics_result->links(l, i).slice(dk_link_sliced_center + (i * NUM_JOINTS + l) * NUM_FACTORS, x);
             }
+
+            double idx_offset = NUM_FACTORS*NUM_TIME_STEPS*NUM_FACTORS;
+            // Contact Force Constraints
+
+            // Extract the force PZs, slice, and get the centers and radii
+            MatrixXInt f_c_x = kinematics_dynamics_result -> f_c(i)(0,0).slice(x);
+            Number f_c_x_center = getCenter(f_c_x);
+            Number f_c_x_radius = getRadius(f_c_x);
+
+            MatrixXInt f_c_y = kinematics_dynamics_result -> f_c(i)(1,0).slice(x);
+            Number f_c_y_center = getCenter(f_c_y);
+            Number f_c_y_radius = getRadius(f_c_y);
+
+            MatrixXInt f_c_z = kinematics_dynamics_result -> f_c(i)(2,0).slice(x);
+            Number f_c_z_center = getCenter(f_c_z);
+            Number f_c_z_radius = getRadius(f_c_z);
+            // f_c_x_radius_2 = f_c_x_radius*f_c_x_radius;
+            // f_c_x_center_2 = f_c_x_center*f_c_x_center;
+
+            // Extract the moment PZs
+            MatrixXInt n_c_x = kinematics_dynamics_result -> n_c(i)(0,0).slice(x);
+            Number n_c_x_center = getCenter(n_c_x);
+            Number n_c_x_radius = getRadius(n_c_x);
+
+            MatrixXInt n_c_y = kinematics_dynamics_result -> n_c(i)(1,0).slice(x);
+            Number n_c_y_center = getCenter(n_c_y);
+            Number n_c_y_radius = getRadius(n_c_y);
+
+            MatrixXInt n_c_z = kinematics_dynamics_result -> n_c(i)(2,0).slice(x);
+            Number n_c_z_center = getCenter(n_c_z);
+            Number n_c_z_radius = getRadius(n_c_z);
+
+            // compute the numerator of the ZMP point equation
+            double norm_vec[3] = {0,0,1};
+            PZsparse ZMP_top = cross(norm_vec,kinematics_dynamics_result->n_c(i));
+            // extract the x, y and z components, slice by the parameters, then get the centers and radii of independent generators
+            // x-component
+            MatrixXInt ZMP_top_x = ZMP_top(0).slice(x); // ->?
+            Number ZMP_top_x_center = getCenter(ZMP_top_x);
+            Number ZMP_top_x_radius = getRadius(ZMP_top_x);
+            // y-component
+            MatrixXInt ZMP_top_y = ZMP_top(1).slice(x); // ->?
+            Number ZMP_top_y_center = getCenter(ZMP_top_y);
+            Number ZMP_top_y_radius = getRadius(ZMP_top_y);
+            // z-component (for verification, this should be zero always.)
+            MatrixXInt ZMP_top_z = ZMP_top(2).slice(x); // ->?
+            Number ZMP_top_z_center = getCenter(ZMP_top_z);
+            Number ZMP_top_z_radius = getRadius(ZMP_top_z);
+
+            // compute the denominator of the ZMP point equation
+            MatrixXInt ZMP_bottom = f_c(i)(2,0).slice(x);
+            TYPE ZMP_bottom_center = getCenter(ZMP_bottom);
+            TYPE ZMP_bottom_radius = getRadius(ZMP_bottom);
+
+            // gradients
+            // storage for the gradients
+            TYPE f_c_x_grad[NUM_FACTORS];
+            TYPE f_c_y_grad[NUM_FACTORS];
+            TYPE f_c_z_grad[NUM_FACTORS];
+            TYPE ZMP_top_x_grad[NUM_FACTORS];
+            TYPE ZMP_top_y_grad[NUM_FACTORS];
+            TYPE ZMP_bottom_grad[NUM_FACTORS];
+            // calculate the gradients
+            kinematics_dynamics_result->f_c(i)(0,0)->slice(f_c_x_grad, x);
+            kinematics_dynamics_result->f_c(i)(1,0)->slice(f_c_y_grad, x);
+            kinematics_dynamics_result->f_c(i)(2,0)->slice(f_c_z_grad, x);
+            ZMP_top(0,0).slice(ZMP_top_x_grad, x); // ->?
+            ZMP_top(1,0).slice(ZMP_top_y_grad, x);
+            kinematics_dynamics_result->f_c(i)(2,0).slice(ZMP_bottom_grad, x); // same as f_c_z_grad?
+
+            // Separation constraint gradient (need to fix)
+            for (int j = offset1;j<offset1+NUM_FACTORS;j++) {
+                values[i+idx_offset+j] = -1*f_c_z_grad[j-offset1];
+            }
+            values[i+idx_offset] = ;
+
         }
 
         // Part 3. check collision between joint position reachable set and obstacles (in gpu)
