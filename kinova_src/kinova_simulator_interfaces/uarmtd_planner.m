@@ -219,6 +219,7 @@ classdef uarmtd_planner < robot_arm_generic_planner
                         link_frs_generators = readmatrix('armour_joint_position_radius.out', 'FileType', 'text');
                         control_input_radius = readmatrix('armour_control_input_radius.out', 'FileType', 'text');
                         constraints_value = readmatrix('armour_constraints.out', 'FileType', 'text');
+                        contact_constraint_radii = readmatrix('')
 
                         link_frs_vertices = cell(7,1);
                         for tid = 1:10:128

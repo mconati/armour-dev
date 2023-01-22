@@ -81,6 +81,9 @@ classdef simulator_armtd < simulator
                 ultimate_bound_check_cell = cell(1,L) ;
                 joint_limit_check_cell = cell(1,L) ;
                 goal_check_cell = cell(1,L) ;
+                grasp_separation_check_cell = cell(1,L);
+                grasp_slipping_check_cell = cell(1,L);
+                grasp_tipping_check_cell = cell(1,L);
                 stop_check_cell = cell(1,L) ;
                 total_simulated_time_cell = cell(1,L) ;
                 control_input_cell = cell(1,L) ;
@@ -132,6 +135,9 @@ classdef simulator_armtd < simulator
                     input_check = false ;
                     ultimate_bound_check = false;
                     joint_limit_check = false;
+                    grasp_separation_check = false;
+                    grasp_slipping_check = false;
+                    grasp_tipping_check = false;
 
                     % start timing
                     current_iteration = 1 ;
@@ -241,6 +247,9 @@ classdef simulator_armtd < simulator
                             ultimate_bound_check = false;
                         end
                         joint_limit_check = A.joint_limit_check(W.current_time); % must come before collision_check (which updates time)
+                        [grasp_separation_check, grasp_slipping_check, grasp_tipping_check] = W.grasp_check(A,agent_info,planner_info); % must come before collision_check (which updates time)
+
+                        % updating time
                         collision_check = W.collision_check(agent_info,false) ;
                         
                         if isa(A,'multi_link_agent')
@@ -347,6 +356,9 @@ classdef simulator_armtd < simulator
                     total_iterations_cell{pidx} = current_iteration ;
                     planning_times_cell{pidx} = planning_time_vec ;
                     collision_check_cell{pidx} = collision_check ;
+                    grasp_separation_check_cell{pidx} = grasp_separation_check;
+                    grasp_slipping_check_cell{pidx} = grasp_slipping_check;
+                    grasp_tipping_check_cell{pidx} = grasp_tipping_check;
                     input_check_cell{pidx} = input_check ;
                     ultimate_bound_check_cell{pidx} = ultimate_bound_check ;
                     joint_limit_check_cell{pidx} = joint_limit_check ;
@@ -375,6 +387,18 @@ classdef simulator_armtd < simulator
                     if collision_check
                         S.vdisp('In final check, agent crashed!')
                     end
+
+                    if grasp_separation_check
+                        S.vdisp('In final check, agent violated separation constraint')
+                    end
+                    
+                    if grasp_slipping_check
+                        S.vdisp('In final check, agent violated slipping constraint')
+                    end
+                    
+                    if grasp_tipping_check
+                        S.vdisp('In final check, agent violated tipping constraint')
+                    end
                     
                     S.vdisp(['Finished Planner ',num2str(pidx)],1)
                     S.vdisp('---------------------------------------------',3,false)
@@ -391,6 +415,9 @@ classdef simulator_armtd < simulator
                                  'ultimate_bound_check', ultimate_bound_check_cell,...
                                  'joint_limit_check', joint_limit_check_cell,...
                                  'goal_check',goal_check_cell,...
+                                 'grasp_separation_check',grasp_separation_check_cell,...
+                                 'grasp_slipping_check',grasp_slipping_check_cell,...
+                                 'grasp_tipping_check',grasp_tipping_check_cell,...
                                  'stop_check',stop_check_cell,...
                                  'total_simulated_time',total_simulated_time_cell,...
                                  'control_input',control_input_cell,...

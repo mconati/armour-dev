@@ -491,9 +491,9 @@ classdef kinova_world_static < world
 %             ZMP = cross(ZMP_Moment,[0;0;1])./dot([0;0;1],f(:,10)); % RNEA
 %             passes out the force and moment at the joint so original ZMP
 %             was correct
-            tip = sqrt(ZMP(1)^2 + ZMP(2)^2) - W.db2/2; % + tip_threshold;
+            tip = sqrt(ZMP(1)^2 + ZMP(2)^2) - W.surf_rad/2; % + tip_threshold;
             
-            if (sep >= 0) || (slip >= 0) || (tip >= 0)
+            if (sep > 0) || (slip > 0) || (tip > 0)
                 out = true;
             end            
         end
@@ -518,10 +518,6 @@ classdef kinova_world_static < world
     
                 % calculate acceleration 
                 qdd = M\(u-C*q(A.joint_speed_indices)-g);
-                
-    %             figure(2)
-    %             hold on
-    %             plot(t_idx,det(M),'o')
     
                 %% Calculating forces
                 % call RNEA on current configuration (assuming at rest? cannot)
@@ -536,21 +532,21 @@ classdef kinova_world_static < world
                 sep = -1*fz; %fz; %
                 slip = sqrt(fx^2+fy^2) - W.u_s*fz;
                 ZMP = cross([0;0;1],n(:,10))./dot([0;0;1],f(:,10));
-                tip = sqrt(ZMP(1)^2 + ZMP(2)^2) - W.db2/2; % + tip_threshold;
+                tip = sqrt(ZMP(1)^2 + ZMP(2)^2) - W.surf_rad/2; % + tip_threshold;
     
-                if (sep >= 0) || (slip >= 0) || (tip >= 0)
+                if (sep > 0) || (slip > 0) || (tip > 0)
                     out = true;
                 end
                 
-                if sep >= 0
+                if sep > 0
                     sep_val = true;
                 end
                 
-                if slip >= 0
+                if slip > 0
                     slip_val = true;
                 end
                 
-                if tip >= 0
+                if tip > 0
                     tip_val = true;
                 end
             else
