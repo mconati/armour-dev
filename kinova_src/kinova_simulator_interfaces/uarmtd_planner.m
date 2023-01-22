@@ -80,7 +80,8 @@ classdef uarmtd_planner < robot_arm_generic_planner
             P.info = struct('T',[],'U',[],'Z',[],'waypoint',[],...
                 'obstacles',[],'q_0',[],'q_dot_0',[],'k_opt',[],...
                 'desired_trajectory', [], 't_move', [], ...
-                'FO_zono', [], 'sliced_FO_zono', []) ;
+                'FO_zono', [], 'sliced_FO_zono', [], ...
+                'contact_constraint_radii', []) ;
         end
         
         function [T, U, Z, info] = replan(P,agent_info,world_info)
@@ -219,7 +220,7 @@ classdef uarmtd_planner < robot_arm_generic_planner
                         link_frs_generators = readmatrix('armour_joint_position_radius.out', 'FileType', 'text');
                         control_input_radius = readmatrix('armour_control_input_radius.out', 'FileType', 'text');
                         constraints_value = readmatrix('armour_constraints.out', 'FileType', 'text');
-                        contact_constraint_radii = readmatrix('')
+                        contact_constraint_radii = readmatrix('armour_force_constraint_radius.out', 'FileType', 'text');
 
                         link_frs_vertices = cell(7,1);
                         for tid = 1:10:128
@@ -382,6 +383,7 @@ classdef uarmtd_planner < robot_arm_generic_planner
             P.info.q_0 = [P.info.q_0, {q_0}] ;
             P.info.q_dot_0 = [P.info.q_dot_0, {q_dot_0}] ;
             P.info.k_opt = [P.info.k_opt, {k_opt}] ;
+            P.info.contact_constraint_radii = [P.info.contact_constraint_radii {contact_constraint_radii}];
             if P.save_FO_zono_flag
                 if ~P.use_cuda
                     for i = 1:P.jrs_info.n_t
