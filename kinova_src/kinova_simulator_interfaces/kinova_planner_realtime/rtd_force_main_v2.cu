@@ -219,7 +219,6 @@ Section III:
 
     SmartPtr<armtd_NLP> mynlp = new armtd_NLP();
     try {
-        PZsparse test = kd.u_nom(0,0);
 	    mynlp->set_parameters(q_des, t_plan, &traj, &kd, &torque_radius, &O, u_s, surf_rad);
     }
     catch (int errorCode) {

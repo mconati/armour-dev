@@ -22,7 +22,7 @@ traj_type = 'bernstein'; % pick 'orig' (ARMTD) or 'bernstein' (ARMOUR)
 use_cuda_flag = true;
 
 %%% for agent
-agent_urdf = 'kinova_without_gripper.urdf';
+agent_urdf = 'Kinova_Grasp_URDF.urdf';
 
 add_uncertainty_to = 'all'; % choose 'all', 'link', or 'none'
 links_with_uncertainty = {}; % if add_uncertainty_to = 'link', specify links here.
@@ -51,8 +51,12 @@ max_sim_iter = 600 ;
 stop_threshold = 4 ; % number of failed iterations before exiting
 
 %%% for world
-start = [-1; -1; -1; -1; -1; -1; -1]; % start configuration
-goal = [1; 1; 1; 1; 1; 1; 1]; % goal configuration
+% start = [-1; -1; -1; -1; -1; -1; -1]; % start configuration
+% goal = [1; 1; 1; 1; 1; 1; 1]; % goal configuration
+
+start = [0;-pi/2;0;0;0;0;0];
+goal = [pi/4;-pi/2;0;0;0;0;0];
+
 obstacles{1} = box_obstacle_zonotope('center', [0; 0; 0.6],...
                                      'side_lengths', [0.1; 0.1; 0.1]) ;
 obstacles{2} = box_obstacle_zonotope('center', [0.3; 0; 0.4],...

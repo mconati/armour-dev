@@ -35,7 +35,11 @@ k_range = [pi/24, pi/24, pi/24, pi/24, pi/24, pi/24, pi/24]';
 
 % choose a random point to slice and make sure they are equal to variable
 % factors defined in PZ_test.cpp
+
 k = [0.5, 0.7, 0.7, 0.0, -0.8, -0.6, -0.7]';
+% k = zeros(7,1);
+% k = ones(7,1);
+% k = -ones(7,1);
 
 q1 = q0 + k .* k_range;
 qd1 = zeros(7,1);
@@ -43,7 +47,9 @@ qdd1 = zeros(7,1);
 
 beta = match_deg5_bernstein_coefficients({q0, qd0, qdd0, q1, qd1, qdd1});
 
-tspan = linspace(0, 1, 128 + 1);
+% for tid = 1:128
+tid = 100;
+tspan = linspace(0, 1, tid + 1);
 
 %% read CUDA output
 
@@ -70,9 +76,6 @@ tip_cuda = force_constraint_values(201:300);
 %% Plotting Link Reach Sets
 
 figure; view(3); axis equal; hold on; axis on;
-
-% for tid = 1:128
-tid = 100;
 
 % choose a random time inside this time interval
 t_lb = tspan(tid);
@@ -105,35 +108,35 @@ us = zeros(7,tid);
 fs = cell(1,tid);
 ns = cell(1,tid);
 ts = zeros(1,tid);
-for tid = 1:tid
+for i = 1:tid
     % choose a random time inside this time interval
-    t_lb = tspan(tid);
-    t_ub = tspan(tid + 1);
-    ts(tid) = (t_ub - t_lb) * rand + t_lb;
+    t_lb = tspan(i);
+    t_ub = tspan(i + 1);
+    ts(i) = (t_ub - t_lb) * rand + t_lb;
 
-    [q, qd, qdd] = get_desired_traj(beta, ts(tid));
+    [q, qd, qdd] = get_desired_traj(beta, ts(i));
 
-    [us(:,tid), fs{tid}, ns{tid}] = rnea(q, qd, qd, qdd, true, params.nominal); % + transmision_inertia' .* qdd;
+    [us(:,i), fs{i}, ns{i}] = rnea(q, qd, qd, qdd, true, params.nominal); % + transmision_inertia' .* qdd;
 end
 
 %% Plotting Torque Reach Sets
 
-u_lb = torque_reachset_center - torque_reachset_radius;
-u_ub = torque_reachset_center + torque_reachset_radius;
-
-figure(2)
-% there is a better way to do this
-for i = 1:7
-    subplot(3,3,i);
-    hold on;
-    plot(ts, us(i,:), 'r');
-    plot(ts, u_lb(:,i), 'b');
-    plot(ts, u_ub(:,i), 'b');
-    title(['link ', num2str(i)]);
-    xlabel('time (sec)');
-    ylabel('torque (N*m)');
-end
-sgtitle('sliced torque reachable set');
+% u_lb = torque_reachset_center - torque_reachset_radius;
+% u_ub = torque_reachset_center + torque_reachset_radius;
+% 
+% figure(2)
+% % there is a better way to do this
+% for i = 1:7
+%     subplot(3,3,i);
+%     hold on;
+%     plot(ts, us(i,:), 'r');
+%     plot(ts, u_lb(:,i), 'b');
+%     plot(ts, u_ub(:,i), 'b');
+%     title(['link ', num2str(i)]);
+%     xlabel('time (sec)');
+%     ylabel('torque (N*m)');
+% end
+% sgtitle('sliced torque reachable set');
 
 %% Plotting Force and Moment Reach Sets
 
@@ -174,7 +177,33 @@ end
 
 %% Calculate the Constraints
 
-% slip constraint
+u_s = 0.609382421;
+surf_rad =  0.058;
+
+for i = 1:tid
+    % separation constraint
+    con_mat(i,1) = -1*f_nom(i,3);
+    % slip constraint
+    con_mat(i,2) = f_nom(i,1)^2 + f_nom(i,2)^2 - u_s^2*f_nom(i,3)^2;
+    % tip constraint
+    ZMP_top = cross([0;0;1],n_nom(i,:));
+    ZMP_bottom = dot([0;0;1],f_nom(i,:));
+    con_mat(i,3) = ZMP_top(1)^2+ZMP_top(2)^2 - surf_rad^2*ZMP_bottom^2;
+end
+
+figure(4)
+constraint_label = {'Separation Constraint','Slipping Constraint','Tipping Constraint'};
+for i = 1:3
+    subplot(3,1,i)
+    hold on
+    plot(ts,con_mat(:,i),'-k')
+    plot(ts,force_constraint_values((1+(i-1)*100):(100+(i-1)*100)))
+    title(constraint_label(i))
+end
+
+sep_cuda = force_constraint_values(1:100);
+slip_cuda = force_constraint_values(101:200);
+tip_cuda = force_constraint_values(201:300);
 
 
 %% Plotting the Force Constraints
