@@ -26,13 +26,13 @@ set(CMAKE_CXX_FLAGS_RELEASE "-O2")
 add_subdirectory(pybind11)
 
 cuda_add_library(armour_main_pybind SHARED
-  armour_main_pybind.cpp
+  armour_main_pybind.cu
   NLPclass.cu
   # NLPclass_freeinput.cu
   CollisionChecking.cu
-  Dynamics.cpp
-  Trajectory.cpp
-  PZsparse.cpp
+  Dynamics.cu
+  Trajectory.cu
+  PZsparse.cu
   )
 
 target_link_libraries(armour_main_pybind # PUBLIC pybind11::module
