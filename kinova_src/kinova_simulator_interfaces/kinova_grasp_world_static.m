@@ -1,4 +1,4 @@
-classdef kinova_world_static < world
+classdef kinova_grasp_world_static < world
     properties
         % setup info
         include_base_obstacle = false;
@@ -43,7 +43,7 @@ classdef kinova_world_static < world
     
     methods
         %% constructor
-        function W = kinova_world_static(varargin)
+        function W = kinova_grasp_world_static(varargin)
             % W = arm_world_static('Aproperty1',value1,'property2',value2,...)
             
             default_goal_radius = 0.05 ; % rad/joint

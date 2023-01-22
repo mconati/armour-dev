@@ -7,7 +7,7 @@
 % Created 25 November 2022
 
 initialize_script_path = matlab.desktop.editor.getActiveFilename;
-cd(initialize_script_path(1:end-23));
+cd(initialize_script_path(1:end-29));
 
 close all; clear; clc;
 
@@ -85,7 +85,8 @@ end
 % run loop
 tic;
 W = kinova_grasp_world_static('create_random_obstacles_flag', false, 'goal_radius', goal_radius, 'N_obstacles',length(obstacles),'dimension',dimension,'workspace_goal_check', 0,...
-                        'verbose',verbosity, 'start', start, 'goal', goal, 'obstacles', obstacles, 'goal_type', goal_type) ;
+                        'verbose',verbosity, 'start', start, 'goal', goal, 'obstacles', obstacles, 'goal_type', goal_type, 'grasp_constraint_flag', true,...
+                        'ik_start_goal_flag', true) ;
 
 % create arm agent
 A = uarmtd_agent(robot, params,...
@@ -106,7 +107,7 @@ if use_robust_input
     A.LLC = uarmtd_robust_CBF_LLC('verbose', verbosity, ...
                                   'use_true_params_for_robust', false, ...
                                   'V_max', LLC_V_max, ...
-                                  'if_use_mex_controller', true);
+                                  'if_use_mex_controller', false);
 else
     A.LLC = uarmtd_nominal_passivity_LLC('verbose', verbosity);
 end
