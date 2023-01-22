@@ -557,6 +557,53 @@ classdef kinova_grasp_world_static < world
             end
             
         end
+
+        function [sep_val, slip_val, tip_val] = grasp_check(W,A,agent_info,planner_info)
+            
+            t_start = W.current_time;
+            
+            % create time vector for checking
+            t_agent = agent_info.time(end);
+            t_check = t_start:W.collision_check_time_discretization:t_agent; % just copied this so using same time discretization
+            
+            if isempty(t_check) || t_check(end) ~= t_agent
+                t_check = [t_check, t_agent];
+            end
+            
+            % get agent trajectory interpolated to time
+            z_agent = match_trajectories(t_check,agent_info.time,agent_info.state);
+            
+            % run collision check
+            W.vdisp('Running grasp checks!',3)
+            out = false;
+            sep_val = false; % optimism!
+            slip_val = false; % more optimism!!
+            tip_val = false; % even more optimism!!!
+            t_idx = 1;
+            
+            while ~sep_val && ~slip_val && ~tip_val && t_idx < length(t_check) % 
+                
+                z = z_agent(:,t_idx);
+                [out, sep_val, slip_val, tip_val] = W.grasp_check_single_state(A,agent_info,planner_info,z,t_check(t_idx),t_start,t_idx);  % agent_info,z);
+
+                t_idx = t_idx + 1;
+                
+            end
+            
+            if out
+                if sep_val
+                    W.vdisp(['Grasp separation violation detected at t = ',num2str(t_check(t_idx))],1)
+                end
+                if slip_val
+                    W.vdisp(['Grasp slipping violation detected at t = ',num2str(t_check(t_idx))],1)
+                end
+                if tip_val
+                    W.vdisp(['Grasp tipping violation detected at t = ',num2str(t_check(t_idx))],1)
+                end
+            else
+                W.vdisp('No grasp violations detected',3)
+            end
+        end
         
         
         %% goal check
