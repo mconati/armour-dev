@@ -294,6 +294,15 @@ bool armtd_NLP::eval_g(
         // kd.f_c(127)(2,0).slice(storage*, x) takes the last 3x1 and then takes the third element and slices it
         // in NLPclass use -> instead of . 
 
+        for (int m = 0; m < 3; m++) {
+            MatrixXInt res1 = kinematics_dynamics_result -> f_c_int(i)(m,0).slice(x);
+            force_value_center(m,i) = getCenter(res1(0));
+            force_value_radii(m,i) = getRadius(res1(0));
+            MatrixXInt res2 = kinematics_dynamics_result -> n_c_int(i)(m,0).slice(x);
+            moment_value_center(m,i) = getCenter(res2(0));
+            moment_value_radii(m,i) = getRadius(res2(0));
+        }
+
         // Contact Force Constraints
 
         // Extract the force PZs, slice, and get the centers and radii
@@ -327,40 +336,66 @@ bool armtd_NLP::eval_g(
         Index idx_offset = NUM_FACTORS*NUM_TIME_STEPS;
         // Separation constraint
         g[i+idx_offset] = -1*f_c_z_center + f_c_z_radius;
+        force_constraint_ub[i+idx_offset] = g[i+idx_offset];
+        force_constraint_lb[i+idx_offset] = -1*f_c_z_center - f_c_z_radius;
 
         idx_offset += NUM_TIME_STEPS;
         // slipping constraint
         if ( (f_c_x_center >= 0) && (f_c_y_center >= 0) && (f_c_z_center >= 0) ){
             // Note: double check that the center/radius is a number that can be squared
             g[i+idx_offset] = pow(f_c_x_center,2) + 2*f_c_x_radius*f_c_x_center + pow(f_c_x_radius,2) + pow(f_c_y_center,2) + 2*f_c_y_radius*f_c_y_center + pow(f_c_y_radius,2) - pow(u_s,2) * ( pow(f_c_z_center,2) - 2*f_c_z_radius*f_c_z_center - pow(f_c_z_radius,2)); // checked signs
+            force_constraint_ub[i+idx_offset] = g[i+idx_offset];
+            force_constraint_lb[i+idx_offset] = pow(f_c_x_center,2) - 2*f_c_x_radius*f_c_x_center - pow(f_c_x_radius,2) + pow(f_c_y_center,2) - 2*f_c_y_radius*f_c_y_center - pow(f_c_y_radius,2) - pow(u_s,2) * ( pow(f_c_z_center,2) + 2*f_c_z_radius*f_c_z_center + pow(f_c_z_radius,2)); // checked signs
+
         }
         // condition 2: y negative
         else if ( (f_c_x_center >= 0) && (f_c_y_center <= 0) && (f_c_z_center >= 0) ) {
             g[i+idx_offset] = pow(f_c_x_center,2) + 2*f_c_x_radius*f_c_x_center + pow(f_c_x_radius,2) + pow(f_c_y_center,2) - 2*f_c_y_radius*f_c_y_center + pow(f_c_y_radius,2) - pow(u_s,2) * ( pow(f_c_z_center,2) - 2*f_c_z_radius*f_c_z_center - pow(f_c_z_radius,2)); // checked signs
+            force_constraint_ub[i+idx_offset] = g[i+idx_offset];
+            force_constraint_lb[i+idx_offset] = pow(f_c_x_center,2) - 2*f_c_x_radius*f_c_x_center - pow(f_c_x_radius,2) + pow(f_c_y_center,2) + 2*f_c_y_radius*f_c_y_center - pow(f_c_y_radius,2) - pow(u_s,2) * ( pow(f_c_z_center,2) + 2*f_c_z_radius*f_c_z_center + pow(f_c_z_radius,2)); // checked signs
+
         }
         // condition 3: z negative
         else if ( (f_c_x_center >= 0) && (f_c_y_center >= 0) && (f_c_z_center <= 0) ) {
             g[i+idx_offset] = pow(f_c_x_center,2) + 2*f_c_x_radius*f_c_x_center + pow(f_c_x_radius,2) + pow(f_c_y_center,2) + 2*f_c_y_radius*f_c_y_center + pow(f_c_y_radius,2) - pow(u_s,2) * ( pow(f_c_z_center,2) + 2*f_c_z_radius*f_c_z_center - pow(f_c_z_radius,2)); // checked signs
+            force_constraint_ub[i+idx_offset] = g[i+idx_offset];
+            force_constraint_lb[i+idx_offset] = pow(f_c_x_center,2) - 2*f_c_x_radius*f_c_x_center - pow(f_c_x_radius,2) + pow(f_c_y_center,2) - 2*f_c_y_radius*f_c_y_center - pow(f_c_y_radius,2) - pow(u_s,2) * ( pow(f_c_z_center,2) - 2*f_c_z_radius*f_c_z_center + pow(f_c_z_radius,2)); // checked signs
+
         }
         // condition 4: y and z negative
         else if ( (f_c_x_center >= 0) && (f_c_y_center <= 0) && (f_c_z_center <= 0) ) {
             g[i+idx_offset] = pow(f_c_x_center,2) + 2*f_c_x_radius*f_c_x_center + pow(f_c_x_radius,2) + pow(f_c_y_center,2) - 2*f_c_y_radius*f_c_y_center + pow(f_c_y_radius,2) - pow(u_s,2) * ( pow(f_c_z_center,2) + 2*f_c_z_radius*f_c_z_center - pow(f_c_z_radius,2)); // checked signs
+            force_constraint_ub[i+idx_offset] = g[i+idx_offset];
+            force_constraint_lb[i+idx_offset] = pow(f_c_x_center,2) - 2*f_c_x_radius*f_c_x_center - pow(f_c_x_radius,2) + pow(f_c_y_center,2) + 2*f_c_y_radius*f_c_y_center - pow(f_c_y_radius,2) - pow(u_s,2) * ( pow(f_c_z_center,2) - 2*f_c_z_radius*f_c_z_center + pow(f_c_z_radius,2)); // checked signs
+
         }
         // condition 5: x negative
         else if ( (f_c_x_center <= 0) && (f_c_y_center >= 0) && (f_c_z_center >= 0) ) {
             g[i+idx_offset] = pow(f_c_x_center,2) - 2*f_c_x_radius*f_c_x_center + pow(f_c_x_radius,2) + pow(f_c_y_center,2) + 2*f_c_y_radius*f_c_y_center + pow(f_c_y_radius,2) - pow(u_s,2) * ( pow(f_c_z_center,2) - 2*f_c_z_radius*f_c_z_center - pow(f_c_z_radius,2)); // checked signs
+            force_constraint_ub[i+idx_offset] = g[i+idx_offset];
+            force_constraint_lb[i+idx_offset] = pow(f_c_x_center,2) + 2*f_c_x_radius*f_c_x_center - pow(f_c_x_radius,2) + pow(f_c_y_center,2) - 2*f_c_y_radius*f_c_y_center - pow(f_c_y_radius,2) - pow(u_s,2) * ( pow(f_c_z_center,2) + 2*f_c_z_radius*f_c_z_center + pow(f_c_z_radius,2)); // checked signs
+
         }
         // condition 6: x and y negative
         else if ( (f_c_x_center <= 0) && (f_c_y_center <= 0) && (f_c_z_center >= 0) ) {
             g[i+idx_offset] = pow(f_c_x_center,2) - 2*f_c_x_radius*f_c_x_center + pow(f_c_x_radius,2) + pow(f_c_y_center,2) - 2*f_c_y_radius*f_c_y_center + pow(f_c_y_radius,2) - pow(u_s,2) * ( pow(f_c_z_center,2) - 2*f_c_z_radius*f_c_z_center - pow(f_c_z_radius,2)); // checked signs
+            force_constraint_ub[i+idx_offset] = g[i+idx_offset];
+            force_constraint_lb[i+idx_offset] = pow(f_c_x_center,2) + 2*f_c_x_radius*f_c_x_center - pow(f_c_x_radius,2) + pow(f_c_y_center,2) + 2*f_c_y_radius*f_c_y_center - pow(f_c_y_radius,2) - pow(u_s,2) * ( pow(f_c_z_center,2) + 2*f_c_z_radius*f_c_z_center + pow(f_c_z_radius,2)); // checked signs
+
         }
         // condition 7: x and z negative
         else if ( (f_c_x_center <= 0) && (f_c_y_center >= 0) && (f_c_z_center <= 0) ) {
             g[i+idx_offset] = pow(f_c_x_center,2) - 2*f_c_x_radius*f_c_x_center + pow(f_c_x_radius,2) + pow(f_c_y_center,2) + 2*f_c_y_radius*f_c_y_center + pow(f_c_y_radius,2) - pow(u_s,2) * ( pow(f_c_z_center,2) + 2*f_c_z_radius*f_c_z_center - pow(f_c_z_radius,2)); // checked signs
+            force_constraint_ub[i+idx_offset] = g[i+idx_offset];
+            force_constraint_lb[i+idx_offset] = pow(f_c_x_center,2) + 2*f_c_x_radius*f_c_x_center - pow(f_c_x_radius,2) + pow(f_c_y_center,2) - 2*f_c_y_radius*f_c_y_center - pow(f_c_y_radius,2) - pow(u_s,2) * ( pow(f_c_z_center,2) - 2*f_c_z_radius*f_c_z_center + pow(f_c_z_radius,2)); // checked signs
+
         }
         // condition 8: x and y and z negative
         else if ( (f_c_x_center <= 0) && (f_c_y_center <= 0) && (f_c_z_center <= 0) ) {
             g[i+idx_offset] = pow(f_c_x_center,2) - 2*f_c_x_radius*f_c_x_center + pow(f_c_x_radius,2) + pow(f_c_y_center,2) - 2*f_c_y_radius*f_c_y_center + pow(f_c_y_radius,2) - pow(u_s,2) * ( pow(f_c_z_center,2) + 2*f_c_z_radius*f_c_z_center - pow(f_c_z_radius,2)); // checked signs
+            force_constraint_ub[i+idx_offset] = g[i+idx_offset];
+            force_constraint_lb[i+idx_offset] = pow(f_c_x_center,2) + 2*f_c_x_radius*f_c_x_center - pow(f_c_x_radius,2) + pow(f_c_y_center,2) + 2*f_c_y_radius*f_c_y_center - pow(f_c_y_radius,2) - pow(u_s,2) * ( pow(f_c_z_center,2) - 2*f_c_z_radius*f_c_z_center + pow(f_c_z_radius,2)); // checked signs
+
         }
 
         idx_offset += NUM_TIME_STEPS;
@@ -393,34 +428,58 @@ bool armtd_NLP::eval_g(
         if ( (ZMP_top_x_center >= 0) && (ZMP_top_y_center >= 0) && (ZMP_bottom_center >= 0) ){
             // Note: double check that the center/radius is a number that can be squared
             g[i+idx_offset] = pow(ZMP_top_x_center,2) + 2*ZMP_top_x_radius*ZMP_top_x_center + pow(ZMP_top_x_radius,2) + pow(ZMP_top_y_center,2) + 2*ZMP_top_y_radius*ZMP_top_y_center + pow(ZMP_top_y_radius,2) - pow(surf_rad,2) * ( pow(ZMP_bottom_center,2) - 2*ZMP_bottom_radius*ZMP_bottom_center - pow(ZMP_bottom_radius,2)); // checked signs
+            force_constraint_ub[i+idx_offset] = g[i+idx_offset];
+            force_constraint_lb[i+idx_offset] = pow(ZMP_top_x_center,2) - 2*ZMP_top_x_radius*ZMP_top_x_center - pow(ZMP_top_x_radius,2) + pow(ZMP_top_y_center,2) - 2*ZMP_top_y_radius*ZMP_top_y_center - pow(ZMP_top_y_radius,2) - pow(surf_rad,2) * ( pow(ZMP_bottom_center,2) + 2*ZMP_bottom_radius*ZMP_bottom_center + pow(ZMP_bottom_radius,2)); // checked signs
+
         }
         // condition 2: y negative
         else if ( (ZMP_top_x_center >= 0) && (ZMP_top_y_center <= 0) && (ZMP_bottom_center >= 0) ) {
             g[i+idx_offset] = pow(ZMP_top_x_center,2) + 2*ZMP_top_x_radius*ZMP_top_x_center + pow(ZMP_top_x_radius,2) + pow(ZMP_top_y_center,2) - 2*ZMP_top_y_radius*ZMP_top_y_center + pow(ZMP_top_y_radius,2) - pow(surf_rad,2) * ( pow(ZMP_bottom_center,2) - 2*ZMP_bottom_radius*ZMP_bottom_center - pow(ZMP_bottom_radius,2)); // checked signs
+            force_constraint_ub[i+idx_offset] = g[i+idx_offset];
+            force_constraint_lb[i+idx_offset] = pow(ZMP_top_x_center,2) - 2*ZMP_top_x_radius*ZMP_top_x_center - pow(ZMP_top_x_radius,2) + pow(ZMP_top_y_center,2) + 2*ZMP_top_y_radius*ZMP_top_y_center - pow(ZMP_top_y_radius,2) - pow(surf_rad,2) * ( pow(ZMP_bottom_center,2) + 2*ZMP_bottom_radius*ZMP_bottom_center + pow(ZMP_bottom_radius,2)); // checked signs
+
         }
         // condition 3: z negative
         else if ( (ZMP_top_x_center >= 0) && (ZMP_top_y_center >= 0) && (ZMP_bottom_center <= 0) ) {
             g[i+idx_offset] = pow(ZMP_top_x_center,2) + 2*ZMP_top_x_radius*ZMP_top_x_center + pow(ZMP_top_x_radius,2) + pow(ZMP_top_y_center,2) + 2*ZMP_top_y_radius*ZMP_top_y_center + pow(ZMP_top_y_radius,2) - pow(surf_rad,2) * ( pow(ZMP_bottom_center,2) + 2*ZMP_bottom_radius*ZMP_bottom_center - pow(ZMP_bottom_radius,2)); // checked signs
+            force_constraint_ub[i+idx_offset] = g[i+idx_offset];
+            force_constraint_lb[i+idx_offset] = pow(ZMP_top_x_center,2) - 2*ZMP_top_x_radius*ZMP_top_x_center - pow(ZMP_top_x_radius,2) + pow(ZMP_top_y_center,2) - 2*ZMP_top_y_radius*ZMP_top_y_center - pow(ZMP_top_y_radius,2) - pow(surf_rad,2) * ( pow(ZMP_bottom_center,2) - 2*ZMP_bottom_radius*ZMP_bottom_center + pow(ZMP_bottom_radius,2)); // checked signs
+
         }
         // condition 4: y and z negative
         else if ( (ZMP_top_x_center >= 0) && (ZMP_top_y_center <= 0) && (ZMP_bottom_center <= 0) ) {
             g[i+idx_offset] = pow(ZMP_top_x_center,2) + 2*ZMP_top_x_radius*ZMP_top_x_center + pow(ZMP_top_x_radius,2) + pow(ZMP_top_y_center,2) - 2*ZMP_top_y_radius*ZMP_top_y_center + pow(ZMP_top_y_radius,2) - pow(surf_rad,2) * ( pow(ZMP_bottom_center,2) + 2*ZMP_bottom_radius*ZMP_bottom_center - pow(ZMP_bottom_radius,2)); // checked signs
+            force_constraint_ub[i+idx_offset] = g[i+idx_offset];
+            force_constraint_lb[i+idx_offset] = pow(ZMP_top_x_center,2) - 2*ZMP_top_x_radius*ZMP_top_x_center - pow(ZMP_top_x_radius,2) + pow(ZMP_top_y_center,2) + 2*ZMP_top_y_radius*ZMP_top_y_center - pow(ZMP_top_y_radius,2) - pow(surf_rad,2) * ( pow(ZMP_bottom_center,2) - 2*ZMP_bottom_radius*ZMP_bottom_center + pow(ZMP_bottom_radius,2)); // checked signs
+
         }
         // condition 5: x negative
         else if ( (ZMP_top_x_center <= 0) && (ZMP_top_y_center >= 0) && (ZMP_bottom_center >= 0) ) {
             g[i+idx_offset] = pow(ZMP_top_x_center,2) - 2*ZMP_top_x_radius*ZMP_top_x_center + pow(ZMP_top_x_radius,2) + pow(ZMP_top_y_center,2) + 2*ZMP_top_y_radius*ZMP_top_y_center + pow(ZMP_top_y_radius,2) - pow(surf_rad,2) * ( pow(ZMP_bottom_center,2) - 2*ZMP_bottom_radius*ZMP_bottom_center - pow(ZMP_bottom_radius,2)); // checked signs
+            force_constraint_ub[i+idx_offset] = g[i+idx_offset];
+            force_constraint_lb[i+idx_offset] = pow(ZMP_top_x_center,2) + 2*ZMP_top_x_radius*ZMP_top_x_center - pow(ZMP_top_x_radius,2) + pow(ZMP_top_y_center,2) - 2*ZMP_top_y_radius*ZMP_top_y_center - pow(ZMP_top_y_radius,2) - pow(surf_rad,2) * ( pow(ZMP_bottom_center,2) + 2*ZMP_bottom_radius*ZMP_bottom_center + pow(ZMP_bottom_radius,2)); // checked signs
+
         }
         // condition 6: x and y negative
         else if ( (ZMP_top_x_center <= 0) && (ZMP_top_y_center <= 0) && (ZMP_bottom_center >= 0) ) {
             g[i+idx_offset] = pow(ZMP_top_x_center,2) - 2*ZMP_top_x_radius*ZMP_top_x_center + pow(ZMP_top_x_radius,2) + pow(ZMP_top_y_center,2) - 2*ZMP_top_y_radius*ZMP_top_y_center + pow(ZMP_top_y_radius,2) - pow(surf_rad,2) * ( pow(ZMP_bottom_center,2) - 2*ZMP_bottom_radius*ZMP_bottom_center - pow(ZMP_bottom_radius,2)); // checked signs
+            force_constraint_ub[i+idx_offset] = g[i+idx_offset];
+            force_constraint_lb[i+idx_offset] = pow(ZMP_top_x_center,2) + 2*ZMP_top_x_radius*ZMP_top_x_center - pow(ZMP_top_x_radius,2) + pow(ZMP_top_y_center,2) + 2*ZMP_top_y_radius*ZMP_top_y_center - pow(ZMP_top_y_radius,2) - pow(surf_rad,2) * ( pow(ZMP_bottom_center,2) + 2*ZMP_bottom_radius*ZMP_bottom_center + pow(ZMP_bottom_radius,2)); // checked signs
+
         }
         // condition 7: x and z negative
         else if ( (ZMP_top_x_center <= 0) && (ZMP_top_y_center >= 0) && (ZMP_bottom_center <= 0) ) {
             g[i+idx_offset] = pow(ZMP_top_x_center,2) - 2*ZMP_top_x_radius*ZMP_top_x_center + pow(ZMP_top_x_radius,2) + pow(ZMP_top_y_center,2) + 2*ZMP_top_y_radius*ZMP_top_y_center + pow(ZMP_top_y_radius,2) - pow(surf_rad,2) * ( pow(ZMP_bottom_center,2) + 2*ZMP_bottom_radius*ZMP_bottom_center - pow(ZMP_bottom_radius,2)); // checked signs
+            force_constraint_ub[i+idx_offset] = g[i+idx_offset];
+            force_constraint_lb[i+idx_offset] = pow(ZMP_top_x_center,2) + 2*ZMP_top_x_radius*ZMP_top_x_center - pow(ZMP_top_x_radius,2) + pow(ZMP_top_y_center,2) - 2*ZMP_top_y_radius*ZMP_top_y_center - pow(ZMP_top_y_radius,2) - pow(surf_rad,2) * ( pow(ZMP_bottom_center,2) - 2*ZMP_bottom_radius*ZMP_bottom_center + pow(ZMP_bottom_radius,2)); // checked signs
+
         }
         // condition 8: x and y and z negative
         else if ( (ZMP_top_x_center <= 0) && (ZMP_top_y_center <= 0) && (ZMP_bottom_center <= 0) ) {
             g[i+idx_offset] = pow(ZMP_top_x_center,2) - 2*ZMP_top_x_radius*ZMP_top_x_center + pow(ZMP_top_x_radius,2) + pow(ZMP_top_y_center,2) - 2*ZMP_top_y_radius*ZMP_top_y_center + pow(ZMP_top_y_radius,2) - pow(surf_rad,2) * ( pow(ZMP_bottom_center,2) + 2*ZMP_bottom_radius*ZMP_bottom_center - pow(ZMP_bottom_radius,2)); // checked signs
+            force_constraint_ub[i+idx_offset] = g[i+idx_offset];
+            force_constraint_lb[i+idx_offset] = pow(ZMP_top_x_center,2) + 2*ZMP_top_x_radius*ZMP_top_x_center - pow(ZMP_top_x_radius,2) + pow(ZMP_top_y_center,2) + 2*ZMP_top_y_radius*ZMP_top_y_center - pow(ZMP_top_y_radius,2) - pow(surf_rad,2) * ( pow(ZMP_bottom_center,2) - 2*ZMP_bottom_radius*ZMP_bottom_center + pow(ZMP_bottom_radius,2)); // checked signs
+
         }
 
     }

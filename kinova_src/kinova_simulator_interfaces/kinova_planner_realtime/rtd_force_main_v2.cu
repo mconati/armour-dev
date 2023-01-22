@@ -7,6 +7,8 @@ const std::string outputfilename2 = pathname + "armour_joint_position_center.out
 const std::string outputfilename3 = pathname + "armour_joint_position_radius.out";
 const std::string outputfilename4 = pathname + "armour_control_input_radius.out";
 const std::string outputfilename5 = pathname + "armour_constraints.out";
+const std::string outputfilename6 = pathname + "armour_wrench_values.out";
+const std::string outputfilename7 = pathname + "armour_force_constraint_radius.out";
 
 int main() {
 /*
@@ -341,6 +343,37 @@ Section IV:
         outputstream5 << mynlp->g_copy[i] << '\n';
     }
     outputstream5.close();
+
+    // need to change variables that are being output
+    // need to add calculation of lower bound to NLPclass.cu and a way to store it
+    // outputting wrench center values and radii
+    std::ofstream outputstream6(outputfilename6);
+    outputstream6 << std::setprecision(10);
+    for (int i = 0; i < NUM_TIME_STEPS; i++) {
+        for (int j = 0; j < 3; j++) {
+            outputstream6 << mynlp -> force_value_center(j, i) << ' ';
+        }
+        for (int j = 0; j < 3; j++) {
+            outputstream6 << mynlp -> moment_value_center(j, i) << ' ';
+        }
+        for (int j = 0; j < 3; j++) {
+            outputstream6 << mynlp -> force_value_radii(j, i) << ' ';
+        }
+        for (int j = 0; j < 3; j++) {
+            outputstream6 << mynlp -> moment_value_radii(j, i) << ' ';
+        }
+        outputstream6 << '\n';
+    }
+    outputstream6.close();
+
+    // outputting contact constraint values
+    std::ofstream outputstream7(outputfilename7);
+    outputstream7 << std::setprecision(10);
+    for (int i = 0; i < 3*NUM_TIME_STEPS; i++) {
+        outputstream7 << mynlp -> force_constraint_ub[i] << ' ' << mynlp -> force_constraint_lb[i] << ' ';
+        outputstream7 << '\n';
+    }
+    outputstream7.close();
 
     return 0;
 }

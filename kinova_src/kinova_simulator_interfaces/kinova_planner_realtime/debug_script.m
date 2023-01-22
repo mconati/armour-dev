@@ -67,9 +67,12 @@ f_rs_c = force_reachset_values(:,1:3);
 n_rs_c = force_reachset_values(:,4:6);
 f_rs_r = force_reachset_values(:,7:9);
 n_rs_r = force_reachset_values(:,10:12);
-sep_cuda = force_constraint_values(1:100);
-slip_cuda = force_constraint_values(101:200);
-tip_cuda = force_constraint_values(201:300);
+sep_ub_cuda = force_constraint_values(1:100,1);
+slip_ub_cuda = force_constraint_values(101:200,1);
+tip_ub_cuda = force_constraint_values(201:300,1);
+sep_lb_cuda = force_constraint_values(1:100,2);
+slip_lb_cuda = force_constraint_values(101:200,2);
+tip_lb_cuda = force_constraint_values(201:300,2);
 
 %% Verification
 
@@ -197,14 +200,12 @@ for i = 1:3
     subplot(3,1,i)
     hold on
     plot(ts,con_mat(:,i),'-k')
-    plot(ts,force_constraint_values((1+(i-1)*100):(100+(i-1)*100)))
+    plot(ts,force_constraint_values((1+(i-1)*100):(100+(i-1)*100),1),'b-')
+    plot(ts,force_constraint_values((1+(i-1)*100):(100+(i-1)*100),2),'b-')
     title(constraint_label(i))
+    xlabel('Time (sec)')
+    ylabel('Constraint Value')
 end
-
-sep_cuda = force_constraint_values(1:100);
-slip_cuda = force_constraint_values(101:200);
-tip_cuda = force_constraint_values(201:300);
-
 
 %% Plotting the Force Constraints
 
