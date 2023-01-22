@@ -9,6 +9,7 @@
 % Edited: 02 June 2022 to work with updated UARMTD code
 % Edited: 25 September 2022 to work with updated UARMTD code for kinova
 % Edited: 10 November 2022 clean up
+% Edited: 20 January 2023 clean up
 
 initialize_script_path = matlab.desktop.editor.getActiveFilename;
 cd(initialize_script_path(1:end-23));
@@ -60,7 +61,7 @@ plot_while_running = false ;
 
 % simulation
 max_sim_time = 172800 ; % 48 hours
-max_sim_iter = 600 ;
+max_sim_iter = 300 ;
 stop_threshold = 4 ; % number of failed iterations before exiting
 
 % file handling
@@ -95,10 +96,6 @@ use_cuda_flag = true;
 
 %% automated from here
 % run loop
-if plot_while_running
-    figure(1); clf; view(3); grid on;
-end
-
 tic
 for idx = 1:length(world_file_list)
     clc; 
@@ -187,5 +184,8 @@ for idx = 1:length(world_file_list)
     
     % save summary
     filename = [file_location,'/',save_file_header,world_filename(1:end-4),'.mat'] ;
-    save(filename, 'world_filename', 'summary')
+    save(filename, 'world_filename', 'summary') ;
+
+    % save all info
+%     save([file_location,'/','agent_info_',num2str(idx),'.mat'],'A','P','W');
 end
