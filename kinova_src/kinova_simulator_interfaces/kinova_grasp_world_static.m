@@ -5,17 +5,19 @@ classdef kinova_grasp_world_static < world
         N_random_obstacles = 0 ;
         create_random_obstacles_flag = true ;
         obstacle_size_range = [0.01 0.5] ; % [min, max] side length
-        create_configuration_timeout = 10 ;
+        create_configuration_timeout = 100 ;
         create_obstacle_timeout =  1 ;
         min_dist_in_config_space_between_start_and_goal
         workspace_goal_check = 0;
-        
+
         % grasp flags
         grasp_constraint_flag = false;
         ik_start_goal_flag = false;
         % contact info 
         u_s = NaN;
         surf_rad = NaN;
+
+        robot;
 
         % arm info
         arm_joint_state_limits
@@ -138,11 +140,12 @@ classdef kinova_grasp_world_static < world
             % set world bounds based on agent limits
             W.bounds = I.reach_limits ;
             
-            % set any joint limits that are +Inf to pi and -Inf to -pi
+            % set any joint limits that are +Inf to 2*pi and -Inf to -2*pi
+            % changed to +- 1000 to match cuda code
             joint_state_limits = I.joint_state_limits ;
             joint_limit_infs = isinf(joint_state_limits) ;
-            joint_state_limits(1,joint_limit_infs(1,:)) = -pi ;
-            joint_state_limits(2,joint_limit_infs(2,:)) = +pi ;
+            joint_state_limits(1,joint_limit_infs(1,:)) = -1000; % 2*pi ;
+            joint_state_limits(2,joint_limit_infs(2,:)) = 1000; % +2*pi ;
             
             W.arm_joint_state_limits = joint_state_limits ;
             W.arm_n_links_and_joints = size(joint_state_limits,2) ;
@@ -243,11 +246,17 @@ classdef kinova_grasp_world_static < world
             
             while ~config_is_valid && t_cur <= W.create_configuration_timeout
                 q = W.create_random_configuration() ;
-                config_is_valid = ~(W.collision_check_single_state(I,q)) ;
+%                 config_is_valid = ~(W.collision_check_single_state(I,q)) ;
                 obstacle_check = ~(W.collision_check_single_state(I,q)); % returns true if collision, so false if no collision
 
                 if W.grasp_constraint_flag
+                    % check that grasp constraints are satisfied
                     grasp_check = ~(W.grasp_check_single_state_resting(I,q));
+                    % also check that joint limits are satisfied
+%                     grasp_check2 = ~(W.joint_limit_check(I,q));
+%                     if ~grasp_check1 || ~grasp_check2
+%                         grasp_check = false;
+%                     end
                 else
                     grasp_check = false; % other function returns true if violation, which is then flipped in the above statement to be a false. so want true here.
                 end
@@ -284,9 +293,26 @@ classdef kinova_grasp_world_static < world
                 % matrix altogether, and then just set the z-rotation to
                 % vertical. could just vary the first 2x2 of the rotation
                 % matrix to get random rotation.
-
+                out = true;
+                while out == true
                 % solving for a config other than home config
-                [q, solInfo1] = ik('cup_link',[1 0 0 rand_x; 0 1 0 rand_y; 0 0 1 rand_z; 0 0 0 1],weights,initialguess);
+                    [q, solInfo1] = ik('cube_link',[1 0 0 rand_x; 0 1 0 rand_y; 0 0 1 rand_z; 0 0 0 1],weights,initialguess);
+                    % put check for config in joint limits here?
+    
+                    q_lower = W.arm_joint_state_limits(1,:);
+                    q_upper = W.arm_joint_state_limits(2,:);
+                    for i = 1:length(q)
+%                         test = append(num2str(q_lower(i)),' ',num2str(q(i)),' ',num2str(q_upper(i)));
+%                         disp(test)
+                        if (q(i) < q_lower(i)) || (q(i) > q_upper(i))
+                            out = true;
+                            continue
+                        else
+                            out = false;
+                        end
+                    end
+                end
+
             else
                 q = rand_range(W.arm_joint_state_limits(1,:),W.arm_joint_state_limits(2,:))' ;
             end
@@ -491,7 +517,7 @@ classdef kinova_grasp_world_static < world
 %             ZMP = cross(ZMP_Moment,[0;0;1])./dot([0;0;1],f(:,10)); % RNEA
 %             passes out the force and moment at the joint so original ZMP
 %             was correct
-            tip = sqrt(ZMP(1)^2 + ZMP(2)^2) - W.surf_rad/2; % + tip_threshold;
+            tip = sqrt(ZMP(1)^2 + ZMP(2)^2) - W.surf_rad; % + tip_threshold;
             
             if (sep > 0) || (slip > 0) || (tip > 0)
                 out = true;
@@ -532,7 +558,7 @@ classdef kinova_grasp_world_static < world
                 sep = -1*fz; %fz; %
                 slip = sqrt(fx^2+fy^2) - W.u_s*fz;
                 ZMP = cross([0;0;1],n(:,10))./dot([0;0;1],f(:,10));
-                tip = sqrt(ZMP(1)^2 + ZMP(2)^2) - W.surf_rad/2; % + tip_threshold;
+                tip = sqrt(ZMP(1)^2 + ZMP(2)^2) - W.surf_rad; % + tip_threshold;
     
                 if (sep > 0) || (slip > 0) || (tip > 0)
                     out = true;
@@ -600,8 +626,22 @@ classdef kinova_grasp_world_static < world
                 if tip_val
                     W.vdisp(['Grasp tipping violation detected at t = ',num2str(t_check(t_idx))],1)
                 end
+                % for debugging, call check again
+                [out, sep_val, slip_val, tip_val] = W.grasp_check_single_state(A,agent_info,planner_info,z,t_check(t_idx),t_start,t_idx);
+                
             else
                 W.vdisp('No grasp violations detected',3)
+            end
+        end
+
+        function out = joint_limit_check(W,I,q)
+            out = false;
+            q_lower = W.arm_joint_state_limits(1,:);
+            q_upper = W.arm_joint_state_limits(2,:);
+            for i = 1:length(q)
+                if (q(i) < q_lower(i)) || (q(i) > q_upper(i))
+                    out = true;
+                end
             end
         end
         

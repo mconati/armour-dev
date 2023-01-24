@@ -9,7 +9,7 @@
 initialize_script_path = matlab.desktop.editor.getActiveFilename;
 cd(initialize_script_path(1:end-29));
 
-close all; clear; clc;
+close all; clear; clc; dbstop if error
 
 %% user parameters
 goal_type = 'configuration'; % pick 'end_effector_location' or 'configuration'
@@ -107,7 +107,7 @@ if use_robust_input
     A.LLC = uarmtd_robust_CBF_LLC('verbose', verbosity, ...
                                   'use_true_params_for_robust', false, ...
                                   'V_max', LLC_V_max, ...
-                                  'if_use_mex_controller', false);
+                                  'if_use_mex_controller', true);
 else
     A.LLC = uarmtd_nominal_passivity_LLC('verbose', verbosity);
 end
@@ -145,7 +145,7 @@ S = simulator_armtd(A,W,P, ...
                     'allow_replan_errors',true,...
                     'max_sim_time',max_sim_time,...
                     'max_sim_iterations',max_sim_iter,...
-                    'stop_sim_when_ultimate_bound_exceeded', use_robust_input) ; 
+                    'stop_sim_when_ultimate_bound_exceeded', false) ; 
 
 % %% plotting
 if plot_while_running
