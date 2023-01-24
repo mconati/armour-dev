@@ -151,6 +151,7 @@ class pzsparse {
 
             // Create JRS online
             traj = BezierCurve(q0, qd0, qdd0);
+            omp_set_num_threads(NUM_THREADS);
             int openmp_t_ind = 0; // openmp loop index
 
             try {
