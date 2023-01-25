@@ -2,10 +2,10 @@
 #define PARAMETERS_H
 
 // #include "FetchInfo.h"
-// #include "KinovaInfo.h"
-#include "KinovaWithoutGripperInfo.h"
+#include "KinovaInfo.h"
+// #include "KinovaWithoutGripperInfo.h"
 
-#define DEBUG_MODE true
+#define DEBUG_MODE false
 
 // Parameters for PZsparse.h:
     // monomials with a coefficient smaller than this number will be reduced
@@ -16,7 +16,8 @@
     #define NUM_TIME_STEPS 128
 
     // range of parameters (size of generators in PZ).
-    const double k_range[NUM_FACTORS] = { M_PI / 24, M_PI / 24, M_PI / 24, M_PI / 24, M_PI / 24, M_PI / 24, M_PI / 30 }; // (radian)
+    // const double k_range[NUM_FACTORS] = { M_PI / 24, M_PI / 24, M_PI / 24, M_PI / 24, M_PI / 24, M_PI / 24, M_PI / 30 }; // (radian)
+    const double k_range[NUM_FACTORS] = { M_PI / 72, M_PI / 72, M_PI / 72, M_PI / 72, M_PI / 72, M_PI / 72, M_PI / 96 }; // (radian)
 
 // Parameters for CollisionChecking.h:
     // maximum number of obstacles (used for memory pre-allocation)

@@ -296,7 +296,6 @@ Section IV:
             }
             outputstream2 << '\n';
         }
-        outputstream2 << '\n';
     }
     outputstream2.close();
 
@@ -312,7 +311,6 @@ Section IV:
             }
             outputstream3 << '\n';
         }
-        outputstream3 << '\n';
     }
     outputstream3.close();
 
