@@ -17,7 +17,8 @@
 
     // range of parameters (size of generators in PZ).
     // const double k_range[NUM_FACTORS] = { M_PI / 24, M_PI / 24, M_PI / 24, M_PI / 24, M_PI / 24, M_PI / 24, M_PI / 30 }; // (radian)
-    const double k_range[NUM_FACTORS] = { M_PI / 72, M_PI / 72, M_PI / 72, M_PI / 72, M_PI / 72, M_PI / 72, M_PI / 96 }; // (radian)
+    const double k_range[NUM_FACTORS] = { M_PI / 48, M_PI / 48, M_PI / 48, M_PI / 48, M_PI / 48, M_PI / 48, M_PI / 60 }; // (radian)
+    // const double k_range[NUM_FACTORS] = { M_PI / 72, M_PI / 72, M_PI / 72, M_PI / 72, M_PI / 72, M_PI / 72, M_PI / 96 }; // (radian)
 
 // Parameters for CollisionChecking.h:
     // maximum number of obstacles (used for memory pre-allocation)
@@ -33,10 +34,10 @@
     #define NUM_THREADS 32
 
     // threshold for collision avoidance constraint considered to be violated (unit: meter)
-    #define COLLISION_AVOIDANCE_CONSTRAINT_VIOLATION_THRESHOLD 1e-4
+    #define COLLISION_AVOIDANCE_CONSTRAINT_VIOLATION_THRESHOLD -1e-4
 
     // threshold for input constraint considered to be violated (unit: Newton * meter)
-    #define TORQUE_INPUT_CONSTRAINT_VIOLATION_THRESHOLD 1e-4
+    #define TORQUE_INPUT_CONSTRAINT_VIOLATION_THRESHOLD 1e-2
 
 // Parameters for armour_main.cpp
     #define IPOPT_OPTIMIZATION_TOLERANCE 1e-6

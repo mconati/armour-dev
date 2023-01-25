@@ -353,12 +353,6 @@ classdef kinova_world_static < world
             while (o_idx <= N_O) && ~out
                 O_idx = O{o_idx} ;
                 out = W.collision_check_single_obstacle(O_idx,V_arm) ;
-
-                if out
-                    disp(q);
-                    disp(O_idx.Z);
-                end
-
                 o_idx = o_idx + 1 ;
             end
         end
