@@ -22,7 +22,7 @@ num_obstacles = 0;
 
 %%% Surface Parameters for Grasp Trial
 u_s = 0.609382421;
-surf_rad =  0.058;
+surf_rad =  0.058/2;
 
 %%% for planner
 traj_type = 'bernstein'; % pick 'orig' (ARMTD) or 'bernstein' (ARMOUR)
@@ -91,9 +91,7 @@ end
 
 % run loop
 tic;
-W = kinova_grasp_world_static('create_random_obstacles_flag', true, 'goal_radius', goal_radius, 'N_obstacles', num_obstacles, 'dimension',dimension,'workspace_goal_check', 0,...
-                        'verbose',verbosity, 'goal_type', goal_type, 'grasp_constraint_flag', true,...
-                        'ik_start_goal_flag', true, 'u_s', u_s, 'surf_rad', surf_rad) ; % 'obstacles', obstacles,length(obstacles), 'start', start, 'goal', goal,
+W = kinova_grasp_world_static('create_random_obstacles_flag', true, 'goal_radius', goal_radius, 'N_obstacles', num_obstacles, 'dimension',dimension,'workspace_goal_check', 0, 'verbose',verbosity, 'goal_type', goal_type, 'grasp_constraint_flag', true,'ik_start_goal_flag', true, 'u_s', u_s, 'surf_rad', surf_rad) ; % 'obstacles', obstacles,length(obstacles), 'start', start, 'goal', goal,
 W.robot = robot;
 
 % create arm agent

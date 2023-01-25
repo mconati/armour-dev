@@ -17,6 +17,9 @@ goal_radius = pi/30;
 dimension = 3 ;
 verbosity = 10;
 
+u_s = 0.609382421; 
+surf_rad =  0.058 / 2;
+
 %%% for planner
 traj_type = 'bernstein'; % pick 'orig' (ARMTD) or 'bernstein' (ARMOUR)
 use_cuda_flag = true;
@@ -54,8 +57,13 @@ stop_threshold = 4 ; % number of failed iterations before exiting
 % start = [-1; -1; -1; -1; -1; -1; -1]; % start configuration
 % goal = [1; 1; 1; 1; 1; 1; 1]; % goal configuration
 
+% simple rotation
+% start = [0;-pi/2;0;0;0;0;0];
+% goal = [pi/4;-pi/2;0;0;0;0;0];
+
+% swing
 start = [0;-pi/2;0;0;0;0;0];
-goal = [pi/4;-pi/2;0;0;0;0;0];
+goal = [pi;-pi/2;pi;0;pi;0;0];
 
 obstacles{1} = box_obstacle_zonotope('center', [0; 0; 0.6],...
                                      'side_lengths', [0.1; 0.1; 0.1]) ;
@@ -84,9 +92,7 @@ end
 
 % run loop
 tic;
-W = kinova_grasp_world_static('create_random_obstacles_flag', false, 'goal_radius', goal_radius, 'N_obstacles',length(obstacles),'dimension',dimension,'workspace_goal_check', 0,...
-                        'verbose',verbosity, 'start', start, 'goal', goal, 'obstacles', obstacles, 'goal_type', goal_type, 'grasp_constraint_flag', true,...
-                        'ik_start_goal_flag', true) ;
+W = kinova_grasp_world_static('create_random_obstacles_flag', false, 'goal_radius', goal_radius, 'N_obstacles',length(obstacles),'dimension',dimension,'workspace_goal_check', 0, 'verbose',verbosity, 'start', start, 'goal', goal, 'obstacles', obstacles, 'goal_type', goal_type, 'grasp_constraint_flag', true,'ik_start_goal_flag', true,'u_s', u_s, 'surf_rad', surf_rad) ;
 
 % create arm agent
 A = uarmtd_agent(robot, params,...
@@ -117,7 +123,7 @@ A.LLC.setup(A);
 P = uarmtd_planner('verbose', verbosity, ...
                    'first_iter_pause_flag', false, ...
                    'use_q_plan_for_cost', true, ...
-                   'input_constraints_flag', true, ...
+                   'input_constraints_flag', false, ...
                    'use_robust_input', use_robust_input, ...
                    'traj_type', traj_type, ...
                    'use_cuda', use_cuda_flag) ;

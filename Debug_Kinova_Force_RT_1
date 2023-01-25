@@ -1,0 +1,1111 @@
+    A: Ensuring all arm properties are consistent
+    A: Checking states and state indices
+    A: Checking links
+    A: Setting link masses
+    A: Creating link inertia matrices!
+    A: Checking joints
+    A: Resetting states
+    A: Resetting time and inputs
+    A: Loading CAD files for arm plotting!
+    A: STL read returned a triangulated data format, but we fixed it :)
+        LLC: Computed ultimate bound of 0.004
+    W: Running arm world setup
+    W: Making goal in workspace using joint locations
+    W: Arm world setup complete
+    W: Plotting obstacles
+    W: Plotting goal
+S: Running simulation
+-------------------------------------------------
+-------------------------------------------------
+S: Starting World 1
+---------------------------------------------
+S: Starting Planner 1
+    A: Resetting states
+    A: Using provided joint positions
+    A: Resetting time and inputs
+    P: Getting agent info
+    P: Getting world info
+        HLP: Filling in HLP's arm properties
+        HLP: Setting goal
+S: Plotting
+    W: Plotting obstacles
+    W: Plotting goal
+    P: Plotting new data
+--------------------------------
+ITERATION 1 (t = 0.00)
+    P: Replanning!
+    P: Calling CUDA & C++ Program!
+        CUDA & C++: Time taken by generating reachable sets: 119 milliseconds
+        CUDA & C++: Time taken by Ipopt: 43 milliseconds
+    P: New trajectory found!
+1.000000 -0.000000 1.000000 -0.000000 1.000000 -0.000000 -0.000000 
+S: Planning time: 0.52385 s
+    A: Moving!
+S: Checking if agent reached goal or crashed...
+    A: Running input check!
+    A: No inputs exceeded
+    A: Running ultimate bound check!
+        LLC: No ultimate bound exceeded
+    A: Running joint limits check!
+    A: No joint limits exceeded
+    W: Running grasp checks!
+    W: No grasp violations detected
+    W: Running collision check!
+    W: No collisions detected
+S: Checking for self-intersection.
+S: Plotting
+    W: Plotting obstacles
+    W: Plotting goal
+    P: Plotting new data
+END ITERATION 1
+--------------------------------
+ITERATION 2 (t = 0.50)
+    P: Replanning!
+    P: Calling CUDA & C++ Program!
+        CUDA & C++: Time taken by generating reachable sets: 122 milliseconds
+        CUDA & C++: Time taken by Ipopt: 52 milliseconds
+    P: New trajectory found!
+1.000000 -0.000146 1.000000 -0.000054 1.000000 -0.000013 -0.000001 
+S: Planning time: 0.50569 s
+    A: Moving!
+S: Checking if agent reached goal or crashed...
+    A: Running input check!
+    A: No inputs exceeded
+    A: Running ultimate bound check!
+        LLC: No ultimate bound exceeded
+    A: Running joint limits check!
+    A: No joint limits exceeded
+    W: Running grasp checks!
+    W: No grasp violations detected
+    W: Running collision check!
+    W: No collisions detected
+S: Checking for self-intersection.
+S: Plotting
+    W: Plotting obstacles
+    W: Plotting goal
+    P: Plotting new data
+END ITERATION 2
+--------------------------------
+ITERATION 3 (t = 1.00)
+    P: Replanning!
+    P: Calling CUDA & C++ Program!
+        CUDA & C++: Time taken by generating reachable sets: 114 milliseconds
+        CUDA & C++: Time taken by Ipopt: 77 milliseconds
+    P: New trajectory found!
+1.000000 -0.000139 1.000000 -0.000051 1.000000 -0.000012 -0.000001 
+S: Planning time: 0.52974 s
+    A: Moving!
+S: Checking if agent reached goal or crashed...
+    A: Running input check!
+    A: No inputs exceeded
+    A: Running ultimate bound check!
+        LLC: No ultimate bound exceeded
+    A: Running joint limits check!
+    A: No joint limits exceeded
+    W: Running grasp checks!
+    W: No grasp violations detected
+    W: Running collision check!
+    W: No collisions detected
+S: Checking for self-intersection.
+S: Plotting
+    W: Plotting obstacles
+    W: Plotting goal
+    P: Plotting new data
+END ITERATION 3
+--------------------------------
+ITERATION 4 (t = 1.50)
+    P: Replanning!
+    P: Calling CUDA & C++ Program!
+        CUDA & C++: Time taken by generating reachable sets: 114 milliseconds
+        CUDA & C++: Time taken by Ipopt: 64 milliseconds
+    P: New trajectory found!
+1.000000 -0.000126 1.000000 -0.000046 1.000000 -0.000011 -0.000001 
+S: Planning time: 0.51305 s
+    A: Moving!
+S: Checking if agent reached goal or crashed...
+    A: Running input check!
+    A: No inputs exceeded
+    A: Running ultimate bound check!
+        LLC: No ultimate bound exceeded
+    A: Running joint limits check!
+    A: No joint limits exceeded
+    W: Running grasp checks!
+    W: No grasp violations detected
+    W: Running collision check!
+    W: No collisions detected
+S: Checking for self-intersection.
+S: Plotting
+    W: Plotting obstacles
+    W: Plotting goal
+    P: Plotting new data
+END ITERATION 4
+--------------------------------
+ITERATION 5 (t = 2.00)
+    P: Replanning!
+    P: Calling CUDA & C++ Program!
+        CUDA & C++: Time taken by generating reachable sets: 117 milliseconds
+        CUDA & C++: Time taken by Ipopt: 95 milliseconds
+    P: New trajectory found!
+1.000000 -0.000114 1.000000 -0.000042 1.000000 -0.000010 -0.000000 
+S: Planning time: 0.56203 s
+    A: Moving!
+S: Checking if agent reached goal or crashed...
+    A: Running input check!
+    A: No inputs exceeded
+    A: Running ultimate bound check!
+        LLC: No ultimate bound exceeded
+    A: Running joint limits check!
+    A: No joint limits exceeded
+    W: Running grasp checks!
+    W: No grasp violations detected
+    W: Running collision check!
+    W: No collisions detected
+S: Checking for self-intersection.
+S: Plotting
+    W: Plotting obstacles
+    W: Plotting goal
+    P: Plotting new data
+END ITERATION 5
+--------------------------------
+ITERATION 6 (t = 2.50)
+    P: Replanning!
+    P: Calling CUDA & C++ Program!
+        CUDA & C++: Time taken by generating reachable sets: 116 milliseconds
+        CUDA & C++: Time taken by Ipopt: 67 milliseconds
+    P: New trajectory found!
+1.000000 -0.000101 1.000000 -0.000037 1.000000 -0.000009 -0.000000 
+S: Planning time: 0.5164 s
+    A: Moving!
+S: Checking if agent reached goal or crashed...
+    A: Running input check!
+    A: No inputs exceeded
+    A: Running ultimate bound check!
+        LLC: No ultimate bound exceeded
+    A: Running joint limits check!
+    A: No joint limits exceeded
+    W: Running grasp checks!
+    W: No grasp violations detected
+    W: Running collision check!
+    W: No collisions detected
+S: Checking for self-intersection.
+S: Plotting
+    W: Plotting obstacles
+    W: Plotting goal
+    P: Plotting new data
+END ITERATION 6
+--------------------------------
+ITERATION 7 (t = 3.00)
+    P: Replanning!
+    P: Calling CUDA & C++ Program!
+        CUDA & C++: Time taken by generating reachable sets: 117 milliseconds
+        CUDA & C++: Time taken by Ipopt: 78 milliseconds
+    P: New trajectory found!
+1.000000 -0.000089 1.000000 -0.000032 1.000000 -0.000007 -0.000000 
+S: Planning time: 0.5319 s
+    A: Moving!
+S: Checking if agent reached goal or crashed...
+    A: Running input check!
+    A: No inputs exceeded
+    A: Running ultimate bound check!
+        LLC: No ultimate bound exceeded
+    A: Running joint limits check!
+    A: No joint limits exceeded
+    W: Running grasp checks!
+    W: No grasp violations detected
+    W: Running collision check!
+    W: No collisions detected
+S: Checking for self-intersection.
+S: Plotting
+    W: Plotting obstacles
+    W: Plotting goal
+    P: Plotting new data
+END ITERATION 7
+--------------------------------
+ITERATION 8 (t = 3.50)
+    P: Replanning!
+    P: Calling CUDA & C++ Program!
+        CUDA & C++: Time taken by generating reachable sets: 136 milliseconds
+        CUDA & C++: Ipopt maximum CPU time exceeded!
+        CUDA & C++: Time taken by Ipopt: 3165 milliseconds
+    P: New trajectory found!
+0.988421 -0.407710 0.962740 -0.256056 0.951969 -0.032184 -0.573286 
+S: Planning time: 3.6413 s
+    A: Moving!
+S: Checking if agent reached goal or crashed...
+    A: Running input check!
+    A: No inputs exceeded
+    A: Running ultimate bound check!
+        LLC: No ultimate bound exceeded
+    A: Running joint limits check!
+    A: No joint limits exceeded
+    W: Running grasp checks!
+    W: Grasp slipping violation detected at t = 3.525
+    W: Running collision check!
+    W: No collisions detected
+S: Checking for self-intersection.
+S: Plotting
+    W: Plotting obstacles
+    W: Plotting goal
+    P: Plotting new data
+END ITERATION 8
+--------------------------------
+ITERATION 9 (t = 4.00)
+    P: Replanning!
+    P: Calling CUDA & C++ Program!
+        CUDA & C++: Time taken by generating reachable sets: 127 milliseconds
+        CUDA & C++: Ipopt maximum CPU time exceeded!
+        CUDA & C++: Time taken by Ipopt: 3157 milliseconds
+    P: New trajectory found!
+-0.736933 -0.538407 -0.942890 -0.554017 -0.757785 -0.485695 -0.772120 
+S: Planning time: 3.6158 s
+    A: Moving!
+S: Checking if agent reached goal or crashed...
+    A: Running input check!
+    A: No inputs exceeded
+    A: Running ultimate bound check!
+        LLC: No ultimate bound exceeded
+    A: Running joint limits check!
+    A: No joint limits exceeded
+    W: Running grasp checks!
+    W: Grasp slipping violation detected at t = 4.015
+    W: Running collision check!
+    W: No collisions detected
+S: Checking for self-intersection.
+S: Plotting
+    W: Plotting obstacles
+    W: Plotting goal
+    P: Plotting new data
+END ITERATION 9
+--------------------------------
+ITERATION 10 (t = 4.50)
+    P: Replanning!
+    P: Calling CUDA & C++ Program!
+        CUDA & C++: Time taken by generating reachable sets: 132 milliseconds
+        CUDA & C++: Ipopt: Slipping constraint violated at time interval: 97 
+        CUDA & C++: Ipopt maximum CPU time exceeded!
+        CUDA & C++: Time taken by Ipopt: 3158 milliseconds
+    P: Unable to find new trajectory!
+S: Planning time: 3.6203 s
+S: Stopping!
+    A: Moving!
+S: Checking if agent reached goal or crashed...
+    A: Running input check!
+    A: No inputs exceeded
+    A: Running ultimate bound check!
+        LLC: No ultimate bound exceeded
+    A: Running joint limits check!
+    A: No joint limits exceeded
+    W: Running grasp checks!
+    W: Grasp separation violation detected at t = 4.505
+    W: Grasp slipping violation detected at t = 4.505
+    W: Grasp tipping violation detected at t = 4.505
+    W: Running collision check!
+    W: No collisions detected
+S: Checking for self-intersection.
+S: Plotting
+    W: Plotting obstacles
+    W: Plotting goal
+    P: Plotting new data
+END ITERATION 10
+--------------------------------
+ITERATION 11 (t = 5.00)
+    P: Replanning!
+    P: Calling CUDA & C++ Program!
+        CUDA & C++: Time taken by generating reachable sets: 124 milliseconds
+        CUDA & C++: Time taken by Ipopt: 64 milliseconds
+    P: New trajectory found!
+1.000000 0.058151 1.000000 0.053474 1.000000 0.039354 0.083049 
+S: Planning time: 0.53304 s
+    A: Moving!
+S: Checking if agent reached goal or crashed...
+    A: Running input check!
+    A: No inputs exceeded
+    A: Running ultimate bound check!
+        LLC: No ultimate bound exceeded
+    A: Running joint limits check!
+    A: No joint limits exceeded
+    W: Running grasp checks!
+    W: Grasp slipping violation detected at t = 5.065
+    W: Running collision check!
+    W: No collisions detected
+S: Checking for self-intersection.
+S: Plotting
+    W: Plotting obstacles
+    W: Plotting goal
+    P: Plotting new data
+END ITERATION 11
+--------------------------------
+ITERATION 12 (t = 5.50)
+    P: Replanning!
+    P: Calling CUDA & C++ Program!
+        CUDA & C++: Time taken by generating reachable sets: 136 milliseconds
+        CUDA & C++: Ipopt maximum CPU time exceeded!
+        CUDA & C++: Time taken by Ipopt: 3169 milliseconds
+    P: New trajectory found!
+0.509672 -0.068231 0.598671 -0.031273 0.697131 0.140473 0.194757 
+S: Planning time: 3.6427 s
+    A: Moving!
+S: Checking if agent reached goal or crashed...
+    A: Running input check!
+    A: No inputs exceeded
+    A: Running ultimate bound check!
+        LLC: No ultimate bound exceeded
+    A: Running joint limits check!
+    A: No joint limits exceeded
+    W: Running grasp checks!
+    W: Grasp slipping violation detected at t = 5.585
+    W: Running collision check!
+    W: No collisions detected
+S: Checking for self-intersection.
+S: Plotting
+    W: Plotting obstacles
+    W: Plotting goal
+    P: Plotting new data
+END ITERATION 12
+--------------------------------
+ITERATION 13 (t = 6.00)
+    P: Replanning!
+    P: Calling CUDA & C++ Program!
+        CUDA & C++: Time taken by generating reachable sets: 119 milliseconds
+        CUDA & C++: Ipopt: Slipping constraint violated at time interval: 18 
+        CUDA & C++: Ipopt maximum CPU time exceeded!
+        CUDA & C++: Time taken by Ipopt: 3162 milliseconds
+    P: Unable to find new trajectory!
+S: Planning time: 3.5958 s
+S: Stopping!
+    A: Moving!
+S: Checking if agent reached goal or crashed...
+    A: Running input check!
+    A: No inputs exceeded
+    A: Running ultimate bound check!
+        LLC: No ultimate bound exceeded
+    A: Running joint limits check!
+    A: No joint limits exceeded
+    W: Running grasp checks!
+    W: Grasp slipping violation detected at t = 6.065
+    W: Running collision check!
+    W: No collisions detected
+S: Checking for self-intersection.
+S: Plotting
+    W: Plotting obstacles
+    W: Plotting goal
+    P: Plotting new data
+END ITERATION 13
+--------------------------------
+ITERATION 14 (t = 6.50)
+    P: Replanning!
+    P: Calling CUDA & C++ Program!
+        CUDA & C++: Time taken by generating reachable sets: 119 milliseconds
+        CUDA & C++: Ipopt maximum CPU time exceeded!
+        CUDA & C++: Time taken by Ipopt: 3166 milliseconds
+    P: New trajectory found!
+-0.276611 -0.960318 -0.473483 -0.612776 -0.881161 0.272863 -0.656614 
+S: Planning time: 3.6216 s
+    A: Moving!
+S: Checking if agent reached goal or crashed...
+    A: Running input check!
+    A: No inputs exceeded
+    A: Running ultimate bound check!
+        LLC: No ultimate bound exceeded
+    A: Running joint limits check!
+    A: No joint limits exceeded
+    W: Running grasp checks!
+    W: Grasp slipping violation detected at t = 6.525
+    W: Running collision check!
+    W: No collisions detected
+S: Checking for self-intersection.
+S: Plotting
+    W: Plotting obstacles
+    W: Plotting goal
+    P: Plotting new data
+END ITERATION 14
+--------------------------------
+ITERATION 15 (t = 7.00)
+    P: Replanning!
+    P: Calling CUDA & C++ Program!
+        CUDA & C++: Time taken by generating reachable sets: 144 milliseconds
+        CUDA & C++: Ipopt: Slipping constraint violated at time interval: 97 
+        CUDA & C++: Ipopt maximum CPU time exceeded!
+        CUDA & C++: Time taken by Ipopt: 3147 milliseconds
+    P: Unable to find new trajectory!
+S: Planning time: 3.6139 s
+S: Stopping!
+    A: Moving!
+S: Checking if agent reached goal or crashed...
+    A: Running input check!
+    A: No inputs exceeded
+    A: Running ultimate bound check!
+        LLC: No ultimate bound exceeded
+    A: Running joint limits check!
+    A: No joint limits exceeded
+    W: Running grasp checks!
+    W: Grasp tipping violation detected at t = 7.06
+    W: Running collision check!
+    W: No collisions detected
+S: Checking for self-intersection.
+S: Plotting
+    W: Plotting obstacles
+    W: Plotting goal
+    P: Plotting new data
+END ITERATION 15
+--------------------------------
+ITERATION 16 (t = 7.50)
+    P: Replanning!
+    P: Calling CUDA & C++ Program!
+        CUDA & C++: Time taken by generating reachable sets: 128 milliseconds
+        CUDA & C++: Time taken by Ipopt: 515 milliseconds
+    P: New trajectory found!
+0.960096 0.075523 0.979251 0.017809 0.969415 -0.047274 0.070494 
+S: Planning time: 0.98743 s
+    A: Moving!
+S: Checking if agent reached goal or crashed...
+    A: Running input check!
+    A: No inputs exceeded
+    A: Running ultimate bound check!
+        LLC: No ultimate bound exceeded
+    A: Running joint limits check!
+    A: No joint limits exceeded
+    W: Running grasp checks!
+    W: No grasp violations detected
+    W: Running collision check!
+    W: No collisions detected
+S: Checking for self-intersection.
+S: Plotting
+    W: Plotting obstacles
+    W: Plotting goal
+    P: Plotting new data
+END ITERATION 16
+--------------------------------
+ITERATION 17 (t = 8.00)
+    P: Replanning!
+    P: Calling CUDA & C++ Program!
+        CUDA & C++: Time taken by generating reachable sets: 123 milliseconds
+        CUDA & C++: Ipopt maximum CPU time exceeded!
+        CUDA & C++: Time taken by Ipopt: 3160 milliseconds
+    P: New trajectory found!
+0.442028 0.001796 0.444278 0.172580 0.593942 -0.182355 -0.824915 
+S: Planning time: 3.6176 s
+    A: Moving!
+S: Checking if agent reached goal or crashed...
+    A: Running input check!
+    A: No inputs exceeded
+    A: Running ultimate bound check!
+        LLC: No ultimate bound exceeded
+    A: Running joint limits check!
+    A: No joint limits exceeded
+    W: Running grasp checks!
+    W: Grasp slipping violation detected at t = 8.015
+    W: Running collision check!
+    W: No collisions detected
+S: Checking for self-intersection.
+S: Plotting
+    W: Plotting obstacles
+    W: Plotting goal
+    P: Plotting new data
+END ITERATION 17
+--------------------------------
+ITERATION 18 (t = 8.50)
+    P: Replanning!
+    P: Calling CUDA & C++ Program!
+        CUDA & C++: Time taken by generating reachable sets: 124 milliseconds
+        CUDA & C++: Ipopt maximum CPU time exceeded!
+        CUDA & C++: Time taken by Ipopt: 3146 milliseconds
+    P: New trajectory found!
+-0.376626 -0.649192 0.016648 -0.131043 -0.188554 -0.658012 -0.528852 
+S: Planning time: 3.6087 s
+    A: Moving!
+S: Checking if agent reached goal or crashed...
+    A: Running input check!
+    A: No inputs exceeded
+    A: Running ultimate bound check!
+        LLC: No ultimate bound exceeded
+    A: Running joint limits check!
+    A: No joint limits exceeded
+    W: Running grasp checks!
+    W: Grasp slipping violation detected at t = 8.525
+    W: Grasp tipping violation detected at t = 8.525
+    W: Running collision check!
+    W: No collisions detected
+S: Checking for self-intersection.
+S: Plotting
+    W: Plotting obstacles
+    W: Plotting goal
+    P: Plotting new data
+END ITERATION 18
+--------------------------------
+ITERATION 19 (t = 9.00)
+    P: Replanning!
+    P: Calling CUDA & C++ Program!
+        CUDA & C++: Time taken by generating reachable sets: 122 milliseconds
+        CUDA & C++: Ipopt: Slipping constraint violated at time interval: 27 
+        CUDA & C++: Ipopt maximum CPU time exceeded!
+        CUDA & C++: Time taken by Ipopt: 3149 milliseconds
+    P: Unable to find new trajectory!
+S: Planning time: 3.5859 s
+S: Stopping!
+    A: Moving!
+S: Checking if agent reached goal or crashed...
+    A: Running input check!
+    A: No inputs exceeded
+    A: Running ultimate bound check!
+        LLC: No ultimate bound exceeded
+    A: Running joint limits check!
+    A: No joint limits exceeded
+    W: Running grasp checks!
+    W: Grasp separation violation detected at t = 9.005
+    W: Grasp slipping violation detected at t = 9.005
+    W: Grasp tipping violation detected at t = 9.005
+    W: Running collision check!
+    W: No collisions detected
+S: Checking for self-intersection.
+S: Plotting
+    W: Plotting obstacles
+    W: Plotting goal
+    P: Plotting new data
+END ITERATION 19
+--------------------------------
+ITERATION 20 (t = 9.50)
+    P: Replanning!
+    P: Calling CUDA & C++ Program!
+        CUDA & C++: Time taken by generating reachable sets: 133 milliseconds
+        CUDA & C++: Ipopt maximum CPU time exceeded!
+        CUDA & C++: Time taken by Ipopt: 3156 milliseconds
+    P: New trajectory found!
+-0.629615 -0.154259 0.230141 -0.545703 -0.282620 -0.427929 -0.585842 
+S: Planning time: 3.6302 s
+    A: Moving!
+S: Checking if agent reached goal or crashed...
+    A: Running input check!
+    A: No inputs exceeded
+    A: Running ultimate bound check!
+        LLC: No ultimate bound exceeded
+    A: Running joint limits check!
+    A: No joint limits exceeded
+    W: Running grasp checks!
+    W: Grasp slipping violation detected at t = 9.515
+    W: Running collision check!
+    W: No collisions detected
+S: Checking for self-intersection.
+S: Plotting
+    W: Plotting obstacles
+    W: Plotting goal
+    P: Plotting new data
+END ITERATION 20
+--------------------------------
+ITERATION 21 (t = 10.00)
+    P: Replanning!
+    P: Calling CUDA & C++ Program!
+        CUDA & C++: Time taken by generating reachable sets: 124 milliseconds
+        CUDA & C++: Ipopt maximum CPU time exceeded!
+        CUDA & C++: Time taken by Ipopt: 3164 milliseconds
+    P: New trajectory found!
+-0.024515 -0.975290 0.690445 -0.062413 -0.995412 -0.234846 -0.744910 
+S: Planning time: 3.6256 s
+    A: Moving!
+S: Checking if agent reached goal or crashed...
+    A: Running input check!
+    A: No inputs exceeded
+    A: Running ultimate bound check!
+        LLC: No ultimate bound exceeded
+    A: Running joint limits check!
+    A: No joint limits exceeded
+    W: Running grasp checks!
+    W: Grasp slipping violation detected at t = 10.025
+    W: Running collision check!
+    W: No collisions detected
+S: Checking for self-intersection.
+S: Plotting
+    W: Plotting obstacles
+    W: Plotting goal
+    P: Plotting new data
+END ITERATION 21
+--------------------------------
+ITERATION 22 (t = 10.50)
+    P: Replanning!
+    P: Calling CUDA & C++ Program!
+        CUDA & C++: Time taken by generating reachable sets: 130 milliseconds
+        CUDA & C++: Ipopt maximum CPU time exceeded!
+        CUDA & C++: Time taken by Ipopt: 3150 milliseconds
+    P: New trajectory found!
+0.183043 -0.783940 -0.154394 -0.471546 -0.775058 -0.498641 -0.529370 
+S: Planning time: 3.6156 s
+    A: Moving!
+S: Checking if agent reached goal or crashed...
+    A: Running input check!
+    A: No inputs exceeded
+    A: Running ultimate bound check!
+        LLC: No ultimate bound exceeded
+    A: Running joint limits check!
+    A: No joint limits exceeded
+    W: Running grasp checks!
+    W: Grasp slipping violation detected at t = 10.505
+    W: Grasp tipping violation detected at t = 10.505
+    W: Running collision check!
+    W: No collisions detected
+S: Checking for self-intersection.
+S: Plotting
+    W: Plotting obstacles
+    W: Plotting goal
+    P: Plotting new data
+END ITERATION 22
+--------------------------------
+ITERATION 23 (t = 11.00)
+    P: Replanning!
+    P: Calling CUDA & C++ Program!
+        CUDA & C++: Time taken by generating reachable sets: 125 milliseconds
+        CUDA & C++: Ipopt: Slipping constraint violated at time interval: 57 
+        CUDA & C++: Ipopt maximum CPU time exceeded!
+        CUDA & C++: Time taken by Ipopt: 3160 milliseconds
+    P: Unable to find new trajectory!
+S: Planning time: 3.6032 s
+S: Stopping!
+    A: Moving!
+S: Checking if agent reached goal or crashed...
+    A: Running input check!
+    A: No inputs exceeded
+    A: Running ultimate bound check!
+        LLC: No ultimate bound exceeded
+    A: Running joint limits check!
+    A: No joint limits exceeded
+    W: Running grasp checks!
+    W: Grasp slipping violation detected at t = 11.005
+    W: Running collision check!
+    W: No collisions detected
+S: Checking for self-intersection.
+S: Plotting
+    W: Plotting obstacles
+    W: Plotting goal
+    P: Plotting new data
+END ITERATION 23
+--------------------------------
+ITERATION 24 (t = 11.50)
+    P: Replanning!
+    P: Calling CUDA & C++ Program!
+        CUDA & C++: Time taken by generating reachable sets: 137 milliseconds
+        CUDA & C++: Ipopt maximum CPU time exceeded!
+        CUDA & C++: Time taken by Ipopt: 3169 milliseconds
+    P: New trajectory found!
+0.372185 -0.711768 -0.028813 0.510313 -0.079619 -0.006420 -0.020628 
+S: Planning time: 3.6633 s
+    A: Moving!
+S: Checking if agent reached goal or crashed...
+    A: Running input check!
+    A: No inputs exceeded
+    A: Running ultimate bound check!
+        LLC: No ultimate bound exceeded
+    A: Running joint limits check!
+    A: No joint limits exceeded
+    W: Running grasp checks!
+    W: Grasp slipping violation detected at t = 11.555
+    W: Running collision check!
+    W: No collisions detected
+S: Checking for self-intersection.
+S: Plotting
+    W: Plotting obstacles
+    W: Plotting goal
+    P: Plotting new data
+END ITERATION 24
+--------------------------------
+ITERATION 25 (t = 12.00)
+    P: Replanning!
+    P: Calling CUDA & C++ Program!
+        CUDA & C++: Time taken by generating reachable sets: 134 milliseconds
+        CUDA & C++: Ipopt: Slipping constraint violated at time interval: 67 
+        CUDA & C++: Time taken by Ipopt: 527 milliseconds
+    P: Unable to find new trajectory!
+S: Planning time: 0.98299 s
+S: Stopping!
+    A: Moving!
+S: Checking if agent reached goal or crashed...
+    A: Running input check!
+    A: No inputs exceeded
+    A: Running ultimate bound check!
+        LLC: No ultimate bound exceeded
+    A: Running joint limits check!
+    A: No joint limits exceeded
+    W: Running grasp checks!
+    W: No grasp violations detected
+    W: Running collision check!
+    W: No collisions detected
+S: Checking for self-intersection.
+S: Plotting
+    W: Plotting obstacles
+    W: Plotting goal
+    P: Plotting new data
+END ITERATION 25
+--------------------------------
+ITERATION 26 (t = 12.50)
+    P: Replanning!
+    P: Calling CUDA & C++ Program!
+        CUDA & C++: Time taken by generating reachable sets: 134 milliseconds
+        CUDA & C++: Ipopt: Slipping constraint violated at time interval: 65 
+        CUDA & C++: Ipopt maximum CPU time exceeded!
+        CUDA & C++: Time taken by Ipopt: 3177 milliseconds
+    P: Unable to find new trajectory!
+S: Planning time: 3.6185 s
+S: Stopping!
+    A: Moving!
+S: Checking if agent reached goal or crashed...
+    A: Running input check!
+    A: No inputs exceeded
+    A: Running ultimate bound check!
+        LLC: No ultimate bound exceeded
+    A: Running joint limits check!
+    A: No joint limits exceeded
+    W: Running grasp checks!
+    W: No grasp violations detected
+    W: Running collision check!
+    W: No collisions detected
+S: Checking for self-intersection.
+S: Plotting
+    W: Plotting obstacles
+    W: Plotting goal
+    P: Plotting new data
+END ITERATION 26
+--------------------------------
+ITERATION 27 (t = 13.00)
+    P: Replanning!
+    P: Calling CUDA & C++ Program!
+        CUDA & C++: Time taken by generating reachable sets: 131 milliseconds
+        CUDA & C++: Ipopt: Slipping constraint violated at time interval: 95 
+        CUDA & C++: Ipopt maximum CPU time exceeded!
+        CUDA & C++: Time taken by Ipopt: 3157 milliseconds
+    P: Unable to find new trajectory!
+S: Planning time: 3.5955 s
+S: Stopping!
+    A: Moving!
+S: Checking if agent reached goal or crashed...
+    A: Running input check!
+    A: No inputs exceeded
+    A: Running ultimate bound check!
+        LLC: No ultimate bound exceeded
+    A: Running joint limits check!
+    A: No joint limits exceeded
+    W: Running grasp checks!
+    W: No grasp violations detected
+    W: Running collision check!
+    W: No collisions detected
+S: Checking for self-intersection.
+S: Plotting
+    W: Plotting obstacles
+    W: Plotting goal
+    P: Plotting new data
+END ITERATION 27
+--------------------------------
+ITERATION 28 (t = 13.50)
+    P: Replanning!
+    P: Calling CUDA & C++ Program!
+        CUDA & C++: Time taken by generating reachable sets: 142 milliseconds
+        CUDA & C++: Ipopt maximum CPU time exceeded!
+        CUDA & C++: Time taken by Ipopt: 3153 milliseconds
+    P: New trajectory found!
+0.267282 -0.304666 0.519708 0.052880 -0.455175 0.458872 0.085544 
+S: Planning time: 3.6456 s
+    A: Moving!
+S: Checking if agent reached goal or crashed...
+    A: Running input check!
+    A: No inputs exceeded
+    A: Running ultimate bound check!
+        LLC: No ultimate bound exceeded
+    A: Running joint limits check!
+    A: No joint limits exceeded
+    W: Running grasp checks!
+    W: Grasp slipping violation detected at t = 13.625
+    W: Running collision check!
+    W: No collisions detected
+S: Checking for self-intersection.
+S: Plotting
+    W: Plotting obstacles
+    W: Plotting goal
+    P: Plotting new data
+END ITERATION 28
+--------------------------------
+ITERATION 29 (t = 14.00)
+    P: Replanning!
+    P: Calling CUDA & C++ Program!
+        CUDA & C++: Time taken by generating reachable sets: 122 milliseconds
+        CUDA & C++: Ipopt: Slipping constraint violated at time interval: 68 
+        CUDA & C++: Ipopt maximum CPU time exceeded!
+        CUDA & C++: Time taken by Ipopt: 3152 milliseconds
+    P: Unable to find new trajectory!
+S: Planning time: 3.6042 s
+S: Stopping!
+    A: Moving!
+S: Checking if agent reached goal or crashed...
+    A: Running input check!
+    A: No inputs exceeded
+    A: Running ultimate bound check!
+        LLC: No ultimate bound exceeded
+    A: Running joint limits check!
+    A: No joint limits exceeded
+    W: Running grasp checks!
+    W: Grasp slipping violation detected at t = 14.045
+    W: Running collision check!
+    W: No collisions detected
+S: Checking for self-intersection.
+S: Plotting
+    W: Plotting obstacles
+    W: Plotting goal
+    P: Plotting new data
+END ITERATION 29
+--------------------------------
+ITERATION 30 (t = 14.50)
+    P: Replanning!
+    P: Calling CUDA & C++ Program!
+        CUDA & C++: Time taken by generating reachable sets: 125 milliseconds
+        CUDA & C++: Ipopt: Slipping constraint violated at time interval: 66 
+        CUDA & C++: Ipopt maximum CPU time exceeded!
+        CUDA & C++: Time taken by Ipopt: 3156 milliseconds
+    P: Unable to find new trajectory!
+S: Planning time: 3.5829 s
+S: Stopping!
+    A: Moving!
+S: Checking if agent reached goal or crashed...
+    A: Running input check!
+    A: No inputs exceeded
+    A: Running ultimate bound check!
+        LLC: No ultimate bound exceeded
+    A: Running joint limits check!
+    A: No joint limits exceeded
+    W: Running grasp checks!
+    W: No grasp violations detected
+    W: Running collision check!
+    W: No collisions detected
+S: Checking for self-intersection.
+S: Plotting
+    W: Plotting obstacles
+    W: Plotting goal
+    P: Plotting new data
+END ITERATION 30
+--------------------------------
+ITERATION 31 (t = 15.00)
+    P: Replanning!
+    P: Calling CUDA & C++ Program!
+        CUDA & C++: Time taken by generating reachable sets: 122 milliseconds
+        CUDA & C++: Ipopt: Slipping constraint violated at time interval: 58 
+        CUDA & C++: Ipopt maximum CPU time exceeded!
+        CUDA & C++: Time taken by Ipopt: 3177 milliseconds
+    P: Unable to find new trajectory!
+S: Planning time: 3.593 s
+S: Stopping!
+    A: Moving!
+S: Checking if agent reached goal or crashed...
+    A: Running input check!
+    A: No inputs exceeded
+    A: Running ultimate bound check!
+        LLC: No ultimate bound exceeded
+    A: Running joint limits check!
+    A: No joint limits exceeded
+    W: Running grasp checks!
+    W: No grasp violations detected
+    W: Running collision check!
+    W: No collisions detected
+S: Checking for self-intersection.
+S: Plotting
+    W: Plotting obstacles
+    W: Plotting goal
+    P: Plotting new data
+END ITERATION 31
+--------------------------------
+ITERATION 32 (t = 15.50)
+    P: Replanning!
+    P: Calling CUDA & C++ Program!
+        CUDA & C++: Time taken by generating reachable sets: 124 milliseconds
+        CUDA & C++: Ipopt: Slipping constraint violated at time interval: 65 
+        CUDA & C++: Ipopt maximum CPU time exceeded!
+        CUDA & C++: Time taken by Ipopt: 3163 milliseconds
+    P: Unable to find new trajectory!
+S: Planning time: 3.5873 s
+S: Stopping!
+    A: Moving!
+S: Checking if agent reached goal or crashed...
+    A: Running input check!
+    A: No inputs exceeded
+    A: Running ultimate bound check!
+        LLC: No ultimate bound exceeded
+    A: Running joint limits check!
+    A: No joint limits exceeded
+    W: Running grasp checks!
+    W: No grasp violations detected
+    W: Running collision check!
+    W: No collisions detected
+S: Checking for self-intersection.
+S: Plotting
+    W: Plotting obstacles
+    W: Plotting goal
+    P: Plotting new data
+END ITERATION 32
+--------------------------------
+ITERATION 33 (t = 16.00)
+    P: Replanning!
+    P: Calling CUDA & C++ Program!
+        CUDA & C++: Time taken by generating reachable sets: 132 milliseconds
+        CUDA & C++: Ipopt maximum CPU time exceeded!
+        CUDA & C++: Time taken by Ipopt: 3149 milliseconds
+    P: New trajectory found!
+0.307685 -0.634014 0.533254 -0.290952 0.224768 0.600895 -0.500112 
+S: Planning time: 3.6205 s
+    A: Moving!
+S: Checking if agent reached goal or crashed...
+    A: Running input check!
+    A: No inputs exceeded
+    A: Running ultimate bound check!
+        LLC: No ultimate bound exceeded
+    A: Running joint limits check!
+    A: No joint limits exceeded
+    W: Running grasp checks!
+    W: Grasp slipping violation detected at t = 16.025
+    W: Running collision check!
+    W: No collisions detected
+S: Checking for self-intersection.
+S: Plotting
+    W: Plotting obstacles
+    W: Plotting goal
+    P: Plotting new data
+END ITERATION 33
+--------------------------------
+ITERATION 34 (t = 16.50)
+    P: Replanning!
+    P: Calling CUDA & C++ Program!
+        CUDA & C++: Time taken by generating reachable sets: 125 milliseconds
+        CUDA & C++: Ipopt: Slipping constraint violated at time interval: 58 
+        CUDA & C++: Time taken by Ipopt: 426 milliseconds
+    P: Unable to find new trajectory!
+S: Planning time: 0.88222 s
+S: Stopping!
+    A: Moving!
+S: Checking if agent reached goal or crashed...
+    A: Running input check!
+    A: No inputs exceeded
+    A: Running ultimate bound check!
+        LLC: No ultimate bound exceeded
+    A: Running joint limits check!
+    A: No joint limits exceeded
+    W: Running grasp checks!
+    W: Grasp slipping violation detected at t = 16.535
+    W: Grasp tipping violation detected at t = 16.535
+    W: Running collision check!
+    W: No collisions detected
+S: Checking for self-intersection.
+S: Plotting
+    W: Plotting obstacles
+    W: Plotting goal
+    P: Plotting new data
+END ITERATION 34
+--------------------------------
+ITERATION 35 (t = 17.00)
+    P: Replanning!
+    P: Calling CUDA & C++ Program!
+        CUDA & C++: Time taken by generating reachable sets: 129 milliseconds
+        CUDA & C++: Ipopt: Slipping constraint violated at time interval: 97 
+        CUDA & C++: Ipopt maximum CPU time exceeded!
+        CUDA & C++: Time taken by Ipopt: 3164 milliseconds
+    P: Unable to find new trajectory!
+S: Planning time: 3.5987 s
+S: Stopping!
+    A: Moving!
+S: Checking if agent reached goal or crashed...
+    A: Running input check!
+    A: No inputs exceeded
+    A: Running ultimate bound check!
+        LLC: No ultimate bound exceeded
+    A: Running joint limits check!
+    A: No joint limits exceeded
+    W: Running grasp checks!
+    W: No grasp violations detected
+    W: Running collision check!
+    W: No collisions detected
+S: Checking for self-intersection.
+S: Plotting
+    W: Plotting obstacles
+    W: Plotting goal
+    P: Plotting new data
+END ITERATION 35
+--------------------------------
+ITERATION 36 (t = 17.50)
+    P: Replanning!
+    P: Calling CUDA & C++ Program!
+        CUDA & C++: Time taken by generating reachable sets: 124 milliseconds
+        CUDA & C++: Ipopt: Slipping constraint violated at time interval: 93 
+        CUDA & C++: Ipopt maximum CPU time exceeded!
+        CUDA & C++: Time taken by Ipopt: 3151 milliseconds
+    P: Unable to find new trajectory!
+S: Planning time: 3.5749 s
+S: Stopping!
+    A: Moving!
+S: Checking if agent reached goal or crashed...
+    A: Running input check!
+    A: No inputs exceeded
+    A: Running ultimate bound check!
+        LLC: No ultimate bound exceeded
+    A: Running joint limits check!
+    A: No joint limits exceeded
+    W: Running grasp checks!
+    W: No grasp violations detected
+    W: Running collision check!
+    W: No collisions detected
+S: Checking for self-intersection.
+S: Plotting
+    W: Plotting obstacles
+    W: Plotting goal
+    P: Plotting new data
+END ITERATION 36
+--------------------------------
+ITERATION 37 (t = 18.00)
+    P: Replanning!
+    P: Calling CUDA & C++ Program!
+        CUDA & C++: Time taken by generating reachable sets: 121 milliseconds
+        CUDA & C++: Ipopt: Slipping constraint violated at time interval: 93 
+        CUDA & C++: Ipopt maximum CPU time exceeded!
+        CUDA & C++: Time taken by Ipopt: 3160 milliseconds
+    P: Unable to find new trajectory!
+S: Planning time: 3.5841 s
+S: Stopping!
+    A: Moving!
+S: Checking if agent reached goal or crashed...
+    A: Running input check!
+    A: No inputs exceeded
+    A: Running ultimate bound check!
+        LLC: No ultimate bound exceeded
+    A: Running joint limits check!
+    A: No joint limits exceeded
+    W: Running grasp checks!
+    W: No grasp violations detected
+    W: Running collision check!
+    W: No collisions detected
+S: Checking for self-intersection.
+S: Plotting
+    W: Plotting obstacles
+    W: Plotting goal
+    P: Plotting new data
+END ITERATION 37
+--------------------------------
+ITERATION 38 (t = 18.50)
+    P: Replanning!
+    P: Calling CUDA & C++ Program!
+        CUDA & C++: Time taken by generating reachable sets: 126 milliseconds
+        CUDA & C++: Ipopt: Slipping constraint violated at time interval: 65 
+        CUDA & C++: Ipopt maximum CPU time exceeded!
+        CUDA & C++: Time taken by Ipopt: 3153 milliseconds
+    P: Unable to find new trajectory!
+S: Planning time: 3.5923 s
+S: Stopping!
+    A: Moving!
+S: Total time spent for Planner 1.00: 385.5371s
+S: Plotting
+    W: Plotting obstacles
+    W: Plotting goal
+    P: Plotting new data
+S: Planner 1 simulation complete!
+S: Compiling summary
+S: Running final goal check
+S: Finished Planner 1
+---------------------------------------------
+S: World 1 complete! Generating summary.
+S: Finished with World 1
+S: Total time spent for World 1: 385.84 s
+------------------------------------------------
+------------------------------------------------
+S: Total time spent running simulator: 385.85 s
+S: Simulation complete!
+>> 

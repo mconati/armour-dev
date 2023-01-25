@@ -299,8 +299,8 @@ classdef kinova_grasp_world_static < world
                     [q, solInfo1] = ik('cube_link',[1 0 0 rand_x; 0 1 0 rand_y; 0 0 1 rand_z; 0 0 0 1],weights,initialguess);
                     % put check for config in joint limits here?
     
-                    q_lower = W.arm_joint_state_limits(1,:);
-                    q_upper = W.arm_joint_state_limits(2,:);
+                    q_lower = W.arm_joint_state_limits(1,:); % + 0.01; % tighten the bounds to make sure valid
+                    q_upper = W.arm_joint_state_limits(2,:); % + 0.01; % tighten the bounds to make sure valid
                     for i = 1:length(q)
 %                         test = append(num2str(q_lower(i)),' ',num2str(q(i)),' ',num2str(q_upper(i)));
 %                         disp(test)
@@ -512,7 +512,7 @@ classdef kinova_grasp_world_static < world
             % ZMP_Moment = n(:,10) + cross([0;0;cup_height],f(:,10));
             
             sep = -1*fz; %fz; %
-            slip = sqrt(fx^2+fy^2) - W.u_s*fz;
+            slip = sqrt(fx^2+fy^2) - W.u_s*abs(fz);
             ZMP = cross([0;0;1],n(:,10))./dot([0;0;1],f(:,10));
 %             ZMP = cross(ZMP_Moment,[0;0;1])./dot([0;0;1],f(:,10)); % RNEA
 %             passes out the force and moment at the joint so original ZMP
@@ -556,23 +556,27 @@ classdef kinova_grasp_world_static < world
     
                 %% Calculating Constraints (written as <0)
                 sep = -1*fz; %fz; %
-                slip = sqrt(fx^2+fy^2) - W.u_s*fz;
+                slip = sqrt(fx^2+fy^2) - W.u_s*abs(fz);
+                slip2 = fx^2+fy^2 - W.u_s^2*fz^2;
                 ZMP = cross([0;0;1],n(:,10))./dot([0;0;1],f(:,10));
                 tip = sqrt(ZMP(1)^2 + ZMP(2)^2) - W.surf_rad; % + tip_threshold;
-    
-                if (sep > 0) || (slip > 0) || (tip > 0)
+                ZMP_top = cross([0;0;1],n(:,10));
+                ZMP_bottom = dot([0;0;1],f(:,10));
+                tip2 = ZMP_top(1)^2 + ZMP_top(2)^2 - W.surf_rad^2*ZMP_bottom^2;
+
+                if (sep > 1e-6) || (slip2 > 1e-6) || (tip2 > 1e-6)
                     out = true;
                 end
                 
-                if sep > 0
+                if sep > 1e-6
                     sep_val = true;
                 end
                 
-                if slip > 0
+                if slip2 > 1e-6
                     slip_val = true;
                 end
                 
-                if tip > 0
+                if tip2 > 1e-6
                     tip_val = true;
                 end
             else
