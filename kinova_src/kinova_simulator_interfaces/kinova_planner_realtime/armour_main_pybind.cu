@@ -189,6 +189,7 @@ class pzsparse {
                     // compute max disturbance (stored in u_nom_int)
                     for (int i = 0; i < NUM_FACTORS; i++) {
                         kd.u_nom_int(i, openmp_t_ind) = kd.u_nom_int(i, openmp_t_ind) - kd.u_nom(i, openmp_t_ind);
+                        // kd.u_nom_int(i, openmp_t_ind) = 0;
                     }
 
                     // reduce non-only-k-dependent generators so that slice takes less time
@@ -216,21 +217,25 @@ class pzsparse {
                         rho_max_temp += temp(0) * temp(0);
 
                         torque_radius(i, t_ind) = alpha * (M_max - M_min) * eps + 0.5 * max(abs(temp(0).lower()), abs(temp(0).upper()));
+                        // torque_radius(i, t_ind) = 0;
                     }
                     rho_max_temp = sqrt(rho_max_temp);
                     
                     for (int i = 0; i < NUM_FACTORS; i++) {
                         torque_radius(i, t_ind) += 0.5 * rho_max_temp.upper();
+                        // torque_radius(i, t_ind) += 0;
                     }
 
                     // (2) add the radius of the nominal input PZ (after reducing)
                     for (int i = 0; i < NUM_FACTORS; i++) {
                         torque_radius(i, t_ind) += kd.u_nom(i, t_ind).independent(0);
+                        // torque_radius(i, t_ind) += 0;
                     }
 
                     // (3) add friction
                     for (int i = 0; i < NUM_FACTORS; i++) {
                         torque_radius(i, t_ind) += friction[i];
+                        // torque_radius(i, t_ind) += 0;
                     }
 
                     // so that torque_radius would be the radius of the total control input PZ from now
