@@ -54,7 +54,7 @@ plot_while_running = true ;
 
 % simulation
 max_sim_time = 172800 ; % 48 hours
-max_sim_iter = 600 ;
+max_sim_iter = 1 ;
 stop_threshold = 4 ; % number of failed iterations before exiting
 
 %%% for world
@@ -167,4 +167,133 @@ end
 
 % run simulation
 summary = S.run();
+
+
+%% Calculating the Acceleration
+
+joint_angles = A.state(A.joint_state_indices,:);
+joint_angular_velocity = A.state(A.joint_speed_indices,:);
+
+qdd_post = zeros(7,length(A.time));
+% calculating the acceleration in post to compare with what is stored
+for i = 2:length(A.time)
+    [M, C, g] = A.calculate_dynamics(joint_angles(:,i-1), joint_angular_velocity(:,i-1), A.params.true);
+
+    % can I call u=A.LLC.get_control_inputs() here with the P.info?
+    
+    % need to initialize this with a column of zeros and start at the
+    % second index - fixed
+    qdd_post(:,i) = M\(A.input(:,i)-C*joint_angular_velocity(:,i-1)-g);
+%         qdd_post(:,i) = M\(A.input(:,i)-C*joint_angular_velocity(:,i)-g);
+
+end
+
+% Calling RNEA
+
+for i = 1:length(A.time)
+
+    % clear relevant variables
+    clear tau f n
+
+    % call rnea
+    [tau, f, n] = rnea(joint_angles(:,i)',joint_angular_velocity(:,i)',joint_angular_velocity(:,i)',qdd_post(:,i)',true,A.params.true); % A.acceleration(:,i)'
+%     [tau, f, n] = rnea(joint_angles(:,i)',joint_angular_velocity(:,i)',joint_angular_velocity(:,i)',accel_short(:,i)',true,A.params.true); % A.acceleration(:,i)'
+
+    % store rnea results
+    Tau{i} = tau;
+    F{i} = f;
+    N{i} = n;
+
+    % store the contact forces
+    force(:,i) = f(:,10);
+    % store the contact moments
+    moment(:,i) = n(:,10);
+
+end
+
+% Plotting the forces
+
+% if plot_force
+
+    figure(3)
+    % plot the x-axis force (in the tray frame)
+    subplot(1,3,1)
+    hold on
+    plot(A.time(1:end), force(1,:), 'k')
+    xlabel('time (s)')
+    ylabel('x-axis Force (N)')
+    axis('square')
+    grid on
+    % plot the y-axis force (in the tray frame)
+    subplot(1,3,2)
+    hold on
+    plot(A.time(1:end), force(2,:), 'k')
+    xlabel('time (s)')
+    ylabel('y-axis Force (N)')
+    axis('square')
+    grid on
+    % plot the z-axis force (in the tray frame)
+    subplot(1,3,3)
+    hold on
+    plot(A.time(1:end), force(3,:), 'k')
+    xlabel('time (s)')
+    ylabel('z-axis Force (N)')
+    axis('square')
+    grid on
+    
+% end
+
+% Calculating Constraints
+
+% separation constraint
+sep = -1*force(3,:);
+
+% slipping constraint
+slip = sqrt(force(1,:).^2+force(2,:).^2) - u_s.*abs(force(3,:));
+slip2 = force(1,:).^2+force(2,:).^2 - u_s^2.*force(3,:).^2;
+
+for i = 1:length(A.time)
+    % tipping constraint the normal way
+    ZMP_top = cross([0;0;1],moment(:,i)); % normal vector should come first
+    ZMP_bottom = dot([0;0;1],force(:,i));
+    ZMP(:,i) = ZMP_top/ZMP_bottom;
+    ZMP_rad(i) = sqrt(ZMP(1,i)^2+ZMP(2,i)^2);
+    tip(i) = ZMP_rad(i) - surf_rad;
+    % tipping constraint the PZ way
+    ZMP_top2 = cross([0;0;1],moment(:,i));
+    ZMP_bottom2 = dot([0;0;1],force(:,i));
+    tip2(i) = ZMP_top(1)^2 + ZMP_top(2)^2 - ZMP_bottom^2*(surf_rad)^2;
+end
+
+% plotting constraints
+
+% if plot_constraint
+    
+    figure(4)
+    % plot the separation constraint
+    subplot(1,3,1)
+    hold on
+    plot(A.time(1:end),sep, 'k')
+    xlabel('time (s)')
+    ylabel('Separation Constraint')
+    axis('square')
+    grid on
+    % plot the slipping constraint
+    subplot(1,3,2)
+    hold on
+    plot(A.time(1:end),slip, 'k')
+    xlabel('time (s)')
+    ylabel('Slipping Constraint')
+    axis('square')
+    grid on
+    % plot the tipping constraint
+    subplot(1,3,3)
+    hold on
+    plot(A.time(1:end),tip, 'k')
+    xlabel('time (s)')
+    ylabel('Tipping Constraint')
+    axis('square')
+    grid on
+
+% end
 
