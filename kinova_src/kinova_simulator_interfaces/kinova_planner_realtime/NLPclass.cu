@@ -808,21 +808,21 @@ void armtd_NLP::finalize_solution(
         if(g_copy[i] > SEPARATION_CONSTRAINT_VIOLATION_THRESHOLD) {
             feasible = false;
             double t_violation = i - offset;
-            cout << "        CUDA & C++: Ipopt: Separation constraint violated at time interval: " << t_violation << " \n";
+            cout << "        CUDA & C++: Ipopt: Separation constraint violated at time interval: " << t_violation << " with value: " << g_copy[i] << "\n";
             return;
         }
         // slipping constraint
         if(g_copy[i+NUM_TIME_STEPS] > SLIPPING_CONSTRAINT_VIOLATION_THRESHOLD){
             feasible = false;
             double t_violation = i - offset;
-            cout << "        CUDA & C++: Ipopt: Slipping constraint violated at time interval: " << t_violation << " \n";
+            cout << "        CUDA & C++: Ipopt: Slipping constraint violated at time interval: " << t_violation << " with value: " << g_copy[i+NUM_TIME_STEPS] << " \n";
             return;
         }
         // tipping constraint
         if(g_copy[i+2*NUM_TIME_STEPS] > TIPPING_CONSTRAINT_VIOLATION_THRESHOLD){
             feasible = false;
             double t_violation = i - offset;
-            cout << "        CUDA & C++: Ipopt: Tipping constraint violated at time interval: " << t_violation << " \n";
+            cout << "        CUDA & C++: Ipopt: Tipping constraint violated at time interval: " << t_violation << " with value: " << g_copy[i+2*NUM_TIME_STEPS] << " \n";
             return;
         }
     }
