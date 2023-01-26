@@ -3,9 +3,7 @@
 
 #include "CollisionChecking.h"
 
-Obstacles::Obstacles(){}
-
-void Obstacles::initialize(const double* obstacles_inp, const int num_obstacles_inp) {
+Obstacles::Obstacles(const double* obstacles_inp, const int num_obstacles_inp) {
     obstacles = obstacles_inp;
     num_obstacles = num_obstacles_inp;
 
