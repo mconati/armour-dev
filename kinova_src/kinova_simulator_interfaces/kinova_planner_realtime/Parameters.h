@@ -13,14 +13,14 @@
 
 // Parameters for Trajectories.h:
     // number of time steps (This should be an EVEN number!!!)
-    #define NUM_TIME_STEPS 128
+    #define NUM_TIME_STEPS 64
 
     // range of parameters (size of generators in PZ).
     const double k_range[NUM_FACTORS] = { M_PI / 72, M_PI / 72, M_PI / 72, M_PI / 72, M_PI / 72, M_PI / 72, M_PI / 72 }; // (radian)
 
 // Parameters for CollisionChecking.h:
     // maximum number of obstacles (used for memory pre-allocation)
-    #define MAX_OBSTACLE_NUM 40
+    #define MAX_OBSTACLE_NUM 10
 
     // number of generators of obstacle zonotopes
     #define MAX_OBSTACLE_GENERATOR_NUM 3
@@ -38,9 +38,9 @@
     #define TORQUE_INPUT_CONSTRAINT_VIOLATION_THRESHOLD 1e-4
 
 // Parameters for armour_main.cpp
-    #define IPOPT_OPTIMIZATION_TOLERANCE 1e-6
+    #define IPOPT_OPTIMIZATION_TOLERANCE 1e-3
 
-    #define IPOPT_MAX_CPU_TIME 10.0
+    #define IPOPT_MAX_CPU_TIME 10
 
     #define IPOPT_PRINT_LEVEL 0
 

@@ -31,7 +31,8 @@ class pzsparse {
 
         int num_obstacles;
         double obstacles[MAX_OBSTACLE_NUM * (MAX_OBSTACLE_GENERATOR_NUM + 1) * 3];
-        Obstacles O;
+        std::shared_ptr<Obstacles> O_ptr{nullptr};
+        // Obstacles O;
 
 
         BezierCurve traj;
@@ -61,7 +62,9 @@ class pzsparse {
             }
             cout << '\n' << endl;
             std::cout << "allocating obstacles..." << std::endl;
-            O.initialize(obstacles, num_obstacles);
+            O_ptr = std::make_unique<Obstacles>();
+            O_ptr->initialize(obstacles, num_obstacles);
+            // O.initialize(obstacles, num_obstacles);
             std::cout << "Obstacles allocated!" << std::endl;
         }
 
@@ -124,16 +127,15 @@ class pzsparse {
 
     public:
     
-        pzsparse(py::array_t<double> obs_vec){
+        pzsparse(py::array_t<double> obs_vec): num_obstacles(0){
             outputstream1 = std::ofstream(outputfilename1);
 
-            num_obstacles = 0;
-            p[NUM_TIME_STEPS * NUM_FACTORS * 3];
-            u_nom[NUM_TIME_STEPS * NUM_FACTORS];
-            v_norm[NUM_TIME_STEPS * NUM_FACTORS] = {0.0};
-            jointPositionRadius[NUM_TIME_STEPS * NUM_FACTORS * 3] = {0.0};
-
             set_obstacles(obs_vec);
+        }
+
+        ~pzsparse()
+        {
+            outputstream1.close();
         }
 
         const int getNumObstacles(){
@@ -248,7 +250,8 @@ class pzsparse {
 
             // Buffer obstacles and initialize collision checking hyperplanes
             try {
-                O.initializeHyperPlane(link_independent_generators);
+                O_ptr->initializeHyperPlane(link_independent_generators);
+                // O.initializeHyperPlane(link_independent_generators);
             }
             catch (int errorCode) {
                 WARNING_PRINT("        CUDA & C++: Error initializing collision checking hyperplanes! Check previous error message!");
@@ -264,7 +267,7 @@ class pzsparse {
             // Solve optimization
             SmartPtr<armtd_NLP> mynlp = new armtd_NLP();
             try {
-                mynlp->set_parameters(q_des, t_plan, &traj, &kd, &torque_radius, &O);
+                mynlp->set_parameters(q_des, t_plan, &traj, &kd, &torque_radius, O_ptr.get());
             }
             catch (int errorCode) {
                 WARNING_PRINT("        CUDA & C++: Error initializing Ipopt! Check previous error message!");
@@ -416,6 +419,11 @@ class pzsparse {
             return traj_d;
         }
 
+        void free()
+        {
+            O_ptr.reset();
+        }
+
 };
 
 PYBIND11_MODULE(armour_main_pybind, m) {
@@ -424,4 +432,5 @@ PYBIND11_MODULE(armour_main_pybind, m) {
         .def("getNumObstacles", &pzsparse::getNumObstacles)
         .def("optimize", &pzsparse::optimize)
         .def("getDesTraj", &pzsparse::getDesTraj);
+        // .def("free", &pzsparse::free);
 }
