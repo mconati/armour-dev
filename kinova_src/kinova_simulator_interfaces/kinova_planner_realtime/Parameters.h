@@ -29,7 +29,7 @@
     // number of threads to parallelize in CPU
     // As a rule of thumb, you SHOULD NOT need to exceed the number of available processors in your system!!!
     // In Linux, run nproc in command line to find out number of processors
-    #define NUM_THREADS 16
+    #define NUM_THREADS 32
 
     // threshold for collision avoidance constraint considered to be violated (unit: meter)
     #define COLLISION_AVOIDANCE_CONSTRAINT_VIOLATION_THRESHOLD 1e-4
@@ -40,7 +40,7 @@
 // Parameters for armour_main.cpp
     #define IPOPT_OPTIMIZATION_TOLERANCE 1e-6
 
-    #define IPOPT_MAX_CPU_TIME 100.0
+    #define IPOPT_MAX_CPU_TIME 10.0
 
     #define IPOPT_PRINT_LEVEL 0
 
