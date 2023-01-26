@@ -539,6 +539,10 @@ classdef kinova_grasp_world_static < world
     
                 [M, C, g] = A.calculate_dynamics(q(A.joint_state_indices), q(A.joint_speed_indices), agent_info.params.true);
                 
+                for i = 1:A.n_inputs
+                    M(i,i) = M(i,i) + A.transmision_inertia(i);
+                end
+
                 % put this here?
                 u = A.LLC.get_control_inputs(A, t_check-t_start, q, planner_info);
     

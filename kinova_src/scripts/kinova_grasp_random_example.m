@@ -54,7 +54,7 @@ plot_while_running = true ;
 
 % simulation
 max_sim_time = 172800 ; % 48 hours
-max_sim_iter = 1 ;
+max_sim_iter = 600 ;
 stop_threshold = 4 ; % number of failed iterations before exiting
 
 %%% for world

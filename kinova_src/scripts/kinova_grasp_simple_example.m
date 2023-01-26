@@ -50,7 +50,7 @@ plot_while_running = true ;
 
 % simulation
 max_sim_time = 172800 ; % 48 hours
-max_sim_iter = 15 ;
+max_sim_iter = 600 ;
 stop_threshold = 4 ; % number of failed iterations before exiting
 
 %%% for world
@@ -188,6 +188,9 @@ qdd_post = zeros(7,length(A.time));
 for i = 2:length(A.time)
     [M, C, g] = A.calculate_dynamics(joint_angles(:,i), joint_angular_velocity(:,i), A.params.true);
 
+    for j = 1:A.n_inputs
+        M(j,j) = M(j,j) + A.transmision_inertia(j);
+    end
     % can I call u=A.LLC.get_control_inputs() here with the P.info?
     
     % need to initialize this with a column of zeros and start at the
@@ -294,6 +297,7 @@ end
     subplot(1,3,2)
     hold on
     plot(A.time(1:end),slip, 'k')
+    plot(A.time(1:end),slip2, 'c')
     xlabel('time (s)')
     ylabel('Slipping Constraint')
     axis('square')
@@ -302,6 +306,7 @@ end
     subplot(1,3,3)
     hold on
     plot(A.time(1:end),tip, 'k')
+    plot(A.time(1:end),tip2, 'c')
     xlabel('time (s)')
     ylabel('Tipping Constraint')
     axis('square')
