@@ -16,9 +16,9 @@ void Obstacles::initialize(const double* obstacles_inp, const int num_obstacles_
 
     // build pre-defined hyper-plane equations for collision checking between links and obstacles
     if (obstacles != nullptr && num_obstacles > 0) {
-        cudaMalloc((void**)&dev_A, NUM_FACTORS * NUM_TIME_STEPS * MAX_OBSTACLE_NUM * COMB_NUM * sizeof(Eigen::Vector3d));
-        cudaMalloc((void**)&dev_d, NUM_FACTORS * NUM_TIME_STEPS * MAX_OBSTACLE_NUM * COMB_NUM * sizeof(double));
-		cudaMalloc((void**)&dev_delta, NUM_FACTORS * NUM_TIME_STEPS * MAX_OBSTACLE_NUM * COMB_NUM * sizeof(double));
+        cudaMalloc((void**)&dev_A, NUM_JOINTS * NUM_TIME_STEPS * MAX_OBSTACLE_NUM * COMB_NUM * sizeof(Eigen::Vector3d));
+        cudaMalloc((void**)&dev_d, NUM_JOINTS * NUM_TIME_STEPS * MAX_OBSTACLE_NUM * COMB_NUM * sizeof(double));
+		cudaMalloc((void**)&dev_delta, NUM_JOINTS * NUM_TIME_STEPS * MAX_OBSTACLE_NUM * COMB_NUM * sizeof(double));
 
         // initialize constant memory
         // obstacle data
@@ -214,10 +214,10 @@ __global__ void polytope_PH(Eigen::Vector3d* buffered_c,
 	}
 
 	// A = C
-	A[(((time_id * NUM_FACTORS + link_id) * num_obstacles + obs_id) * COMB_NUM + p_id)] = C;
+	A[(((time_id * NUM_JOINTS + link_id) * num_obstacles + obs_id) * COMB_NUM + p_id)] = C;
 
 	// d = C * c
-	d[((time_id * NUM_FACTORS + link_id) * num_obstacles + obs_id) * COMB_NUM + p_id] = C[0] * c[0] + C[1] * c[1] + C[2] * c[2];
+	d[((time_id * NUM_JOINTS + link_id) * num_obstacles + obs_id) * COMB_NUM + p_id] = C[0] * c[0] + C[1] * c[1] + C[2] * c[2];
 
 	// delta = sum(abs(C * G))
 	double delta_res = 0.0;
@@ -226,7 +226,7 @@ __global__ void polytope_PH(Eigen::Vector3d* buffered_c,
 		delta_res += fabs(C[0] * G[j][0] + C[1] * G[j][1] + C[2] * G[j][2]);
 	}
 
-	delta[((time_id * NUM_FACTORS + link_id) * num_obstacles + obs_id) * COMB_NUM + p_id] = delta_res;
+	delta[((time_id * NUM_JOINTS + link_id) * num_obstacles + obs_id) * COMB_NUM + p_id] = delta_res;
 }
 
 __global__ void checkCollisionKernel(Eigen::Vector3d* A, 
@@ -245,9 +245,9 @@ __global__ void checkCollisionKernel(Eigen::Vector3d* A,
 	__shared__ double pos_res[COMB_NUM];
 	__shared__ double neg_res[COMB_NUM];
 
-	Eigen::Vector3d A_elt = A[(((time_id * NUM_FACTORS + link_id) * num_obstacles + obs_id) * COMB_NUM + p_id)];
-	double d_elt = d[(((time_id * NUM_FACTORS + link_id) * num_obstacles + obs_id) * COMB_NUM + p_id)];
-	double delta_elt = delta[(((time_id * NUM_FACTORS + link_id) * num_obstacles + obs_id) * COMB_NUM + p_id)];
+	Eigen::Vector3d A_elt = A[(((time_id * NUM_JOINTS + link_id) * num_obstacles + obs_id) * COMB_NUM + p_id)];
+	double d_elt = d[(((time_id * NUM_JOINTS + link_id) * num_obstacles + obs_id) * COMB_NUM + p_id)];
+	double delta_elt = delta[(((time_id * NUM_JOINTS + link_id) * num_obstacles + obs_id) * COMB_NUM + p_id)];
 
 	Eigen::Vector3d center_elt = link_sliced_center[time_id * NUM_JOINTS + link_id];
 
@@ -265,7 +265,7 @@ __global__ void checkCollisionKernel(Eigen::Vector3d* A,
 	if (p_id == 0) {
 		double max_elt = -100000000;
 		uint max_id = 0;
-		bool pos_or_neg = 0; // false -> pos, true -> neg
+		bool pos_or_neg = false; // false -> pos, true -> neg
 
 		for (uint i = 0; i < COMB_NUM; i++) {
 			if (pos_res[i] > max_elt) {
