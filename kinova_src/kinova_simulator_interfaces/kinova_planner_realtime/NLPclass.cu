@@ -194,7 +194,7 @@ bool armtd_NLP::eval_f(
     }
 
     // obj_value = sum((q_plan - q_des).^2);
-    obj_value = 0; 
+    obj_value = 0;
     for(Index i = 0; i < n; i++){
         double q_plan = q_des_func(desired_trajectory->q0[i], desired_trajectory->qd0[i], desired_trajectory->qdd0[i], k_range[i] * x[i], t_plan);
         obj_value += pow(q_plan - q_des[i], 2);
