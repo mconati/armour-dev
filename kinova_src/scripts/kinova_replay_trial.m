@@ -1,11 +1,11 @@
 %% user parameters
 clear;
-filename = './random_pillars_crash/trial_scene_139.mat';
+filename = './trial_scene_001_.mat';
 
 verbosity = 0 ;
 dimension = 3 ;
 
-plot_start_and_end_config_only = true; % otherwise, animate trial.
+plot_start_and_end_config_only = false; % otherwise, animate trial.
 
 %% automated from here
 load(filename)
@@ -18,7 +18,7 @@ start = summary.start ;
 goal = summary.goal ;
 
 % agent just for visualizing, parameters may differ
-agent_urdf = 'kinova_without_gripper.urdf';
+agent_urdf = 'Kinova_Grasp_URDF.urdf';
 robot = importrobot(agent_urdf);
 robot.DataFormat = 'col';
 robot.Gravity = [0 0 -9.81];
@@ -33,7 +33,7 @@ A = uarmtd_agent(robot, params,...
 % create world
 goal_type = 'configuration';
 goal_radius = pi/30;
-W = kinova_world_static('create_random_obstacles_flag', false, 'include_base_obstacle', true, 'goal_radius', goal_radius, 'N_obstacles',length(obstacles),'dimension',dimension,'workspace_goal_check', 0,...
+W = kinova_grasp_world_static('create_random_obstacles_flag', false, 'include_base_obstacle', true, 'goal_radius', goal_radius, 'N_obstacles',length(obstacles),'dimension',dimension,'workspace_goal_check', 0,...
                             'verbose',verbosity, 'start', start, 'goal', goal, 'obstacles', obstacles, 'goal_type', goal_type) ;
 
 % fill in agent state
