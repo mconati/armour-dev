@@ -23,6 +23,7 @@ use_cuda_flag = true;
 
 %%% for agent
 agent_urdf = 'Kinova_Grasp_URDF.urdf';
+robot = importrobot(agent_urdf,'urdf');
 
 add_uncertainty_to = 'all'; % choose 'all', 'link', or 'none'
 links_with_uncertainty = {}; % if add_uncertainty_to = 'link', specify links here.
@@ -55,7 +56,10 @@ stop_threshold = 4 ; % number of failed iterations before exiting
 % goal = [1; 1; 1; 1; 1; 1; 1]; % goal configuration
 
 start = [0;-pi/2;0;0;0;0;0];
-goal = [pi/4;-pi/2;0;0;0;0;0];
+goal = [pi;-pi/2;0;0;0;0;0];
+
+% figure(101)
+% show(robot,goal)
 
 obstacles{1} = box_obstacle_zonotope('center', [0; 0; 0.6],...
                                      'side_lengths', [0.1; 0.1; 0.1]) ;
@@ -84,7 +88,7 @@ end
 
 % run loop
 tic;
-W = kinova_world_static('create_random_obstacles_flag', false, 'goal_radius', goal_radius, 'N_obstacles',length(obstacles),'dimension',dimension,'workspace_goal_check', 0,...
+W = kinova_grasp_world_static('create_random_obstacles_flag', false, 'goal_radius', goal_radius, 'N_obstacles',length(obstacles),'dimension',dimension,'workspace_goal_check', 0,...
                         'verbose',verbosity, 'start', start, 'goal', goal, 'obstacles', obstacles, 'goal_type', goal_type) ;
 
 % create arm agent
@@ -106,7 +110,7 @@ if use_robust_input
     A.LLC = uarmtd_robust_CBF_LLC('verbose', verbosity, ...
                                   'use_true_params_for_robust', false, ...
                                   'V_max', LLC_V_max, ...
-                                  'if_use_mex_controller', false);
+                                  'if_use_mex_controller', true);
 else
     A.LLC = uarmtd_nominal_passivity_LLC('verbose', verbosity);
 end

@@ -36,7 +36,7 @@ classdef uarmtd_planner < robot_arm_generic_planner
 
         % parameters for grasp constraints
         u_s = NaN; % coefficient of friction
-        db2 = NaN; % diameter of a circular contact area
+        surf_rad = NaN; % RADIUS of a circular contact area
 
         % for obstacle avoidance:
         combs;
@@ -101,12 +101,12 @@ classdef uarmtd_planner < robot_arm_generic_planner
                 speed_limit_infs = isinf(agent_info.joint_speed_limits) ;
                 input_limit_infs = isinf(agent_info.joint_input_limits) ;
     
-                P.agent_info.joint_state_limits(1,joint_limit_infs(1,:)) = -200*pi ;
-                P.agent_info.joint_state_limits(2,joint_limit_infs(2,:)) = +200*pi ;            
-                P.agent_info.joint_speed_limits(1,speed_limit_infs(1,:)) = -200*pi ;
-                P.agent_info.joint_speed_limits(2,speed_limit_infs(2,:)) = +200*pi ;
-                P.agent_info.joint_input_limits(1,input_limit_infs(1,:)) = -200*pi ;
-                P.agent_info.joint_input_limits(2,input_limit_infs(2,:)) = +200*pi ;
+                P.agent_info.joint_state_limits(1,joint_limit_infs(1,:)) = -2*pi ;
+                P.agent_info.joint_state_limits(2,joint_limit_infs(2,:)) = +2*pi ;            
+                P.agent_info.joint_speed_limits(1,speed_limit_infs(1,:)) = -2*pi ;
+                P.agent_info.joint_speed_limits(2,speed_limit_infs(2,:)) = +2*pi ;
+                P.agent_info.joint_input_limits(1,input_limit_infs(1,:)) = -2*pi ;
+                P.agent_info.joint_input_limits(2,input_limit_infs(2,:)) = +2*pi ;
     
                 % generate a waypoint in configuration space
                 P.vdisp('Generating cost function',6)
@@ -150,7 +150,7 @@ classdef uarmtd_planner < robot_arm_generic_planner
                     % Make sure this is consistent with the k_range in
                     % cuda-dev/PZsparse-Bernstein/Trajectory.h 
                     % !!!!!!
-                    P.jrs_info.g_k_bernstein = [pi/24; pi/24; pi/24; pi/24; pi/24; pi/24; pi/24];
+                    P.jrs_info.g_k_bernstein = [pi/72; pi/72; pi/72; pi/72; pi/72; pi/72; pi/72];
 %                     P.jrs_info.g_k_bernstein = [pi/72; pi/72; pi/72; pi/72; pi/72; pi/72; pi/72];
     
                     q_des = P.HLP.get_waypoint(agent_info,world_info,P.lookahead_distance) ;
@@ -549,7 +549,7 @@ classdef uarmtd_planner < robot_arm_generic_planner
                 % need to add a check somewhere to see if constraint is
                 % trivially satisfied
                 u_s = P.u_s; % A.u_s; 0.5
-                db2 = P.db2; % 0.0762; % A.db2 0.0762
+                surf_rad = P.surf_rad; % 0.0762; % A.db2 0.0762
 
                 % iterate through all of the time steps
                 for i = 1:jrs_info.n_t
@@ -670,7 +670,7 @@ classdef uarmtd_planner < robot_arm_generic_planner
                     % for the bottom component: 
                     ZMP_bottom = f_int{i,1}{10}*[0,0,1]; % verified (same center as normal rnea)
 %                     ZMP_bottom = reduce(ZMP_bottom, 'girard', P.agent_info.params.pz_interval.zono_order);
-                    ZMP_temp = (ZMP_bottom.*ZMP_bottom).*(db2/2)^2;
+                    ZMP_temp = (ZMP_bottom.*ZMP_bottom).*(surf_rad)^2;
 %                     ZMP_temp = reduce(ZMP_temp, 'girard', P.agent_info.params.pz_interval.zono_order);
                     
                     % there should either be only G, only Grest or both.

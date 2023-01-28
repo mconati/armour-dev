@@ -17,7 +17,7 @@
     #define NUM_TIME_STEPS 100
 
     // range of parameters (size of generators in PZ).
-    const double k_range[NUM_FACTORS] = { M_PI / 24, M_PI / 24, M_PI / 24, M_PI / 24, M_PI / 24, M_PI / 24, M_PI / 24 }; // (radian)
+    const double k_range[NUM_FACTORS] = { M_PI / 72, M_PI / 72, M_PI / 72, M_PI / 72, M_PI / 72, M_PI / 72, M_PI / 72 }; // (radian)
 
 // Parameters for CollisionChecking.h:
     // maximum number of obstacles (used for memory pre-allocation)
@@ -39,18 +39,18 @@
     #define TORQUE_INPUT_CONSTRAINT_VIOLATION_THRESHOLD 1e-4
 
     // threshold for separation constraint (unit: Newton)
-    #define SEPARATION_CONSTRAINT_VIOLATION_THRESHOLD -1e-6
+    #define SEPARATION_CONSTRAINT_VIOLATION_THRESHOLD 1e-6
 
     // threshold for slipping constraint violation (unit: Newton) // squared?
-    #define SLIPPING_CONSTRAINT_VIOLATION_THRESHOLD -1e-6
+    #define SLIPPING_CONSTRAINT_VIOLATION_THRESHOLD 1e-6
 
     // threshold for tipping constraint violation (unit: meter) // squared?
-    #define TIPPING_CONSTRAINT_VIOLATION_THRESHOLD -1e-6
+    #define TIPPING_CONSTRAINT_VIOLATION_THRESHOLD 1e-6
 
 // Parameters for armour_main.cpp
     #define IPOPT_OPTIMIZATION_TOLERANCE 1e-6
 
-    #define IPOPT_MAX_CPU_TIME 14.0
+    #define IPOPT_MAX_CPU_TIME 14 // 14.0
 
     #define IPOPT_PRINT_LEVEL 0
 

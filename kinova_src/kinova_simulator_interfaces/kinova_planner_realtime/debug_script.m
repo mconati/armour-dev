@@ -25,21 +25,27 @@ link_poly_zonotopes = create_pz_bounding_boxes(robot);
 %% initialize desired trajectories
 % choose random initial conditions and make sure they are aligned with
 % the first three rows in buffer/armour.in
-q0 = [0.0000000000 -1.5707000000 0.0000000000 0.0000000000 0.0000000000 0.0000000000 0.0000000000]';
-qd0 = [0.0000000000 0.0000000000 0.0000000000 0.0000000000 0.0000000000 0.0000000000 0.0000000000]'; 
-qdd0 = [0.0000000000 0.0000000000 0.0000000000 0.0000000000 0.0000000000 0.0000000000 0.0000000000]';
+% q0 = [0.0000000000 -1.5707000000 0.0000000000 0.0000000000 0.0000000000 0.0000000000 0.0000000000]';
+% qd0 = [0.0000000000 0.0000000000 0.0000000000 0.0000000000 0.0000000000 0.0000000000 0.0000000000]'; 
+% qdd0 = [0.0000000000 0.0000000000 0.0000000000 0.0000000000 0.0000000000 0.0000000000 0.0000000000]';
+q0 = [0.2038127266 -1.5708173008 0.2038127266 -0.0000076520 0.2038127266 -0.0000018307 -0.0000000752 ]';
+qd0 = [0.0592332659 -0.0000048124 0.0592332659 -0.0000017300 0.0592332659 -0.0000003942 -0.0000000156 ]';
+qdd0 = [-0.0665036714 0.0000075421 -0.0665036714 0.0000027297 -0.0665036714 0.0000006371 0.0000000322 ]';
+qdes = [0.4347528433 -1.5708206594 0.4347528920 -0.0000088522 0.4347528206 -0.0000020995 -0.0000000857 ]';
 
 % choose a random k_range and make sure they are aligned with k_range in
 % Parameters.h
-k_range = [pi/24, pi/24, pi/24, pi/24, pi/24, pi/24, pi/24]';
+% k_range = [pi/24, pi/24, pi/24, pi/24, pi/24, pi/24, pi/24]';
+k_range = [pi/72, pi/72, pi/72, pi/72, pi/72, pi/72, pi/72]';
+
 
 % choose a random point to slice and make sure they are equal to variable
 % factors defined in PZ_test.cpp
 
-k = [0.5, 0.7, 0.7, 0.0, -0.8, -0.6, -0.7]';
+% k = [0.5, 0.7, 0.7, 0.0, -0.8, -0.6, -0.7]';
 % k = zeros(7,1);
 % k = ones(7,1);
-% k = -ones(7,1);
+k = -ones(7,1);
 
 q1 = q0 + k .* k_range;
 qd1 = zeros(7,1);
@@ -181,7 +187,7 @@ end
 %% Calculate the Constraints
 
 u_s = 0.609382421;
-surf_rad =  0.058;
+surf_rad =  0.058/2;
 
 for i = 1:tid
     % separation constraint
@@ -213,6 +219,13 @@ end
 % for i=1:3
 % 
 % end
+
+% for i = 1:length(A.time)
+% 
+%     out = W.grasp_check(A,A.agent_info,P.info)
+% 
+% end
+
 
 %% helper functions
 function [q, qd, qdd] = get_desired_traj(beta, t)
