@@ -81,7 +81,9 @@ classdef uarmtd_planner < robot_arm_generic_planner
                 'obstacles',[],'q_0',[],'q_dot_0',[],'k_opt',[],...
                 'desired_trajectory', [], 't_move', [], ...
                 'FO_zono', [], 'sliced_FO_zono', [], ...
-                'contact_constraint_radii', []) ;
+                'contact_constraint_radii', [],...
+                'wrench_radii',[],...
+                'constraints_value',[]) ;
         end
         
         function [T, U, Z, info] = replan(P,agent_info,world_info)
@@ -141,6 +143,8 @@ classdef uarmtd_planner < robot_arm_generic_planner
                 end
                 toc(planning_time);
             else % if using cuda
+
+                %%%%% This one
                 if strcmp(P.traj_type, 'bernstein')
                     P.jrs_info.n_t = 100;
                     P.jrs_info.n_q = 7;
@@ -221,6 +225,7 @@ classdef uarmtd_planner < robot_arm_generic_planner
                         control_input_radius = readmatrix('armour_control_input_radius.out', 'FileType', 'text');
                         constraints_value = readmatrix('armour_constraints.out', 'FileType', 'text');
                         contact_constraint_radii = readmatrix('armour_force_constraint_radius.out', 'FileType', 'text');
+                        wrench_radii = readmatrix('armour_force_constraint_radius.out', 'FileType', 'text');
 
                         link_frs_vertices = cell(7,1);
                         for tid = 1:10:128
@@ -237,6 +242,9 @@ classdef uarmtd_planner < robot_arm_generic_planner
 
 %                     fprintf('paused, check armour_constraints.out and press key to continue')
 %                     pause()
+                
+                %%%%% Bernstein is above
+
 
                 elseif strcmp(P.traj_type, 'orig')
                     P.jrs_info.n_t = 100;
@@ -383,7 +391,12 @@ classdef uarmtd_planner < robot_arm_generic_planner
             P.info.q_0 = [P.info.q_0, {q_0}] ;
             P.info.q_dot_0 = [P.info.q_dot_0, {q_dot_0}] ;
             P.info.k_opt = [P.info.k_opt, {k_opt}] ;
+
             P.info.contact_constraint_radii = [P.info.contact_constraint_radii {contact_constraint_radii}];
+            P.info.wrench_radii = [P.info.wrench_radii {wrench_radii}];
+            P.info.constraints_value = [P.info.constraints_value {constraints_value}];
+
+
             if P.save_FO_zono_flag
                 if ~P.use_cuda
                     for i = 1:P.jrs_info.n_t
