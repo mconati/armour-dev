@@ -8,52 +8,93 @@
 clear ; clc ; figure(1); clf; view(3); grid on;
 
 %% user parameters
-world_save_dir = 'saved_worlds/random';
+world_save_dir = 'saved_worlds/rtd-force/experiment_2_01282023';
 if ~exist(world_save_dir, 'dir')
     mkdir(world_save_dir);
 end
 
-N_obstacle_min = 13 ;
-N_obstacle_max = 40 ;
+u_s = 0.609382421; 
+surf_rad =  0.058 / 2;
+grasp_constraint_flag = true;
+
+transmision_inertia = [8.02999999999999936 11.99620246153036440 9.00254278617515169 11.58064393167063599 8.46650409179141228 8.85370693737424297 8.85873036646853151]; % matlab doesn't import these from urdf so hard code into class
+M_min_eigenvalue = 5.095620491878957; % matlab doesn't import these from urdf so hard code into class
+
+obstacle_flag = 1;
+N_obstacle_min = 10 ;
+N_obstacle_max = 10 ;
 N_obstacle_delta = 3 ;
-N_worlds_per_obstacle = 10;
+N_worlds_per_obstacle = 100;
 dimension = 3 ;
-nLinks = 3 ;
+nLinks = 10 ;
 verbosity = 10 ;
 allow_replan_errors = true ;
 t_plan = 0.5 ;
 time_discretization = 0.01 ;
 T = 1 ;
-use_cuda_flag = false;
-agent_move_mode = 'direct' ; % pick 'direct' or 'integrator'
+use_cuda_flag = true;
+agent_move_mode = 'integrator' ; % pick 'direct' or 'integrator'
+
+add_uncertainty_to = 'all'; % choose 'all', 'link', or 'none'
+links_with_uncertainty = {}; % if add_uncertainty_to = 'link', specify links here.
+uncertain_mass_range = [0.97, 1.03];
 
 % kinova
-robot = importrobot('gen3.urdf');
+robot = importrobot('Kinova_Grasp_URDF.urdf');
 robot.DataFormat = 'col';
 robot.Gravity = [0 0 -9.81];
-model = create_model_from_urdf('gen3.urdf');
+model = create_model_from_urdf('Kinova_Grasp_URDF.urdf');
 model = rmfield(model, 'transmissionInertia');
 model = rmfield(model, 'friction');
 model = rmfield(model, 'damping');
-params = load_robot_params(robot);
+params = load_robot_params(robot,...
+                            'add_uncertainty_to', add_uncertainty_to, ...
+                           'links_with_uncertainty', links_with_uncertainty,...
+                           'uncertain_mass_range', uncertain_mass_range);
 joint_speed_limits = [-1.3963, -1.3963, -1.3963, -1.3963, -1.2218, -1.2218, -1.2218;
                        1.3963,  1.3963,  1.3963,  1.3963,  1.2218,  1.2218,  1.2218]; % matlab doesn't import these from urdf
 joint_input_limits = [-56.7, -56.7, -56.7, -56.7, -29.4, -29.4, -29.4;
                        56.7,  56.7,  56.7,  56.7,  29.4,  29.4,  29.4]; % matlab doesn't import these from urdf
-A = uarmtd_agent(robot, model, params, ...
+A = uarmtd_agent(robot, params, ...
                      'move_mode', agent_move_mode,...
                      'joint_speed_limits', joint_speed_limits, ...
-                     'joint_input_limits', joint_input_limits);
+                     'joint_input_limits', joint_input_limits,...
+                     'M_min_eigenvalue', M_min_eigenvalue, ...
+                     'transmision_inertia', transmision_inertia);
 A.LLC = uarmtd_robust_CBF_LLC();
 
 %% automated from here
 
-for i = N_obstacle_min:N_obstacle_delta:N_obstacle_max
+if obstacle_flag
+    for i = N_obstacle_min:N_obstacle_delta:N_obstacle_max
+        for j = 1:N_worlds_per_obstacle
+        
+            % use this to start from random start config:
+            W = kinova_grasp_world_static('robot',robot,'include_base_obstacle', 1, 'goal_radius', pi/30, 'N_random_obstacles',i,'dimension',dimension,'workspace_goal_check', 0,...
+                'verbose',verbosity, 'creation_buffer', 0.075, 'base_creation_buffer', 0.075,...
+                'grasp_constraint_flag', grasp_constraint_flag,'ik_start_goal_flag', true,'u_s', u_s, 'surf_rad', surf_rad) ;
+    
+            % set up world using arm
+            I = A.get_agent_info ;
+            W.setup(I)
+    
+            % place arm at starting configuration
+            A.state(A.joint_state_indices) = W.start ;
+            
+            filename = sprintf('%s/scene_%03d_%03d.csv', world_save_dir, i, j);
+    
+            % create .csv file
+            write_fetch_scene_to_csv(W, filename);
+    
+        end
+    end
+else
     for j = 1:N_worlds_per_obstacle
     
         % use this to start from random start config:
-        W = kinova_world_static('include_base_obstacle', 1, 'goal_radius', pi/30, 'N_random_obstacles',i,'dimension',dimension,'workspace_goal_check', 0,...
-            'verbose',verbosity, 'creation_buffer', 0.075, 'base_creation_buffer', 0.075) ;
+        W = kinova_grasp_world_static('robot',robot,'include_base_obstacle', 1, 'goal_radius', pi/30,'dimension',dimension,'workspace_goal_check', 0,...
+            'verbose',verbosity, 'creation_buffer', 0.075, 'base_creation_buffer', 0.075,...
+            'grasp_constraint_flag', true,'ik_start_goal_flag', true,'u_s', u_s, 'surf_rad', surf_rad) ;
 
         % set up world using arm
         I = A.get_agent_info ;
@@ -62,7 +103,7 @@ for i = N_obstacle_min:N_obstacle_delta:N_obstacle_max
         % place arm at starting configuration
         A.state(A.joint_state_indices) = W.start ;
         
-        filename = sprintf('%s/scene_%03d_%03d.csv', world_save_dir, i, j);
+        filename = sprintf('%s/scene_%03d_%03d.csv', world_save_dir, j);
 
         % create .csv file
         write_fetch_scene_to_csv(W, filename);

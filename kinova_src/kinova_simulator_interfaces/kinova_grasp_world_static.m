@@ -5,8 +5,8 @@ classdef kinova_grasp_world_static < world
         N_random_obstacles = 0 ;
         create_random_obstacles_flag = true ;
         obstacle_size_range = [0.01 0.5] ; % [min, max] side length
-        create_configuration_timeout = 100 ;
-        create_obstacle_timeout =  1 ;
+        create_configuration_timeout = 200 ;
+        create_obstacle_timeout =  100 ;
         min_dist_in_config_space_between_start_and_goal
         workspace_goal_check = 0;
 
@@ -144,8 +144,8 @@ classdef kinova_grasp_world_static < world
             % changed to +- 1000 to match cuda code
             joint_state_limits = I.joint_state_limits ;
             joint_limit_infs = isinf(joint_state_limits) ;
-            joint_state_limits(1,joint_limit_infs(1,:)) = -1000; % 2*pi ;
-            joint_state_limits(2,joint_limit_infs(2,:)) = 1000; % +2*pi ;
+            joint_state_limits(1,joint_limit_infs(1,:)) = -pi; % 2*pi ;
+            joint_state_limits(2,joint_limit_infs(2,:)) = pi; % +2*pi ;
             
             W.arm_joint_state_limits = joint_state_limits ;
             W.arm_n_links_and_joints = size(joint_state_limits,2) ;
@@ -154,7 +154,7 @@ classdef kinova_grasp_world_static < world
             % set minimum distance between start and goal based on the
             % joint limits
             joint_ranges = diff(joint_state_limits,[],1) ;
-            W.min_dist_in_config_space_between_start_and_goal = norm(0.25*joint_ranges) ;
+            W.min_dist_in_config_space_between_start_and_goal = norm(0.10*joint_ranges) ;
         end
         
         %% make start and goal
@@ -285,9 +285,9 @@ classdef kinova_grasp_world_static < world
                 initialguess = homeConfiguration(W.robot);
                 % choose random x,y,z components for location of 10th joint
                 % in taskspace
-                rand_x = rand_range(-0.5,1);
-                rand_y = rand_range(-1,1);
-                rand_z = rand_range(0.2,1.5);
+                rand_x = rand_range(-0.85,0.85);
+                rand_y = rand_range(-0.85,0.85);
+                rand_z = rand_range(-0.2,0.85);
 
                 %% ! Note: need to also vary the x,y rotation? or the rotation
                 % matrix altogether, and then just set the z-rotation to

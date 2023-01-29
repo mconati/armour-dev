@@ -17,6 +17,10 @@ close all; clear; clc;
 
 %% user parameters
 
+u_s = 0.609382421; 
+surf_rad =  0.058 / 2;
+grasp_constraint_flag = true;
+
 use_robust_input = true;
 
 goal_type = 'configuration'; % pick 'end_effector_location' or 'configuration'
@@ -32,14 +36,18 @@ use_q_plan_for_cost = false; % otherwise use q_stop (q at final time)
 input_constraints_flag = true;
 
 %%% for agent
-agent_urdf = 'kinova_without_gripper.urdf';
+agent_urdf = 'Kinova_Grasp_URDF.urdf';
 
-add_uncertainty_to = 'all'; % choose 'all', 'link', or 'none'
+% RTD-Force Experiment 1: no uncertainty
+% RTD-Force Experiment 2: no uncertainty
+% RTD-Force Experiment 3: 5% uncertainty in all links (including tray and
+%                           object
+add_uncertainty_to = 'none'; % choose 'all', 'link', or 'none'
 links_with_uncertainty = {}; % if add_uncertainty_to = 'link', specify links here.
 uncertain_mass_range = [0.97, 1.03];
 
 agent_move_mode = 'integrator' ; % pick 'direct' or 'integrator'
-use_CAD_flag = false;
+use_CAD_flag = true;
 add_measurement_noise_ = false;
 measurement_noise_size_ = 0;
 
@@ -59,20 +67,20 @@ lookahead_distance = 0.1 ;
 plot_while_running = false ;
 
 % simulation
-max_sim_time = 172800 ; % 48 hours
+max_sim_time = 86400 ; % 48 hours
 max_sim_iter = 600 ;
-stop_threshold = 4 ; % number of failed iterations before exiting
+stop_threshold = 3 ; % number of failed iterations before exiting
 
 % file handling
 save_file_header = 'trial_' ;
-file_location = '../results/random/' ;
+file_location = '../results/rtd-force/experiment_1_01282023' ;
 if ~exist(file_location, 'dir')
     mkdir(file_location);
 end
 
 % world file
 world_file_header = 'scene';
-world_file_folder = '../saved_worlds/random/';
+world_file_folder = '../saved_worlds/rtd-force/experiment_1_01282023/';
 world_file_location = sprintf('%s*%s*', world_file_folder, world_file_header);
 world_file_list = dir(world_file_location);
 
@@ -108,8 +116,9 @@ for idx = 1:length(world_file_list)
     world_filename = world_file_list(idx).name;
     [start, goal, obstacles] = load_saved_world([world_file_folder world_filename]);
     
-    W = kinova_world_static('create_random_obstacles_flag', false, 'goal_radius', goal_radius, 'N_obstacles',length(obstacles),'dimension',dimension,'workspace_goal_check', 0,...
-                            'verbose',verbosity, 'start', start, 'goal', goal, 'obstacles', obstacles, 'goal_type', goal_type) ;
+    W = kinova_grasp_world_static('create_random_obstacles_flag', false, 'goal_radius', goal_radius, 'N_obstacles',length(obstacles),'dimension',dimension,'workspace_goal_check', 0,...
+                            'verbose',verbosity, 'start', start, 'goal', goal, 'obstacles', obstacles, 'goal_type', goal_type,...
+                            'grasp_constraint_flag', true,'ik_start_goal_flag', true, 'u_s', u_s, 'surf_rad', surf_rad) ;
     
     % create arm agent
     A = uarmtd_agent(robot, params,...
@@ -185,7 +194,7 @@ for idx = 1:length(world_file_list)
     % run simulation
     summary = S.run() ;
     
-    % save summary
-    filename = [file_location,'/',save_file_header,world_filename(1:end-4),'.mat'] ;
-    save(filename, 'world_filename', 'summary')
+    %% save summary
+    filename = [file_location,'/',save_file_header,world_filename(1:end),'.mat'] ;
+    save(filename, 'world_filename', 'summary', 'A', 'P', 'W', 'S','-v7.3')
 end

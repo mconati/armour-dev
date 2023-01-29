@@ -178,7 +178,7 @@ plot(A.time,A.state(A.joint_speed_indices,:))
 subplot(3,1,3)
 plot(A.time,A.input)
 
-%% Calculating the Acceleration
+% Calculating the Acceleration
 
 joint_angles = A.state(A.joint_state_indices,:);
 joint_angular_velocity = A.state(A.joint_speed_indices,:);

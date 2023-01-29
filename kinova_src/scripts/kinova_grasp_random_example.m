@@ -171,6 +171,14 @@ summary = S.run();
 
 %% Calculating the Acceleration
 
+figure(101)
+subplot(3,1,1)
+plot(A.time,A.state(A.joint_state_indices,:))
+subplot(3,1,2)
+plot(A.time,A.state(A.joint_speed_indices,:))
+subplot(3,1,3)
+plot(A.time,A.input)
+
 joint_angles = A.state(A.joint_state_indices,:);
 joint_angular_velocity = A.state(A.joint_speed_indices,:);
 
@@ -179,6 +187,9 @@ qdd_post = zeros(7,length(A.time));
 for i = 2:length(A.time)
     [M, C, g] = A.calculate_dynamics(joint_angles(:,i-1), joint_angular_velocity(:,i-1), A.params.true);
 
+    for j = 1:A.n_inputs
+        M(j,j) = M(j,j) + A.transmision_inertia(j);
+    end
     % can I call u=A.LLC.get_control_inputs() here with the P.info?
     
     % need to initialize this with a column of zeros and start at the
@@ -215,31 +226,31 @@ end
 
 % if plot_force
 
-    figure(3)
-    % plot the x-axis force (in the tray frame)
-    subplot(1,3,1)
-    hold on
-    plot(A.time(1:end), force(1,:), 'k')
-    xlabel('time (s)')
-    ylabel('x-axis Force (N)')
-    axis('square')
-    grid on
-    % plot the y-axis force (in the tray frame)
-    subplot(1,3,2)
-    hold on
-    plot(A.time(1:end), force(2,:), 'k')
-    xlabel('time (s)')
-    ylabel('y-axis Force (N)')
-    axis('square')
-    grid on
-    % plot the z-axis force (in the tray frame)
-    subplot(1,3,3)
-    hold on
-    plot(A.time(1:end), force(3,:), 'k')
-    xlabel('time (s)')
-    ylabel('z-axis Force (N)')
-    axis('square')
-    grid on
+figure(3)
+% plot the x-axis force (in the tray frame)
+subplot(1,3,1)
+hold on
+plot(A.time(1:end), force(1,:), 'k')
+xlabel('time (s)')
+ylabel('x-axis Force (N)')
+axis('square')
+grid on
+% plot the y-axis force (in the tray frame)
+subplot(1,3,2)
+hold on
+plot(A.time(1:end), force(2,:), 'k')
+xlabel('time (s)')
+ylabel('y-axis Force (N)')
+axis('square')
+grid on
+% plot the z-axis force (in the tray frame)
+subplot(1,3,3)
+hold on
+plot(A.time(1:end), force(3,:), 'k')
+xlabel('time (s)')
+ylabel('z-axis Force (N)')
+axis('square')
+grid on
     
 % end
 
@@ -269,31 +280,31 @@ end
 
 % if plot_constraint
     
-    figure(4)
-    % plot the separation constraint
-    subplot(1,3,1)
-    hold on
-    plot(A.time(1:end),sep, 'k')
-    xlabel('time (s)')
-    ylabel('Separation Constraint')
-    axis('square')
-    grid on
-    % plot the slipping constraint
-    subplot(1,3,2)
-    hold on
-    plot(A.time(1:end),slip, 'k')
-    xlabel('time (s)')
-    ylabel('Slipping Constraint')
-    axis('square')
-    grid on
-    % plot the tipping constraint
-    subplot(1,3,3)
-    hold on
-    plot(A.time(1:end),tip, 'k')
-    xlabel('time (s)')
-    ylabel('Tipping Constraint')
-    axis('square')
-    grid on
+figure(4)
+% plot the separation constraint
+subplot(1,3,1)
+hold on
+plot(A.time(1:end),sep, 'k')
+xlabel('time (s)')
+ylabel('Separation Constraint')
+axis('square')
+grid on
+% plot the slipping constraint
+subplot(1,3,2)
+hold on
+plot(A.time(1:end),slip, 'k')
+xlabel('time (s)')
+ylabel('Slipping Constraint')
+axis('square')
+grid on
+% plot the tipping constraint
+subplot(1,3,3)
+hold on
+plot(A.time(1:end),tip, 'k')
+xlabel('time (s)')
+ylabel('Tipping Constraint')
+axis('square')
+grid on
 
 % end
 
