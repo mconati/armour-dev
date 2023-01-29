@@ -30,6 +30,7 @@ allow_replan_errors = true ;
 first_iter_pause_flag = false;
 use_q_plan_for_cost = false; % otherwise use q_stop (q at final time)
 input_constraints_flag = true;
+save_FO_zono_flag = true;
 
 %%% for agent
 agent_urdf = 'kinova_without_gripper.urdf';
@@ -143,7 +144,8 @@ for idx = 1:length(world_file_list)
                        'input_constraints_flag', input_constraints_flag, ...
                        'use_robust_input', use_robust_input, ...
                        'traj_type', traj_type, ...
-                       'use_cuda', use_cuda_flag) ;
+                       'use_cuda', use_cuda_flag,...
+                       'save_FO_zono_flag', save_FO_zono_flag) ;
 
     if if_use_RRT
         P.HLP = arm_end_effector_RRT_star_HLP('plot_waypoint_flag',plot_waypoint_flag,...
