@@ -1,7 +1,7 @@
 ![](https://github.com/roahmlab/armour-dev/blob/main/assets/armour_logo.png?raw=true)
 
 # Autonomous Robust Manipulation via Optimization with Uncertainty-aware Reachability
-**Authors:** Jonathan Michaux (jmichaux@umich.edu), Patrick Holmes (pdholmes@umich.edu), Bohao Zhang (jimzhang@umich.edu), Che Chen (cctom7@umich.edu), Baiyue Wang (baiyuew@umich.edu), Shrey Sahgal (shreyps@umich.edu), Tiancheng Zhang (zhangtc@umich.edu), Sidhartha Dey (sid.dey@agilityrobotics.com), Shreyas Kousik (skousik@gatech.edu), and Ram Vasudevan (ramv@umich.edu). 
+**Authors:** Jonathan Michaux (jmichaux@umich.edu), Patrick Holmes (pdholmes@umich.edu), Bohao Zhang (jimzhang@umich.edu), Che Chen (cctom@umich.edu), Baiyue Wang (baiyuew@umich.edu), Shrey Sahgal (shreyps@umich.edu), Tiancheng Zhang (zhangtc@umich.edu), Sidhartha Dey (sid.dey@agilityrobotics.com), Shreyas Kousik (skousik@gatech.edu), and Ram Vasudevan (ramv@umich.edu). 
 
 - All authors are affiliated with the Robotics Institute and department of Mechanical Engineering of the University of Michigan, 2505 Hayward Street, Ann Arbor, Michigan, USA (TODO: include Shreyas and Sid).
 - This work is supported by the Ford Motor Company via the Ford-UM Alliance under award N022977, National Science Foundation Career Award 1751093 and by the Office of Naval Research under Award Number N00014-18-1-2575.
@@ -68,6 +68,12 @@ libipopt and libcoinhsl could be very annoying to install and to work with MATLA
 Suppose libipopt and libcoinhsl are both installed in /usr/local/lib.
 You need to add that path to both user's environmental variable 'LD_LIBRARY_PATH' and MATLAB's environment variable 'LD_LIBRARY_PATH'
 Check [here](https://www.mathworks.com/help/matlab/matlab_external/set-run-time-library-path-on-linux-systems.html) and [here](https://stackoverflow.com/questions/13428910/how-to-set-the-environmental-variable-ld-library-path-in-linux) for more information.
+
+#### Install submodules
+Run
+``` sh
+git submodule update --init
+```
 
 ## Building
 Run 
