@@ -184,8 +184,8 @@ for idx = 1:length(world_file_list)
     
     % save summary
     filename = [file_location,'/',save_file_header,world_filename(1:end-4),'.mat'] ;
-    save(filename, 'world_filename', 'summary') ;
+%     save(filename, 'world_filename', 'summary') ;
 
     % save all info
-%     save([file_location,'/','agent_info_',num2str(idx),'.mat'],'A','P','W');
+    save(filename,'world_filename', 'summary', 'A', 'P', 'W');
 end
