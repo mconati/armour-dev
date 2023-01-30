@@ -309,7 +309,6 @@ Section IV:
                 }
                 outputstream3 << '\n';
             }
-            outputstream3 << '\n';
         }
     }
     outputstream3.close();

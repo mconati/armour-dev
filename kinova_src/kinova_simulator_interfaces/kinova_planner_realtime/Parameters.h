@@ -2,8 +2,8 @@
 #define PARAMETERS_H
 
 // #include "FetchInfo.h"
-#include "KinovaInfo.h"
-// #include "KinovaWithoutGripperInfo.h"
+// #include "KinovaInfo.h"
+#include "KinovaWithoutGripperInfo.h"
 
 #define DEBUG_MODE false
 
