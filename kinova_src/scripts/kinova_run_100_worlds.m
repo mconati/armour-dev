@@ -109,7 +109,7 @@ if plot_while_running
 end
 
 tic
-for idx = 1:length(world_file_list)
+for idx = 50:length(world_file_list)
     clc; 
     fprintf("THIS IS WORLD %d\n\n", idx);
 
