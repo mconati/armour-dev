@@ -225,7 +225,7 @@ classdef uarmtd_planner < robot_arm_generic_planner
                         control_input_radius = readmatrix('armour_control_input_radius.out', 'FileType', 'text');
                         constraints_value = readmatrix('armour_constraints.out', 'FileType', 'text');
                         contact_constraint_radii = readmatrix('armour_force_constraint_radius.out', 'FileType', 'text');
-                        wrench_radii = readmatrix('armour_force_constraint_radius.out', 'FileType', 'text');
+                        wrench_radii = readmatrix('armour_wrench_values.out', 'FileType', 'text');
 
                         link_frs_vertices = cell(7,1);
                         for tid = 1:10:128
