@@ -7,25 +7,74 @@
 
 clear all; close all; clc;
 
-load('trial_scene_050_.mat')
+load('trial_scene_004_.mat')
 
 
 %% Extracting Info From CUDA Code
 
-
-
+% wrench reachable set center and radii
+CUDA_f_center = [];
+CUDA_n_center = [];
+CUDA_f_radii = [];
+CUDA_n_radii = [];
+% contact constraint radii
 CUDA_sep_bounds = [];
 CUDA_slip_bounds = [];
 CUDA_tip_bounds = [];
+nan_counter = 0;
 for i = 1:length(P.info.contact_constraint_radii)
-    CUDA_sep_bounds = [CUDA_sep_bounds; P.info.contact_constraint_radii{1,i}(1:50,:)];
-    CUDA_slip_bounds = [CUDA_slip_bounds; P.info.contact_constraint_radii{1,i}(101:150,:)];
-    CUDA_tip_bounds = [CUDA_tip_bounds; P.info.contact_constraint_radii{1,i}(201:250,:)];
+    % need to check if breaking maneuver is performed
+    if isnan(P.info.k_opt{1,i})
+        if nan_counter < 1 % first brake
+            % wrench reachable set center and radii
+            CUDA_f_center = [CUDA_f_center; P.info.wrench_radii{1,i-1}(51:100,1:3)];
+            CUDA_n_center = [CUDA_n_center; P.info.wrench_radii{1,i-1}(51:100,4:6)];
+            CUDA_f_radii = [CUDA_f_radii; P.info.wrench_radii{1,i-1}(51:100,7:9)];
+            CUDA_n_radii = [CUDA_n_radii; P.info.wrench_radii{1,i-1}(51:100,10:12)];
+            % contact constraint radii
+            CUDA_sep_bounds = [CUDA_sep_bounds; P.info.contact_constraint_radii{1,i-1}(51:100,:)];
+            CUDA_slip_bounds = [CUDA_slip_bounds; P.info.contact_constraint_radii{1,i-1}(151:200,:)];
+            CUDA_tip_bounds = [CUDA_tip_bounds; P.info.contact_constraint_radii{1,i-1}(251:300,:)];
+            nan_counter = nan_counter + 1;
+        else % more than one brake in a row
+            % wrench reachable set center and radii
+            CUDA_f_center = [CUDA_f_center; P.info.wrench_radii{1,i}(1:50,1:3)];
+            CUDA_n_center = [CUDA_n_center; P.info.wrench_radii{1,i}(1:50,4:6)];
+            CUDA_f_radii = [CUDA_f_radii; P.info.wrench_radii{1,i}(1:50,7:9)];
+            CUDA_n_radii = [CUDA_n_radii; P.info.wrench_radii{1,i}(1:50,10:12)];
+            % contact constraint radii
+            CUDA_sep_bounds = [CUDA_sep_bounds; P.info.contact_constraint_radii{1,i}(1:50,:)];
+            CUDA_slip_bounds = [CUDA_slip_bounds; P.info.contact_constraint_radii{1,i}(101:150,:)];
+            CUDA_tip_bounds = [CUDA_tip_bounds; P.info.contact_constraint_radii{1,i}(201:250,:)];
+            nan_counter = nan_counter + 1;
+        end
+    else % normal iteration
+        % wrench reachable set center and radii
+        CUDA_f_center = [CUDA_f_center; P.info.wrench_radii{1,i}(1:50,1:3)];
+        CUDA_n_center = [CUDA_n_center; P.info.wrench_radii{1,i}(1:50,4:6)];
+        CUDA_f_radii = [CUDA_f_radii; P.info.wrench_radii{1,i}(1:50,7:9)];
+        CUDA_n_radii = [CUDA_n_radii; P.info.wrench_radii{1,i}(1:50,10:12)];
+        % contact constraint radii
+        CUDA_sep_bounds = [CUDA_sep_bounds; P.info.contact_constraint_radii{1,i}(1:50,:)];
+        CUDA_slip_bounds = [CUDA_slip_bounds; P.info.contact_constraint_radii{1,i}(101:150,:)];
+        CUDA_tip_bounds = [CUDA_tip_bounds; P.info.contact_constraint_radii{1,i}(201:250,:)];
+        nan_counter = 0;
+    end
 end
+
+%% Create Zonotopes of Wrenches
+
+for i = 1:size(CUDA_f_radii,1)
+    CUDA_f_zono{i} = zonotope(CUDA_f_center(i,:)',CUDA_f_radii(i,:)');
+    CUDA_n_zono{i} = zonotope(CUDA_n_center(i,:)',CUDA_n_radii(i,:)');
+end
+
+figure(201)
+plot(CUDA_f_zono{1})
 
 %% flags
 
-plot_states = false;
+plot_states = true;
 plot_control = false;
 plot_accel = true;
 plot_force = true;
@@ -205,6 +254,38 @@ if plot_force
     subplot(1,3,3)
     hold on
     plot(A.time(1:end), force(3,:), 'k')
+    xlabel('time (s)')
+    ylabel('z-axis Force (N)')
+    axis('square')
+    grid on
+
+    figure(102)
+    % plot the x-axis force (in the tray frame)
+    subplot(1,3,1)
+    hold on
+    plot(A.time(1:end), force(1,:), 'k')
+    plot(A.time(1:end-1), CUDA_f_center(:,1)-CUDA_f_radii(:,1),'m')
+    plot(A.time(1:end-1), CUDA_f_center(:,1)+CUDA_f_radii(:,1),'m')
+    xlabel('time (s)')
+    ylabel('x-axis Force (N)')
+    axis('square')
+    grid on
+    % plot the y-axis force (in the tray frame)
+    subplot(1,3,2)
+    hold on
+    plot(A.time(1:end), force(2,:), 'k')
+    plot(A.time(1:end-1), CUDA_f_center(:,2)-CUDA_f_radii(:,2),'m')
+    plot(A.time(1:end-1), CUDA_f_center(:,2)+CUDA_f_radii(:,2),'m')
+    xlabel('time (s)')
+    ylabel('y-axis Force (N)')
+    axis('square')
+    grid on
+    % plot the z-axis force (in the tray frame)
+    subplot(1,3,3)
+    hold on
+    plot(A.time(1:end), force(3,:), 'k')
+    plot(A.time(1:end-1), CUDA_f_center(:,3)-CUDA_f_radii(:,3),'m')
+    plot(A.time(1:end-1), CUDA_f_center(:,3)+CUDA_f_radii(:,3),'m')
     xlabel('time (s)')
     ylabel('z-axis Force (N)')
     axis('square')
@@ -396,14 +477,14 @@ if plot_zmp
     th = linspace(0,2*pi,500);
     xunit = r * cos(th) + x;
     yunit = r * sin(th) + y;
-    plot(xunit, yunit);
+    plot(xunit, yunit,'r');
     xlabel('x position (m)')
     ylabel('y position (m)')
     axis('square')
     grid on
     title('ZMP Position in Contact Area')
 
-    plot(ZMP(1,:),ZMP(2,:),'or')
+    plot(ZMP(1,:),ZMP(2,:),'k','MarkerSize',2)
     
 end
 
