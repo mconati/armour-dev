@@ -15,9 +15,9 @@ In this context, safety means avoiding collisions while obeying joint position, 
 To address the safety challenge, this paper proposes **Autonomous Robust Manipulation via Optimization with Uncertainty-aware Reachability**, a method for guaranteed-safe, real-time manipulator motion planning and control.
 An overview of this method is given in figure below.
 
-<img height="270" src="/assets/uarmtd_summary_figure.png"/>
+<img height="360" src="/assets/uarmtd_summary_figure.png"/>
 
-<img height="270" src="/assets/armour_method_figure.pdf"/>
+<!---<img height="270" src="/assets/armour_method_figure.pdf"/>-->
 
 ## Dependency
 The repo has been verified on MATLAB R>=2021b and Ubuntu >= 20.04
