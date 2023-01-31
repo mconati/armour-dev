@@ -83,7 +83,7 @@ Check the [README](https://github.com/roahmlab/armour-dev/blob/main/kinova_src/R
 
 ## License
 
-`ARMOUR` is released under a [GNU license](https://github.com/roahmlab/armour-dev/blob/main/LICENSE). For a list of all code/library dependencies, please check dependency section. For a closed-source version of `ARMOUR` for commercial purpose, please contact the authors. (TODO: Maybe not this type of license)
+`ARMOUR` is released under a [GNU license](https://github.com/roahmlab/armour-dev/blob/main/LICENSE). For a list of all code/library dependencies, please check dependency section. For a closed-source version of `ARMOUR` for commercial purpose, please contact the authors. 
 
 An overview of the theoretical and implementation details has been published in arxiv. 
 <!---(If you use `ARMOUR` in an academic work, please cite using the following BibTex entry (TODO: fill in reference to our paper)-->
