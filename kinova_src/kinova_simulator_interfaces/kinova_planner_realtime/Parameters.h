@@ -13,7 +13,7 @@
 
 // Parameters for Trajectories.h:
     // number of time steps (This should be an EVEN number!!!)
-    #define NUM_TIME_STEPS 40
+    #define NUM_TIME_STEPS 64
 
     // range of parameters (size of generators in PZ).
     const double k_range[NUM_FACTORS] = { M_PI / 72, M_PI / 72, M_PI / 72, M_PI / 72, M_PI / 72, M_PI / 72, M_PI / 72 }; // (radian)
@@ -40,7 +40,7 @@
 // Parameters for armour_main.cpp
     #define IPOPT_OPTIMIZATION_TOLERANCE 1e-3
 
-    #define IPOPT_MAX_CPU_TIME 5
+    #define IPOPT_MAX_CPU_TIME 8
 
     #define IPOPT_PRINT_LEVEL 0
 

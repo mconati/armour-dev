@@ -200,7 +200,7 @@ bool armtd_NLP::eval_f(
         obj_value += pow(q_plan - q_des[i], 2);
     }
 
-    obj_value *= 1000.0;
+    obj_value *= 10000.0;
 
     return true;
 }
@@ -222,7 +222,7 @@ bool armtd_NLP::eval_grad_f(
     for(Index i = 0; i < n; i++){
         double q_plan = q_des_func(desired_trajectory->q0[i], desired_trajectory->qd0[i], desired_trajectory->qdd0[i], k_range[i] * x[i], t_plan);
         double dk_q_plan = pow(t_plan,3) * (6 * pow(t_plan,2) - 15 * t_plan + 10);
-        grad_f[i] = (2 * (q_plan - q_des[i]) * dk_q_plan * k_range[i]) * 1000.0;
+        grad_f[i] = (2 * (q_plan - q_des[i]) * dk_q_plan * k_range[i]) * 10000.0;
     }
 
     return true;
