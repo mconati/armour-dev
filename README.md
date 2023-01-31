@@ -14,9 +14,10 @@ Instead, it is necessary to develop motion planning and control strategies that 
 In this context, safety means avoiding collisions while obeying joint position, velocity, and torque limits.
 To address the safety challenge, this paper proposes **Autonomous Robust Manipulation via Optimization with Uncertainty-aware Reachability**, a method for guaranteed-safe, real-time manipulator motion planning and control.
 An overview of this method is given in figure below.
-The present work enables safety for uncertain manipulator dynamics, which includes uncertain payloads, by proposing a combined planning and control framework.
 
 <img height="270" src="/assets/uarmtd_summary_figure.png"/>
+
+<img height="270" src="/assets/armour_method_figure.pdf"/>
 
 ## Dependency
 The repo has been verified on MATLAB R>=2021b and Ubuntu >= 20.04
@@ -85,4 +86,4 @@ Check the [README](https://github.com/roahmlab/armour-dev/blob/main/kinova_src/R
 `ARMOUR` is released under a [GNU license](https://github.com/roahmlab/armour-dev/blob/main/LICENSE). For a list of all code/library dependencies, please check dependency section. For a closed-source version of `ARMOUR` for commercial purpose, please contact the authors. (TODO: Maybe not this type of license)
 
 An overview of the theoretical and implementation details has been published in arxiv. 
-[comment]:<>(If you use `ARMOUR` in an academic work, please cite using the following BibTex entry (TODO: fill in reference to our paper):)
+<!---(If you use `ARMOUR` in an academic work, please cite using the following BibTex entry (TODO: fill in reference to our paper)-->
