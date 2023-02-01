@@ -217,7 +217,7 @@ void armtd_NLP::compute(
     // check if a new x is passed in
     if (new_x){
         // timing
-        // auto start_compute = std::chrono::high_resolution_clock::now();
+        auto start_compute = std::chrono::high_resolution_clock::now();
 
         // update values
 
@@ -226,7 +226,7 @@ void armtd_NLP::compute(
         // Contact Force Constraints
         Index i;
         #pragma omp parallel for shared(kinematics_dynamics_result, x, link_sliced_center) private(i) schedule(static, NUM_TIME_STEPS / NUM_THREADS)
-        for(Index i = 0; i<NUM_TIME_STEPS; i++){
+        for(i = 0; i<NUM_TIME_STEPS; i++){
 
             for (int m = 0; m < 3; m++) {
                 MatrixXInt res1 = kinematics_dynamics_result -> f_c_int(i)(m,0).slice(x);
@@ -532,9 +532,9 @@ void armtd_NLP::compute(
 
             
         }
-        // auto stop_compute = std::chrono::high_resolution_clock::now();
-        // auto duration_compute = std::chrono::duration_cast<std::chrono::milliseconds>(stop_compute - start_compute);
-        // cout << "        Time Taken to Calculate Compute Function: " << duration_compute.count() << " milliseconds" << endl;
+        auto stop_compute = std::chrono::high_resolution_clock::now();
+        auto duration_compute = std::chrono::duration_cast<std::chrono::milliseconds>(stop_compute - start_compute);
+        cout << "        Time Taken to Calculate Compute Function: " << duration_compute.count() << " milliseconds" << endl;
 
     }
     else{
@@ -636,12 +636,12 @@ bool armtd_NLP::eval_f(
 
     // auto start_f = std::chrono::high_resolution_clock::now();
 
-    // new cost term
-    // loop to pull out slip constraint values
-    for(Index i=0; i<NUM_TIME_STEPS;i++){
-        // offset by NUM_TIME_STEPS to move past the separation constraint
-        obj_value += force_constraint_ub[i+NUM_TIME_STEPS];
-    }
+    // // new cost term
+    // // loop to pull out slip constraint values
+    // for(Index i=0; i<NUM_TIME_STEPS;i++){
+    //     // offset by NUM_TIME_STEPS to move past the separation constraint
+    //     obj_value += force_constraint_ub[i+NUM_TIME_STEPS];
+    // }
 
     // auto stop_f = std::chrono::high_resolution_clock::now();
     // auto duration_f = std::chrono::duration<long, std::nano>(stop_f - start_f);
@@ -775,15 +775,15 @@ bool armtd_NLP::eval_grad_f(
 
     // auto start_grad = std::chrono::high_resolution_clock::now();
 
-    // new cost term gradient
-    Index offset = NUM_TIME_STEPS*NUM_FACTORS; // offset to pass over separation constraint
-    for(Index i=0; i<NUM_TIME_STEPS;i++){
-        // sum cost_grad_slip and grad_f column-wise
-        for(Index j = 0; j < n; j++){
-            // grad_f[j] += cost_grad_slip[i];
-            grad_f[j] += force_constraint_gradient[i*NUM_FACTORS+offset+j];
-        }
-    }
+    // // new cost term gradient
+    // Index offset = NUM_TIME_STEPS*NUM_FACTORS; // offset to pass over separation constraint
+    // for(Index i=0; i<NUM_TIME_STEPS;i++){
+    //     // sum cost_grad_slip and grad_f column-wise
+    //     for(Index j = 0; j < n; j++){
+    //         // grad_f[j] += cost_grad_slip[i];
+    //         grad_f[j] += force_constraint_gradient[i*NUM_FACTORS+offset+j];
+    //     }
+    // }
 
     // auto stop_grad = std::chrono::high_resolution_clock::now();
     // auto duration_grad = std::chrono::duration<long, std::nano>(stop_grad - start_grad);
@@ -812,6 +812,8 @@ bool armtd_NLP::eval_g(
 
     // cout << "Computing new_x from g function" << endl;
     compute(new_x,x);
+
+    auto start_g = std::chrono::high_resolution_clock::now();
 
     Index i;
     #pragma omp parallel for shared(kinematics_dynamics_result, x, g, link_sliced_center) private(i) schedule(static, NUM_TIME_STEPS / NUM_THREADS)
@@ -1048,6 +1050,10 @@ bool armtd_NLP::eval_g(
     desired_trajectory->returnJointPositionExtremum(g + NUM_TIME_STEPS * NUM_JOINTS * obstacles->num_obstacles + NUM_FACTORS*NUM_TIME_STEPS + 3*NUM_TIME_STEPS, x);
     desired_trajectory->returnJointVelocityExtremum(g + NUM_TIME_STEPS * NUM_JOINTS * obstacles->num_obstacles + NUM_FACTORS * 2 + NUM_FACTORS*NUM_TIME_STEPS + 3*NUM_TIME_STEPS, x);
 
+    auto stop_g = std::chrono::high_resolution_clock::now();
+    auto duration_g = std::chrono::duration_cast<std::chrono::milliseconds>(stop_g - start_g);
+    cout << "        Time Taken to Calculate Eval g Function: " << duration_g.count() << " milliseconds" << endl;
+
     return true;
 }
 // [TNLP_eval_g]
@@ -1075,6 +1081,8 @@ bool armtd_NLP::eval_jac_g(
 
     // cout << "Computing new_x from g grad function" << endl;
     compute(new_x,x); // could this move into the else of the if statement below?
+
+    auto start_g_grad = std::chrono::high_resolution_clock::now();
 
     if( values == NULL ) {
        // return the structure of the Jacobian
@@ -1292,6 +1300,10 @@ bool armtd_NLP::eval_jac_g(
         desired_trajectory->returnJointPositionExtremumGradient(values + (NUM_TIME_STEPS * NUM_FACTORS + 3 * NUM_TIME_STEPS + NUM_TIME_STEPS * NUM_JOINTS * obstacles->num_obstacles) * NUM_FACTORS, x);
         desired_trajectory->returnJointVelocityExtremumGradient(values + (NUM_TIME_STEPS * NUM_FACTORS + 3 * NUM_TIME_STEPS + NUM_TIME_STEPS * NUM_JOINTS * obstacles->num_obstacles + NUM_FACTORS * 2) * NUM_FACTORS, x);
     }
+
+    auto stop_g_grad = std::chrono::high_resolution_clock::now();
+    auto duration_g_grad = std::chrono::duration_cast<std::chrono::milliseconds>(stop_g_grad - start_g_grad);
+    cout << "        Time Taken to Calculate Eval g Grad Function: " << duration_g_grad.count() << " milliseconds" << endl;
 
     return true;
 }

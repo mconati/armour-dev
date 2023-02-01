@@ -36,7 +36,7 @@ use_CAD_flag = true; % plot robot with CAD or bounding boxes
 
 %%% for LLC
 use_robust_input = true;
-LLC_V_max = 1e-4;
+LLC_V_max = 1e-2;
 
 %%% for HLP
 if_use_RRT = false;
@@ -58,8 +58,25 @@ stop_threshold = 4 ; % number of failed iterations before exiting
 % goal = [1; 1; 1; 1; 1; 1; 1]; % goal configuration
 
 % simple rotation
-start = [0;-pi/2;0;0;0;0;0];
-goal = [pi/4;-pi/2;0;0;0;0;0];
+% start = [0;-pi/2;0;0;0;0;0];
+% goal = [pi/4;-pi/2;0;0;0;0;0];
+start = [-pi/6;-pi/2;-pi/2;pi/2;0;pi/2;pi/2];
+goal = [pi/6;-pi/2;pi/2;pi/2;pi;-pi/2;pi/2];
+
+% start = [1.60560000000000;
+% -0.159490569928781;
+% -1.56770902931599;
+% -0.845551078749901;
+% -0.0163822583789873;
+% 2.16000000000000;
+% -3.31497484097283];
+% goal = [1.35699949162188;
+% -0.0574597782525521;
+% 2.43188521636437;
+% -0.692567319303937;
+% 2.99403842768718;
+% -0.990958192493399;
+% 2.04347442405308];
 
 % swing
 % start = [0;-pi/2;0;0;0;0;0];
@@ -323,3 +340,9 @@ end
 
 % end
 
+%% Mean Planning Time
+plan_time = [];
+for i=1:length(P.info.planning_time)
+    plan_time = [plan_time P.info.planning_time{i}];
+end
+mean(plan_time)

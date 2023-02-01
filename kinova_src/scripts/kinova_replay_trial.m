@@ -1,7 +1,7 @@
 %% user parameters
 clear;
 
-filename = 'trial_scene_002_.mat';
+filename = 'trial_scene_001_.mat';
 
 verbosity = 0 ;
 dimension = 3 ;
