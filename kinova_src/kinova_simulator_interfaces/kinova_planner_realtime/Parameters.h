@@ -4,8 +4,8 @@
 // #include "FetchInfo.h"
 // #include "KinovaInfo.h"
 // #include "KinovaWithoutGripperInfo.h"
-#include "KinovaForceInfo.h"
-// #include "KinovaFixedGripperInfo.h"
+// #include "KinovaForceInfo.h"
+#include "KinovaFixedGripperInfo.h"
 
 #define DEBUG_MODE true
 
@@ -51,7 +51,7 @@
 // Parameters for armour_main.cpp
     #define IPOPT_OPTIMIZATION_TOLERANCE 1e-4
 
-    #define IPOPT_MAX_CPU_TIME 14 // 14.0
+    #define IPOPT_MAX_CPU_TIME 10 // 14.0
 
     #define IPOPT_PRINT_LEVEL 0
 

@@ -208,9 +208,9 @@ classdef uarmtd_planner < robot_arm_generic_planner
                         if length(k_opt) == 1
                             P.vdisp('Unable to find new trajectory!',3)
                             k_opt = nan;
-%                         elseif planning_time > P.t_plan
-%                             P.vdisp('Solver Took Too Long!',3)
-%                             k_opt = nan;
+                        elseif planning_time > 1.0 % P.t_plan
+                            P.vdisp('Solver Took Too Long!',3)
+                            k_opt = nan;
                         else
                             P.vdisp('New trajectory found!',3);
                             for i = 1:length(k_opt)

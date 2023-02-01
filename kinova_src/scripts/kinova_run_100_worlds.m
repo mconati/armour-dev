@@ -43,7 +43,7 @@ agent_urdf = 'Kinova_Grasp_URDF.urdf';
 % RTD-Force Experiment 2: no uncertainty
 % RTD-Force Experiment 3: 5% uncertainty in all links (including tray and
 %                           object
-add_uncertainty_to = 'none'; % choose 'all', 'link', or 'none'
+add_uncertainty_to = 'all'; % choose 'all', 'link', or 'none'
 links_with_uncertainty = {}; % if add_uncertainty_to = 'link', specify links here.
 uncertain_mass_range = [0.97, 1.03];
 
@@ -65,16 +65,16 @@ plot_waypoint_arm_flag  = true ;
 lookahead_distance = 0.1 ;
 
 % plotting
-plot_while_running = true ;
+plot_while_running = false ;
 
 % simulation
 max_sim_time = 86400 ; % 48 hours
 max_sim_iter = 600 ;
-stop_threshold = 4 ; % number of failed iterations before exiting
+stop_threshold = 5 ; % number of failed iterations before exiting
 
 % file handling
 save_file_header = 'trial_' ;
-file_location = '../results/rtd-force/experiment_1_01312023_largerVm' ;
+file_location = '../results/rtd-force/experiment_cost_02012023' ;
 if ~exist(file_location, 'dir')
     mkdir(file_location);
 end
@@ -109,7 +109,7 @@ if plot_while_running
 end
 
 tic
-for idx = 6:length(world_file_list)
+for idx = 1:length(world_file_list)
     clc; 
     fprintf("THIS IS WORLD %d\n\n", idx);
 

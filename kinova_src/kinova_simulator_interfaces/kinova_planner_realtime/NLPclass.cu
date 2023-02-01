@@ -216,6 +216,9 @@ void armtd_NLP::compute(
 
     // check if a new x is passed in
     if (new_x){
+        // timing
+        // auto start_compute = std::chrono::high_resolution_clock::now();
+
         // update values
 
         // compute the constraint values
@@ -527,7 +530,11 @@ void armtd_NLP::compute(
                 }
             }
 
+            
         }
+        // auto stop_compute = std::chrono::high_resolution_clock::now();
+        // auto duration_compute = std::chrono::duration_cast<std::chrono::milliseconds>(stop_compute - start_compute);
+        // cout << "        Time Taken to Calculate Compute Function: " << duration_compute.count() << " milliseconds" << endl;
 
     }
     else{
@@ -550,7 +557,15 @@ bool armtd_NLP::eval_f(
     }
 
     // call compute function to update values if necessary
+    // cout << "Computing new_x from f function" << endl;
+    // auto start_new_x = std::chrono::high_resolution_clock::now();
+
     compute(new_x,x);
+
+    // auto stop_new_x = std::chrono::high_resolution_clock::now();
+    // auto duration_new_x = std::chrono::duration_cast<std::chrono::milliseconds>(stop_new_x - start_new_x);
+    // cout << "        Time Taken to Calculate new_x from f grad: " << duration_new_x.count() << " milliseconds" << endl;
+
 
     // // Contact Force Constraints
     // double cost_slip_ub[NUM_TIME_STEPS];
@@ -604,6 +619,8 @@ bool armtd_NLP::eval_f(
     //     }
     // }
 
+    // auto start_nom = std::chrono::high_resolution_clock::now();
+
     // obj_value = sum((q_plan - q_des).^2);
     obj_value = 0; 
     for(Index i = 0; i < n; i++){
@@ -613,11 +630,22 @@ bool armtd_NLP::eval_f(
 
     obj_value *= 100.0; // needs to change in the gradient as well
 
+    // auto stop_nom = std::chrono::high_resolution_clock::now();
+    // auto duration_nom = std::chrono::duration<long, std::nano>(stop_nom - start_nom);
+    // cout << "        Time for Evaluating Cost Nominal Term: " << duration_nom.count() << " nanoseconds" << endl;
+
+    // auto start_f = std::chrono::high_resolution_clock::now();
+
+    // new cost term
     // loop to pull out slip constraint values
     for(Index i=0; i<NUM_TIME_STEPS;i++){
         // offset by NUM_TIME_STEPS to move past the separation constraint
         obj_value += force_constraint_ub[i+NUM_TIME_STEPS];
     }
+
+    // auto stop_f = std::chrono::high_resolution_clock::now();
+    // auto duration_f = std::chrono::duration<long, std::nano>(stop_f - start_f);
+    // cout << "        Time for Evaluating Cost Slip Term: " << duration_f.count() << " nanoseconds" << endl;
 
     // for(Index i = 0; i < NUM_TIME_STEPS; i++){
     //     obj_value += cost_slip_ub[i];
@@ -642,7 +670,16 @@ bool armtd_NLP::eval_grad_f(
         WARNING_PRINT("*** Error wrong value of n in eval_grad_f!");
     }
 
+    // call compute to update if new_x
+    // cout << "Computing new_x from f grad function" << endl;
+    // auto start_new_x = std::chrono::high_resolution_clock::now();
+
     compute(new_x,x);
+
+    // auto stop_new_x = std::chrono::high_resolution_clock::now();
+    // auto duration_new_x = std::chrono::duration_cast<std::chrono::milliseconds>(stop_new_x - start_new_x);
+    // cout << "        Time Taken to Calculate new_x from f grad: " << duration_new_x.count() << " milliseconds" << endl;
+
 
     for(Index i = 0; i < n; i++){
 
@@ -655,9 +692,9 @@ bool armtd_NLP::eval_grad_f(
         grad_f[i] = (2 * (q_plan - q_des[i]) * dk_q_plan * k_range[i]) * 100.0;
     }
 
-    double cost_grad_slip[NUM_FACTORS];
+    // double cost_grad_slip[NUM_FACTORS];
 
-    for(Index i = 0; i < NUM_TIME_STEPS; i++){
+    // for(Index i = 0; i < NUM_TIME_STEPS; i++){
 
         // Contact Force Constraints
 
@@ -734,9 +771,12 @@ bool armtd_NLP::eval_grad_f(
         //     }
         // }
 
-    }
+    // }
 
-    Index offset = NUM_TIME_STEPS*NUM_FACTORS;
+    // auto start_grad = std::chrono::high_resolution_clock::now();
+
+    // new cost term gradient
+    Index offset = NUM_TIME_STEPS*NUM_FACTORS; // offset to pass over separation constraint
     for(Index i=0; i<NUM_TIME_STEPS;i++){
         // sum cost_grad_slip and grad_f column-wise
         for(Index j = 0; j < n; j++){
@@ -744,6 +784,10 @@ bool armtd_NLP::eval_grad_f(
             grad_f[j] += force_constraint_gradient[i*NUM_FACTORS+offset+j];
         }
     }
+
+    // auto stop_grad = std::chrono::high_resolution_clock::now();
+    // auto duration_grad = std::chrono::duration<long, std::nano>(stop_grad - start_grad);
+    // cout << "        Time for Evaluating Cost Gradient Slip Term: " << duration_grad.count() << " nanoseconds" << endl;
 
     return true;
 }
@@ -766,6 +810,7 @@ bool armtd_NLP::eval_g(
         WARNING_PRINT("*** Error wrong value of m in eval_g!");
     }
 
+    // cout << "Computing new_x from g function" << endl;
     compute(new_x,x);
 
     Index i;
@@ -787,14 +832,14 @@ bool armtd_NLP::eval_g(
         // kd.f_c(127)(2,0).slice(storage*, x) takes the last 3x1 and then takes the third element and slices it
         // in NLPclass use -> instead of . 
 
-        for (int m = 0; m < 3; m++) {
-            MatrixXInt res1 = kinematics_dynamics_result -> f_c_int(i)(m,0).slice(x);
-            force_value_center(m,i) = getCenter(res1(0));
-            force_value_radii(m,i) = getRadius(res1(0));
-            MatrixXInt res2 = kinematics_dynamics_result -> n_c_int(i)(m,0).slice(x);
-            moment_value_center(m,i) = getCenter(res2(0));
-            moment_value_radii(m,i) = getRadius(res2(0));
-        }
+        // for (int m = 0; m < 3; m++) {
+        //     MatrixXInt res1 = kinematics_dynamics_result -> f_c_int(i)(m,0).slice(x);
+        //     force_value_center(m,i) = getCenter(res1(0));
+        //     force_value_radii(m,i) = getRadius(res1(0));
+        //     MatrixXInt res2 = kinematics_dynamics_result -> n_c_int(i)(m,0).slice(x);
+        //     moment_value_center(m,i) = getCenter(res2(0));
+        //     moment_value_radii(m,i) = getRadius(res2(0));
+        // }
 
         // // Contact Force Constraints
 
@@ -1027,8 +1072,9 @@ bool armtd_NLP::eval_jac_g(
     if(m != constraint_number){
         WARNING_PRINT("*** Error wrong value of m in eval_g!");
     }
-        
-    compute(new_x,x);
+
+    // cout << "Computing new_x from g grad function" << endl;
+    compute(new_x,x); // could this move into the else of the if statement below?
 
     if( values == NULL ) {
        // return the structure of the Jacobian
