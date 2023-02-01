@@ -1,5 +1,6 @@
 %% user parameters
 clear;
+
 filename = 'trial_scene_006_.mat';
 
 verbosity = 0 ;
@@ -46,6 +47,11 @@ A.state = agent_info.state ;
 % set up world using arm
 W.setup(agent_info)
 clear_plot_data(W);
+
+%% Output some key stats
+
+goal_check = summary.goal_check
+num_iter = summary.total_iterations
     
 %% plotting
 figure(1) ; clf ; axis equal ; hold on ; grid on ;

@@ -7,21 +7,75 @@
 
 % clear all; close all; clc;
 
-% load('trial_scene_050_.mat')
+load('trial_scene_003_.mat')
 
+%% Defining Transmission Inertia
+transmision_inertia = [8.02999999999999936 11.99620246153036440 9.00254278617515169 11.58064393167063599 8.46650409179141228 8.85370693737424297 8.85873036646853151]; % matlab doesn't import these from urdf so hard code into class
+
+dt = 1/P.jrs_info.n_t; % note this might be wrong for some of the experiments and should be 1/128
 
 %% Extracting Info From CUDA Code
 
-
-
+% wrench reachable set center and radii
+CUDA_f_center = [];
+CUDA_n_center = [];
+CUDA_f_radii = [];
+CUDA_n_radii = [];
+% contact constraint radii
 CUDA_sep_bounds = [];
 CUDA_slip_bounds = [];
 CUDA_tip_bounds = [];
+nan_counter = 0;
 for i = 1:length(P.info.contact_constraint_radii)
-    CUDA_sep_bounds = [CUDA_sep_bounds; P.info.contact_constraint_radii{1,i}(1:50,:)];
-    CUDA_slip_bounds = [CUDA_slip_bounds; P.info.contact_constraint_radii{1,i}(101:150,:)];
-    CUDA_tip_bounds = [CUDA_tip_bounds; P.info.contact_constraint_radii{1,i}(201:250,:)];
+    % need to check if breaking maneuver is performed
+    if isnan(P.info.k_opt{1,i})
+        if nan_counter < 1 % first brake
+            % wrench reachable set center and radii
+            CUDA_f_center = [CUDA_f_center; P.info.wrench_radii{1,i-1}(51:100,1:3)];
+            CUDA_n_center = [CUDA_n_center; P.info.wrench_radii{1,i-1}(51:100,4:6)];
+            CUDA_f_radii = [CUDA_f_radii; P.info.wrench_radii{1,i-1}(51:100,7:9)];
+            CUDA_n_radii = [CUDA_n_radii; P.info.wrench_radii{1,i-1}(51:100,10:12)];
+            % contact constraint radii
+            CUDA_sep_bounds = [CUDA_sep_bounds; P.info.contact_constraint_radii{1,i-1}(51:100,:)];
+            CUDA_slip_bounds = [CUDA_slip_bounds; P.info.contact_constraint_radii{1,i-1}(151:200,:)];
+            CUDA_tip_bounds = [CUDA_tip_bounds; P.info.contact_constraint_radii{1,i-1}(251:300,:)];
+            nan_counter = nan_counter + 1;
+        else % more than one brake in a row
+            % wrench reachable set center and radii
+            CUDA_f_center = [CUDA_f_center; P.info.wrench_radii{1,i}(1:50,1:3)];
+            CUDA_n_center = [CUDA_n_center; P.info.wrench_radii{1,i}(1:50,4:6)];
+            CUDA_f_radii = [CUDA_f_radii; P.info.wrench_radii{1,i}(1:50,7:9)];
+            CUDA_n_radii = [CUDA_n_radii; P.info.wrench_radii{1,i}(1:50,10:12)];
+            % contact constraint radii
+            CUDA_sep_bounds = [CUDA_sep_bounds; P.info.contact_constraint_radii{1,i}(1:50,:)];
+            CUDA_slip_bounds = [CUDA_slip_bounds; P.info.contact_constraint_radii{1,i}(101:150,:)];
+            CUDA_tip_bounds = [CUDA_tip_bounds; P.info.contact_constraint_radii{1,i}(201:250,:)];
+            nan_counter = nan_counter + 1;
+        end
+    else % normal iteration
+        % wrench reachable set center and radii
+        CUDA_f_center = [CUDA_f_center; P.info.wrench_radii{1,i}(1:50,1:3)];
+        CUDA_n_center = [CUDA_n_center; P.info.wrench_radii{1,i}(1:50,4:6)];
+        CUDA_f_radii = [CUDA_f_radii; P.info.wrench_radii{1,i}(1:50,7:9)];
+        CUDA_n_radii = [CUDA_n_radii; P.info.wrench_radii{1,i}(1:50,10:12)];
+        % contact constraint radii
+        CUDA_sep_bounds = [CUDA_sep_bounds; P.info.contact_constraint_radii{1,i}(1:50,:)];
+        CUDA_slip_bounds = [CUDA_slip_bounds; P.info.contact_constraint_radii{1,i}(101:150,:)];
+        CUDA_tip_bounds = [CUDA_tip_bounds; P.info.contact_constraint_radii{1,i}(201:250,:)];
+        nan_counter = 0;
+    end
 end
+
+%% Create Zonotopes of Wrenches
+
+for i = 1:size(CUDA_f_radii,1)
+    CUDA_f_zono{i} = zonotope(CUDA_f_center(i,:)',diag(CUDA_f_radii(i,:)));
+    CUDA_n_zono{i} = zonotope(CUDA_n_center(i,:)',diag(CUDA_n_radii(i,:)));
+end
+
+% figure(201)
+% zono1 = CUDA_f_zono{1}
+% plot(zono1,[1,2])
 
 %% flags
 
@@ -113,18 +167,18 @@ if plot_accel
 
     qdd_post = zeros(7,length(A.time));
     % calculating the acceleration in post to compare with what is stored
-    for i = 2:length(A.time)
-        [M, C, g] = A.calculate_dynamics(joint_angles(:,i-1), joint_angular_velocity(:,i-1), A.params.true);
+    for i = 1:length(A.time(1:end-1))
+        [M, C, g] = A.calculate_dynamics(joint_angles(:,i), joint_angular_velocity(:,i), A.params.true);
 
         %% can I call u=A.LLC.get_control_inputs() here with the P.info?
 
-        for i = 1:size(M,1)
-            M(i,i) = M(i,i) + A.transmision_inertia(i);
+        for j = 1:size(M,1)
+            M(j,j) = M(j,j) + transmision_inertia(j);
         end
         
         % need to initialize this with a column of zeros and start at the
         % second index - fixed
-        qdd_post(:,i) = M\(A.input(:,i)-C*joint_angular_velocity(:,i-1)-g);
+        qdd_post(:,i) = M\(A.input(:,i+1)-C*joint_angular_velocity(:,i)-g);
 %         qdd_post(:,i) = M\(A.input(:,i)-C*joint_angular_velocity(:,i)-g);
 
     end
@@ -209,8 +263,109 @@ if plot_force
     ylabel('z-axis Force (N)')
     axis('square')
     grid on
+
+    %% plotting pz overapproximation
+
+    % note: change plotting to be patches
+
+    figure(102)
+    % plot the x-axis force (in the tray frame)
+    subplot(1,3,1)
+    hold on
+    plot(A.time(1:end), force(1,:), 'k')
+    plot(A.time(1:end-1), CUDA_f_center(:,1)-CUDA_f_radii(:,1),'m')
+    plot(A.time(1:end-1), CUDA_f_center(:,1)+CUDA_f_radii(:,1),'m')
+    xlabel('time (s)')
+    ylabel('x-axis Force (N)')
+    axis('square')
+    grid on
+    % plot the y-axis force (in the tray frame)
+    subplot(1,3,2)
+    hold on
+    plot(A.time(1:end), force(2,:), 'k')
+    plot(A.time(1:end-1), CUDA_f_center(:,2)-CUDA_f_radii(:,2),'m')
+    plot(A.time(1:end-1), CUDA_f_center(:,2)+CUDA_f_radii(:,2),'m')
+    xlabel('time (s)')
+    ylabel('y-axis Force (N)')
+    axis('square')
+    grid on
+    % plot the z-axis force (in the tray frame)
+    subplot(1,3,3)
+    hold on
+    plot(A.time(1:end), force(3,:), 'k')
+    plot(A.time(1:end-1), CUDA_f_center(:,3)-CUDA_f_radii(:,3),'m')
+    plot(A.time(1:end-1), CUDA_f_center(:,3)+CUDA_f_radii(:,3),'m')
+    xlabel('time (s)')
+    ylabel('z-axis Force (N)')
+    axis('square')
+    grid on
+
+    %% plotting pz overapproximation with patches
+    
+    % plotting settings
+    edgecolor = 'none';
+    facealpha = 0.2;
+
+    % note: change plotting to be patches
+
+    figure(301)
+    % plot the full nominal force trajectory first
+    subplot(1,3,1)
+    hold on
+    plot(A.time(1:50), force(1,1:50), 'k')
+    subplot(1,3,2)
+    hold on
+    plot(A.time(1:50), force(2,1:50), 'k')
+    subplot(1,3,3)
+    hold on
+    plot(A.time(1:50), force(3,1:50), 'k')
+    % get PZ points to plot
+    fx_l = CUDA_f_center(:,1)-CUDA_f_radii(:,1);
+    fx_u = CUDA_f_center(:,1)+CUDA_f_radii(:,1);
+    fy_l = CUDA_f_center(:,2)-CUDA_f_radii(:,2);
+    fy_u = CUDA_f_center(:,2)+CUDA_f_radii(:,2);
+    fz_l = CUDA_f_center(:,3)-CUDA_f_radii(:,3);
+    fz_u = CUDA_f_center(:,3)+CUDA_f_radii(:,3);
+    % plot the PZ patches
+    for i=1:length(A.time(1:50))
+        % plot the x-axis force (in the tray frame)
+        subplot(1,3,1)
+        hold on
+%         plot(A.time(1:end), force(1,:), 'k')
+%         plot(A.time(i), CUDA_f_center(:,1)-CUDA_f_radii(:,1),'m')
+%         plot(A.time(i), CUDA_f_center(:,1)+CUDA_f_radii(:,1),'m')
+        pf1 = patch([A.time(i)+dt;A.time(i)+dt;A.time(i);A.time(i)],[fx_u(i);fx_l(i);fx_l(i);fx_u(i)],'m','EdgeColor',edgecolor,'FaceAlpha',facealpha);
+        xlabel('time (s)')
+        ylabel('x-axis Force (N)')
+        axis('square')
+        grid on
+        % plot the y-axis force (in the tray frame)
+        subplot(1,3,2)
+        hold on
+%         plot(A.time(1:end), force(2,:), 'k')
+%         plot(A.time(1:end-1), CUDA_f_center(:,2)-CUDA_f_radii(:,2),'m')
+%         plot(A.time(1:end-1), CUDA_f_center(:,2)+CUDA_f_radii(:,2),'m')
+        pf2 = patch([A.time(i)+dt;A.time(i)+dt;A.time(i);A.time(i)],[fy_u(i);fy_l(i);fy_l(i);fy_u(i)],'m','EdgeColor',edgecolor,'FaceAlpha',facealpha);
+        xlabel('time (s)')
+        ylabel('y-axis Force (N)')
+        axis('square')
+        grid on
+        % plot the z-axis force (in the tray frame)
+        subplot(1,3,3)
+        hold on
+%         plot(A.time(1:end), force(3,:), 'k')
+%         plot(A.time(1:end-1), CUDA_f_center(:,3)-CUDA_f_radii(:,3),'m')
+%         plot(A.time(1:end-1), CUDA_f_center(:,3)+CUDA_f_radii(:,3),'m')
+        pf2 = patch([A.time(i)+dt;A.time(i)+dt;A.time(i);A.time(i)],[fz_u(i);fz_l(i);fz_l(i);fz_u(i)],'m','EdgeColor',edgecolor,'FaceAlpha',facealpha);
+        xlabel('time (s)')
+        ylabel('z-axis Force (N)')
+        axis('square')
+        grid on
+    end
     
 end
+
+
 
 %% Calculating Constraints
 
@@ -232,10 +387,51 @@ for i = 1:length(A.time)
     ZMP_top2 = cross([0;0;1],moment(:,i));
     ZMP_bottom2 = dot([0;0;1],force(:,i));
     tip2(i) = ZMP_top(1)^2 + ZMP_top(2)^2 - ZMP_bottom^2*(W.surf_rad)^2;
-    %% need to fix the ZMP constraint with the correct moment
+end
+%% Calculating PZ Constraints
+
+for i = 1:length(A.time(1:50)) %end-1))
+    f_PZ = polyZonotope_ROAHM(CUDA_f_zono{i}.Z(:,1),CUDA_f_zono{i}.Z(:,2:4));
+    n_PZ = polyZonotope_ROAHM(CUDA_n_zono{i}.Z(:,1),CUDA_n_zono{i}.Z(:,2:4));
+    % calculating the PZ form of the constraints
+    ZMP_PZ_top = cross([0;0;1],n_PZ);
+    ZMP_PZ_bottom = f_PZ*[0,0,1];
+    ZMP_PZ_bottom = interval(ZMP_PZ_bottom);
+    ZMP_PZ_bottom_inf = ZMP_PZ_bottom.inf;
+    ZMP_PZ_bottom_sup = ZMP_PZ_bottom.sup;
+    % Note that this is not the entire overapproximated PZ because the
+    % bottom has the .sup as well
+    ZMP_PZ_inf = interval(ZMP_PZ_top) / ZMP_PZ_bottom_inf;
+    ZMP_PZ_sup = interval(ZMP_PZ_top) / ZMP_PZ_bottom_sup;
+    ZMP_PZ{i} = convHull(ZMP_PZ_inf,ZMP_PZ_sup);
 end
 
+%% Plotting the ZMP Point
 
+figure(401)
+% subplot(3,4,12)
+hold on
+
+for i = 1:length(ZMP_PZ)
+    s = plot(ZMP_PZ{i},[1,2],'Filled',true,'EdgeColor','m','FaceColor','m','FaceAlpha',0.01,'EdgeAlpha',0.2);
+%     alpha(s,0.2)
+end
+
+r=W.surf_rad;
+x=0;
+y=0;
+th = linspace(0,2*pi,500);
+xunit = r * cos(th) + x;
+yunit = r * sin(th) + y;
+tipplot1 = plot(xunit, yunit,'-r');
+xlabel('x position (m)')
+ylabel('y position (m)')
+axis('square')
+% axis equal
+grid on
+title('ZMP Position')
+
+tipplot2 = plot(ZMP(1,1:50),ZMP(2,1:50),'xk')
 
 %% plotting constraints
 
@@ -267,7 +463,11 @@ if plot_constraint
     axis('square')
     grid on
 
-    % plotting with PZ overapprox
+
+    %% plotting with PZ overapprox
+
+    % note: change plotting of PZs to be patches
+
     figure(101)
     % plot the separation constraint
     subplot(1,3,1)
@@ -396,14 +596,14 @@ if plot_zmp
     th = linspace(0,2*pi,500);
     xunit = r * cos(th) + x;
     yunit = r * sin(th) + y;
-    plot(xunit, yunit);
+    plot(xunit, yunit,'r');
     xlabel('x position (m)')
     ylabel('y position (m)')
     axis('square')
     grid on
     title('ZMP Position in Contact Area')
 
-    plot(ZMP(1,:),ZMP(2,:),'or')
+    plot(ZMP(1,:),ZMP(2,:),'k','MarkerSize',2)
     
 end
 
