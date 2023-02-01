@@ -55,16 +55,19 @@ stop_threshold = 4 ; % number of failed iterations before exiting
 % start = [-1; -1; -1; -1; -1; -1; -1]; % start configuration
 % goal = [1; 1; 1; 1; 1; 1; 1]; % goal configuration
 
-start = [0;-pi/2;0;0;0;0;0];
-goal = [pi;-pi/2;0;0;0;0;0];
+% start = [0;-pi/2;0;0;0;0;0];
+% goal = [pi;-pi/2;0;0;0;0;0];
+
+start = [0;-1.5708;0;0;0;0;0];
+goal = [1.5184;-1.488;0.99919;-0.8293;-3.0787;2.22;1.0417];
 
 % figure(101)
 % show(robot,goal)
 
-obstacles{1} = box_obstacle_zonotope('center', [0; 0; 0.6],...
+obstacles{1} = box_obstacle_zonotope('center', [3; 3; 3],...
                                      'side_lengths', [0.1; 0.1; 0.1]) ;
-obstacles{2} = box_obstacle_zonotope('center', [0.3; 0; 0.4],...
-                                     'side_lengths', [0.1; 0.8; 0.05]) ;
+% obstacles{2} = box_obstacle_zonotope('center', [0.3; 0; 0.4],...
+%                                      'side_lengths', [0.1; 0.8; 0.05]) ;
 
 %% robot params:
 robot = importrobot(agent_urdf);

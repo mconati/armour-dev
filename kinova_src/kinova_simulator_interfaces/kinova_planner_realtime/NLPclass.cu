@@ -199,10 +199,10 @@ bool armtd_NLP::get_starting_point(
 
     for( Index i = 0; i < n; i++ ) {
         // initialize to zero
-        // x[i] = 0.0;
+        x[i] = 0.0;
 
         // try to avoid local minimum
-        x[i] = min(max((q_des[i] - desired_trajectory->q0[i]) / k_range[i], -0.5), 0.5);
+        // x[i] = min(max((q_des[i] - desired_trajectory->q0[i]) / k_range[i], -0.5), 0.5);
     }
 
     return true;
@@ -222,6 +222,60 @@ bool armtd_NLP::eval_f(
        WARNING_PRINT("*** Error wrong value of n in eval_f!");
     }
 
+    // ADDING SLIPPING CONSTRAINT VALUE TO COST
+
+    // Contact Force Constraints
+    double cost_slip_ub[NUM_TIME_STEPS];
+
+    for(int i=0; i<NUM_TIME_STEPS;i++){
+        // Extract the force PZs, slice, and get the centers and radii
+        MatrixXInt f_c_x = kinematics_dynamics_result -> f_c_int(i)(0,0).slice(x);
+        Number f_c_x_center = getCenter(f_c_x(0));
+        Number f_c_x_radius = getRadius(f_c_x(0));
+
+        MatrixXInt f_c_y = kinematics_dynamics_result -> f_c_int(i)(1,0).slice(x);
+        Number f_c_y_center = getCenter(f_c_y(0));
+        Number f_c_y_radius = getRadius(f_c_y(0));
+
+        MatrixXInt f_c_z = kinematics_dynamics_result -> f_c_int(i)(2,0).slice(x);
+        Number f_c_z_center = getCenter(f_c_z(0));
+        Number f_c_z_radius = getRadius(f_c_z(0));
+
+        // slipping constraint
+        if ( (f_c_x_center >= 0) && (f_c_y_center >= 0) && (f_c_z_center >= 0) ){
+            // Note: double check that the center/radius is a number that can be squared
+            cost_slip_ub[i] = pow(f_c_x_center,2) + 2*f_c_x_radius*f_c_x_center + pow(f_c_x_radius,2) + pow(f_c_y_center,2) + 2*f_c_y_radius*f_c_y_center + pow(f_c_y_radius,2) - pow(u_s,2) * ( pow(f_c_z_center,2) - 2*f_c_z_radius*f_c_z_center - pow(f_c_z_radius,2)); // checked signs
+        }
+        // condition 2: y negative
+        else if ( (f_c_x_center >= 0) && (f_c_y_center <= 0) && (f_c_z_center >= 0) ) {
+            cost_slip_ub[i] = pow(f_c_x_center,2) + 2*f_c_x_radius*f_c_x_center + pow(f_c_x_radius,2) + pow(f_c_y_center,2) - 2*f_c_y_radius*f_c_y_center + pow(f_c_y_radius,2) - pow(u_s,2) * ( pow(f_c_z_center,2) - 2*f_c_z_radius*f_c_z_center - pow(f_c_z_radius,2)); // checked signs
+        }
+        // condition 3: z negative
+        else if ( (f_c_x_center >= 0) && (f_c_y_center >= 0) && (f_c_z_center <= 0) ) {
+            cost_slip_ub[i] = pow(f_c_x_center,2) + 2*f_c_x_radius*f_c_x_center + pow(f_c_x_radius,2) + pow(f_c_y_center,2) + 2*f_c_y_radius*f_c_y_center + pow(f_c_y_radius,2) - pow(u_s,2) * ( pow(f_c_z_center,2) + 2*f_c_z_radius*f_c_z_center - pow(f_c_z_radius,2)); // checked signs
+        }
+        // condition 4: y and z negative
+        else if ( (f_c_x_center >= 0) && (f_c_y_center <= 0) && (f_c_z_center <= 0) ) {
+            cost_slip_ub[i] = pow(f_c_x_center,2) + 2*f_c_x_radius*f_c_x_center + pow(f_c_x_radius,2) + pow(f_c_y_center,2) - 2*f_c_y_radius*f_c_y_center + pow(f_c_y_radius,2) - pow(u_s,2) * ( pow(f_c_z_center,2) + 2*f_c_z_radius*f_c_z_center - pow(f_c_z_radius,2)); // checked signs
+        }
+        // condition 5: x negative
+        else if ( (f_c_x_center <= 0) && (f_c_y_center >= 0) && (f_c_z_center >= 0) ) {
+            cost_slip_ub[i] = pow(f_c_x_center,2) - 2*f_c_x_radius*f_c_x_center + pow(f_c_x_radius,2) + pow(f_c_y_center,2) + 2*f_c_y_radius*f_c_y_center + pow(f_c_y_radius,2) - pow(u_s,2) * ( pow(f_c_z_center,2) - 2*f_c_z_radius*f_c_z_center - pow(f_c_z_radius,2)); // checked signs
+        }
+        // condition 6: x and y negative
+        else if ( (f_c_x_center <= 0) && (f_c_y_center <= 0) && (f_c_z_center >= 0) ) {
+            cost_slip_ub[i] = pow(f_c_x_center,2) - 2*f_c_x_radius*f_c_x_center + pow(f_c_x_radius,2) + pow(f_c_y_center,2) - 2*f_c_y_radius*f_c_y_center + pow(f_c_y_radius,2) - pow(u_s,2) * ( pow(f_c_z_center,2) - 2*f_c_z_radius*f_c_z_center - pow(f_c_z_radius,2)); // checked signs
+        }
+        // condition 7: x and z negative
+        else if ( (f_c_x_center <= 0) && (f_c_y_center >= 0) && (f_c_z_center <= 0) ) {
+            cost_slip_ub[i] = pow(f_c_x_center,2) - 2*f_c_x_radius*f_c_x_center + pow(f_c_x_radius,2) + pow(f_c_y_center,2) + 2*f_c_y_radius*f_c_y_center + pow(f_c_y_radius,2) - pow(u_s,2) * ( pow(f_c_z_center,2) + 2*f_c_z_radius*f_c_z_center - pow(f_c_z_radius,2)); // checked signs
+        }
+        // condition 8: x and y and z negative
+        else if ( (f_c_x_center <= 0) && (f_c_y_center <= 0) && (f_c_z_center <= 0) ) {
+            cost_slip_ub[i] = pow(f_c_x_center,2) - 2*f_c_x_radius*f_c_x_center + pow(f_c_x_radius,2) + pow(f_c_y_center,2) - 2*f_c_y_radius*f_c_y_center + pow(f_c_y_radius,2) - pow(u_s,2) * ( pow(f_c_z_center,2) + 2*f_c_z_radius*f_c_z_center - pow(f_c_z_radius,2)); // checked signs
+        }
+    }
+
     // obj_value = sum((q_plan - q_des).^2);
     obj_value = 0; 
     for(Index i = 0; i < n; i++){
@@ -229,7 +283,13 @@ bool armtd_NLP::eval_f(
         obj_value += pow(q_plan - q_des[i], 2);
     }
 
-    obj_value *= 100.0;
+    obj_value *= 100.0; // needs to change in the gradient as well
+
+    for(Index i = 0; i < NUM_TIME_STEPS; i++){
+        obj_value += cost_slip_ub[i];
+    }
+
+    
 
     return true;
 }
@@ -249,9 +309,100 @@ bool armtd_NLP::eval_grad_f(
     }
 
     for(Index i = 0; i < n; i++){
+
+        // values is 7x1
+        // sum for each time step resulting in 7x1
+        // add each element to corresponding element of grad_f?
+
         double q_plan = q_des_func(desired_trajectory->q0[i], desired_trajectory->qd0[i], desired_trajectory->qdd0[i], k_range[i] * x[i], t_plan);
         double dk_q_plan = pow(t_plan,3) * (6 * pow(t_plan,2) - 15 * t_plan + 10);
         grad_f[i] = (2 * (q_plan - q_des[i]) * dk_q_plan * k_range[i]) * 100.0;
+    }
+
+    double cost_grad_slip[NUM_FACTORS];
+
+    for(Index i = 0; i < NUM_TIME_STEPS; i++){
+
+        // Contact Force Constraints
+
+        // Extract the force PZs, slice, and get the centers and radii
+        MatrixXInt f_c_x = kinematics_dynamics_result -> f_c_int(i)(0,0).slice(x);
+        Number f_c_x_center = getCenter(f_c_x(0));
+        Number f_c_x_radius = getRadius(f_c_x(0));
+
+        MatrixXInt f_c_y = kinematics_dynamics_result -> f_c_int(i)(1,0).slice(x);
+        Number f_c_y_center = getCenter(f_c_y(0));
+        Number f_c_y_radius = getRadius(f_c_y(0));
+
+        MatrixXInt f_c_z = kinematics_dynamics_result -> f_c_int(i)(2,0).slice(x);
+        Number f_c_z_center = getCenter(f_c_z(0));
+        Number f_c_z_radius = getRadius(f_c_z(0));
+
+        // gradients
+        // storage for the gradients
+        Number f_c_x_grad[NUM_FACTORS];
+        Number f_c_y_grad[NUM_FACTORS];
+        Number f_c_z_grad[NUM_FACTORS];
+        // calculate the gradients
+        kinematics_dynamics_result->f_c_int(i)(0,0).slice(f_c_x_grad, x);
+        kinematics_dynamics_result->f_c_int(i)(1,0).slice(f_c_y_grad, x);
+        kinematics_dynamics_result->f_c_int(i)(2,0).slice(f_c_z_grad, x);
+
+        // Slipping Constraint
+        // calculate constraint gradient, depends on the signs of the centers like constraint itself does.
+        if ( (f_c_x_center >= 0) && (f_c_y_center >= 0) && (f_c_z_center >= 0) ){
+            for (int j=0;j<NUM_FACTORS;j++) {
+                cost_grad_slip[j] += 2*f_c_x_center*f_c_x_grad[j] + 2*f_c_x_radius*f_c_x_grad[j] + 2*f_c_y_center*f_c_y_grad[j] + 2*f_c_y_radius*f_c_y_grad[j] - pow(u_s,2) * ( 2*f_c_z_center*f_c_z_grad[j] - 2*f_c_z_radius*f_c_z_grad[j] );
+            }
+        }
+        // condition 2: y negative
+        else if ( (f_c_x_center >= 0) && (f_c_y_center <= 0) && (f_c_z_center >= 0) ) {
+            for (int j=0;j<NUM_FACTORS;j++) {
+                cost_grad_slip[j] += 2*f_c_x_center*f_c_x_grad[j] + 2*f_c_x_radius*f_c_x_grad[j] + 2*f_c_y_center*f_c_y_grad[j] - 2*f_c_y_radius*f_c_y_grad[j] - pow(u_s,2) * ( 2*f_c_z_center*f_c_z_grad[j] - 2*f_c_z_radius*f_c_z_grad[j] );
+            }
+        }
+        // condition 3: z negative
+        else if ( (f_c_x_center >= 0) && (f_c_y_center >= 0) && (f_c_z_center <= 0) ) {
+            for (int j=0;j<NUM_FACTORS;j++) {
+                cost_grad_slip[j] += 2*f_c_x_center*f_c_x_grad[j] + 2*f_c_x_radius*f_c_x_grad[j] + 2*f_c_y_center*f_c_y_grad[j] + 2*f_c_y_radius*f_c_y_grad[j] - pow(u_s,2) * ( 2*f_c_z_center*f_c_z_grad[j] + 2*f_c_z_radius*f_c_z_grad[j] );
+            }
+        }
+        // condition 4: y and z negative
+        else if ( (f_c_x_center >= 0) && (f_c_y_center <= 0) && (f_c_z_center <= 0) ) {
+            for (int j=0;j<NUM_FACTORS;j++) {
+                cost_grad_slip[j] += 2*f_c_x_center*f_c_x_grad[j] + 2*f_c_x_radius*f_c_x_grad[j] + 2*f_c_y_center*f_c_y_grad[j] - 2*f_c_y_radius*f_c_y_grad[j] - pow(u_s,2) * ( 2*f_c_z_center*f_c_z_grad[j] + 2*f_c_z_radius*f_c_z_grad[j] );
+            }
+        }
+        // condition 5: x negative
+        else if ( (f_c_x_center <= 0) && (f_c_y_center >= 0) && (f_c_z_center >= 0) ) {
+            for (int j=0;j<NUM_FACTORS;j++) {
+                cost_grad_slip[j] += 2*f_c_x_center*f_c_x_grad[j] - 2*f_c_x_radius*f_c_x_grad[j] + 2*f_c_y_center*f_c_y_grad[j] + 2*f_c_y_radius*f_c_y_grad[j] - pow(u_s,2) * ( 2*f_c_z_center*f_c_z_grad[j] - 2*f_c_z_radius*f_c_z_grad[j] );
+            }
+        }
+        // condition 6: x and y negative
+        else if ( (f_c_x_center <= 0) && (f_c_y_center <= 0) && (f_c_z_center >= 0) ) {
+            for (int j=0;j<NUM_FACTORS;j++) {
+                cost_grad_slip[j] += 2*f_c_x_center*f_c_x_grad[j] - 2*f_c_x_radius*f_c_x_grad[j] + 2*f_c_y_center*f_c_y_grad[j] - 2*f_c_y_radius*f_c_y_grad[j] - pow(u_s,2) * ( 2*f_c_z_center*f_c_z_grad[j] - 2*f_c_z_radius*f_c_z_grad[j] );
+            }
+        }
+        // condition 7: x and z negative
+        else if ( (f_c_x_center <= 0) && (f_c_y_center >= 0) && (f_c_z_center <= 0) ) {
+            for (int j=0;j<NUM_FACTORS;j++) {
+                cost_grad_slip[j] += 2*f_c_x_center*f_c_x_grad[j] - 2*f_c_x_radius*f_c_x_grad[j] + 2*f_c_y_center*f_c_y_grad[j] + 2*f_c_y_radius*f_c_y_grad[j] - pow(u_s,2) * ( 2*f_c_z_center*f_c_z_grad[j] + 2*f_c_z_radius*f_c_z_grad[j] );
+            }
+        }
+        // condition 8: x and y and z negative
+        else if ( (f_c_x_center <= 0) && (f_c_y_center <= 0) && (f_c_z_center <= 0) ) {
+            for (int j=0;j<NUM_FACTORS;j++) {
+                cost_grad_slip[j] += 2*f_c_x_center*f_c_x_grad[j] - 2*f_c_x_radius*f_c_x_grad[j] + 2*f_c_y_center*f_c_y_grad[j] - 2*f_c_y_radius*f_c_y_grad[j] - u_s*u_s * ( 2*f_c_z_center*f_c_z_grad[j] + 2*f_c_z_radius*f_c_z_grad[j] );
+            }
+        }
+
+    }
+
+    // sum cost_grad_slip and grad_f column-wise
+    for(Index i = 0; i < n; i++){
+        grad_f[i] += cost_grad_slip[i];
     }
 
     return true;
@@ -486,6 +637,16 @@ bool armtd_NLP::eval_g(
         }
 
     }
+
+    // // For loop to iterate
+    // for(int j=0; j<NUM_FACTORS;j++){
+    //     cout << x[j] << ", ";
+    // }
+    // cout << "\n";
+    // int out_index = NUM_FACTORS*NUM_TIME_STEPS + NUM_TIME_STEPS;
+    // for(int i=0; i<NUM_TIME_STEPS;i++){
+    //     cout << g[i+out_index] << "\n";
+    // }
 
     // Part 3. check collision between joint position reachable set and obstacles (in gpu)
     obstacles->linkFRSConstraints(link_sliced_center, nullptr, g + NUM_FACTORS*NUM_TIME_STEPS + 3*NUM_TIME_STEPS, nullptr);

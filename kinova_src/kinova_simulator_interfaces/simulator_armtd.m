@@ -182,7 +182,7 @@ classdef simulator_armtd < simulator
                         end
                         t_plan_spent = toc(t_plan_start_tic) ;
 %                         planning_time_vec(current_iteration) = t_plan_spent ;
-                        planning_time_vec(current_iteration) = P.info.planning_time ;
+                        planning_time_vec(current_iteration) = P.info.planning_time{current_iteration} ;
                         S.vdisp(['Planning time: ',num2str(t_plan_spent),' s'],4)
 
                     %% move agent

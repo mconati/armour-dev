@@ -89,7 +89,8 @@ Section I:
 Section II:
     Initialize all polynomial zonotopes, including links and torques
 */
-    Obstacles O(obstacles, num_obstacles); 
+    Obstacles O;
+    O.initialize(obstacles, num_obstacles); 
 
     auto start1 = std::chrono::high_resolution_clock::now();
 

@@ -201,8 +201,8 @@ Section III:
     Slice reachable sets at some point
 */
 
-    double factors[NUM_FACTORS] = {0.5, 0.7, 0.7, 0.0, -0.8, -0.6, -0.7};
-    // double factors[NUM_FACTORS] = {0,0,0,0,0,0,0};
+    // double factors[NUM_FACTORS] = {0.5, 0.7, 0.7, 0.0, -0.8, -0.6, -0.7};
+    double factors[NUM_FACTORS] = {0,0,0,0,0,0,0};
     // double factors[NUM_FACTORS] = {1,1,1,1,1,1,1};
     // double factors[NUM_FACTORS] = {-1,-1,-1,-1,-1,-1,-1};
 

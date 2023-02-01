@@ -299,8 +299,8 @@ classdef kinova_grasp_world_static < world
                     [q, solInfo1] = ik('cube_link',[1 0 0 rand_x; 0 1 0 rand_y; 0 0 1 rand_z; 0 0 0 1],weights,initialguess);
                     % put check for config in joint limits here?
     
-                    q_lower = W.arm_joint_state_limits(1,:); % + 0.01; % tighten the bounds to make sure valid
-                    q_upper = W.arm_joint_state_limits(2,:); % + 0.01; % tighten the bounds to make sure valid
+                    q_lower = W.arm_joint_state_limits(1,:)+0.1; % + 0.01; % tighten the bounds to make sure valid
+                    q_upper = W.arm_joint_state_limits(2,:)-0.1; % + 0.01; % tighten the bounds to make sure valid
                     for i = 1:length(q)
 %                         test = append(num2str(q_lower(i)),' ',num2str(q(i)),' ',num2str(q_upper(i)));
 %                         disp(test)

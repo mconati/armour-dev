@@ -83,7 +83,8 @@ classdef uarmtd_planner < robot_arm_generic_planner
                 'FO_zono', [], 'sliced_FO_zono', [], ...
                 'contact_constraint_radii', [],...
                 'wrench_radii',[],...
-                'constraints_value',[]) ;
+                'constraints_value',[],...
+                'planning_time',[]) ;
         end
         
         function [T, U, Z, info] = replan(P,agent_info,world_info)
@@ -207,6 +208,9 @@ classdef uarmtd_planner < robot_arm_generic_planner
                         if length(k_opt) == 1
                             P.vdisp('Unable to find new trajectory!',3)
                             k_opt = nan;
+%                         elseif planning_time > P.t_plan
+%                             P.vdisp('Solver Took Too Long!',3)
+%                             k_opt = nan;
                         else
                             P.vdisp('New trajectory found!',3);
                             for i = 1:length(k_opt)
@@ -228,7 +232,7 @@ classdef uarmtd_planner < robot_arm_generic_planner
                         wrench_radii = readmatrix('armour_wrench_values.out', 'FileType', 'text');
 
                         link_frs_vertices = cell(7,1);
-                        for tid = 1:10:128
+                        for tid = 1:10:P.jrs_info.n_t
                             for j = 1:7
                                 c = link_frs_center((tid-1)*7+j, :)';
                                 g = link_frs_generators( ((tid-1)*7+j-1)*3+1 : ((tid-1)*7+j)*3, :);
@@ -383,7 +387,7 @@ classdef uarmtd_planner < robot_arm_generic_planner
             end
             
             % save info
-            P.info.planning_time = planning_time;
+            P.info.planning_time = [P.info.planning_time {planning_time}];
             P.info.desired_trajectory = [P.info.desired_trajectory, {@(t) P.desired_trajectory(q_0, q_dot_0, q_ddot_0, t, k_opt)}];
             P.info.t_move = [P.info.t_move, {P.t_move}];
             P.info.waypoint = [P.info.waypoint, {q_des}] ;

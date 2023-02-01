@@ -53,7 +53,7 @@ add_measurement_noise_ = false;
 measurement_noise_size_ = 0;
 
 %%% for LLC
-LLC_V_max = 5e-5;
+LLC_V_max = 1e-4;
 use_true_params_for_robust = false;
 if_use_mex_controller = true;
 
@@ -65,23 +65,23 @@ plot_waypoint_arm_flag  = true ;
 lookahead_distance = 0.1 ;
 
 % plotting
-plot_while_running = false ;
+plot_while_running = true ;
 
 % simulation
 max_sim_time = 86400 ; % 48 hours
 max_sim_iter = 600 ;
-stop_threshold = 3 ; % number of failed iterations before exiting
+stop_threshold = 4 ; % number of failed iterations before exiting
 
 % file handling
 save_file_header = 'trial_' ;
-file_location = '../results/rtd-force/experiment_1_01282023' ;
+file_location = '../results/rtd-force/experiment_1_01312023_largerVm' ;
 if ~exist(file_location, 'dir')
     mkdir(file_location);
 end
 
 % world file
 world_file_header = 'scene';
-world_file_folder = '../saved_worlds/rtd-force/experiment_1_01282023/';
+world_file_folder = '../saved_worlds/rtd-force/experiment_1_01312023/';
 world_file_location = sprintf('%s*%s*', world_file_folder, world_file_header);
 world_file_list = dir(world_file_location);
 
@@ -98,7 +98,7 @@ joint_speed_limits = [-1.3963, -1.3963, -1.3963, -1.3963, -1.2218, -1.2218, -1.2
 joint_input_limits = [-56.7, -56.7, -56.7, -56.7, -29.4, -29.4, -29.4;
                        56.7,  56.7,  56.7,  56.7,  29.4,  29.4,  29.4]; % matlab doesn't import these from urdf so hard code into class
 transmision_inertia = [8.02999999999999936 11.99620246153036440 9.00254278617515169 11.58064393167063599 8.46650409179141228 8.85370693737424297 8.85873036646853151]; % matlab doesn't import these from urdf so hard code into class
-M_min_eigenvalue = 5.095620491878957; % matlab doesn't import these from urdf so hard code into class
+M_min_eigenvalue = 8.29938; % matlab doesn't import these from urdf so hard code into class
 
 use_cuda_flag = true;
 
@@ -109,7 +109,7 @@ if plot_while_running
 end
 
 tic
-for idx = 50:length(world_file_list)
+for idx = 1:length(world_file_list)
     clc; 
     fprintf("THIS IS WORLD %d\n\n", idx);
 

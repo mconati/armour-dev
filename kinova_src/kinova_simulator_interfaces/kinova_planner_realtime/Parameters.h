@@ -5,12 +5,13 @@
 // #include "KinovaInfo.h"
 // #include "KinovaWithoutGripperInfo.h"
 #include "KinovaForceInfo.h"
+// #include "KinovaFixedGripperInfo.h"
 
 #define DEBUG_MODE true
 
 // Parameters for PZsparse.h:
     // monomials with a coefficient smaller than this number will be reduced
-    #define SIMPLIFY_THRESHOLD 2e-4
+    #define SIMPLIFY_THRESHOLD 1e-4
 
 // Parameters for Trajectories.h:
     // number of time steps (This should be an EVEN number!!!)
@@ -48,14 +49,14 @@
     #define TIPPING_CONSTRAINT_VIOLATION_THRESHOLD 1e-6
 
 // Parameters for armour_main.cpp
-    #define IPOPT_OPTIMIZATION_TOLERANCE 1e-6
+    #define IPOPT_OPTIMIZATION_TOLERANCE 1e-4
 
-    #define IPOPT_MAX_CPU_TIME 14 // 14.0
+    #define IPOPT_MAX_CPU_TIME 1000 // 14.0
 
     #define IPOPT_PRINT_LEVEL 0
 
     #define IPOPT_MU_STRATEGY "adaptive"
 
-    #define IPOPT_LINEAR_SOLVER "ma27"
+    #define IPOPT_LINEAR_SOLVER "ma97"
 
 #endif

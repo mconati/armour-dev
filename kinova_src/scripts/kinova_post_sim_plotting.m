@@ -5,9 +5,9 @@
 
 %% Loading Data
 
-clear all; close all; clc;
+% clear all; close all; clc;
 
-load('trial_scene_050_.mat')
+% load('trial_scene_050_.mat')
 
 
 %% Extracting Info From CUDA Code
@@ -25,13 +25,13 @@ end
 
 %% flags
 
-plot_states = false;
-plot_control = false;
+plot_states = true;
+plot_control = true;
 plot_accel = true;
 plot_force = true;
 plot_moment = true;
 plot_constraint = true;
-plot_torque = false;
+plot_torque = true;
 plot_torque_control = false;
 plot_torque_accel = false;
 plot_zmp = true;

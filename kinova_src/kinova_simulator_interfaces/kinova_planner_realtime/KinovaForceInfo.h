@@ -82,6 +82,7 @@ const double inertia[NUM_JOINTS * 9] = {  0.00457, 0.000001, 0.000002, 0.000001,
 										0.0004596, 0, 0, 0, 0.0005181, 0, 0, 0, 0.00036051,
                                         0.00003615, 0, 0, 0, 0.00003615, 0, 0, 0, 0.00007225,
                                         0.00007385, 0, 0, 0, 0.00007385, 0, 0, 0, 0.00007385};
+
 const double inertia_uncertainty = 0.03;
 // question for Bohao, does this add inertia uncertainty to all of the links?
 // question for Bohao, why are the mass and inertia uncertainty not tied together? the inertia uncertainty should be at least the mass uncertainty since mass is used to calculate inertia. (so is center of mass? {no because it is inertia about the COM} so if both are 3%, shouldn't inertia be larger?)
@@ -144,9 +145,9 @@ const double link_zonotope_generators[NUM_JOINTS][3] = {{ 0.046358, 0.047354, 0.
 
 // ultimate bound
 const double alpha = 1.0;
-const double V_m = 5e-5;
+const double V_m = 0;
 const double M_max = 15.79635774;
-const double M_min = 5.095620491878957;
+const double M_min = 8.29938;
 const double eps = sqrt(2 * V_m / M_min); // 0; // 
 const double K = 10.0;
 const double qe = eps / K;
