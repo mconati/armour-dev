@@ -221,6 +221,8 @@ void armtd_NLP::compute(
         // compute the constraint values
 
         // Contact Force Constraints
+        Index i;
+        #pragma omp parallel for shared(kinematics_dynamics_result, x, link_sliced_center) private(i) schedule(static, NUM_TIME_STEPS / NUM_THREADS)
         for(Index i = 0; i<NUM_TIME_STEPS; i++){
 
             for (int m = 0; m < 3; m++) {
@@ -768,7 +770,7 @@ bool armtd_NLP::eval_g(
 
     Index i;
     #pragma omp parallel for shared(kinematics_dynamics_result, x, g, link_sliced_center) private(i) schedule(static, NUM_TIME_STEPS / NUM_THREADS)
-    for(Index i = 0; i < NUM_TIME_STEPS; i++) {
+    for(i = 0; i < NUM_TIME_STEPS; i++) {
         for (int k = 0; k < NUM_FACTORS; k++) {
             MatrixXInt res = kinematics_dynamics_result->u_nom(k, i).slice(x);
             g[i * NUM_FACTORS + k] = getCenter(res(0));

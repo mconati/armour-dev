@@ -239,10 +239,10 @@ Section III:
 	app->Options()->SetStringValue("hessian_approximation", "limited-memory");
 
     // For gradient checking
-    app->Options()->SetStringValue("output_file", "ipopt.out");
-    app->Options()->SetStringValue("derivative_test", "first-order");
-    app->Options()->SetNumericValue("derivative_test_perturbation", 1e-8);
-    app->Options()->SetNumericValue("derivative_test_tol", 1e-6);
+    // app->Options()->SetStringValue("output_file", "ipopt.out");
+    // app->Options()->SetStringValue("derivative_test", "first-order");
+    // app->Options()->SetNumericValue("derivative_test_perturbation", 1e-8);
+    // app->Options()->SetNumericValue("derivative_test_tol", 1e-6);
 
     // Initialize the IpoptApplication and process the options
     ApplicationReturnStatus status;

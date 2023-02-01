@@ -36,7 +36,7 @@ use_CAD_flag = true; % plot robot with CAD or bounding boxes
 
 %%% for LLC
 use_robust_input = true;
-LLC_V_max = 5e-5;
+LLC_V_max = 0;
 
 %%% for HLP
 if_use_RRT = false;
@@ -177,10 +177,13 @@ summary = S.run();
 
 figure(101)
 subplot(3,1,1)
+title('Joint Positions')
 plot(A.time,A.state(A.joint_state_indices,:))
 subplot(3,1,2)
+title('Joint Velocities')
 plot(A.time,A.state(A.joint_speed_indices,:))
 subplot(3,1,3)
+title('Joint Torques')
 plot(A.time,A.input)
 
 % Calculating the Acceleration
@@ -206,6 +209,7 @@ for i = 2:length(A.time)
 end
 
 figure(1001)
+title('Acceleration')
 plot(A.time,qdd_post)
 
 % Calling RNEA
