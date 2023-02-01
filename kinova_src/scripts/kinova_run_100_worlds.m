@@ -53,7 +53,7 @@ add_measurement_noise_ = false;
 measurement_noise_size_ = 0;
 
 %%% for LLC
-LLC_V_max = 1e-4;
+LLC_V_max = 1e-2;
 use_true_params_for_robust = false;
 if_use_mex_controller = true;
 

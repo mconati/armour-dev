@@ -53,7 +53,7 @@
 
     #define IPOPT_MAX_CPU_TIME 1000 // 14.0
 
-    #define IPOPT_PRINT_LEVEL 0
+    #define IPOPT_PRINT_LEVEL 5
 
     #define IPOPT_MU_STRATEGY "adaptive"
 
