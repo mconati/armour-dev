@@ -1,7 +1,7 @@
 %% user parameters
 clear;
 
-filename = 'trial_scene_001_.mat';
+filename = 'trial_scene_040_.mat';
 
 verbosity = 0 ;
 dimension = 3 ;
@@ -68,5 +68,5 @@ if plot_start_and_end_config_only
     pause();
     plot(A) ;
 else
-    animate(A) ;
+    animate(A);
 end

@@ -299,14 +299,14 @@ classdef kinova_grasp_world_static < world
                     [q, solInfo1] = ik('cube_link',[1 0 0 rand_x; 0 1 0 rand_y; 0 0 1 rand_z; 0 0 0 1],weights,initialguess);
                     % put check for config in joint limits here?
     
-                    q_lower = W.arm_joint_state_limits(1,:)+0.1; % + 0.01; % tighten the bounds to make sure valid
-                    q_upper = W.arm_joint_state_limits(2,:)-0.1; % + 0.01; % tighten the bounds to make sure valid
+                    q_lower = W.arm_joint_state_limits(1,:)+.025; % + 0.01; % tighten the bounds to make sure valid
+                    q_upper = W.arm_joint_state_limits(2,:)-.025; % + 0.01; % tighten the bounds to make sure valid
                     for i = 1:length(q)
 %                         test = append(num2str(q_lower(i)),' ',num2str(q(i)),' ',num2str(q_upper(i)));
 %                         disp(test)
                         if (q(i) < q_lower(i)) || (q(i) > q_upper(i))
                             out = true;
-                            continue
+                            break
                         else
                             out = false;
                         end
@@ -314,7 +314,7 @@ classdef kinova_grasp_world_static < world
                 end
 
             else
-                q = rand_range(W.arm_joint_state_limits(1,:),W.arm_joint_state_limits(2,:))' ;
+                q = rand_range(W.arm_joint_state_limits(1,:)+0.025,W.arm_joint_state_limits(2,:)-0.025)' ;
             end
         end
         
@@ -512,12 +512,12 @@ classdef kinova_grasp_world_static < world
             % ZMP_Moment = n(:,10) + cross([0;0;cup_height],f(:,10));
             
             sep = -1*fz; %fz; %
-            slip = sqrt(fx^2+fy^2) - W.u_s*abs(fz);
+            slip = sqrt(fx^2+fy^2) - 0.3*abs(fz);
             ZMP = cross([0;0;1],n(:,10))./dot([0;0;1],f(:,10));
 %             ZMP = cross(ZMP_Moment,[0;0;1])./dot([0;0;1],f(:,10)); % RNEA
 %             passes out the force and moment at the joint so original ZMP
 %             was correct
-            tip = sqrt(ZMP(1)^2 + ZMP(2)^2) - W.surf_rad; % + tip_threshold;
+            tip = sqrt(ZMP(1)^2 + ZMP(2)^2) - 0.025; % + tip_threshold;
             
             if (sep > 0) || (slip > 0) || (tip > 0)
                 out = true;

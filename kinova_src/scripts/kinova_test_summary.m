@@ -10,7 +10,7 @@ clear; clc;
 use_robust_input = true;
 
 save_file_header = 'trial_' ;
-file_location = '/home/roahmlab/Documents/armour-dev/kinova_src/results/rtd-force/experiment_1_01312023_largerVm' ;
+file_location = '/home/roahmlab/Documents/armour-dev/kinova_src/results/rtd-force/experiment_paper_02012023' ;
 % file_location = '../results/hard' ;
 addpath(file_location);
 

@@ -74,14 +74,14 @@ stop_threshold = 5 ; % number of failed iterations before exiting
 
 % file handling
 save_file_header = 'trial_' ;
-file_location = '../results/rtd-force/experiment_random_02012023' ;
+file_location = '../results/rtd-force/experiment_paper_02012023' ;
 if ~exist(file_location, 'dir')
     mkdir(file_location);
 end
 
 % world file
 world_file_header = 'scene';
-world_file_folder = '../saved_worlds/rtd-force/experiment_1_01282023/';
+world_file_folder = '../saved_worlds/rtd-force/experiment_random_buffered/';
 world_file_location = sprintf('%s*%s*', world_file_folder, world_file_header);
 world_file_list = dir(world_file_location);
 
@@ -109,7 +109,7 @@ if plot_while_running
 end
 
 tic
-for idx = 5:length(world_file_list)
+for idx = 1:length(world_file_list)
     clc; 
     fprintf("THIS IS WORLD %d\n\n", idx);
 

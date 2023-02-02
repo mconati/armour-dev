@@ -8,7 +8,7 @@
 clear ; clc ; figure(1); clf; view(3); grid on;
 
 %% user parameters
-world_save_dir = 'saved_worlds/rtd-force/experiment_1_01312023';
+world_save_dir = 'saved_worlds/rtd-force/experiment_random_buffered';
 if ~exist(world_save_dir, 'dir')
     mkdir(world_save_dir);
 end
@@ -72,7 +72,7 @@ if obstacle_flag
             % use this to start from random start config:
             W = kinova_grasp_world_static('robot',robot,'include_base_obstacle', 1, 'goal_radius', pi/30, 'N_random_obstacles',i,'dimension',dimension,'workspace_goal_check', 0,...
                 'verbose',verbosity, 'creation_buffer', 0.075, 'base_creation_buffer', 0.075,...
-                'grasp_constraint_flag', grasp_constraint_flag,'ik_start_goal_flag', true,'u_s', u_s, 'surf_rad', surf_rad) ;
+                'grasp_constraint_flag', grasp_constraint_flag,'ik_start_goal_flag', false,'u_s', u_s, 'surf_rad', surf_rad) ;
     
             % set up world using arm
             I = A.get_agent_info ;
@@ -94,20 +94,20 @@ else
         % use this to start from random start config:
         W = kinova_grasp_world_static('robot',robot,'include_base_obstacle', 1, 'goal_radius', pi/30,'dimension',dimension,'workspace_goal_check', 0,...
             'verbose',verbosity, 'creation_buffer', 0.075, 'base_creation_buffer', 0.075,...
-            'grasp_constraint_flag', true,'ik_start_goal_flag', true,'u_s', u_s, 'surf_rad', surf_rad) ;
+            'grasp_constraint_flag', true,'ik_start_goal_flag', false,'u_s', u_s, 'surf_rad', surf_rad) ;
 
         % set up world using arm
         I = A.get_agent_info ;
         W.setup(I)
 
-        W.start = [0;-pi/2;0;0;0;0;0];
+%         W.start = [0;-pi/2;0;0;0;0;0];
         % place arm at starting configuration
-        A.state(A.joint_state_indices) = W.start ;
+%         A.state(A.joint_state_indices) = W.start ;
 
         % set up world using arm
-%         I = A.get_agent_info ;
+        I = A.get_agent_info ;
 %         W.setup(I) ;
-%         W.bounds = [-1 1 -1 1 0 2];
+        W.bounds = [-1 1 -1 1 0 2];
 %         if dimension == 3
 %             view(3);
 %         end
