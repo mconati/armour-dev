@@ -20,6 +20,9 @@
     // range of parameters (size of generators in PZ).
     const double k_range[NUM_FACTORS] = { M_PI / 72, M_PI / 72, M_PI / 72, M_PI / 72, M_PI / 72, M_PI / 72, M_PI / 72 }; // (radian)
 
+// Duration of the trajectories
+    #define T 2
+
 // Parameters for CollisionChecking.h:
     // maximum number of obstacles (used for memory pre-allocation)
     #define MAX_OBSTACLE_NUM 40

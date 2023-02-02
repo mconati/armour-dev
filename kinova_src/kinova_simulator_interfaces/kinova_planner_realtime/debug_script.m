@@ -231,15 +231,16 @@ end
 
 %% helper functions
 function [q, qd, qdd] = get_desired_traj(beta, t)
-    dur = 2;
-    [B, dB, ddB] = Bezier_kernel_deg5(t); %t/dur
+    % actual time duration of the trajectory
+    duration = 2;
+    [B, dB, ddB] = Bezier_kernel_deg5(t/duration); %t/dur
     
     q = zeros(7,1);
     qd = zeros(7,1);
     qdd = zeros(7,1);
     for j = 1:6
         q = q + beta{j} * B(j);
-        qd = qd + beta{j} * dB(j);
-        qdd = qdd + beta{j} * ddB(j); % coeff
+        qd = qd + 1/duration*beta{j} * dB(j);
+        qdd = qdd + (1/duration)^2*beta{j} * ddB(j); % coeff
     end
 end
