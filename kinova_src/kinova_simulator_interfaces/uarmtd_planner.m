@@ -1096,9 +1096,9 @@ classdef uarmtd_planner < robot_arm_generic_planner
                     qdd_des = zeros(length(q_0), 1);
                     for j = 1:n_q
                         for coeff_idx = 0:5
-                            q_des(j) = q_des(j) + alpha{j}{coeff_idx+1}*t^coeff_idx;
+                            q_des(j) = q_des(j) + alpha{j}{coeff_idx+1}*t^coeff_idx;% change t/duration
                             if coeff_idx > 0
-                                qd_des(j) = qd_des(j) + coeff_idx*alpha{j}{coeff_idx+1}*t^(coeff_idx-1);
+                                qd_des(j) = qd_des(j) + coeff_idx*alpha{j}{coeff_idx+1}*t^(coeff_idx-1); % multiply by 1/T
                             end
                             if coeff_idx > 1
                                 qdd_des(j) = qdd_des(j) + (coeff_idx)*(coeff_idx-1)*alpha{j}{coeff_idx+1}*t^(coeff_idx-2);

@@ -231,7 +231,8 @@ end
 
 %% helper functions
 function [q, qd, qdd] = get_desired_traj(beta, t)
-    [B, dB, ddB] = Bezier_kernel_deg5(t);
+    dur = 2;
+    [B, dB, ddB] = Bezier_kernel_deg5(t); %t/dur
     
     q = zeros(7,1);
     qd = zeros(7,1);
@@ -239,6 +240,6 @@ function [q, qd, qdd] = get_desired_traj(beta, t)
     for j = 1:6
         q = q + beta{j} * B(j);
         qd = qd + beta{j} * dB(j);
-        qdd = qdd + beta{j} * ddB(j);
+        qdd = qdd + beta{j} * ddB(j); % coeff
     end
 end

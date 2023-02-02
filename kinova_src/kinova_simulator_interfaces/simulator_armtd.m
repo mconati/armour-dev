@@ -250,7 +250,7 @@ classdef simulator_armtd < simulator
                         [grasp_separation_check, grasp_slipping_check, grasp_tipping_check] = W.grasp_check(A,agent_info,planner_info); % must come before collision_check (which updates time)
 
                         % updating time
-                        collision_check = W.collision_check(agent_info,false) ;
+                        collision_check = W.collision_check(at_nt_info,false) ;
                         
                         if isa(A,'multi_link_agent')
                             S.vdisp('Checking for self-intersection.',2)
