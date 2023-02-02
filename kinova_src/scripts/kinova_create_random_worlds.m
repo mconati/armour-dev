@@ -8,7 +8,7 @@
 clear ; clc ; figure(1); clf; view(3); grid on;
 
 %% user parameters
-world_save_dir = 'saved_worlds/rtd-force/experiment_2_01282023';
+world_save_dir = 'saved_worlds/rtd-force/experiment_random_buffered';
 if ~exist(world_save_dir, 'dir')
     mkdir(world_save_dir);
 end
@@ -20,9 +20,9 @@ grasp_constraint_flag = true;
 transmision_inertia = [8.02999999999999936 11.99620246153036440 9.00254278617515169 11.58064393167063599 8.46650409179141228 8.85370693737424297 8.85873036646853151]; % matlab doesn't import these from urdf so hard code into class
 M_min_eigenvalue = 5.095620491878957; % matlab doesn't import these from urdf so hard code into class
 
-obstacle_flag = 1;
-N_obstacle_min = 10 ;
-N_obstacle_max = 10 ;
+obstacle_flag = 0;
+N_obstacle_min = 0 ;
+N_obstacle_max = 0 ;
 N_obstacle_delta = 3 ;
 N_worlds_per_obstacle = 100;
 dimension = 3 ;
@@ -43,10 +43,10 @@ uncertain_mass_range = [0.97, 1.03];
 robot = importrobot('Kinova_Grasp_URDF.urdf');
 robot.DataFormat = 'col';
 robot.Gravity = [0 0 -9.81];
-model = create_model_from_urdf('Kinova_Grasp_URDF.urdf');
-model = rmfield(model, 'transmissionInertia');
-model = rmfield(model, 'friction');
-model = rmfield(model, 'damping');
+% model = create_model_from_urdf('Kinova_Grasp_URDF.urdf');
+% model = rmfield(model, 'transmissionInertia');
+% model = rmfield(model, 'friction');
+% model = rmfield(model, 'damping');
 params = load_robot_params(robot,...
                             'add_uncertainty_to', add_uncertainty_to, ...
                            'links_with_uncertainty', links_with_uncertainty,...
@@ -72,7 +72,7 @@ if obstacle_flag
             % use this to start from random start config:
             W = kinova_grasp_world_static('robot',robot,'include_base_obstacle', 1, 'goal_radius', pi/30, 'N_random_obstacles',i,'dimension',dimension,'workspace_goal_check', 0,...
                 'verbose',verbosity, 'creation_buffer', 0.075, 'base_creation_buffer', 0.075,...
-                'grasp_constraint_flag', grasp_constraint_flag,'ik_start_goal_flag', true,'u_s', u_s, 'surf_rad', surf_rad) ;
+                'grasp_constraint_flag', grasp_constraint_flag,'ik_start_goal_flag', false,'u_s', u_s, 'surf_rad', surf_rad) ;
     
             % set up world using arm
             I = A.get_agent_info ;
@@ -94,14 +94,26 @@ else
         % use this to start from random start config:
         W = kinova_grasp_world_static('robot',robot,'include_base_obstacle', 1, 'goal_radius', pi/30,'dimension',dimension,'workspace_goal_check', 0,...
             'verbose',verbosity, 'creation_buffer', 0.075, 'base_creation_buffer', 0.075,...
-            'grasp_constraint_flag', true,'ik_start_goal_flag', true,'u_s', u_s, 'surf_rad', surf_rad) ;
+            'grasp_constraint_flag', true,'ik_start_goal_flag', false,'u_s', u_s, 'surf_rad', surf_rad) ;
 
         % set up world using arm
         I = A.get_agent_info ;
         W.setup(I)
 
+%         W.start = [0;-pi/2;0;0;0;0;0];
         % place arm at starting configuration
-        A.state(A.joint_state_indices) = W.start ;
+%         A.state(A.joint_state_indices) = W.start ;
+
+        % set up world using arm
+        I = A.get_agent_info ;
+%         W.setup(I) ;
+        W.bounds = [-1 1 -1 1 0 2];
+%         if dimension == 3
+%             view(3);
+%         end
+%         
+%         plot(A);
+%         plot(W);
         
         filename = sprintf('%s/scene_%03d_%03d.csv', world_save_dir, j);
 

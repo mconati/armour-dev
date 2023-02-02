@@ -5,7 +5,7 @@
 
 %% Loading Data
 
-clear all; close all; clc;
+% clear all; close all; clc;
 
 load('trial_scene_003_.mat')
 
@@ -104,7 +104,31 @@ end
 % zono1 = CUDA_f_zono{1}
 % plot(zono1,[1,2])
 
-%% 
+%% flags
+
+plot_states = true;
+plot_control = true;
+plot_accel = true;
+plot_force = true;
+plot_moment = true;
+plot_constraint = true;
+plot_torque = true;
+plot_torque_control = false;
+plot_torque_accel = false;
+plot_zmp = true;
+plot_friction_cone = false;
+
+pz_approx = false;
+
+plot_force_approx = false;
+plot_constraint_approx = false;
+plot_uc_constraint_approx = false;
+
+plot_force_approx_v2 = false;
+plot_constraint_approx_v2 = false;
+plot_uc_constraint_approx_v2 = false;
+
+plot_k = false;
 
 % for i = 1:length(A.time)
 %     figure(101)

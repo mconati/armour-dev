@@ -10,7 +10,7 @@ clear; clc;
 use_robust_input = true;
 
 save_file_header = 'trial_' ;
-file_location = '../results/random' ;
+file_location = '/home/roahmlab/Documents/armour-dev/kinova_src/results/rtd-force/experiment_paper_02012023' ;
 % file_location = '../results/hard' ;
 addpath(file_location);
 
@@ -22,6 +22,9 @@ ultimate_bound_check = [];
 joint_limit_check = [];
 goal_check = [];
 infeasible_check = [];
+grasp_separation_check = [];
+grasp_slipping_check = [];
+grasp_tipping_check = [];
 
 for i = 1:length(summary_files)
     data = load(summary_files(i).name);
@@ -45,6 +48,16 @@ for i = 1:length(summary_files)
         goal_check = [goal_check, i];
         continue;
     end
+    if data.summary.grasp_separation_check
+        grasp_separation_check = [grasp_separation_check i];
+    end
+    if data.summary.grasp_slipping_check
+        grasp_slipping_check = [grasp_slipping_check i];
+    end
+    if data.summary.grasp_tipping_check
+        grasp_tipping_check = [grasp_tipping_check i];
+    end
+
     infeasible_check = [infeasible_check, i];
 end
 

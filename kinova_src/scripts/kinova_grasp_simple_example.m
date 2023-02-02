@@ -36,7 +36,7 @@ use_CAD_flag = true; % plot robot with CAD or bounding boxes
 
 %%% for LLC
 use_robust_input = true;
-LLC_V_max = 5e-5;
+LLC_V_max = 1e-2;
 
 %%% for HLP
 if_use_RRT = false;
@@ -60,15 +60,37 @@ stop_threshold = 4 ; % number of failed iterations before exiting
 % simple rotation
 % start = [0;-pi/2;0;0;0;0;0];
 % goal = [pi/4;-pi/2;0;0;0;0;0];
+start = [-pi/6;-pi/2;-pi/2;pi/2;0;pi/2;pi/2];
+goal = [pi/6;-pi/2;pi/2;pi/2;pi;-pi/2;pi/2];
+
+% start = [1.60560000000000;
+% -0.159490569928781;
+% -1.56770902931599;
+% -0.845551078749901;
+% -0.0163822583789873;
+% 2.16000000000000;
+% -3.31497484097283];
+% goal = [1.35699949162188;
+% -0.0574597782525521;
+% 2.43188521636437;
+% -0.692567319303937;
+% 2.99403842768718;
+% -0.990958192493399;
+% 2.04347442405308];
 
 % swing
-start = [0;-pi/2;0;0;0;0;0];
-goal = [pi;-pi/2;pi;0;pi;0;0];
+% start = [0;-pi/2;0;0;0;0;0];
+% goal = [pi;-pi/2;pi;0;0;0;0];
 
-obstacles{1} = box_obstacle_zonotope('center', [0; 0; 0.6],...
+% random that struggles to reach goal
+% use to debug gradients as well
+% start = [0.9534;-1.4310;0.1330;0.6418;-0.9534;-0.9534;0.0637];
+% goal = [1.62310000000000;-1.59990000000000;-0.137000000000000;0.493080000000000;-3.26490000000000;-2.23000000000000;-0.246620000000000];
+
+obstacles{1} = box_obstacle_zonotope('center', [3; 3; 3],...
                                      'side_lengths', [0.1; 0.1; 0.1]) ;
-obstacles{2} = box_obstacle_zonotope('center', [0.3; 0; 0.4],...
-                                     'side_lengths', [0.1; 0.8; 0.05]) ;
+% obstacles{2} = box_obstacle_zonotope('center', [0.3; 0; 0.4],...
+%                                      'side_lengths', [0.1; 0.8; 0.05]) ;
 
 %% robot params:
 robot = importrobot(agent_urdf);
@@ -172,10 +194,13 @@ summary = S.run();
 
 figure(101)
 subplot(3,1,1)
+title('Joint Positions')
 plot(A.time,A.state(A.joint_state_indices,:))
 subplot(3,1,2)
+title('Joint Velocities')
 plot(A.time,A.state(A.joint_speed_indices,:))
 subplot(3,1,3)
+title('Joint Torques')
 plot(A.time,A.input)
 
 % Calculating the Acceleration
@@ -201,6 +226,7 @@ for i = 2:length(A.time)
 end
 
 figure(1001)
+title('Acceleration')
 plot(A.time,qdd_post)
 
 % Calling RNEA
@@ -314,3 +340,9 @@ end
 
 % end
 
+%% Mean Planning Time
+plan_time = [];
+for i=1:length(P.info.planning_time)
+    plan_time = [plan_time P.info.planning_time{i}];
+end
+mean(plan_time)

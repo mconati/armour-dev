@@ -63,6 +63,11 @@ public:
         Number* lambda
     );
 
+    virtual void compute(
+        bool new_x,
+        const Number* x
+    );
+
     /** Method to return the objective value */
     virtual bool eval_f(
         Index         n,
@@ -159,6 +164,7 @@ public:
 
     double force_constraint_ub[3*NUM_TIME_STEPS];
     double force_constraint_lb[3*NUM_TIME_STEPS];
+    double force_constraint_gradient[3*NUM_TIME_STEPS*NUM_FACTORS]; // check if this is the correct size
 
 private:
     /**@name Methods to block default compiler methods.
