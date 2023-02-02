@@ -223,7 +223,7 @@ void BezierCurve::makePolyZono(int t_ind) {
         qdd_des_degree[1][i + NUM_FACTORS * 3] = 1; // qddae
 
         // qdd_des_int = qdd_des_center + qdd_des_coeff[0] * k + qdd_des_coeff[1] * qdde;
-        qdda_des(i, t_ind) = (1/duration^2)*PZsparse(qdd_des_center, qdd_des_coeff, qdd_des_degree, 2);
+        qdda_des(i, t_ind) = (1.0/pow(duration,2))*PZsparse(qdd_des_center, qdd_des_coeff, qdd_des_degree, 2);
     }
 
     // assume all fixed joints are at the end of the kinematics chain
