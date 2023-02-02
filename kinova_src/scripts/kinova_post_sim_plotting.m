@@ -9,6 +9,33 @@ clear all; close all; clc;
 
 load('trial_scene_003_.mat')
 
+%% Plotting flags
+
+plot_states = false;
+plot_control = false;
+plot_accel = true;
+plot_force = true;
+plot_moment = true;
+plot_constraint = true;
+plot_torque = false;
+plot_torque_control = false;
+plot_torque_accel = false;
+plot_zmp = false;
+plot_friction_cone = false;
+plot_friction_cone_2D = true;
+
+pz_approx = false;
+
+plot_force_approx = false;
+plot_constraint_approx = false;
+plot_uc_constraint_approx = false;
+
+plot_force_approx_v2 = false;
+plot_constraint_approx_v2 = false;
+plot_uc_constraint_approx_v2 = false;
+
+plot_k = false;
+
 %% Defining Transmission Inertia
 transmision_inertia = [8.02999999999999936 11.99620246153036440 9.00254278617515169 11.58064393167063599 8.46650409179141228 8.85370693737424297 8.85873036646853151]; % matlab doesn't import these from urdf so hard code into class
 
@@ -77,31 +104,7 @@ end
 % zono1 = CUDA_f_zono{1}
 % plot(zono1,[1,2])
 
-%% flags
-
-plot_states = true;
-plot_control = false;
-plot_accel = true;
-plot_force = true;
-plot_moment = true;
-plot_constraint = true;
-plot_torque = false;
-plot_torque_control = false;
-plot_torque_accel = false;
-plot_zmp = true;
-plot_friction_cone = false;
-
-pz_approx = false;
-
-plot_force_approx = false;
-plot_constraint_approx = false;
-plot_uc_constraint_approx = false;
-
-plot_force_approx_v2 = false;
-plot_constraint_approx_v2 = false;
-plot_uc_constraint_approx_v2 = false;
-
-plot_k = false;
+%% 
 
 % for i = 1:length(A.time)
 %     figure(101)
@@ -390,12 +393,12 @@ for i = 1:length(A.time)
 end
 %% Calculating PZ Constraints
 
-for i = 1:length(A.time(1:50)) %end-1))
-    f_PZ = polyZonotope_ROAHM(CUDA_f_zono{i}.Z(:,1),CUDA_f_zono{i}.Z(:,2:4));
+for i = 1:length(A.time(1:end-1)) %end-1))
+    f_PZ{i} = polyZonotope_ROAHM(CUDA_f_zono{i}.Z(:,1),CUDA_f_zono{i}.Z(:,2:4));
     n_PZ = polyZonotope_ROAHM(CUDA_n_zono{i}.Z(:,1),CUDA_n_zono{i}.Z(:,2:4));
     % calculating the PZ form of the constraints
     ZMP_PZ_top = cross([0;0;1],n_PZ);
-    ZMP_PZ_bottom = f_PZ*[0,0,1];
+    ZMP_PZ_bottom = f_PZ{i}*[0,0,1];
     ZMP_PZ_bottom = interval(ZMP_PZ_bottom);
     ZMP_PZ_bottom_inf = ZMP_PZ_bottom.inf;
     ZMP_PZ_bottom_sup = ZMP_PZ_bottom.sup;
@@ -412,6 +415,7 @@ figure(401)
 % subplot(3,4,12)
 hold on
 
+% plot ZMP PZ overapproximation
 for i = 1:length(ZMP_PZ)
     s = plot(ZMP_PZ{i},[1,2],'Filled',true,'EdgeColor','m','FaceColor','m','FaceAlpha',0.01,'EdgeAlpha',0.2);
 %     alpha(s,0.2)
@@ -431,11 +435,8 @@ axis('square')
 grid on
 title('ZMP Position')
 
+% plot nominal ZMP location
 tipplot2 = plot(ZMP(1,1:50),ZMP(2,1:50),'xk')
-
-
-
-
 
 %% plotting constraints
 
@@ -670,6 +671,31 @@ if plot_friction_cone
     
 end
 
+if plot_friction_cone_2D
+
+    figure(22)
+    hold on
+    % plot the boundary
+    theta_friction = linspace(0,2*pi,100);
+    r_friction = force(3,i)*W.u_s;
+    fricplot4 = plot(r_friction*cos(theta_friction),r_friction*sin(theta_friction),'-r')
+    % plot the nominal forces
+    plot(force(1,:),force(2,:),'.k','MarkerSize',2)
+    for i = 1:length(f_PZ)
+%         f_int = interval(f_PZ{1});
+        f = plot(f_PZ{i},[1,2],'Filled',true,'EdgeColor','m','FaceColor','m','FaceAlpha',0.01,'EdgeAlpha',0.2);
+    end
+
+    axis square
+    axis equal
+    grid on
+    xlabel('x-axis Force (N)')
+    ylabel('y-axis Force (N)')
+    title('Friction Cone')
+
+end
+
+%%
 
 % started plotting friction cone for gif
 % for i = 1:length(A.time)

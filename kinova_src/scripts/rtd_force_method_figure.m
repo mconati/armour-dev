@@ -27,9 +27,15 @@ zono_order = 10;
 
 %% setup plotting flags
 plot_idx = 0;
-plot_trajectories = true;
+plot_trajectory_1 = true;
+plot_trajectory_2 = false;
+plot_trajectory_3 = false;
+plot_trajectory_4 = false;
 plot_forward_occupancy = true;
 plot_pz_time = false;
+
+plot_force_trajectory = true;
+
 save_plot = false;
 
 time_color = 1/256*[207,207,196];
@@ -59,15 +65,15 @@ time_to_slice = 6;
 
 %% compute trajectories
 % initial conditions
-q_0 = [pi*2/5; -pi/3];%; -pi/4; 0];
-qd_0= [-pi/3; pi/3];%; -pi/3; 0];
-qdd_0 = [0.4; -0.4];%; 0.3; 0];
+q_0 = [0;-pi/2;0;0;0;0;0];
+qd_0= [0;0;0;0;0;0;0];
+qdd_0 = [0;0;0;0;0;0;0];
 
 % trajectory parameter
-kvec = [0.6; -0.8];%; 0.5; 0];
+kvec = [0.6; -0.8; 0.5; -0.2; -0.4; 0.35; 0.34];
 
 % create pz trajectories
-joint_axes = [zeros(2, length(q_0)); ones(1, length(q_0))];
+joint_axes = [zeros(2, length(q_0)); ones(1, length(q_0))]; % Question: what is this?
 taylor_degree = 5;
 traj_type = 'bernstein';
 add_ultimate_bound = true;
@@ -129,8 +135,46 @@ for i = 1:jrs_info.n_t
 	end
 end
 
+%% Calling PZRNEA
+
+for i = 1:jrs_info.n_t
+    [tau_temp, f_temp, n_temp] = poly_zonotope_rnea(R{i}, R_t{i}, Qd{i}, Qd_a{i}, Qdd_a{i}, true, params.pz_interval);
+%     tau_int{i} = tau_temp{10,1};
+    f_int{i} = f_temp{10,1};
+    n_int{i} = n_temp{10,1};
+end
+
+%% Calling RNEA for Nominal Wrench Trajectories
+
+%% Plotting Wrench Trajectory
+
+if plot_force_trajectory
+
+    for i = 1:length(t_traj)
+        poly_inf = Q_e{10, 1}{j, 1}.c - sum(abs(Q_e{i, 1}{j, 1}.G)) - sum(abs(Q_e{i, 1}{j, 1}.Grest));
+        poly_sup = Q_e{10, 1}{j, 1}.c + sum(abs(Q_e{i, 1}{j, 1}.G)) + sum(abs(Q_e{i, 1}{j, 1}.Grest));
+        p1 = patch([t_traj(i)+jrs_info.dt; t_traj(i)+jrs_info.dt; t_traj(i); t_traj(i)], [poly_sup; poly_inf; poly_inf; poly_sup], 'b');
+%         p1.EdgeColor = pz_err_color;
+        p1.LineWidth = 0.1;
+%         p1.FaceColor = pz_err_color;
+    end
+
+end
+
+%% Plotting Friction Cone
+
+%% Plotting ZMP Diagram
+
+%% Plotting Separation Constraint
+
+% could maybe plot a 1D interval along the z-axis of the tray?
+
+%% Notes
+% Plotting the 3D force PZ on the robot tray would give info about both the
+% separation and slipping constraints. Would be really cool visual.
+
 %% plot trajectory 1
-if plot_trajectories
+if plot_trajectory_1
     for j = 1:length(kvec)
         plot_idx = plot_idx + 1;
         figure(plot_idx); clf; hold on;
@@ -208,7 +252,7 @@ if plot_trajectories
 end
 
 %% plot trajectory 2
-if plot_trajectories
+if plot_trajectory_2
     for j = 1:length(kvec)
         plot_idx = plot_idx + 1;
         figure(plot_idx); clf; hold on;
@@ -286,7 +330,7 @@ if plot_trajectories
 end
 
 %% plot trajector 3
-if plot_trajectories
+if plot_trajectory_3
     for j = 1:length(kvec)
         plot_idx = plot_idx + 1;
         figure(plot_idx); clf; hold on;
@@ -364,7 +408,7 @@ if plot_trajectories
 end
 
 %% plot trajector 4
-if plot_trajectories
+if plot_trajectory_4
     for j = 1:length(kvec)
         plot_idx = plot_idx + 1;
         figure(plot_idx); clf; hold on;
