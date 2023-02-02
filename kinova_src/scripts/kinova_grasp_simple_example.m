@@ -58,10 +58,10 @@ stop_threshold = 4 ; % number of failed iterations before exiting
 % goal = [1; 1; 1; 1; 1; 1; 1]; % goal configuration
 
 % simple rotation
-% start = [0;-pi/2;0;0;0;0;0];
-% goal = [pi/4;-pi/2;0;0;0;0;0];
-start = [-pi/6;-pi/2;-pi/2;pi/2;0;pi/2;pi/2];
-goal = [pi/6;-pi/2;pi/2;pi/2;pi;-pi/2;pi/2];
+start = [0;-pi/2;0;0;0;0;0];
+goal = [pi/4;-pi/2;0;0;0;0;0];
+% start = [-pi/6;-pi/2;-pi/2;pi/2;0;pi/2;pi/2];
+% goal = [pi/6;-pi/2;pi/2;pi/2;pi;-pi/2;pi/2];
 
 % start = [1.60560000000000;
 % -0.159490569928781;
