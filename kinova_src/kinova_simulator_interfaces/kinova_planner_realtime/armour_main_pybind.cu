@@ -9,18 +9,15 @@
 namespace py = pybind11;
 
 
-const std::string inputfilename = pathname + "armour.in";
-const std::string outputfilename1 = pathname + "armour.out";
-const std::string outputfilename2 = pathname + "armour_joint_position_center.out";
-const std::string outputfilename3 = pathname + "armour_joint_position_radius.out";
-const std::string outputfilename4 = pathname + "armour_control_input_radius.out";
-const std::string outputfilename5 = pathname + "armour_constraints.out";
-
-
 class pzsparse {
     private:
 
         std::ofstream outputstream1;
+
+        std::string data_dir;
+        const std::string ofile1 = "/armour.out";
+        const std::string ofile2 = "/armour_joint_position_center.out";
+        const std::string ofile3 = "/armour_joint_position_radius.out";
 
         double q0[NUM_FACTORS] = {0.0};
         double qd0[NUM_FACTORS] = {0.0};
@@ -127,9 +124,14 @@ class pzsparse {
 
     public:
     
-        pzsparse(py::array_t<double> obs_vec): num_obstacles(0){
-            outputstream1 = std::ofstream(outputfilename1);
-
+        pzsparse(py::array_t<double> obs_vec, const std::string &dir)
+        : data_dir(dir), num_obstacles(0){
+            outputstream1 = std::ofstream(data_dir + ofile1);
+            if (!outputstream1)
+            {
+                throw std::runtime_error("Open filestream failed!");
+            }
+            std::cout << "is_open: " << (bool)outputstream1 << std::endl;
             set_obstacles(obs_vec);
         }
 
@@ -345,12 +347,12 @@ class pzsparse {
             cout << "]" << endl;
 
             // output time cost (in milliseconds) in C++
-            // outputstream1 << duration1.count() + duration2.count();
-            // outputstream1.close();
+            outputstream1 << duration1.count() + duration2.count();
+            outputstream1.close();
 
             // output FRS and other information, you can comment them if they are unnecessary
             cout << "saving reach sets ..." << endl;
-            std::ofstream outputstream2(outputfilename2);
+            std::ofstream outputstream2(data_dir + ofile2);
             outputstream2 << std::setprecision(10);
             for (int i = 0; i < NUM_TIME_STEPS; i++) {
                 for (int j = 0; j < NUM_JOINTS; j++) {
@@ -363,7 +365,7 @@ class pzsparse {
             }
             outputstream2.close();
 
-            std::ofstream outputstream3(outputfilename3);
+            std::ofstream outputstream3(data_dir + ofile3);
             outputstream3 << std::setprecision(10);
             for (int i = 0; i < NUM_TIME_STEPS; i++) {
                 for (int j = 0; j < NUM_JOINTS; j++) {
@@ -424,13 +426,19 @@ class pzsparse {
             O_ptr.reset();
         }
 
+        std::string get_datadir()
+        {
+            return data_dir;
+        }
+
 };
 
 PYBIND11_MODULE(armour_main_pybind, m) {
     py::class_<pzsparse>(m, "pzsparse")
-        .def(py::init<py::array_t<double> &>())
+        .def(py::init<py::array_t<double> &, const std::string &>())
         .def("getNumObstacles", &pzsparse::getNumObstacles)
         .def("optimize", &pzsparse::optimize)
-        .def("getDesTraj", &pzsparse::getDesTraj);
+        .def("getDesTraj", &pzsparse::getDesTraj)
+        .def("getDataDir", &pzsparse::get_datadir);
         // .def("free", &pzsparse::free);
 }
