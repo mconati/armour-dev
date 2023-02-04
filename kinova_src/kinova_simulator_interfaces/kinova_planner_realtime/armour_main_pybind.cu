@@ -12,8 +12,6 @@ namespace py = pybind11;
 class pzsparse {
     private:
 
-        std::ofstream outputstream1;
-
         std::string data_dir;
         const std::string ofile1 = "/armour.out";
         const std::string ofile2 = "/armour_joint_position_center.out";
@@ -126,18 +124,12 @@ class pzsparse {
     
         pzsparse(py::array_t<double> obs_vec, const std::string &dir)
         : data_dir(dir), num_obstacles(0){
-            outputstream1 = std::ofstream(data_dir + ofile1);
-            if (!outputstream1)
-            {
-                throw std::runtime_error("Open filestream failed!");
-            }
-            std::cout << "is_open: " << (bool)outputstream1 << std::endl;
+            
             set_obstacles(obs_vec);
         }
 
         ~pzsparse()
         {
-            outputstream1.close();
         }
 
         const int getNumObstacles(){
@@ -293,6 +285,12 @@ class pzsparse {
 
             // Initialize the IpoptApplication and process the options
             ApplicationReturnStatus status;
+            auto outputstream1 = std::ofstream(data_dir + ofile1);
+            if (!outputstream1)
+            {
+                throw std::runtime_error("Open filestream failed!");
+            }
+            std::cout << "is_open: " << (bool)outputstream1 << std::endl;
             status = app->Initialize();
             if( status != Solve_Succeeded ) {
                 WARNING_PRINT("Error during initialization!");
@@ -426,6 +424,11 @@ class pzsparse {
             O_ptr.reset();
         }
 
+        void set_datadir(const std::string &dir)
+        {
+            data_dir = dir;
+        }
+
         std::string get_datadir()
         {
             return data_dir;
@@ -439,6 +442,7 @@ PYBIND11_MODULE(armour_main_pybind, m) {
         .def("getNumObstacles", &pzsparse::getNumObstacles)
         .def("optimize", &pzsparse::optimize)
         .def("getDesTraj", &pzsparse::getDesTraj)
+        .def("setDataDir", &pzsparse::set_datadir)
         .def("getDataDir", &pzsparse::get_datadir);
         // .def("free", &pzsparse::free);
 }
