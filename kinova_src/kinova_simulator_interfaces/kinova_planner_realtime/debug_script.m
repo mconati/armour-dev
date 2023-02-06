@@ -46,7 +46,7 @@ k_range = [pi/72, pi/72, pi/72, pi/72, pi/72, pi/72, pi/72]';
 % k = zeros(7,1);
 % k = ones(7,1);
 % k = -ones(7,1);
-k=[0.999901, -0.898396, 0.973896, -0.454472, 0.999083, 0.940592, 0.974109]'
+k=[0.999901, -0.898396, 0.973896, -0.454472, 0.999083, 0.940592, 0.974109]';
 
 q1 = q0 + k .* k_range;
 qd1 = zeros(7,1);
@@ -60,56 +60,26 @@ tspan = linspace(0, 1, tid + 1);
 
 %% read CUDA output
 
-link_reachset_center = readmatrix('buffer/armour_joint_position_center.out', 'FileType', 'text');
-link_reachset_generators = readmatrix('buffer/armour_joint_position_radius.out', 'FileType', 'text');
-
-torque_reachset_center = readmatrix('buffer/armour_constraints.out', 'FileType', 'text');
-torque_reachset_radius = readmatrix('buffer/armour_control_input_radius.out', 'FileType', 'text');
-
-force_reachset_values = readmatrix('buffer/armour_wrench_values.out', 'FileType', 'text');
-force_constraint_values = readmatrix('buffer/armour_force_constraint_radius.out', 'FileType', 'text');
-
-% separate the force arrays
-f_rs_c = force_reachset_values(:,1:3);
-n_rs_c = force_reachset_values(:,4:6);
-f_rs_r = force_reachset_values(:,7:9);
-n_rs_r = force_reachset_values(:,10:12);
-sep_ub_cuda = force_constraint_values(1:100,1);
-slip_ub_cuda = force_constraint_values(101:200,1);
-tip_ub_cuda = force_constraint_values(201:300,1);
-sep_lb_cuda = force_constraint_values(1:100,2);
-slip_lb_cuda = force_constraint_values(101:200,2);
-tip_lb_cuda = force_constraint_values(201:300,2);
-
-%% Verification
-
-%% Plotting Link Reach Sets
-
-figure; view(3); axis equal; hold on; axis on;
-
-% choose a random time inside this time interval
-t_lb = tspan(tid);
-t_ub = tspan(tid + 1);
-t = (t_ub - t_lb) * rand + t_lb;
-
-q = get_desired_traj(beta, t);
-
-figure(1)
-% plot robot
-A.plot_at_time(q);
-
-% ! Ask Bohao about the number 10 vs 7 in the for loop below
-% plot link reachsets
-numBodies = 8;
-% for j = 1:robot.NumBodies
-%     c = link_reachset_center((tid-1)*numBodies+j, :)';
-%     g = link_reachset_generators( ((tid-1)*numBodies+j-1)*3+1 : ((tid-0)*numBodies+j)*3, :);
-%     Z = zonotope(c, g);
-%     Z_v = vertices(Z)';
-%     trisurf(convhulln(Z_v),Z_v(:,1),Z_v(:,2),Z_v(:,3),'FaceColor',[0,0,1],'FaceAlpha',0.1,'EdgeColor',[0,0,1],'EdgeAlpha',0.3);
-% end
-% lighting flat
-% end
+% link_reachset_center = readmatrix('buffer/armour_joint_position_center.out', 'FileType', 'text');
+% link_reachset_generators = readmatrix('buffer/armour_joint_position_radius.out', 'FileType', 'text');
+% 
+% torque_reachset_center = readmatrix('buffer/armour_constraints.out', 'FileType', 'text');
+% torque_reachset_radius = readmatrix('buffer/armour_control_input_radius.out', 'FileType', 'text');
+% 
+% force_reachset_values = readmatrix('buffer/armour_wrench_values.out', 'FileType', 'text');
+% force_constraint_values = readmatrix('buffer/armour_force_constraint_radius.out', 'FileType', 'text');
+% 
+% % separate the force arrays
+% f_rs_c = force_reachset_values(:,1:3);
+% n_rs_c = force_reachset_values(:,4:6);
+% f_rs_r = force_reachset_values(:,7:9);
+% n_rs_r = force_reachset_values(:,10:12);
+% sep_ub_cuda = force_constraint_values(1:100,1);
+% slip_ub_cuda = force_constraint_values(101:200,1);
+% tip_ub_cuda = force_constraint_values(201:300,1);
+% sep_lb_cuda = force_constraint_values(1:100,2);
+% slip_lb_cuda = force_constraint_values(101:200,2);
+% tip_lb_cuda = force_constraint_values(201:300,2);
 
 %% Calculating Nominal Values
 
@@ -129,6 +99,41 @@ for i = 1:tid
 
     [us(:,i), fs{i}, ns{i}] = rnea(q, qd, qd, qdd, true, params.nominal); % + transmision_inertia' .* qdd;
 end
+
+%% Verification
+
+%% Plotting Link Reach Sets
+
+figure; view(3); axis equal; hold on; axis on;
+
+% choose a random time inside this time interval
+t_lb = tspan(tid);
+t_ub = tspan(tid + 1);
+t = (t_ub - t_lb) * rand + t_lb;
+
+q_rand = get_desired_traj(beta, t);
+
+figure(1)
+% plot robot
+A.plot_at_time(q_rand);
+view(3)
+axis('equal')
+xlim([-1.5 1.5])
+ylim([-1.5 1.5])
+zlim([0 1.5])
+
+% ! Ask Bohao about the number 10 vs 7 in the for loop below
+% plot link reachsets
+numBodies = 8;
+% for j = 1:robot.NumBodies
+%     c = link_reachset_center((tid-1)*numBodies+j, :)';
+%     g = link_reachset_generators( ((tid-1)*numBodies+j-1)*3+1 : ((tid-0)*numBodies+j)*3, :);
+%     Z = zonotope(c, g);
+%     Z_v = vertices(Z)';
+%     trisurf(convhulln(Z_v),Z_v(:,1),Z_v(:,2),Z_v(:,3),'FaceColor',[0,0,1],'FaceAlpha',0.1,'EdgeColor',[0,0,1],'EdgeAlpha',0.3);
+% end
+% lighting flat
+% end
 
 %% Plotting Torque Reach Sets
 

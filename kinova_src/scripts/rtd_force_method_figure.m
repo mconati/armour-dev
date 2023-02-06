@@ -150,9 +150,20 @@ end
 
 if plot_force_trajectory
 
+    plot_idx = plot_idx + 1;
+    figure(plot_idx); clf; hold on;
+    title('Force Plot: Last Joint')
+
     for i = 1:length(t_traj)
-        poly_inf = Q_e{10, 1}{j, 1}.c - sum(abs(Q_e{i, 1}{j, 1}.G)) - sum(abs(Q_e{i, 1}{j, 1}.Grest));
-        poly_sup = Q_e{10, 1}{j, 1}.c + sum(abs(Q_e{i, 1}{j, 1}.G)) + sum(abs(Q_e{i, 1}{j, 1}.Grest));
+        % calculate the inf/sup
+        if f_int{1,i}.G
+            poly_inf = f_int{1,i}.c(1) - sum(abs(f_int{1,i}.G(1,:))) - sum(abs(f_int{1,i}.Grest(1,:)));
+            poly_sup = f_int{1,i}.c(1) + sum(abs(f_int{1,i}.G(1,:))) + sum(abs(f_int{1,i}.Grest(1,:)));
+        else % the magnitude of Grest means that only those were tracked
+            poly_inf = f_int{1,i}.c(1) - sum(abs(f_int{1,i}.Grest(1,:)));
+            poly_sup = f_int{1,i}.c(1) + sum(abs(f_int{1,i}.Grest(1,:)));
+        end
+
         p1 = patch([t_traj(i)+jrs_info.dt; t_traj(i)+jrs_info.dt; t_traj(i); t_traj(i)], [poly_sup; poly_inf; poly_inf; poly_sup], 'b');
 %         p1.EdgeColor = pz_err_color;
         p1.LineWidth = 0.1;
