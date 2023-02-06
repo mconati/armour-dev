@@ -10,6 +10,7 @@ const std::string outputfilename4 = pathname + "armour_control_input_radius.out"
 const std::string outputfilename5 = pathname + "armour_constraints.out";
 const std::string outputfilename6 = pathname + "armour_wrench_values.out";
 const std::string outputfilename7 = pathname + "armour_force_constraint_radius.out";
+const std::string outputfilename8 = pathname + "armour_desired_sliced.out";
 
 int main() {
 /*
@@ -58,9 +59,11 @@ Section I:
     }
     for (int i = 0; i < NUM_FACTORS; i++) {
         inputstream >> qd0[i];
+        qd0[i] = 2*qd0[i];
     }
     for (int i = 0; i < NUM_FACTORS; i++) {
         inputstream >> qdd0[i];
+        qdd0[i] = 2*qdd0[i];
     }
     for (int i = 0; i < NUM_FACTORS; i++) {
         inputstream >> q_des[i];
@@ -202,9 +205,9 @@ Section III:
 */
 
     // double factors[NUM_FACTORS] = {0.5, 0.7, 0.7, 0.0, -0.8, -0.6, -0.7};
-    double factors[NUM_FACTORS] = {0,0,0,0,0,0,0};
+    // double factors[NUM_FACTORS] = {0,0,0,0,0,0,0};
     // double factors[NUM_FACTORS] = {1,1,1,1,1,1,1};
-    // double factors[NUM_FACTORS] = {-1,-1,-1,-1,-1,-1,-1};
+    double factors[NUM_FACTORS] = {-1,-1,-1,-1,-1,-1,-1};
 
     Eigen::MatrixXd torque_sliced_center(NUM_FACTORS, NUM_TIME_STEPS);
     Eigen::Vector3d link_sliced_center[NUM_TIME_STEPS * NUM_JOINTS];
@@ -213,11 +216,48 @@ Section III:
     Eigen::MatrixXd moment_value_center(3,NUM_TIME_STEPS);
     Eigen::MatrixXd moment_value_radii(3,NUM_TIME_STEPS);
 
+    // storage for sliced desired trajectories
+    Eigen::MatrixXd qd_center(NUM_FACTORS,NUM_TIME_STEPS);
+    Eigen::MatrixXd qda_center(NUM_FACTORS,NUM_TIME_STEPS);
+    Eigen::MatrixXd qdda_center(NUM_FACTORS,NUM_TIME_STEPS);
+
+    Eigen::MatrixXd qd_radius(NUM_FACTORS,NUM_TIME_STEPS);
+    Eigen::MatrixXd qda_radius(NUM_FACTORS,NUM_TIME_STEPS);
+    Eigen::MatrixXd qdda_radius(NUM_FACTORS,NUM_TIME_STEPS);
+
+
     double force_constraint_ub[3*NUM_TIME_STEPS];
     double force_constraint_lb[3*NUM_TIME_STEPS];
 
-    #pragma omp parallel for shared(kd, factors, torque_sliced_center, link_sliced_center) private(openmp_t_ind) schedule(static, NUM_TIME_STEPS / NUM_THREADS)
+    // #pragma omp parallel for shared(kd, factors, torque_sliced_center, link_sliced_center) private(openmp_t_ind) schedule(static, NUM_TIME_STEPS / NUM_THREADS)
     for(openmp_t_ind = 0; openmp_t_ind < NUM_TIME_STEPS; openmp_t_ind++) {
+
+        // slicing desired trajectories for comparison
+        for (int k = 0; k < NUM_FACTORS; k++) {
+            // slice
+            MatrixXInt qd_slice = traj.qd_des(k,openmp_t_ind).slice(factors);
+            cout << qd_slice << endl;
+            // get center
+            qd_center(k,openmp_t_ind) = getCenter(qd_slice(0));
+            // get radius
+            qd_radius(k,openmp_t_ind) = getRadius(qd_slice(0));
+            // cout << qd_slice << endl;
+
+            // slice
+            MatrixXInt qda_slice = traj.qda_des(k,openmp_t_ind).slice(factors);
+            // get center
+            qda_center(k,openmp_t_ind) = getCenter(qda_slice(0));
+            // get radius
+            qda_radius(k,openmp_t_ind) = getRadius(qda_slice(0));
+
+            // slice
+            MatrixXInt qdda_slice = traj.qdda_des(k,openmp_t_ind).slice(factors);
+            // get center
+            qdda_center(k,openmp_t_ind) = getCenter(qdda_slice(0));
+            // get radius
+            qdda_radius(k,openmp_t_ind) = getRadius(qdda_slice(0));
+        }
+
         for (int k = 0; k < NUM_FACTORS; k++) {
             MatrixXInt res = kd.u_nom(k, openmp_t_ind).slice(factors);
             torque_sliced_center(k, openmp_t_ind) = getCenter(res(0));
@@ -479,5 +519,28 @@ Section IV:
         outputstream7 << '\n';
     }
     outputstream7.close();
+
+    // outputting sliced desired trajectories
+    std::ofstream outputstream8(outputfilename8);
+    outputstream8 << std::setprecision(10);
+    for (int j = 0; j < NUM_TIME_STEPS; j++){
+        for (int i = 0; i < NUM_FACTORS; i++) {
+            outputstream8 << qd_center(i,j) << ' ' << qd_radius(i,j) << ' ';
+        }
+        outputstream8 << '\n';
+    }
+    for (int j = 0; j < NUM_TIME_STEPS; j++){
+        for (int i = 0; i < NUM_FACTORS; i++) {
+            outputstream8 << qda_center(i,j) << ' ' << qda_radius(i,j) << ' ';
+        }
+        outputstream8 << '\n';
+    }
+    for (int j = 0; j < NUM_TIME_STEPS; j++){
+        for (int i = 0; i < NUM_FACTORS; i++) {
+            outputstream8 << qdda_center(i,j) << ' ' << qdda_radius(i,j) << ' ';
+        }
+        outputstream8 << '\n';
+    }
+    outputstream8.close();
 
 }

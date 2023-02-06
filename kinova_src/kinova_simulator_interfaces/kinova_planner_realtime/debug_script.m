@@ -25,13 +25,13 @@ link_poly_zonotopes = create_pz_bounding_boxes(robot);
 %% initialize desired trajectories
 % choose random initial conditions and make sure they are aligned with
 % the first three rows in buffer/armour.in
-q0 = [0.9534000000 -1.4310000000 0.1330000000 0.6418000000 -0.9534000000 -0.9534000000 0.0637000000 ]';
-qd0 = [0.0000000000 0.0000000000 0.0000000000 0.0000000000 0.0000000000 0.0000000000 0.0000000000]'; 
-qdd0 = [0.0000000000 0.0000000000 0.0000000000 0.0000000000 0.0000000000 0.0000000000 0.0000000000]';
-% q0 = [0.2038127266 -1.5708173008 0.2038127266 -0.0000076520 0.2038127266 -0.0000018307 -0.0000000752 ]';
-% qd0 = [0.0592332659 -0.0000048124 0.0592332659 -0.0000017300 0.0592332659 -0.0000003942 -0.0000000156 ]';
-% qdd0 = [-0.0665036714 0.0000075421 -0.0665036714 0.0000027297 -0.0665036714 0.0000006371 0.0000000322 ]';
-% qdes = [0.4347528433 -1.5708206594 0.4347528920 -0.0000088522 0.4347528206 -0.0000020995 -0.0000000857 ]';
+% q0 = [0.9534000000 -1.4310000000 0.1330000000 0.6418000000 -0.9534000000 -0.9534000000 0.0637000000 ]';
+% qd0 = [0.0000000000 0.0000000000 0.0000000000 0.0000000000 0.0000000000 0.0000000000 0.0000000000]'; 
+% qdd0 = [0.0000000000 0.0000000000 0.0000000000 0.0000000000 0.0000000000 0.0000000000 0.0000000000]';
+q0 = [0.0000000000 -1.5707963268 0.0000000000 0.0000000000 0.0000000000 0.0000000000 0.0000000000 ]';
+qd0 = [1.0000000000 0.0000000000 0.0000000000 0.0000000000 0.0000000000 0.0000000000 0.0000000000 ]';
+qdd0 = [1.0000000000 0.0000000000 0.0000000000 0.0000000000 0.0000000000 0.0000000000 0.0000000000 ]';
+qdes = [0.4000000000 -1.5707963268 0.0000000000 0.0000000000 0.0000000000 0.0000000000 0.0000000000 ]';
 
 % choose a random k_range and make sure they are aligned with k_range in
 % Parameters.h
@@ -42,11 +42,12 @@ k_range = [pi/72, pi/72, pi/72, pi/72, pi/72, pi/72, pi/72]';
 % choose a random point to slice and make sure they are equal to variable
 % factors defined in PZ_test.cpp
 
-% k = [0.5, 0.7, 0.7, 0.0, -0.8, -0.6, -0.7]';
+k = [0.5, 0.7, 0.7, 0.0, -0.8, -0.6, -0.7]';
 % k = zeros(7,1);
 % k = ones(7,1);
 % k = -ones(7,1);
-k=[0.999901, -0.898396, 0.973896, -0.454472, 0.999083, 0.940592, 0.974109]';
+% k=[0.999901, -0.898396, 0.973896, -0.454472, 0.999083, 0.940592, 0.974109]';
+
 
 q1 = q0 + k .* k_range;
 qd1 = zeros(7,1);
@@ -55,8 +56,9 @@ qdd1 = zeros(7,1);
 beta = match_deg5_bernstein_coefficients({q0, qd0, qdd0, q1, qd1, qdd1});
 
 % for tid = 1:128
+duration = 2;
 tid = 100;
-tspan = linspace(0, 1, tid + 1);
+tspan = linspace(0, duration, tid + 1);
 
 %% read CUDA output
 
@@ -81,6 +83,28 @@ tspan = linspace(0, 1, tid + 1);
 % slip_lb_cuda = force_constraint_values(101:200,2);
 % tip_lb_cuda = force_constraint_values(201:300,2);
 
+%% Processing CUDA output
+
+% separate the desired trajectories
+des_vel_center = des_traj_slice(:,1:2:14);
+des_vel_radius = des_traj_slice(:,2:2:14);
+des_aux_vel_center = des_traj_slice(:,15:2:28);
+des_aux_vel_radius = des_traj_slice(:,16:2:28);
+des_accel_center = des_traj_slice(:,29:2:end);
+des_accel_radius = des_traj_slice(:,30:2:end);
+
+% separate the force arrays
+f_rs_c = force_reachset_values(:,1:3);
+n_rs_c = force_reachset_values(:,4:6);
+f_rs_r = force_reachset_values(:,7:9);
+n_rs_r = force_reachset_values(:,10:12);
+sep_ub_cuda = force_constraint_values(1:100,1);
+slip_ub_cuda = force_constraint_values(101:200,1);
+tip_ub_cuda = force_constraint_values(201:300,1);
+sep_lb_cuda = force_constraint_values(1:100,2);
+slip_lb_cuda = force_constraint_values(101:200,2);
+tip_lb_cuda = force_constraint_values(201:300,2);
+
 %% Calculating Nominal Values
 
 figure; hold on;
@@ -95,7 +119,11 @@ for i = 1:tid
     t_ub = tspan(i + 1);
     ts(i) = (t_ub - t_lb) * rand + t_lb;
 
-    [q, qd, qdd] = get_desired_traj(beta, ts(i));
+    [q, qd, qdd] = get_desired_traj(beta, ts(i), duration);
+    
+    q_des_matlab(:,i) = q;
+    qd_des_matlab(:,i) = qd;
+    qdd_des_matlab(:,i) = qdd;
 
     [us(:,i), fs{i}, ns{i}] = rnea(q, qd, qd, qdd, true, params.nominal); % + transmision_inertia' .* qdd;
 end
@@ -233,11 +261,34 @@ end
 % 
 % end
 
+%% Plotting Desired Trajectory Comparison
+
+figure(5)
+clf(5)
+title('desired comparison')
+for i = 1:7
+    subplot(7,1,i)
+    hold on
+    plot(ts,qd_des_matlab(i,:),'ok')
+    plot(ts,des_vel_center(:,i),'--r')
+    plot(ts,des_aux_vel_center(:,i),'--b')
+    % plot(ts,des_vel_center+des_vel_radius,'--r')
+    % plot(ts,des_vel_center-des_vel_radius,'--r')
+end
+
+figure(6)
+for i = 1:7
+    subplot(7,1,i)
+    hold on
+    plot(ts,qdd_des_matlab(i,:),'ok')
+    plot(ts,des_accel_center(:,i),'--b')
+    % plot(ts,des_accel_center+des_vel_radius,'--r')
+    % plot(ts,des_accel_center-des_vel_radius,'--r')
+end
+
 
 %% helper functions
-function [q, qd, qdd] = get_desired_traj(beta, t)
-    % actual time duration of the trajectory
-    duration = 2;
+function [q, qd, qdd] = get_desired_traj(beta, t, duration)
     [B, dB, ddB] = Bezier_kernel_deg5(t/duration); %t/dur
     
     q = zeros(7,1);
