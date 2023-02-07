@@ -59,11 +59,11 @@ Section I:
     }
     for (int i = 0; i < NUM_FACTORS; i++) {
         inputstream >> qd0[i];
-        qd0[i] = 2*qd0[i];
+        qd0[i] = qd0[i];
     }
     for (int i = 0; i < NUM_FACTORS; i++) {
         inputstream >> qdd0[i];
-        qdd0[i] = 2*qdd0[i];
+        qdd0[i] = qdd0[i];
     }
     for (int i = 0; i < NUM_FACTORS; i++) {
         inputstream >> q_des[i];

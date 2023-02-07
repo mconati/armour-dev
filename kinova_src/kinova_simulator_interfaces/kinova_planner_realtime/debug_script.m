@@ -4,6 +4,8 @@
 
 close all; clear; clc;
 
+fig_num = 0;
+
 %% initialize robot
 robot = importrobot('Kinova_Grasp_URDF.urdf');
 robot.DataFormat = 'col';
@@ -48,17 +50,21 @@ k = [0.5, 0.7, 0.7, 0.0, -0.8, -0.6, -0.7]';
 % k = -ones(7,1);
 % k=[0.999901, -0.898396, 0.973896, -0.454472, 0.999083, 0.940592, 0.974109]';
 
-
-q1 = q0 + k .* k_range;
-qd1 = zeros(7,1);
-qdd1 = zeros(7,1);
+% desired trajectory constraints
+q1 = q0 + k .* k_range; % final position is k*k_range away from initial
+qd1 = zeros(7,1); % final velocity is zero
+qdd1 = zeros(7,1); % final acceleration is zero
 
 beta = match_deg5_bernstein_coefficients({q0, qd0, qdd0, q1, qd1, qdd1});
+beta_onesec = match_deg5_bernstein_coefficients({q0, qd0, qdd0, q1, qd1, qdd1});
 
 % for tid = 1:128
 duration = 2;
 tid = 100;
 tspan = linspace(0, duration, tid + 1);
+
+duration_onesec = 1;
+tspan_onesec = linspace(0, duration, tid+1);
 
 %% read CUDA output
 
@@ -70,7 +76,19 @@ tspan = linspace(0, duration, tid + 1);
 % 
 % force_reachset_values = readmatrix('buffer/armour_wrench_values.out', 'FileType', 'text');
 % force_constraint_values = readmatrix('buffer/armour_force_constraint_radius.out', 'FileType', 'text');
-% 
+%
+% des_traj_slice = readmatrix('buffer/armour_desired_sliced.out', 'FileType', 'text');
+
+%% Processing CUDA output
+
+% % separate the desired trajectories
+% des_vel_center = des_traj_slice(:,1:2:14);
+% des_vel_radius = des_traj_slice(:,2:2:14);
+% des_aux_vel_center = des_traj_slice(:,15:2:28);
+% des_aux_vel_radius = des_traj_slice(:,16:2:28);
+% des_accel_center = des_traj_slice(:,29:2:end);
+% des_accel_radius = des_traj_slice(:,30:2:end);
+
 % % separate the force arrays
 % f_rs_c = force_reachset_values(:,1:3);
 % n_rs_c = force_reachset_values(:,4:6);
@@ -83,31 +101,12 @@ tspan = linspace(0, duration, tid + 1);
 % slip_lb_cuda = force_constraint_values(101:200,2);
 % tip_lb_cuda = force_constraint_values(201:300,2);
 
-%% Processing CUDA output
-
-% separate the desired trajectories
-des_vel_center = des_traj_slice(:,1:2:14);
-des_vel_radius = des_traj_slice(:,2:2:14);
-des_aux_vel_center = des_traj_slice(:,15:2:28);
-des_aux_vel_radius = des_traj_slice(:,16:2:28);
-des_accel_center = des_traj_slice(:,29:2:end);
-des_accel_radius = des_traj_slice(:,30:2:end);
-
-% separate the force arrays
-f_rs_c = force_reachset_values(:,1:3);
-n_rs_c = force_reachset_values(:,4:6);
-f_rs_r = force_reachset_values(:,7:9);
-n_rs_r = force_reachset_values(:,10:12);
-sep_ub_cuda = force_constraint_values(1:100,1);
-slip_ub_cuda = force_constraint_values(101:200,1);
-tip_ub_cuda = force_constraint_values(201:300,1);
-sep_lb_cuda = force_constraint_values(1:100,2);
-slip_lb_cuda = force_constraint_values(101:200,2);
-tip_lb_cuda = force_constraint_values(201:300,2);
 
 %% Calculating Nominal Values
 
-figure; hold on;
+fig_num = fig_num + 1;
+figure(fig_num); 
+hold on;
 
 us = zeros(7,tid);
 fs = cell(1,tid);
@@ -120,19 +119,24 @@ for i = 1:tid
     ts(i) = (t_ub - t_lb) * rand + t_lb;
 
     [q, qd, qdd] = get_desired_traj(beta, ts(i), duration);
+    [q_onesec, qd_onesec, qdd_onesec] = get_desired_traj(beta, ts(i), duration_onesec);
     
     q_des_matlab(:,i) = q;
     qd_des_matlab(:,i) = qd;
     qdd_des_matlab(:,i) = qdd;
 
+    q_des_matlab_onesec(:,i) = q_onesec;
+    qd_des_matlab_onesec(:,i) = qd_onesec;
+    qdd_des_matlab_onesec(:,i) = qdd_onesec;
+
     [us(:,i), fs{i}, ns{i}] = rnea(q, qd, qd, qdd, true, params.nominal); % + transmision_inertia' .* qdd;
 end
 
-%% Verification
-
 %% Plotting Link Reach Sets
 
-figure; view(3); axis equal; hold on; axis on;
+fig_num = fig_num + 1;
+figure(fig_num); 
+hold on; view(3); axis equal; axis on;
 
 % choose a random time inside this time interval
 t_lb = tspan(tid);
@@ -196,7 +200,10 @@ f_lb = f_rs_c - f_rs_r;
 n_ub = n_rs_c + n_rs_r;
 n_lb = n_rs_c - n_rs_r;
 
-figure(3)
+fig_num = fig_num + 1;
+figure(fig_num); 
+hold on;
+
 plot_label = {'X-axis','Y-axis','Z-axis'};
 for i = 1:3
     subplot(3,2,i*2-1)
@@ -235,7 +242,10 @@ for i = 1:tid
     con_mat(i,3) = ZMP_top(1)^2+ZMP_top(2)^2 - surf_rad^2*ZMP_bottom^2;
 end
 
-figure(4)
+fig_num = fig_num + 1;
+figure(fig_num); 
+hold on;
+
 constraint_label = {'Separation Constraint','Slipping Constraint','Tipping Constraint'};
 for i = 1:3
     subplot(3,1,i)
@@ -263,8 +273,17 @@ end
 
 %% Plotting Desired Trajectory Comparison
 
-figure(5)
-clf(5)
+% Trajectory Duration Verification
+% plotting one second trajecotry vs duration trajectory
+fig_num = fig_num + 1;
+figure(fig_num);
+hold on;
+
+
+fig_num = fig_num + 1;
+figure(fig_num);
+hold on;
+
 title('desired comparison')
 for i = 1:7
     subplot(7,1,i)
@@ -276,7 +295,10 @@ for i = 1:7
     % plot(ts,des_vel_center-des_vel_radius,'--r')
 end
 
-figure(6)
+fig_num = fig_num + 1;
+figure(fig_num); 
+hold on;
+
 for i = 1:7
     subplot(7,1,i)
     hold on
