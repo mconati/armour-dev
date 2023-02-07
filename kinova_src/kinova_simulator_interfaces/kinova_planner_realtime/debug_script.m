@@ -64,7 +64,7 @@ tid = 100;
 tspan = linspace(0, duration, tid + 1);
 
 duration_onesec = 1;
-tspan_onesec = linspace(0, duration, tid+1);
+tspan_onesec = linspace(0, duration_onesec, tid+1);
 
 %% read CUDA output
 
@@ -104,10 +104,6 @@ tspan_onesec = linspace(0, duration, tid+1);
 
 %% Calculating Nominal Values
 
-fig_num = fig_num + 1;
-figure(fig_num); 
-hold on;
-
 us = zeros(7,tid);
 fs = cell(1,tid);
 ns = cell(1,tid);
@@ -116,10 +112,15 @@ for i = 1:tid
     % choose a random time inside this time interval
     t_lb = tspan(i);
     t_ub = tspan(i + 1);
-    ts(i) = (t_ub - t_lb) * rand + t_lb;
+    temp = rand;
+    ts(i) = (t_ub - t_lb) * temp + t_lb;
+
+    t_lb_onesec = tspan_onesec(i);
+    t_ub_onesec = tspan_onesec(i+1);
+    ts_onesec(i) = (t_ub_onesec - t_lb_onesec) * temp + t_lb_onesec;
 
     [q, qd, qdd] = get_desired_traj(beta, ts(i), duration);
-    [q_onesec, qd_onesec, qdd_onesec] = get_desired_traj(beta, ts(i), duration_onesec);
+    [q_onesec, qd_onesec, qdd_onesec] = get_desired_traj(beta_onesec, ts_onesec(i), duration_onesec);
     
     q_des_matlab(:,i) = q;
     qd_des_matlab(:,i) = qd;
@@ -132,6 +133,62 @@ for i = 1:tid
     [us(:,i), fs{i}, ns{i}] = rnea(q, qd, qd, qdd, true, params.nominal); % + transmision_inertia' .* qdd;
 end
 
+%% Plotting Desired Trajectory Comparison
+
+% Trajectory Duration Verification
+% plotting one second trajecotry vs duration trajectory
+fig_num = fig_num + 1;
+figure(fig_num);
+hold on;
+
+for i = 1:7
+    % plotting position
+    subplot(7,3,3*i-2)
+    hold on
+    plot(ts, q_des_matlab(i,:))
+    plot(ts_onesec,q_des_matlab_onesec(i,:))
+    % plotting velocity
+    subplot(7,3,3*i-1)
+    hold on
+    plot(ts, qd_des_matlab(i,:))
+    % plotting acceleration
+    subplot(7,3,3*i)
+    hold on
+    plot(ts, qdd_des_matlab(i,:))
+end
+sgtitle('Trajectory Duration Comparison')
+fig_num = fig_num + 1;
+figure(fig_num);
+hold on;
+
+% Outputting check if the end position states are the same!!!
+end_check = q_des_matlab(:,end) - q_des_matlab_onesec(:,end) < 1e-10
+
+for i = 1:7
+    subplot(7,1,i)
+    hold on
+    plot(ts,qd_des_matlab(i,:),'ok')
+%     plot(ts,des_vel_center(:,i),'--r')
+%     plot(ts,des_aux_vel_center(:,i),'--b')
+    % plot(ts,des_vel_center+des_vel_radius,'--r')
+    % plot(ts,des_vel_center-des_vel_radius,'--r')
+end
+sgtitle('Desired Velocity Comparison')
+
+fig_num = fig_num + 1;
+figure(fig_num); 
+hold on;
+
+for i = 1:7
+    subplot(7,1,i)
+    hold on
+    plot(ts,qdd_des_matlab(i,:),'ok')
+%     plot(ts,des_accel_center(:,i),'--b')
+    % plot(ts,des_accel_center+des_vel_radius,'--r')
+    % plot(ts,des_accel_center-des_vel_radius,'--r')
+end
+sgtitle('Desired Acceleration Comparison')
+
 %% Plotting Link Reach Sets
 
 fig_num = fig_num + 1;
@@ -143,7 +200,7 @@ t_lb = tspan(tid);
 t_ub = tspan(tid + 1);
 t = (t_ub - t_lb) * rand + t_lb;
 
-q_rand = get_desired_traj(beta, t);
+q_rand = get_desired_traj(beta, t, duration);
 
 figure(1)
 % plot robot
@@ -270,43 +327,6 @@ end
 %     out = W.grasp_check(A,A.agent_info,P.info)
 % 
 % end
-
-%% Plotting Desired Trajectory Comparison
-
-% Trajectory Duration Verification
-% plotting one second trajecotry vs duration trajectory
-fig_num = fig_num + 1;
-figure(fig_num);
-hold on;
-
-
-fig_num = fig_num + 1;
-figure(fig_num);
-hold on;
-
-title('desired comparison')
-for i = 1:7
-    subplot(7,1,i)
-    hold on
-    plot(ts,qd_des_matlab(i,:),'ok')
-    plot(ts,des_vel_center(:,i),'--r')
-    plot(ts,des_aux_vel_center(:,i),'--b')
-    % plot(ts,des_vel_center+des_vel_radius,'--r')
-    % plot(ts,des_vel_center-des_vel_radius,'--r')
-end
-
-fig_num = fig_num + 1;
-figure(fig_num); 
-hold on;
-
-for i = 1:7
-    subplot(7,1,i)
-    hold on
-    plot(ts,qdd_des_matlab(i,:),'ok')
-    plot(ts,des_accel_center(:,i),'--b')
-    % plot(ts,des_accel_center+des_vel_radius,'--r')
-    % plot(ts,des_accel_center-des_vel_radius,'--r')
-end
 
 
 %% helper functions

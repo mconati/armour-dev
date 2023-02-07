@@ -10,7 +10,7 @@
 #define DEBUG_MODE true
 
 // Parameters for PZsparse.h:
-    // monomials with a coefficient smaller than this number will be reduced
+    // monomials with a coefficient smaller than this number will be reduced (should be close to V_m magnitude)
     #define SIMPLIFY_THRESHOLD 1e-4
 
 // Parameters for Trajectories.h:
