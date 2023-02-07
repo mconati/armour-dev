@@ -151,10 +151,12 @@ for i = 1:7
     subplot(7,3,3*i-1)
     hold on
     plot(ts, qd_des_matlab(i,:))
+    plot(ts_onesec,qd_des_matlab_onesec(i,:))
     % plotting acceleration
     subplot(7,3,3*i)
     hold on
     plot(ts, qdd_des_matlab(i,:))
+    plot(ts_onesec,qdd_des_matlab_onesec(i,:))
 end
 sgtitle('Trajectory Duration Comparison')
 fig_num = fig_num + 1;
@@ -162,7 +164,9 @@ figure(fig_num);
 hold on;
 
 % Outputting check if the end position states are the same!!!
-end_check = q_des_matlab(:,end) - q_des_matlab_onesec(:,end) < 1e-10
+position_end_check = (q_des_matlab(:,end) - q_des_matlab_onesec(:,end) < 1e-10)
+% velocity and acceleration end should be zero
+% should initial all be the same?
 
 for i = 1:7
     subplot(7,1,i)
