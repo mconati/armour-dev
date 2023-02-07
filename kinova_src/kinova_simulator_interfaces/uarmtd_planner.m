@@ -215,7 +215,7 @@ classdef uarmtd_planner < robot_arm_generic_planner
                         constraints_value = readmatrix('armour_constraints.out', 'FileType', 'text');
 
                         link_frs_vertices = cell(7,1);
-                        for tid = 1:10:128
+                        for tid = [1:10:128, 128]
                             for j = 1:7
                                 c = link_frs_center((tid-1)*7+j, :)';
                                 g = link_frs_generators( ((tid-1)*7+j-1)*3+1 : ((tid-1)*7+j)*3, :);
@@ -351,11 +351,28 @@ classdef uarmtd_planner < robot_arm_generic_planner
                         link_frs_center = readmatrix('armtd_main_joint_position_center.out', 'FileType', 'text');
                         joint_frs_radius = readmatrix('armtd_main_joint_position_radius.out', 'FileType', 'text');
                         constraints_value = readmatrix('armtd_main_constraints.out', 'FileType', 'text');
+
+                        link_radius = [[0.070, 0.070, 0.070] 
+									   [0.070, 0.070, 0.070] 
+									   [0.070, 0.070, 0.070] 
+									   [0.070, 0.070, 0.070] 
+									   [0.070, 0.070, 0.070] 
+									   [0.057, 0.057, 0.057] 
+									   [0.100, 0.100, 0.100]];
+                        
+                        link_frs_vertices = cell(6,1);
+                        for tid = [1:10:100,100]
+                            for j = 2:7
+                                c1 = link_frs_center((tid-1)*7+(j-1), :)';
+                                c2 = link_frs_center((tid-1)*7+j, :)';
+                                g = joint_frs_radius((tid-1)*7+j, :);
+                                Z = zonotope(0.5 * (c1 + c2), [0.5 * (c2 - c1), diag(g + link_radius(j))]);
+                                link_frs_vertices{j-1} = [link_frs_vertices{j-1}; vertices(Z)'];
+                            end
+                        end
                     else
                         k_opt = nan;
-                        link_frs_center = [];
-                        joint_frs_radius = [];
-                        constraints_value = [];
+                        link_frs_vertices = [];
                     end
                 else
                     error('Unrecognized trajectory type!');
