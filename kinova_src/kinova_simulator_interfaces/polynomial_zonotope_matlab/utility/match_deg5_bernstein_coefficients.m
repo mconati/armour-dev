@@ -1,4 +1,4 @@
-function [beta] = match_deg5_bernstein_coefficients(traj_constraints)
+function [beta] = match_deg5_bernstein_coefficients(traj_constraints, k, duration)
     % match coefficients to initial position, velocity, acceleration (t=0)
     % and final position, velocity, and acceleration (t=1)
     % assuming a 5th degree bernstein polynomial (minimum degree necessary
@@ -11,17 +11,26 @@ function [beta] = match_deg5_bernstein_coefficients(traj_constraints)
     q1 = traj_constraints{4};
     qd1 = traj_constraints{5};
     qdd1 = traj_constraints{6};
+
+    T = duration;
     
-    % position constraints:
-    beta{1} = q0; % beta_0;
-    beta{6} = q1; % beta_5;
-    
-    % velocity constraints:
-    beta{2} = (qd0 + 5*beta{1})*(1/5); % beta_1
-    beta{5} = (qd1 - 5*beta{6})*(-1/5); % beta_4
-    
-    % acceleration constraints
-    beta{3} = (qdd0 - 20*beta{1} + 40*beta{2})*(1/20); % beta_2
-    beta{4} = (qdd1 - 20*beta{6} + 40*beta{5})*(1/20); % beta_3 
+%     % position constraints:
+%     beta{1} = q0; % beta_0;
+%     beta{6} = q1; % beta_5;
+%     
+%     % velocity constraints:
+%     beta{2} = (qd0 + 5*beta{1})*(1/5); % beta_1
+%     beta{5} = (qd1 - 5*beta{6})*(-1/5); % beta_4
+%     
+%     % acceleration constraints
+%     beta{3} = (qdd0 - 20*beta{1} + 40*beta{2})*(1/20); % beta_2
+%     beta{4} = (qdd1 - 20*beta{6} + 40*beta{5})*(1/20); % beta_3 
+
+    beta{1} = q0;
+    beta{2} = q0 + (T*qd0)/5;
+    beta{3} = (qdd0*T^2)/20 + (2*qd0*T)/5 + q0;
+    beta{4} = k + q0;
+    beta{5} = k + q0;
+    beta{6} = k + q0;
     
 end

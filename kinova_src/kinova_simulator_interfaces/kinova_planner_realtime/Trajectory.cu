@@ -6,7 +6,12 @@
 BezierCurve::BezierCurve(double* q0_inp, double* qd0_inp, double* qdd0_inp) {
     q0 = q0_inp;
     qd0 = qd0_inp;
-    qdd0 = qdd0_inp;    
+    qdd0 = qdd0_inp;
+
+    for(int i=0; i<7; i++){
+        qd0[i] *= duration;
+        qdd0[i] *= pow(duration,2);
+    }    
 
     // pre-allocate memory
     R = PZsparseArray(NUM_JOINTS + 1, NUM_TIME_STEPS);
@@ -39,14 +44,15 @@ BezierCurve::BezierCurve(double* q0_inp, double* qd0_inp, double* qdd0_inp) {
         qdd_des_k_indep_extremum_2[i] = qdd_des_k_indep(q0[i], qd0[i], qdd0[i], qdd_des_k_indep_extrema_2[i]);
     }
 
-    dt = 1.0 / NUM_TIME_STEPS;
+    dt = 2.0 / NUM_TIME_STEPS;
+    // dt = duration/NUM_TIME_STEPS;
 }
 
 void BezierCurve::makePolyZono(int t_ind) {
     assert(t_ind < NUM_TIME_STEPS);
 
     const double t_lb = t_ind * dt;
-    const double t_ub = (t_ind + 1) * dt;
+    const double t_ub = (t_ind + 1) * dt; 
 
     const Interval t_int(t_lb, t_ub);
 
@@ -162,7 +168,7 @@ void BezierCurve::makePolyZono(int t_ind) {
         qd_des_degree[1][i + NUM_FACTORS * 1] = 1; // qde
 
         // qd_des_int = qd_des_center + qd_des_coeff[0] * k + qd_des_coeff[1] * qde;
-        qd_des(i, t_ind) = 1/duration*PZsparse(qd_des_center, qd_des_coeff, qd_des_degree, 2);
+        qd_des(i, t_ind) = 1.0/duration*PZsparse(qd_des_center, qd_des_coeff, qd_des_degree, 2);
 
         double qda_des_coeff[] = {k_dep_coeff_center, k_dep_coeff_radius + k_indep_radius + qdae};
 
@@ -171,7 +177,7 @@ void BezierCurve::makePolyZono(int t_ind) {
         qda_des_degree[1][i + NUM_FACTORS * 2] = 1; // qdae
 
         // qda_des_int = qd_des_center + qda_des_coeff[0] * k + qda_des_coeff[1] * qdae;
-        qda_des(i, t_ind) = 1/duration*PZsparse(qd_des_center, qda_des_coeff, qda_des_degree, 2);
+        qda_des(i, t_ind) = 1.0/duration*PZsparse(qd_des_center, qda_des_coeff, qda_des_degree, 2);
 
         // Part 3: qdd_des
         double temp_lb = 60 * t_lb * (2 * pow(t_lb,2) - 3 * t_lb + 1);
@@ -223,7 +229,7 @@ void BezierCurve::makePolyZono(int t_ind) {
         qdd_des_degree[1][i + NUM_FACTORS * 3] = 1; // qddae
 
         // qdd_des_int = qdd_des_center + qdd_des_coeff[0] * k + qdd_des_coeff[1] * qdde;
-        qdda_des(i, t_ind) = (1.0/pow(duration,2))*PZsparse(qdd_des_center, qdd_des_coeff, qdd_des_degree, 2);
+        qdda_des(i, t_ind) = 1.0/pow(duration,2)*PZsparse(qdd_des_center, qdd_des_coeff, qdd_des_degree, 2);
     }
 
     // assume all fixed joints are at the end of the kinematics chain
@@ -421,7 +427,7 @@ void BezierCurve::returnJointVelocityExtremumGradient(double* extremumGradient, 
         double extrema1 = 0;
         double extrema2 = (18*qd0[i] - 30*k_actual + 4*qdd0[i] + sqrt(6*(150*pow(k_actual,2) - 180*k_actual*qd0[i] - 20*k_actual*qdd0[i] + 54*pow(qd0[i],2) + 14*qd0[i]*qdd0[i] + pow(qdd0[i],2))))/(10*(6*qd0[i] - 12*k_actual + qdd0[i]));
         double extrema3 = (18*qd0[i] - 30*k_actual + 4*qdd0[i] - sqrt(6*(150*pow(k_actual,2) - 180*k_actual*qd0[i] - 20*k_actual*qdd0[i] + 54*pow(qd0[i],2) + 14*qd0[i]*qdd0[i] + pow(qdd0[i],2))))/(10*(6*qd0[i] - 12*k_actual + qdd0[i]));
-        double extrema4 = 1;
+        double extrema4 = 1; // feel like this should be duration
 
         // get extremums of all extremas
         double extremum1 = qd_des_func(q0[i], qd0[i], qdd0[i], k_actual, extrema1);

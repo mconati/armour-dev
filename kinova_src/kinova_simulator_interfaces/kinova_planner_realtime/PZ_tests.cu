@@ -204,10 +204,10 @@ Section III:
     Slice reachable sets at some point
 */
 
-    // double factors[NUM_FACTORS] = {0.5, 0.7, 0.7, 0.0, -0.8, -0.6, -0.7};
+    double factors[NUM_FACTORS] = {0.5, 0.7, 0.7, 0.0, -0.8, -0.6, -0.7};
     // double factors[NUM_FACTORS] = {0,0,0,0,0,0,0};
     // double factors[NUM_FACTORS] = {1,1,1,1,1,1,1};
-    double factors[NUM_FACTORS] = {-1,-1,-1,-1,-1,-1,-1};
+    // double factors[NUM_FACTORS] = {-1,-1,-1,-1,-1,-1,-1};
 
     Eigen::MatrixXd torque_sliced_center(NUM_FACTORS, NUM_TIME_STEPS);
     Eigen::Vector3d link_sliced_center[NUM_TIME_STEPS * NUM_JOINTS];
@@ -236,9 +236,10 @@ Section III:
         for (int k = 0; k < NUM_FACTORS; k++) {
             // slice
             MatrixXInt qd_slice = traj.qd_des(k,openmp_t_ind).slice(factors);
-            cout << qd_slice << endl;
+            // cout << qd_slice << endl;
             // get center
             qd_center(k,openmp_t_ind) = getCenter(qd_slice(0));
+            // cout << qd_center(k,openmp_t_ind) << " ";
             // get radius
             qd_radius(k,openmp_t_ind) = getRadius(qd_slice(0));
             // cout << qd_slice << endl;
@@ -247,6 +248,7 @@ Section III:
             MatrixXInt qda_slice = traj.qda_des(k,openmp_t_ind).slice(factors);
             // get center
             qda_center(k,openmp_t_ind) = getCenter(qda_slice(0));
+            // cout << qda_center(k,openmp_t_ind) << " ";
             // get radius
             qda_radius(k,openmp_t_ind) = getRadius(qda_slice(0));
 
@@ -254,8 +256,10 @@ Section III:
             MatrixXInt qdda_slice = traj.qdda_des(k,openmp_t_ind).slice(factors);
             // get center
             qdda_center(k,openmp_t_ind) = getCenter(qdda_slice(0));
+            // cout << qdda_center(k,openmp_t_ind) << endl;
             // get radius
             qdda_radius(k,openmp_t_ind) = getRadius(qdda_slice(0));
+
         }
 
         for (int k = 0; k < NUM_FACTORS; k++) {
