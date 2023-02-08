@@ -35,10 +35,10 @@ Section I:
     // declare this first and make sure we always have a new output
     std::ofstream outputstream1(outputfilename1);
 
-    double q0[NUM_FACTORS] = {0.0};
-    double qd0[NUM_FACTORS] = {0.0};
-    double qdd0[NUM_FACTORS] = {0.0};
-    double q_des[NUM_FACTORS] = {0.0};
+    Eigen::VectorXd q0(NUM_FACTORS); q0.setZero();
+    Eigen::VectorXd qd0(NUM_FACTORS); qd0.setZero();
+    Eigen::VectorXd qdd0(NUM_FACTORS); qdd0.setZero();
+    Eigen::VectorXd q_des(NUM_FACTORS); q_des.setZero();
 
     int num_obstacles = 0;
     double obstacles[MAX_OBSTACLE_NUM * (MAX_OBSTACLE_GENERATOR_NUM + 1) * 3] = {0.0};
@@ -88,7 +88,7 @@ Section II:
     auto start1 = std::chrono::high_resolution_clock::now();
 
     omp_set_num_threads(NUM_THREADS);
-    int openmp_t_ind = 0; // openmp loop index
+    int openmp_s_ind = 0; // openmp loop index
 
     /*
     Section II.A: Create JRS online
@@ -96,9 +96,9 @@ Section II:
     BezierCurve traj(q0, qd0, qdd0);
 
     try {
-        #pragma omp parallel for shared(traj) private(openmp_t_ind) schedule(static, NUM_TIME_STEPS / NUM_THREADS)
-        for(openmp_t_ind = 0; openmp_t_ind < NUM_TIME_STEPS; openmp_t_ind++) {
-            traj.makePolyZono(openmp_t_ind);
+        #pragma omp parallel for shared(traj) private(openmp_s_ind) schedule(static, NUM_TIME_STEPS / NUM_THREADS)
+        for(openmp_s_ind = 0; openmp_s_ind < NUM_TIME_STEPS; openmp_s_ind++) {
+            traj.makePolyZono(openmp_s_ind);
         }
     }
     catch (int errorCode) {
@@ -113,30 +113,30 @@ Section II:
     Eigen::Matrix<double, 3, 3 + 3> link_independent_generators[NUM_TIME_STEPS * NUM_JOINTS];
 
     try {
-        #pragma omp parallel for shared(kd, link_independent_generators) private(openmp_t_ind) schedule(static, NUM_TIME_STEPS / NUM_THREADS)
-        for(openmp_t_ind = 0; openmp_t_ind < NUM_TIME_STEPS; openmp_t_ind++) {
+        #pragma omp parallel for shared(kd, link_independent_generators) private(openmp_s_ind) schedule(static, NUM_TIME_STEPS / NUM_THREADS)
+        for(openmp_s_ind = 0; openmp_s_ind < NUM_TIME_STEPS; openmp_s_ind++) {
             // compute link PZs through forward kinematics
-            kd.fk(openmp_t_ind);
+            kd.fk(openmp_s_ind);
 
             // reduce non-only-k-dependent generators so that slice takes less time
             for (int i = 0; i < NUM_JOINTS; i++) {
-                link_independent_generators[openmp_t_ind * NUM_JOINTS + i] = kd.links(i, openmp_t_ind).reduce_link_PZ();
+                link_independent_generators[openmp_s_ind * NUM_JOINTS + i] = kd.links(i, openmp_s_ind).reduce_link_PZ();
             }
 
             // compute nominal torque
-            kd.rnea_nominal(openmp_t_ind);
+            kd.rnea_nominal(openmp_s_ind);
 
             // compute interval torque
-            kd.rnea_interval(openmp_t_ind);
+            kd.rnea_interval(openmp_s_ind);
 
             // compute max disturbance (stored in u_nom_int)
             for (int i = 0; i < NUM_FACTORS; i++) {
-                kd.u_nom_int(i, openmp_t_ind) = kd.u_nom_int(i, openmp_t_ind) - kd.u_nom(i, openmp_t_ind);
+                kd.u_nom_int(i, openmp_s_ind) = kd.u_nom_int(i, openmp_s_ind) - kd.u_nom(i, openmp_s_ind);
             }
 
             // reduce non-only-k-dependent generators so that slice takes less time
             for (int i = 0; i < NUM_FACTORS; i++) {
-                kd.u_nom(i, openmp_t_ind).reduce();
+                kd.u_nom(i, openmp_s_ind).reduce();
             }
         }
     }

@@ -31,9 +31,12 @@
 //
 class BezierCurve{
 public:
-    double* q0 = nullptr;
-    double* qd0 = nullptr;
-    double* qdd0 = nullptr;
+    Eigen::VectorXd q0;
+    Eigen::VectorXd qd0;
+    Eigen::VectorXd qdd0;
+
+    Eigen::VectorXd Tqd0; // qd0 * T
+    Eigen::VectorXd TTqdd0; // qdd0 * T ^ 2
 
     double q_des_k_indep_extrema_1[NUM_FACTORS] = {0.0};
     double q_des_k_indep_extrema_2[NUM_FACTORS] = {0.0};
@@ -50,7 +53,7 @@ public:
     double qdd_des_k_indep_extremum_1[NUM_FACTORS] = {0.0};
     double qdd_des_k_indep_extremum_2[NUM_FACTORS] = {0.0};
 
-    double dt;
+    double ds = 0;
 
     // PZsparse cos_q_des[NUM_TIME_STEPS * NUM_FACTORS];
     // PZsparse sin_q_des[NUM_TIME_STEPS * NUM_FACTORS];
@@ -68,9 +71,11 @@ public:
     // joint acceleration
     PZsparseArray qdda_des;
 
-    BezierCurve() {};
+    BezierCurve();
 
-    BezierCurve(double* q0_inp, double* qd0_inp, double* qdd0_inp);
+    BezierCurve(const Eigen::VectorXd& q0_inp, 
+                const Eigen::VectorXd& qd0_inp, 
+                const Eigen::VectorXd& qdd0_inp);
 
     ~BezierCurve() {};
 

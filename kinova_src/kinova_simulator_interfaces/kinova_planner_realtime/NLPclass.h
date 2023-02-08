@@ -10,7 +10,7 @@ using namespace Ipopt;
 
 class armtd_NLP: public TNLP
 {
-public:
+public: 
     /** Default constructor */
     armtd_NLP();
 
@@ -19,7 +19,7 @@ public:
 
     // [set_parameters]
     bool set_parameters(
-        double* q_des_input,
+        Eigen::VectorXd& q_des_input,
         double t_plan_input,
         const BezierCurve* desired_trajectory_input,
         KinematicsDynamics* kinematics_dynamics_result_input,
@@ -170,7 +170,7 @@ private:
        const armtd_NLP&
     );
 
-    double* q_des = nullptr;
+    Eigen::VectorXd q_des;
 
     const BezierCurve* desired_trajectory = nullptr;
 

@@ -23,7 +23,7 @@ An overview of this method is given in figure below.
 The repo has been verified on MATLAB R>=2021b and Ubuntu >= 20.04
 
 This repo depends on the following repos:
- - [CORA](https://tumcps.github.io/CORA/)
+ - [CORA 2021](https://tumcps.github.io/CORA/data/CORA_2021.zip)
  
 You need to download this repo and add to your MATLAB path.
 
