@@ -218,8 +218,6 @@ for i = 2:length(A.time)
     end
     % can I call u=A.LLC.get_control_inputs() here with the P.info?
     
-    % need to initialize this with a column of zeros and start at the
-    % second index - fixed
     qdd_post(:,i) = M\(A.input(:,i)-C*joint_angular_velocity(:,i)-g);
 %         qdd_post(:,i) = M\(A.input(:,i)-C*joint_angular_velocity(:,i)-g);
 

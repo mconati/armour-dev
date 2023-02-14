@@ -18,7 +18,7 @@ params = load_robot_params(robot, ...
 
 
 % controller info
-LLC_info.ultimate_bound = 0.191;
+LLC_info.ultimate_bound = 0.00191;
 LLC_info.Kr = 10;
 
 % create link poly zonotopes
@@ -65,12 +65,13 @@ time_to_slice = 6;
 
 %% compute trajectories
 % initial conditions
-q_0 = [0;-pi/2;0;0;0;0;0];
+q_0 = [0;-pi/2;0;0;0;0;pi/10];
 qd_0= [0;0;0;0;0;0;0];
-qdd_0 = [0;0;0;0;0;0;0];
+qdd_0 = [-pi/24;pi/12;0;0;0;0;-pi/24];
 
 % trajectory parameter
-kvec = [0.6; -0.8; 0.5; -0.2; -0.4; 0.35; 0.34];
+% kvec = [0.6; -0.8; 0.5; -0.2; -0.4; 0.35; 0.34];
+kvec = [-1;-1;-1;-1;-1;-1;-1];
 
 % create pz trajectories
 joint_axes = [zeros(2, length(q_0)); ones(1, length(q_0))]; % Question: what is this?
@@ -147,15 +148,18 @@ end
 %% Calling RNEA for Nominal Wrench Trajectories
 
 for i = 1:jrs_info.n_t
-    [tau_temp, f_temp, n_temp] = rnea(q_des, qd_des, qdd_des, true, params.nominal);
+    [tau_temp, f_temp, n_temp] = rnea(q_des(:,i), qd_des(:,i), qd_des(:,i), qdd_des(:,i), true, params.nominal);
 %     tau_int{i} = tau_temp{10,1};
-    f_nom{i} = f_temp{10,1};
-    n_nom{i} = n_temp{10,1};
+    f_nom(:,i) = f_temp(:,10);
+    n_nom(:,i) = n_temp(:,10);
 end
 
 %% Plotting Wrench Trajectory
 
 if plot_force_trajectory
+
+    % choose which force to plot (1=x-axis,
+    force = 3; 
 
     plot_idx = plot_idx + 1;
     figure(plot_idx); clf; hold on;
@@ -165,20 +169,26 @@ if plot_force_trajectory
         % plot the polynomial overapproximation
         % calculate the inf/sup
         if f_int{1,i}.G
-            poly_inf = f_int{1,i}.c(1) - sum(abs(f_int{1,i}.G(1,:))) - sum(abs(f_int{1,i}.Grest(1,:)));
-            poly_sup = f_int{1,i}.c(1) + sum(abs(f_int{1,i}.G(1,:))) + sum(abs(f_int{1,i}.Grest(1,:)));
+            poly_inf = f_int{1,i}.c(force) - sum(abs(f_int{1,i}.G(force,:))) - sum(abs(f_int{1,i}.Grest(force,:)));
+            poly_sup = f_int{1,i}.c(force) + sum(abs(f_int{1,i}.G(force,:))) + sum(abs(f_int{1,i}.Grest(force,:)));
         else % the magnitude of Grest means that only those were tracked
-            poly_inf = f_int{1,i}.c(1) - sum(abs(f_int{1,i}.Grest(1,:)));
-            poly_sup = f_int{1,i}.c(1) + sum(abs(f_int{1,i}.Grest(1,:)));
+            poly_inf = f_int{1,i}.c(force) - sum(abs(f_int{1,i}.Grest(force,:)));
+            poly_sup = f_int{1,i}.c(force) + sum(abs(f_int{1,i}.Grest(force,:)));
         end
         p1 = patch([t_traj(i)+jrs_info.dt; t_traj(i)+jrs_info.dt; t_traj(i); t_traj(i)], [poly_sup; poly_inf; poly_inf; poly_sup], 'b');
 %         p1.EdgeColor = pz_err_color;
         p1.LineWidth = 0.1;
 %         p1.FaceColor = pz_err_color;
 
-        % plot the nominal values
+        
         
     end
+
+    % plot the nominal values
+    plot(t_traj, f_nom(force,:),'--r')
+
+    % formatting for plot
+    ylim([0 2.25])
 
 end
 

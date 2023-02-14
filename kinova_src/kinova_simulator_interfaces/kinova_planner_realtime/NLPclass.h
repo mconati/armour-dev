@@ -19,7 +19,7 @@ public:
 
     // [set_parameters]
     bool set_parameters(
-        double* q_des_input,
+        Eigen::VectorXd& q_des_input,
         double t_plan_input,
         const BezierCurve* desired_trajectory_input,
         KinematicsDynamics* kinematics_dynamics_result_input,
@@ -142,7 +142,7 @@ public:
     );
     //@}
 
-    double t_plan = 1.0;
+    double t_plan = duration;
 
     double solution[NUM_FACTORS];
 
@@ -156,6 +156,8 @@ public:
 
     Eigen::Vector3d link_sliced_center[NUM_TIME_STEPS * NUM_JOINTS];
     Eigen::Vector3d dk_link_sliced_center[NUM_TIME_STEPS * NUM_JOINTS * NUM_FACTORS];
+
+    // force constraint specific
     
     Eigen::MatrixXd force_value_center = Eigen::MatrixXd(3,NUM_TIME_STEPS);
     Eigen::MatrixXd force_value_radii = Eigen::MatrixXd(3,NUM_TIME_STEPS);
@@ -164,7 +166,7 @@ public:
 
     double force_constraint_ub[3*NUM_TIME_STEPS];
     double force_constraint_lb[3*NUM_TIME_STEPS];
-    double force_constraint_gradient[3*NUM_TIME_STEPS*NUM_FACTORS]; // check if this is the correct size
+    double force_constraint_gradient[3*NUM_TIME_STEPS*NUM_FACTORS];
 
 private:
     /**@name Methods to block default compiler methods.

@@ -14,14 +14,14 @@
     #define SIMPLIFY_THRESHOLD 1e-4
 
 // Parameters for Trajectories.h:
+    // Duration of the Bezier Curve
+    #define duration 2.0
+
     // number of time steps (This should be an EVEN number!!!)
     #define NUM_TIME_STEPS 100
 
     // range of parameters (size of generators in PZ).
     const double k_range[NUM_FACTORS] = { M_PI / 72, M_PI / 72, M_PI / 72, M_PI / 72, M_PI / 72, M_PI / 72, M_PI / 72 }; // (radian)
-
-// Duration of the trajectories
-    #define duration 2.0
 
 // Parameters for CollisionChecking.h:
     // maximum number of obstacles (used for memory pre-allocation)
@@ -50,6 +50,9 @@
 
     // threshold for tipping constraint violation (unit: meter) // squared?
     #define TIPPING_CONSTRAINT_VIOLATION_THRESHOLD 1e-6
+
+    // scale the cost function value so that it could converge faster (be careful with it!)
+    #define COST_FUNCTION_OPTIMALITY_SCALE 10.0
 
 // Parameters for armour_main.cpp
     #define IPOPT_OPTIMIZATION_TOLERANCE 1e-4

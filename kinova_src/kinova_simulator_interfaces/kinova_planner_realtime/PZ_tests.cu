@@ -39,10 +39,10 @@ Section I:
     // declare this first and make sure we always have a new output
     std::ofstream outputstream1(outputfilename1);
 
-    double q0[NUM_FACTORS] = {0.0};
-    double qd0[NUM_FACTORS] = {0.0};
-    double qdd0[NUM_FACTORS] = {0.0};
-    double q_des[NUM_FACTORS] = {0.0};
+    Eigen::VectorXd q0(NUM_FACTORS); q0.setZero();
+    Eigen::VectorXd qd0(NUM_FACTORS); qd0.setZero();
+    Eigen::VectorXd qdd0(NUM_FACTORS); qdd0.setZero();
+    Eigen::VectorXd q_des(NUM_FACTORS); q_des.setZero();
 
     int num_obstacles = 0;
     double obstacles[MAX_OBSTACLE_NUM * (MAX_OBSTACLE_GENERATOR_NUM + 1) * 3] = {0.0};
@@ -83,7 +83,7 @@ Section I:
 
     inputstream.close();
 
-    double t_plan = 1.0; // optimize the distance between q_des and the desired trajectories at t_plan
+    double t_plan = duration; // optimize the distance between q_des and the desired trajectories at t_plan
     // Kinova Hardware Demo Values: u_s = 0.609382421; surf_rad =  0.058;
     double u_s = 0.609382421; // 0.5; // static coefficient of friction between tray and object
     double surf_rad =  0.058/2; // 0.0762; // radius of contact area between tray and object (area assumed to be circular)
@@ -209,6 +209,7 @@ Section III:
     // double factors[NUM_FACTORS] = {1,1,1,1,1,1,1};
     // double factors[NUM_FACTORS] = {-1,-1,-1,-1,-1,-1,-1};
 
+    Eigen::MatrixXd qd_des_sliced_center(NUM_FACTORS, NUM_TIME_STEPS);
     Eigen::MatrixXd torque_sliced_center(NUM_FACTORS, NUM_TIME_STEPS);
     Eigen::Vector3d link_sliced_center[NUM_TIME_STEPS * NUM_JOINTS];
     Eigen::MatrixXd force_value_center(3,NUM_TIME_STEPS);
@@ -231,6 +232,11 @@ Section III:
 
     // #pragma omp parallel for shared(kd, factors, torque_sliced_center, link_sliced_center) private(openmp_t_ind) schedule(static, NUM_TIME_STEPS / NUM_THREADS)
     for(openmp_t_ind = 0; openmp_t_ind < NUM_TIME_STEPS; openmp_t_ind++) {
+
+        for (int k = 0; k < NUM_FACTORS; k++) {
+            MatrixXInt res = traj.qd_des(k, openmp_t_ind).slice(factors);
+            qd_des_sliced_center(k, openmp_t_ind) = getCenter(res(0));
+        }
 
         // slicing desired trajectories for comparison
         for (int k = 0; k < NUM_FACTORS; k++) {

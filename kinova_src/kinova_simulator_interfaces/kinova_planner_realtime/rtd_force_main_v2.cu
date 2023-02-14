@@ -37,10 +37,10 @@ Section I:
     // declare this first and make sure we always have a new output
     std::ofstream outputstream1(outputfilename1);
 
-    double q0[NUM_FACTORS] = {0.0};
-    double qd0[NUM_FACTORS] = {0.0};
-    double qdd0[NUM_FACTORS] = {0.0};
-    double q_des[NUM_FACTORS] = {0.0};
+    Eigen::VectorXd q0(NUM_FACTORS); q0.setZero();
+    Eigen::VectorXd qd0(NUM_FACTORS); qd0.setZero();
+    Eigen::VectorXd qdd0(NUM_FACTORS); qdd0.setZero();
+    Eigen::VectorXd q_des(NUM_FACTORS); q_des.setZero();
 
     int num_obstacles = 0;
     double obstacles[MAX_OBSTACLE_NUM * (MAX_OBSTACLE_GENERATOR_NUM + 1) * 3] = {0.0};
@@ -79,7 +79,7 @@ Section I:
 
     inputstream.close();
 
-    double t_plan = 1.0; // optimize the distance between q_des and the desired trajectories at t_plan
+    double t_plan = duration; // optimize the distance between q_des and the desired trajectories at t_plan
     // Kinova Hardware Demo Values: u_s = 0.609382421; surf_rad =  0.058/2;
     double u_s = 0.609382421; // 0.5; // static coefficient of friction between tray and object
     double surf_rad =  0.058 / 2; // 0.0762; // RADIUS of contact area between tray and object (area assumed to be circular) 
