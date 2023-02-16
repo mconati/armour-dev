@@ -69,10 +69,6 @@ q_0 = [0;-pi/2;0;0;0;0;pi/10];
 qd_0= [0;0;0;0;0;0;0];
 qdd_0 = [-pi/24;pi/12;0;0;0;0;-pi/24];
 
-% trajectory parameter
-% kvec = [0.6; -0.8; 0.5; -0.2; -0.4; 0.35; 0.34];
-kvec = [-1;-1;-1;-1;-1;-1;-1];
-
 % create pz trajectories
 joint_axes = [zeros(2, length(q_0)); ones(1, length(q_0))]; % Question: what is this?
 taylor_degree = 5;
@@ -80,6 +76,12 @@ traj_type = 'bernstein';
 add_ultimate_bound = true;
 
 [Q_des, Qd_des, Qdd_des, Q, Qd, Qd_a, Qdd_a, R_des, R_t_des, R, R_t, T, E_p, jrs_info] = create_jrs_online_modified(q_0,qd_0,qdd_0, joint_axes, taylor_degree, traj_type, add_ultimate_bound, LLC_info);
+
+%%
+
+% trajectory parameter
+% kvec = [0.6; -0.8; 0.5; -0.2; -0.4; 0.35; 0.34];
+kvec = [-1;-1;-1;-1;-1;-1;-1];
 
 % planning info
 t_traj = 0:jrs_info.dt:jrs_info.t_f;
@@ -147,7 +149,7 @@ end
 
 %% Calling RNEA for Nominal Wrench Trajectories
 
-for i = 1:jrs_info.n_t
+for i = 1:length(t_steps)
     [tau_temp, f_temp, n_temp] = rnea(q_des(:,i), qd_des(:,i), qd_des(:,i), qdd_des(:,i), true, params.nominal);
 %     tau_int{i} = tau_temp{10,1};
     f_nom(:,i) = f_temp(:,10);
@@ -179,13 +181,12 @@ if plot_force_trajectory
 %         p1.EdgeColor = pz_err_color;
         p1.LineWidth = 0.1;
 %         p1.FaceColor = pz_err_color;
+        p1.FaceAlpha = 0.3;
 
-        
-        
     end
 
     % plot the nominal values
-    plot(t_traj, f_nom(force,:),'--r')
+    plot(t_steps, f_nom(force,:),'-k')
 
     % formatting for plot
     ylim([0 2.25])

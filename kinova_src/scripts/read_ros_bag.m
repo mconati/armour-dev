@@ -18,7 +18,9 @@ catch
     warning('variable data not loaded yet, loading now')
 
 %     data = readmatrix('ARMOUR_Added_Mass_v1.csv'); % Raw Data
-    data = readmatrix('ARMOUR_Added_Mass_Reduced_data_v1.csv'); % Reduced Data (Just the Correct Trial)
+%     data = readmatrix('ARMOUR_Added_Mass_Reduced_data_v1.csv'); % Reduced Data (Just the Correct Trial)
+%     data = readmatrix('ARMOUR_Added_Mass_02_15_2023_v1.csv'); % Raw Data
+    data = readmatrix('ARMOUR_Added_Mass_02_15_2023_v1_Reduced.csv'); % Raw Data
 
     processFunction(data)
 
@@ -37,11 +39,12 @@ function output = processFunction(data)
 
     % index offset (for use with raw data since has more columns)
     idx_offset = 3;
-    
+    spacing = 1;
+
     % time
     time = data(:,1);
     % joint position measured?
-    joint_pos = data(:,24+idx_offset:30+idx_offset);
+    joint_pos = data(1:spacing:end,24+idx_offset:30+idx_offset);
     % joint velocity measured?
     joint_vel = data(:,38+idx_offset:44+idx_offset);
     % joint acceleration
@@ -52,9 +55,14 @@ function output = processFunction(data)
     torque_comm = data(:,31+idx_offset:37+idx_offset);
 
     % joint position error
-    joint_pos_err = data(:,9+idx_offset:15+idx_offset);
+    joint_pos_err = data(1:spacing:end,9+idx_offset:15+idx_offset);
     % joint velocity error
-    joint_vel_err = data(:,16+idx_offset:22+idx_offset);
+    joint_vel_err = data(1:spacing:end,16+idx_offset:22+idx_offset);
+
+    %% Processing for NaN values
+    for i = 1
+        non_nan_idx(:,i) = find(~isnan(joint_pos_err(:,i)));
+    end
 
     %% Plotting
 
@@ -62,7 +70,7 @@ function output = processFunction(data)
     figure(fig)
     hold on
     % plotting joint position error
-    plot(time, joint_pos_err)
+    plot(time(non_nan_idx), joint_pos_err(non_nan_idx,:))
     % plotting position error ultimate bound
     plot([time(1) time(end)],[ult_bound_pos ult_bound_pos], '--r')
     plot([time(1) time(end)],[-ult_bound_pos -ult_bound_pos], '--r')
@@ -76,7 +84,7 @@ function output = processFunction(data)
     figure(fig)
     hold on
     % plotting joint velocity error
-    plot(time, joint_vel_err)
+    plot(time(non_nan_idx), joint_vel_err(non_nan_idx,:))
     % plotting velocity error ultimate bound
     plot([time(1) time(end)],[ult_bound_vel ult_bound_vel], '--r')
     plot([time(1) time(end)],[-ult_bound_vel -ult_bound_vel], '--r')
