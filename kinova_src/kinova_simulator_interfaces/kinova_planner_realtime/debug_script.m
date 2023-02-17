@@ -337,14 +337,19 @@ end
 
 %% helper functions
 function [q, qd, qdd] = get_desired_traj(beta, t, duration)
+
+    if nargin < 3
+        T = 1;
+    end
+
     [B, dB, ddB] = Bezier_kernel_deg5(t/duration); %t/dur
     
-    q = zeros(7,1);
-    qd = zeros(7,1);
-    qdd = zeros(7,1);
     for j = 1:6
-        q = q + beta{j} * B(j);
-        qd = qd + 1/duration*beta{j} * dB(j);
-        qdd = qdd + (1/duration)^2*beta{j} * ddB(j); % coeff
+        q = q + beta{j} .* B(:,j)';
+        qd = qd + beta{j} .* dB(:,j)';
+        qdd = qdd + beta{j} .* ddB(:,j)';
     end
+
+    qd = qd / T;
+    qdd = qdd / T / T;
 end
