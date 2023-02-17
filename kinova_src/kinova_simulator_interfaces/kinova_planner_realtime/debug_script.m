@@ -63,8 +63,8 @@ tspan = linspace(0, duration, tid + 1);
 duration_onesec = 1;
 tspan_onesec = linspace(0, duration_onesec, tid+1);
 
-beta = match_deg5_bernstein_coefficients({q0, qd0, qdd0, q1, qd1, qdd1}, k, duration);
-beta_onesec = match_deg5_bernstein_coefficients({q0, qd0, qdd0, q1, qd1, qdd1}, k, duration_onesec);
+beta = match_deg5_bernstein_coefficients({q0, qd0, qdd0, q1, qd1, qdd1}, duration);
+beta_onesec = match_deg5_bernstein_coefficients({q0, qd0, qdd0, q1, qd1, qdd1}, duration_onesec);
 
 %% read CUDA output
 
