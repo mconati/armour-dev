@@ -63,7 +63,7 @@ bernstein_final_range = pi/36*ones(n_q, 1);
 
 t_f = 1;
 t_p = 0.5;
-dt = 0.025;
+dt = 0.025; % adjust this for the number of polyzonos
 n_t = t_f/dt;
 n_t_p = t_p/t_f*n_t; % last time step of "planning" phase before braking phase
 

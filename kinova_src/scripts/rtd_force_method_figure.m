@@ -71,9 +71,13 @@ time_to_slice = 6;
 
 %% compute trajectories
 % initial conditions
-q_0 = [0;-pi/2;0;0;0;0;pi/10];
-qd_0= [0;0;0;0;0;0;0];
-qdd_0 = [-pi/24;pi/12;0;0;0;0;-pi/24];
+q_0 = [0;-pi/4;0;-pi/2;0;pi/4;0];
+qd_0= [-pi/3;-pi/12;0;0;0;0;0];
+qdd_0 = [pi/3;-pi/6;0;0;0;0;-pi/24];
+
+% clf(101)
+% figure(101)
+% show(robot,q_0)
 
 % create pz trajectories
 joint_axes = [zeros(2, length(q_0)); ones(1, length(q_0))]; % Question: what is this?
@@ -111,14 +115,14 @@ P.traj_type = traj_type;
 
 % compute desired trajectory
 t_steps_dt = 0:jrs_info.dt:1;
-t_steps = 0:0.01:1;
+t_steps = 0:jrs_info.dt:1;
 n_steps = length(t_steps_dt);
 q_des = zeros(length(kvec), length(t_steps));
 q_des_dt = zeros(length(kvec), n_steps);
 qd_des = zeros(length(kvec), n_steps);
 qdd_des = zeros(length(kvec), n_steps);
 
-for i = 1:101
+for i = 1:length(t_steps)
     [q_des(:,i), qd_des(:,i), qdd_des(:,i)] = desired_trajectory(P, q_0, qd_0, qdd_0, t_steps(i), kvec);
 end
 
@@ -293,7 +297,48 @@ end
 
 %% Plotting Friction Cone
 
+plot_idx = plot_idx + 1;
+figure(plot_idx); clf; hold on;
+title('Friction Cone Unsliced Plot')
 
+for i = 1:length(t_traj)
+
+    % plot the overapproximation
+    plot(f_int{i},[1,2])
+
+end
+
+for i = 1:length(t_steps)
+
+    plot(f_nom(1,i),f_nom(2,i),'xk')
+    % need to add plotting of the friction cone at the z-level
+    theta_friction = linspace(0,2*pi,100);
+    r_friction = f_nom(3,i)*u_s;
+    plot(r_friction*cos(theta_friction),r_friction*sin(theta_friction),'-r')
+
+    axis('square')
+    xlabel('x-axis Force (N)')
+    ylabel('y-axis Force (N)')
+
+end
+
+plot_idx = plot_idx + 1;
+figure(plot_idx); clf; hold on;
+title('Friction Cone Unsliced Plot')
+
+%% Plotting Friction Cone and Force PZ in 3D
+
+plot_idx = plot_idx + 1;
+figure(plot_idx); clf; hold on;
+title('Friction Cone Unsliced Plot')
+
+
+for i = 1:length(t_traj)
+
+    % plot the overapproximation
+    plot(f_int{i},[1,2,3])
+
+end
 
 %% Plotting ZMP Diagram
 
@@ -305,7 +350,7 @@ title('ZMP Unsliced Plot')
 
 % plot ZMP PZ overapproximation
 for i = 1:length(ZMP_PZ)
-    s1 = plot(ZMP_PZ{i},[1,2],'Filled',true,'EdgeColor','b','FaceColor','b','FaceAlpha',0.3,'EdgeAlpha',0.3);
+    s1 = plot(ZMP_PZ{i},[1,2],'Filled',true,'EdgeColor','b','FaceColor','b','FaceAlpha',0.1,'EdgeAlpha',0.5);
 end
 
 r=surf_rad;
@@ -318,7 +363,7 @@ tipplot1 = plot(xunit, yunit,'-r');
 xlabel('x position (m)')
 ylabel('y position (m)')
 axis('square')
-% axis equal
+axis equal
 grid on
 
 tipplot2 = plot(ZMP(1,:),ZMP(2,:),'xk');
@@ -331,7 +376,7 @@ title('ZMP Sliced Plot')
 
 % plot ZMP PZ overapproximation
 for i = 1:length(ZMP_PZ_sliced)
-    s2 = plot(ZMP_PZ_sliced{i},[1,2],'Filled',true,'EdgeColor','g','FaceColor','g','FaceAlpha',0.3,'EdgeAlpha',0.3);
+    s2 = plot(ZMP_PZ_sliced{i},[1,2],'Filled',true,'EdgeColor','g','FaceColor','g','FaceAlpha',0.1,'EdgeAlpha',0.5);
 %     p1 = patch([t_traj(i)+jrs_info.dt; t_traj(i)+jrs_info.dt; t_traj(i); t_traj(i)], [ZMP_PZ_sliced{1,i}.sup; ZMP_PZ_sliced{1,i}.inf; ZMP_PZ_sliced{1,i}.inf; ZMP_PZ_sliced{1,i}.sup], 'g');
 %         p1.EdgeColor = pz_err_color;
 %     p1.LineWidth = 0.1;
@@ -350,7 +395,7 @@ tipplot1 = plot(xunit, yunit,'-r');
 xlabel('x position (m)')
 ylabel('y position (m)')
 axis('square')
-% axis equal
+axis equal
 grid on
 
 tipplot2 = plot(ZMP(1,:),ZMP(2,:),'xk');
@@ -373,20 +418,20 @@ if plot_trajectory_1
         % plot pz trajectories
         for i = 1:length(t_traj)
             % plot error polynomial zonotope interval
-%             poly_inf = Q_e{i, 1}{j, 1}.c - sum(abs(Q_e{i, 1}{j, 1}.G)) - sum(abs(Q_e{i, 1}{j, 1}.Grest));
-%             poly_sup = Q_e{i, 1}{j, 1}.c + sum(abs(Q_e{i, 1}{j, 1}.G)) + sum(abs(Q_e{i, 1}{j, 1}.Grest));
-%             p1 = patch([t_traj(i)+jrs_info.dt/2; t_traj(i)+jrs_info.dt/2; t_traj(i) - jrs_info.dt/2; t_traj(i) - jrs_info.dt/2], [poly_sup; poly_inf; poly_inf; poly_sup], 'b');
-%             p1.EdgeColor = pz_err_color;
-%             p1.LineWidth = 0.1;
-%             p1.FaceColor = pz_err_color;
+            poly_inf = Q_e{i, 1}{j, 1}.c - sum(abs(Q_e{i, 1}{j, 1}.G)) - sum(abs(Q_e{i, 1}{j, 1}.Grest));
+            poly_sup = Q_e{i, 1}{j, 1}.c + sum(abs(Q_e{i, 1}{j, 1}.G)) + sum(abs(Q_e{i, 1}{j, 1}.Grest));
+            p1 = patch([t_traj(i)+jrs_info.dt/2; t_traj(i)+jrs_info.dt/2; t_traj(i) - jrs_info.dt/2; t_traj(i) - jrs_info.dt/2], [poly_sup; poly_inf; poly_inf; poly_sup], 'b');
+            p1.EdgeColor = pz_err_color;
+            p1.LineWidth = 0.1;
+            p1.FaceColor = pz_err_color;
 
             % plot unslice polynomial zonotope interval
-%             poly_inf = Q_des{i, 1}{j, 1}.c - sum(abs(Q_des{i, 1}{j, 1}.G)) - sum(abs(Q_des{i, 1}{j, 1}.Grest));
-%             poly_sup = Q_des{i, 1}{j, 1}.c + sum(abs(Q_des{i, 1}{j, 1}.G)) + sum(abs(Q_des{i, 1}{j, 1}.Grest));
-%             p2 = patch([t_traj(i)+jrs_info.dt/2; t_traj(i)+jrs_info.dt/2; t_traj(i) - jrs_info.dt/2; t_traj(i) - jrs_info.dt/2], [poly_sup; poly_inf; poly_inf; poly_sup], 'b');
-%             p2.EdgeColor = slice_step_color;
-%             p2.LineWidth = 0.1;
-%             p2.FaceColor = slice_step_color;
+            poly_inf = Q_des{i, 1}{j, 1}.c - sum(abs(Q_des{i, 1}{j, 1}.G)) - sum(abs(Q_des{i, 1}{j, 1}.Grest));
+            poly_sup = Q_des{i, 1}{j, 1}.c + sum(abs(Q_des{i, 1}{j, 1}.G)) + sum(abs(Q_des{i, 1}{j, 1}.Grest));
+            p2 = patch([t_traj(i)+jrs_info.dt/2; t_traj(i)+jrs_info.dt/2; t_traj(i) - jrs_info.dt/2; t_traj(i) - jrs_info.dt/2], [poly_sup; poly_inf; poly_inf; poly_sup], 'b');
+            p2.EdgeColor = slice_step_color;
+            p2.LineWidth = 0.1;
+            p2.FaceColor = slice_step_color;
 
             % plot unsliced (original + err) polynomial zonotope interval
             poly_inf = Q{i, 1}{j, 1}.c - sum(abs(Q{i, 1}{j, 1}.G)) - sum(abs(Q{i, 1}{j, 1}.Grest));
@@ -397,13 +442,13 @@ if plot_trajectory_1
             p3.FaceColor = slice_step_color;
 
             % plot sliced (original + err) polynomial zonotope interval
-%             poly_slice = getSubset(Q{i, 1}{j, 1}, id_slice(j), kvec(j));
-%             poly_slice_inf = poly_slice.c - sum(abs(poly_slice.G)) - sum(abs(poly_slice.Grest));
-%             poly_slice_sup = poly_slice.c + sum(abs(poly_slice.G)) + sum(abs(poly_slice.Grest));
-%             p4 = patch([t_traj(i)+jrs_info.dt/2; t_traj(i)+jrs_info.dt/2; t_traj(i) - jrs_info.dt/2; t_traj(i) - jrs_info.dt/2], [poly_slice_sup; poly_slice_inf; poly_slice_inf; poly_slice_sup], 'b');
-%             p4.EdgeColor = slice_step_color;
-%             p4.LineWidth = 0.1;
-%             p4.FaceColor = slice_step_color;
+            poly_slice = getSubset(Q{i, 1}{j, 1}, id_slice(j), kvec(j));
+            poly_slice_inf = poly_slice.c - sum(abs(poly_slice.G)) - sum(abs(poly_slice.Grest));
+            poly_slice_sup = poly_slice.c + sum(abs(poly_slice.G)) + sum(abs(poly_slice.Grest));
+            p4 = patch([t_traj(i)+jrs_info.dt/2; t_traj(i)+jrs_info.dt/2; t_traj(i) - jrs_info.dt/2; t_traj(i) - jrs_info.dt/2], [poly_slice_sup; poly_slice_inf; poly_slice_inf; poly_slice_sup], 'b');
+            p4.EdgeColor = slice_step_color;
+            p4.LineWidth = 0.1;
+            p4.FaceColor = slice_step_color;
 
             % capture slice of time
             if i ~= time_to_slice
