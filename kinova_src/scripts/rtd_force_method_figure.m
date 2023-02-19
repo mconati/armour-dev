@@ -2,9 +2,6 @@ clear;
 close all; 
 clc;
 
-%%%%% Are the id's for slicing correct???? %%%%%
-
-
 %% setup robot
 
 % robot_name = 'Kinova_Grasp_URDF.urdf';
@@ -387,10 +384,10 @@ plot3(f_cont(1,:),f_cont(2,:),f_cont(3,:),'-k', 'LineWidth', 3)
 % plot the friction cone
 r = linspace(0,4,10);
 theta = linspace(0,2*pi,50);
-[R,Theta] = meshgrid(r,theta);
-X = R.*cos(Theta);
-Y = R.*sin(Theta);
-Z = u_s.*R; % A.u_s.*R;
+[RR,Theta] = meshgrid(r,theta);
+X = RR.*cos(Theta);
+Y = RR.*sin(Theta);
+Z = u_s.*RR; % A.u_s.*R;
 h1 = surf(X,Y,Z,'EdgeColor','none','FaceColor','r','FaceAlpha','0.05');
 xlabel('x-axis Tangential Force (N)')
 ylabel('y-axis Tangential Force (N)')
@@ -507,7 +504,7 @@ if plot_trajectory_1
             poly_slice = getSubset(Q{i, 1}{j, 1}, id_slice(j), kvec(j));
             poly_slice_inf = poly_slice.c - sum(abs(poly_slice.G)) - sum(abs(poly_slice.Grest));
             poly_slice_sup = poly_slice.c + sum(abs(poly_slice.G)) + sum(abs(poly_slice.Grest));
-            p4 = patch([t_traj(i)+jrs_info.dt/2; t_traj(i)+jrs_info.dt/2; t_traj(i) - jrs_info.dt/2; t_traj(i) - jrs_info.dt/2], [poly_slice_sup; poly_slice_inf; poly_slice_inf; poly_slice_sup], 'g', 'FaceAlpha', 0.2);
+            p4 = patch([t_traj(i)+jrs_info.dt; t_traj(i)+jrs_info.dt; t_traj(i); t_traj(i)], [poly_slice_sup; poly_slice_inf; poly_slice_inf; poly_slice_sup], 'g', 'FaceAlpha', 0.2);
 %             p4.EdgeColor = slice_step_color;
 %             p4.LineWidth = 0.1;
 %             p4.FaceColor = slice_step_color;
