@@ -1,9 +1,23 @@
-clear; close all; clc;
+clear; 
+close all; 
+clc;
 
-%%%%% Are the id's for slicing correct???? %%%%%
+%% To Do
 
+% color consistency between plots
 
-%% setup 2d3link robot
+% attempt to fix forward occupancy
+
+% separation constraint plot (maybe a separate one?)
+
+% animation in 3D of friction cone? either on robot tray or subplot
+
+% try reducing the number of Grest on the friction cone 3D plot to reduce
+% time and resources needed
+
+%% setup robot
+
+% robot_name = 'Kinova_Grasp_URDF.urdf';
 robot_name = 'Kinova_Grasp_Cylinder_Edge.urdf';
 robot = importrobot(robot_name);
 robot.DataFormat = 'col';
@@ -18,7 +32,6 @@ params = load_robot_params(robot, ...
                            'add_uncertainty_to', add_uncertainty_to, ...
                            'links_with_uncertainty', links_with_uncertainty,...
                            'uncertain_mass_range', uncertain_mass_range);
-
 
 % controller info
 LLC_info.ultimate_bound = 0.00191; % 0.00191
@@ -71,9 +84,13 @@ time_to_slice = 6;
 
 %% compute trajectories
 % initial conditions
-q_0 = [0;-pi/2;0;0;0;0;pi/10];
-qd_0= [0;0;0;0;0;0;0];
-qdd_0 = [-pi/24;pi/12;0;0;0;0;-pi/24];
+q_0 = [0;-pi/4;0;-pi/2;0;pi/4;0];
+qd_0= [-pi/3;-pi/12;0;0;0;0;0];
+qdd_0 = [pi/3;-pi/6;0;0;0;0;-pi/24];
+
+% clf(101)
+% figure(101)
+% show(robot,q_0)
 
 % create pz trajectories
 joint_axes = [zeros(2, length(q_0)); ones(1, length(q_0))]; % Question: what is this?
@@ -111,14 +128,14 @@ P.traj_type = traj_type;
 
 % compute desired trajectory
 t_steps_dt = 0:jrs_info.dt:1;
-t_steps = 0:0.01:1;
+t_steps = 0:jrs_info.dt:1;
 n_steps = length(t_steps_dt);
 q_des = zeros(length(kvec), length(t_steps));
 q_des_dt = zeros(length(kvec), n_steps);
 qd_des = zeros(length(kvec), n_steps);
 qdd_des = zeros(length(kvec), n_steps);
 
-for i = 1:101
+for i = 1:length(t_steps)
     [q_des(:,i), qd_des(:,i), qdd_des(:,i)] = desired_trajectory(P, q_0, qd_0, qdd_0, t_steps(i), kvec);
 end
 
@@ -291,9 +308,109 @@ if plot_force_trajectory
 
 end
 
-%% Plotting Friction Cone
+%% Plotting Unsliced 2D Friction Cone
+
+plot_idx = plot_idx + 1;
+figure(plot_idx); clf; hold on;
+title('Friction Cone Unsliced Plot')
+
+for i = 1:length(t_traj)
+
+    % plot the overapproximation
+    plot(f_int{i},[1,2])
+
+end
+
+for i = 1:length(t_steps)
+
+    plot(f_nom(1,i),f_nom(2,i),'xk')
+    % need to add plotting of the friction cone at the z-level
+    theta_friction = linspace(0,2*pi,100);
+    r_friction = f_nom(3,i)*u_s;
+    plot(r_friction*cos(theta_friction),r_friction*sin(theta_friction),'-r')
+
+    axis('square')
+    xlabel('x-axis Force (N)')
+    ylabel('y-axis Force (N)')
+
+end
+
+%% Plotting Sliced 2D Friction Cone
+
+plot_idx = plot_idx + 1;
+figure(plot_idx); clf; hold on;
+title('Friction Cone Sliced Plot')
+
+for i = 1:length(t_traj)
+
+    f_sliced{i} = getSubset(f_int{i},f_int{i}.id,kvec(f_int{i}.id));
+    % plot the overapproximation
+    plot(interval(f_sliced{i}),[1,2],'g')
+
+end
+
+for i = 1:length(t_steps)
+
+    plot(f_nom(1,i),f_nom(2,i),'xk')
+    % need to add plotting of the friction cone at the z-level
+    theta_friction = linspace(0,2*pi,100);
+    r_friction = f_nom(3,i)*u_s;
+    plot(r_friction*cos(theta_friction),r_friction*sin(theta_friction),'-r')
+
+    axis('square')
+    xlabel('x-axis Force (N)')
+    ylabel('y-axis Force (N)')
+
+end
 
 
+%% Plotting Friction Cone and Force PZ in 3D
+
+plot_idx = plot_idx + 1;
+figure(plot_idx); clf; hold on;
+title('Friction Cone Unsliced Plot')
+
+% time
+t_cont = linspace(0,1); % 1/40 for a single iteration
+% desired trajectory
+for i = 1:length(t_cont)
+    [q_cont_des(:,i), qd_cont_des(:,i), qdd_cont_des(:,i)] = desired_trajectory(P, q_0, qd_0, qdd_0, t_cont(i), kvec);
+    % rnea
+    [u_temp f_temp n_temp] = rnea(q_cont_des(:,i), qd_cont_des(:,i), qd_cont_des(:,i), qdd_cont_des(:,i), true, params.nominal);
+%     tau_int{i} = tau_temp{10,1};
+    f_cont(:,i) = f_temp(:,10);
+    n_cont(:,i) = n_temp(:,10);
+end
+
+for i = 1:1:length(t_traj)
+
+    % plot the overapproximation
+    fc1 = plot(f_int{i},[1,2,3],'Splits',1)
+%     fc1.FaceAlpha = 0.1
+    % plot the nominal value
+    plot3(f_nom(1,i),f_nom(2,i),f_nom(3,i),'xk')
+end
+
+% plot the nominal trajectory
+plot3(f_cont(1,:),f_cont(2,:),f_cont(3,:),'-k', 'LineWidth', 3)
+
+% plot the friction cone
+r = linspace(0,4,10);
+theta = linspace(0,2*pi,50);
+[RR,Theta] = meshgrid(r,theta);
+X = RR.*cos(Theta);
+Y = RR.*sin(Theta);
+Z = u_s.*RR; % A.u_s.*R;
+h1 = surf(X,Y,Z,'EdgeColor','none','FaceColor','r','FaceAlpha','0.05');
+xlabel('x-axis Tangential Force (N)')
+ylabel('y-axis Tangential Force (N)')
+zlabel('z-axis Normal Force (N)')
+axis('square')
+grid on
+view(0,0)
+
+% plotting the friction cone slices
+% plot full red rings at proper z-slices of the friction cone
 
 %% Plotting ZMP Diagram
 
@@ -305,7 +422,7 @@ title('ZMP Unsliced Plot')
 
 % plot ZMP PZ overapproximation
 for i = 1:length(ZMP_PZ)
-    s1 = plot(ZMP_PZ{i},[1,2],'Filled',true,'EdgeColor','b','FaceColor','b','FaceAlpha',0.3,'EdgeAlpha',0.3);
+    s1 = plot(ZMP_PZ{i},[1,2],'Filled',true,'EdgeColor','b','FaceColor','b','FaceAlpha',0.1,'EdgeAlpha',0.5);
 end
 
 r=surf_rad;
@@ -318,7 +435,7 @@ tipplot1 = plot(xunit, yunit,'-r');
 xlabel('x position (m)')
 ylabel('y position (m)')
 axis('square')
-% axis equal
+axis equal
 grid on
 
 tipplot2 = plot(ZMP(1,:),ZMP(2,:),'xk');
@@ -331,7 +448,7 @@ title('ZMP Sliced Plot')
 
 % plot ZMP PZ overapproximation
 for i = 1:length(ZMP_PZ_sliced)
-    s2 = plot(ZMP_PZ_sliced{i},[1,2],'Filled',true,'EdgeColor','g','FaceColor','g','FaceAlpha',0.3,'EdgeAlpha',0.3);
+    s2 = plot(ZMP_PZ_sliced{i},[1,2],'Filled',true,'EdgeColor','g','FaceColor','g','FaceAlpha',0.1,'EdgeAlpha',0.5);
 %     p1 = patch([t_traj(i)+jrs_info.dt; t_traj(i)+jrs_info.dt; t_traj(i); t_traj(i)], [ZMP_PZ_sliced{1,i}.sup; ZMP_PZ_sliced{1,i}.inf; ZMP_PZ_sliced{1,i}.inf; ZMP_PZ_sliced{1,i}.sup], 'g');
 %         p1.EdgeColor = pz_err_color;
 %     p1.LineWidth = 0.1;
@@ -350,7 +467,7 @@ tipplot1 = plot(xunit, yunit,'-r');
 xlabel('x position (m)')
 ylabel('y position (m)')
 axis('square')
-% axis equal
+axis equal
 grid on
 
 tipplot2 = plot(ZMP(1,:),ZMP(2,:),'xk');
@@ -391,16 +508,16 @@ if plot_trajectory_1
             % plot unsliced (original + err) polynomial zonotope interval
             poly_inf = Q{i, 1}{j, 1}.c - sum(abs(Q{i, 1}{j, 1}.G)) - sum(abs(Q{i, 1}{j, 1}.Grest));
             poly_sup = Q{i, 1}{j, 1}.c + sum(abs(Q{i, 1}{j, 1}.G)) + sum(abs(Q{i, 1}{j, 1}.Grest));
-            p3 = patch([t_traj(i)+jrs_info.dt/2; t_traj(i)+jrs_info.dt/2; t_traj(i) - jrs_info.dt/2; t_traj(i) - jrs_info.dt/2], [poly_sup; poly_inf; poly_inf; poly_sup], 'b');
-            p3.EdgeColor = slice_step_color;
-            p3.LineWidth = 0.1;
-            p3.FaceColor = slice_step_color;
+            p3 = patch([t_traj(i)+jrs_info.dt; t_traj(i)+jrs_info.dt; t_traj(i); t_traj(i)], [poly_sup; poly_inf; poly_inf; poly_sup], 'b', 'FaceAlpha', 0.2);
+%             p3.EdgeColor = slice_step_color;
+%             p3.LineWidth = 0.1;
+%             p3.FaceColor = slice_step_color;
 
             % plot sliced (original + err) polynomial zonotope interval
-%             poly_slice = getSubset(Q{i, 1}{j, 1}, id_slice(j), kvec(j));
-%             poly_slice_inf = poly_slice.c - sum(abs(poly_slice.G)) - sum(abs(poly_slice.Grest));
-%             poly_slice_sup = poly_slice.c + sum(abs(poly_slice.G)) + sum(abs(poly_slice.Grest));
-%             p4 = patch([t_traj(i)+jrs_info.dt/2; t_traj(i)+jrs_info.dt/2; t_traj(i) - jrs_info.dt/2; t_traj(i) - jrs_info.dt/2], [poly_slice_sup; poly_slice_inf; poly_slice_inf; poly_slice_sup], 'b');
+            poly_slice = getSubset(Q{i, 1}{j, 1}, id_slice(j), kvec(j));
+            poly_slice_inf = poly_slice.c - sum(abs(poly_slice.G)) - sum(abs(poly_slice.Grest));
+            poly_slice_sup = poly_slice.c + sum(abs(poly_slice.G)) + sum(abs(poly_slice.Grest));
+            p4 = patch([t_traj(i)+jrs_info.dt; t_traj(i)+jrs_info.dt; t_traj(i); t_traj(i)], [poly_slice_sup; poly_slice_inf; poly_slice_inf; poly_slice_sup], 'g', 'FaceAlpha', 0.2);
 %             p4.EdgeColor = slice_step_color;
 %             p4.LineWidth = 0.1;
 %             p4.FaceColor = slice_step_color;
@@ -429,10 +546,11 @@ if plot_trajectory_1
             axis tight;
             hold off;
         end
-                % plot scalar trajectories
-        plot(t_steps, q_des(j,:));
-        plot(t_steps, q_max(j,:), 'Color', 'r');
-        plot(t_steps, q_min(j,:), 'Color', 'r');
+        
+        % plot scalar trajectories
+        plot(t_steps, q_des(j,:), '-k');
+        plot(t_steps, q_max(j,:), '--r');
+        plot(t_steps, q_min(j,:), '--r');
 
         if save_plot
             filename = sprintf('/Users/kronos/Research/armour/traj_error_%i.eps',j);
@@ -443,238 +561,238 @@ if plot_trajectory_1
 end
 
 %% plot trajectory 2
-if plot_trajectory_2
-    for j = 1:length(kvec)
-        plot_idx = plot_idx + 1;
-        figure(plot_idx); clf; hold on;
-
-        % plot pz trajectories
-        for i = 1:length(t_traj)
-            % plot error polynomial zonotope interval
-            poly_inf = Q_e{i, 1}{j, 1}.c - sum(abs(Q_e{i, 1}{j, 1}.G)) - sum(abs(Q_e{i, 1}{j, 1}.Grest));
-            poly_sup = Q_e{i, 1}{j, 1}.c + sum(abs(Q_e{i, 1}{j, 1}.G)) + sum(abs(Q_e{i, 1}{j, 1}.Grest));
-            p1 = patch([t_traj(i)+jrs_info.dt/2; t_traj(i)+jrs_info.dt/2; t_traj(i) - jrs_info.dt/2; t_traj(i) - jrs_info.dt/2], [poly_sup; poly_inf; poly_inf; poly_sup], 'b');
-            p1.EdgeColor = slice_step_color;
-            p1.LineWidth = 0.1;
-            p1.FaceColor = slice_step_color;
-
-            % plot unslice polynomial zonotope interval
-            poly_inf = Q_des{i, 1}{j, 1}.c - sum(abs(Q_des{i, 1}{j, 1}.G)) - sum(abs(Q_des{i, 1}{j, 1}.Grest));
-            poly_sup = Q_des{i, 1}{j, 1}.c + sum(abs(Q_des{i, 1}{j, 1}.G)) + sum(abs(Q_des{i, 1}{j, 1}.Grest));
-            p2 = patch([t_traj(i)+jrs_info.dt/2; t_traj(i)+jrs_info.dt/2; t_traj(i) - jrs_info.dt/2; t_traj(i) - jrs_info.dt/2], [poly_sup; poly_inf; poly_inf; poly_sup], 'b');
-            p2.EdgeColor = unsliced_color;
-            p2.LineWidth = 0.1;
-            p2.FaceColor = unsliced_color;
-
-            % plot unsliced (original + err) polynomial zonotope interval
-            poly_inf = Q{i, 1}{j, 1}.c - sum(abs(Q{i, 1}{j, 1}.G)) - sum(abs(Q{i, 1}{j, 1}.Grest));
-            poly_sup = Q{i, 1}{j, 1}.c + sum(abs(Q{i, 1}{j, 1}.G)) + sum(abs(Q{i, 1}{j, 1}.Grest));
-            p3 = patch([t_traj(i)+jrs_info.dt/2; t_traj(i)+jrs_info.dt/2; t_traj(i) - jrs_info.dt/2; t_traj(i) - jrs_info.dt/2], [poly_sup; poly_inf; poly_inf; poly_sup], 'b');
-            p3.EdgeColor = slice_step_color;
-            p3.LineWidth = 0.1;
-            p3.FaceColor = slice_step_color;
-
-            % plot sliced (original + err) polynomial zonotope interval
-            poly_slice = getSubset(Q{i, 1}{j, 1}, id_slice(j), kvec(j));
-            poly_slice_inf = poly_slice.c - sum(abs(poly_slice.G)) - sum(abs(poly_slice.Grest));
-            poly_slice_sup = poly_slice.c + sum(abs(poly_slice.G)) + sum(abs(poly_slice.Grest));
-            p4 = patch([t_traj(i)+jrs_info.dt/2; t_traj(i)+jrs_info.dt/2; t_traj(i) - jrs_info.dt/2; t_traj(i) - jrs_info.dt/2], [poly_slice_sup; poly_slice_inf; poly_slice_inf; poly_slice_sup], 'b');
-            p4.EdgeColor = slice_step_color;
-            p4.LineWidth = 0.1;
-            p4.FaceColor = slice_step_color;
-
-            % capture slice of time
-            if i ~= time_to_slice
-                p2.FaceAlpha = 0.2;
-            end
-
-        end
-
-        axis tight;
-        if plot_pz_time
-            xl = xlim;
-            yl = ylim-0.02;
-            for i = 1:length(t_traj)
-                
-                poly_inf = yl(1)*T{end, 1}.c - sum(abs(T{end, 1}.G)) - sum(abs(T{end, 1}.Grest));
-                poly_sup = yl(1)*T{end, 1}.c + sum(abs(T{end, 1}.G)) + sum(abs(T{end, 1}.Grest));
-                p0 = patch([t_traj(i)+jrs_info.dt/2; t_traj(i)+jrs_info.dt/2; t_traj(i) - jrs_info.dt/2; t_traj(i) - jrs_info.dt/2], [poly_sup; poly_inf; poly_inf; poly_sup], 'b');
-                p0.EdgeColor = time_color;
-                p0.LineWidth = 0.1;
-                p0.FaceColor = time_color;
-            end
-        
-            axis tight;
-            hold off;
-        end
-                % plot scalar trajectories
-        plot(t_steps, q_des(j,:));
-        plot(t_steps, q_max(j,:), 'Color', 'r');
-        plot(t_steps, q_min(j,:), 'Color', 'r');
-
-        if save_plot
-            filename = sprintf('/Users/kronos/Research/armour/traj_unsliced_%i.eps',j);
-    
-            exportgraphics(gcf,filename,'ContentType','vector','BackgroundColor','none');
-        end
-    end
-end
-
-%% plot trajector 3
-if plot_trajectory_3
-    for j = 1:length(kvec)
-        plot_idx = plot_idx + 1;
-        figure(plot_idx); clf; hold on;
-
-        % plot pz trajectories
-        for i = 1:length(t_traj)
-            % plot error polynomial zonotope interval
-            poly_inf = Q_e{i, 1}{j, 1}.c - sum(abs(Q_e{i, 1}{j, 1}.G)) - sum(abs(Q_e{i, 1}{j, 1}.Grest));
-            poly_sup = Q_e{i, 1}{j, 1}.c + sum(abs(Q_e{i, 1}{j, 1}.G)) + sum(abs(Q_e{i, 1}{j, 1}.Grest));
-            p1 = patch([t_traj(i)+jrs_info.dt/2; t_traj(i)+jrs_info.dt/2; t_traj(i) - jrs_info.dt/2; t_traj(i) - jrs_info.dt/2], [poly_sup; poly_inf; poly_inf; poly_sup], 'b');
-            p1.EdgeColor = slice_step_color;
-            p1.LineWidth = 0.1;
-            p1.FaceColor = slice_step_color;
-
-            % plot unslice polynomial zonotope interval
-            poly_inf = Q_des{i, 1}{j, 1}.c - sum(abs(Q_des{i, 1}{j, 1}.G)) - sum(abs(Q_des{i, 1}{j, 1}.Grest));
-            poly_sup = Q_des{i, 1}{j, 1}.c + sum(abs(Q_des{i, 1}{j, 1}.G)) + sum(abs(Q_des{i, 1}{j, 1}.Grest));
-            p2 = patch([t_traj(i)+jrs_info.dt/2; t_traj(i)+jrs_info.dt/2; t_traj(i) - jrs_info.dt/2; t_traj(i) - jrs_info.dt/2], [poly_sup; poly_inf; poly_inf; poly_sup], 'b');
-            p2.EdgeColor = slice_step_color;
-            p2.LineWidth = 0.1;
-            p2.FaceColor = slice_step_color;
-
-            % plot unsliced (original + err) polynomial zonotope interval
-            poly_inf = Q{i, 1}{j, 1}.c - sum(abs(Q{i, 1}{j, 1}.G)) - sum(abs(Q{i, 1}{j, 1}.Grest));
-            poly_sup = Q{i, 1}{j, 1}.c + sum(abs(Q{i, 1}{j, 1}.G)) + sum(abs(Q{i, 1}{j, 1}.Grest));
-            p3 = patch([t_traj(i)+jrs_info.dt/2; t_traj(i)+jrs_info.dt/2; t_traj(i) - jrs_info.dt/2; t_traj(i) - jrs_info.dt/2], [poly_sup; poly_inf; poly_inf; poly_sup], 'b');
-            p3.EdgeColor = unsliced_w_err_color;
-            p3.LineWidth = 0.1;
-            p3.FaceColor = unsliced_w_err_color;
-
-            % plot sliced (original + err) polynomial zonotope interval
-            poly_slice = getSubset(Q{i, 1}{j, 1}, id_slice(j), kvec(j));
-            poly_slice_inf = poly_slice.c - sum(abs(poly_slice.G)) - sum(abs(poly_slice.Grest));
-            poly_slice_sup = poly_slice.c + sum(abs(poly_slice.G)) + sum(abs(poly_slice.Grest));
-            p4 = patch([t_traj(i)+jrs_info.dt/2; t_traj(i)+jrs_info.dt/2; t_traj(i) - jrs_info.dt/2; t_traj(i) - jrs_info.dt/2], [poly_slice_sup; poly_slice_inf; poly_slice_inf; poly_slice_sup], 'b');
-            p4.EdgeColor = slice_step_color;
-            p4.LineWidth = 0.1;
-            p4.FaceColor = slice_step_color;
-
-            % capture slice of time
-            if i ~= time_to_slice
-                p3.FaceAlpha = 0.2;
-            end
-
-        end
-
-        axis tight;
-        if plot_pz_time
-            xl = xlim;
-            yl = ylim-0.02;
-            for i = 1:length(t_traj)
-                
-                poly_inf = yl(1)*T{end, 1}.c - sum(abs(T{end, 1}.G)) - sum(abs(T{end, 1}.Grest));
-                poly_sup = yl(1)*T{end, 1}.c + sum(abs(T{end, 1}.G)) + sum(abs(T{end, 1}.Grest));
-                p0 = patch([t_traj(i)+jrs_info.dt/2; t_traj(i)+jrs_info.dt/2; t_traj(i) - jrs_info.dt/2; t_traj(i) - jrs_info.dt/2], [poly_sup; poly_inf; poly_inf; poly_sup], 'b');
-                p0.EdgeColor = time_color;
-                p0.LineWidth = 0.1;
-                p0.FaceColor = time_color;
-            end
-        
-            axis tight;
-            hold off;
-        end
-                % plot scalar trajectories
-        plot(t_steps, q_des(j,:));
-        plot(t_steps, q_max(j,:), 'Color', 'r');
-        plot(t_steps, q_min(j,:), 'Color', 'r');
-
-        if save_plot
-            filename = sprintf('/Users/kronos/Research/armour/traj_total_error_%i.eps',j);
-    
-            exportgraphics(gcf,filename,'ContentType','vector','BackgroundColor','none');
-        end
-    end
-end
-
-%% plot trajector 4
-if plot_trajectory_4
-    for j = 1:length(kvec)
-        plot_idx = plot_idx + 1;
-        figure(plot_idx); clf; hold on;
-
-        % plot pz trajectories
-        for i = 1:length(t_traj)
-            % plot error polynomial zonotope interval
-            poly_inf = Q_e{i, 1}{j, 1}.c - sum(abs(Q_e{i, 1}{j, 1}.G)) - sum(abs(Q_e{i, 1}{j, 1}.Grest));
-            poly_sup = Q_e{i, 1}{j, 1}.c + sum(abs(Q_e{i, 1}{j, 1}.G)) + sum(abs(Q_e{i, 1}{j, 1}.Grest));
-            p1 = patch([t_traj(i)+jrs_info.dt/2; t_traj(i)+jrs_info.dt/2; t_traj(i) - jrs_info.dt/2; t_traj(i) - jrs_info.dt/2], [poly_sup; poly_inf; poly_inf; poly_sup], 'b');
-            p1.EdgeColor = slice_step_color;
-            p1.LineWidth = 0.1;
-            p1.FaceColor = slice_step_color;
-
-            % plot unslice polynomial zonotope interval
-            poly_inf = Q_des{i, 1}{j, 1}.c - sum(abs(Q_des{i, 1}{j, 1}.G)) - sum(abs(Q_des{i, 1}{j, 1}.Grest));
-            poly_sup = Q_des{i, 1}{j, 1}.c + sum(abs(Q_des{i, 1}{j, 1}.G)) + sum(abs(Q_des{i, 1}{j, 1}.Grest));
-            p2 = patch([t_traj(i)+jrs_info.dt/2; t_traj(i)+jrs_info.dt/2; t_traj(i) - jrs_info.dt/2; t_traj(i) - jrs_info.dt/2], [poly_sup; poly_inf; poly_inf; poly_sup], 'b');
-            p2.EdgeColor = slice_step_color;
-            p2.LineWidth = 0.1;
-            p2.FaceColor = slice_step_color;
-
-            % plot unsliced (original + err) polynomial zonotope interval
-            poly_inf = Q{i, 1}{j, 1}.c - sum(abs(Q{i, 1}{j, 1}.G)) - sum(abs(Q{i, 1}{j, 1}.Grest));
-            poly_sup = Q{i, 1}{j, 1}.c + sum(abs(Q{i, 1}{j, 1}.G)) + sum(abs(Q{i, 1}{j, 1}.Grest));
-            p3 = patch([t_traj(i)+jrs_info.dt/2; t_traj(i)+jrs_info.dt/2; t_traj(i) - jrs_info.dt/2; t_traj(i) - jrs_info.dt/2], [poly_sup; poly_inf; poly_inf; poly_sup], 'b');
-            p2.EdgeColor = slice_step_color;
-            p3.LineWidth = 0.1;
-            p3.FaceColor = slice_step_color;
-
-            % plot sliced (original + err) polynomial zonotope interval
-            poly_slice = getSubset(Q{i, 1}{j, 1}, id_slice(j), kvec(j));
-            poly_slice_inf = poly_slice.c - sum(abs(poly_slice.G)) - sum(abs(poly_slice.Grest));
-            poly_slice_sup = poly_slice.c + sum(abs(poly_slice.G)) + sum(abs(poly_slice.Grest));
-            p4 = patch([t_traj(i)+jrs_info.dt/2; t_traj(i)+jrs_info.dt/2; t_traj(i) - jrs_info.dt/2; t_traj(i) - jrs_info.dt/2], [poly_slice_sup; poly_slice_inf; poly_slice_inf; poly_slice_sup], 'b');
-            p4.EdgeColor = sliced_color;
-            p4.LineWidth = 0.1;
-            p4.FaceColor = sliced_color;
-
-            % capture slice of time
-            if i ~= time_to_slice
-                p4.FaceAlpha = 0.2;
-            end
-
-        end
-
-        axis tight;
-        if plot_pz_time
-            xl = xlim;
-            yl = ylim-0.02;
-            for i = 1:length(t_traj)
-                
-                poly_inf = yl(1)*T{end, 1}.c - sum(abs(T{end, 1}.G)) - sum(abs(T{end, 1}.Grest));
-                poly_sup = yl(1)*T{end, 1}.c + sum(abs(T{end, 1}.G)) + sum(abs(T{end, 1}.Grest));
-                p0 = patch([t_traj(i)+jrs_info.dt/2; t_traj(i)+jrs_info.dt/2; t_traj(i) - jrs_info.dt/2; t_traj(i) - jrs_info.dt/2], [poly_sup; poly_inf; poly_inf; poly_sup], 'b');
-                p0.EdgeColor = time_color;
-                p0.LineWidth = 0.1;
-                p0.FaceColor = time_color;
-            end
-        
-            axis tight;
-            hold off;
-        end
-                % plot scalar trajectories
-        plot(t_steps, q_des(j,:));
-        plot(t_steps, q_max(j,:), 'Color', 'r');
-        plot(t_steps, q_min(j,:), 'Color', 'r');
-
-        if save_plot
-            filename = sprintf('/Users/kronos/Research/armour/traj_slice_%i.eps',j);
-    
-            exportgraphics(gcf,filename,'ContentType','vector','BackgroundColor','none');
-        end
-    end
-end
+% if plot_trajectory_2
+%     for j = 1:length(kvec)
+%         plot_idx = plot_idx + 1;
+%         figure(plot_idx); clf; hold on;
+% 
+%         % plot pz trajectories
+%         for i = 1:length(t_traj)
+%             % plot error polynomial zonotope interval
+%             poly_inf = Q_e{i, 1}{j, 1}.c - sum(abs(Q_e{i, 1}{j, 1}.G)) - sum(abs(Q_e{i, 1}{j, 1}.Grest));
+%             poly_sup = Q_e{i, 1}{j, 1}.c + sum(abs(Q_e{i, 1}{j, 1}.G)) + sum(abs(Q_e{i, 1}{j, 1}.Grest));
+%             p1 = patch([t_traj(i)+jrs_info.dt/2; t_traj(i)+jrs_info.dt/2; t_traj(i) - jrs_info.dt/2; t_traj(i) - jrs_info.dt/2], [poly_sup; poly_inf; poly_inf; poly_sup], 'b');
+%             p1.EdgeColor = slice_step_color;
+%             p1.LineWidth = 0.1;
+%             p1.FaceColor = slice_step_color;
+% 
+%             % plot unslice polynomial zonotope interval
+%             poly_inf = Q_des{i, 1}{j, 1}.c - sum(abs(Q_des{i, 1}{j, 1}.G)) - sum(abs(Q_des{i, 1}{j, 1}.Grest));
+%             poly_sup = Q_des{i, 1}{j, 1}.c + sum(abs(Q_des{i, 1}{j, 1}.G)) + sum(abs(Q_des{i, 1}{j, 1}.Grest));
+%             p2 = patch([t_traj(i)+jrs_info.dt/2; t_traj(i)+jrs_info.dt/2; t_traj(i) - jrs_info.dt/2; t_traj(i) - jrs_info.dt/2], [poly_sup; poly_inf; poly_inf; poly_sup], 'b');
+%             p2.EdgeColor = unsliced_color;
+%             p2.LineWidth = 0.1;
+%             p2.FaceColor = unsliced_color;
+% 
+%             % plot unsliced (original + err) polynomial zonotope interval
+%             poly_inf = Q{i, 1}{j, 1}.c - sum(abs(Q{i, 1}{j, 1}.G)) - sum(abs(Q{i, 1}{j, 1}.Grest));
+%             poly_sup = Q{i, 1}{j, 1}.c + sum(abs(Q{i, 1}{j, 1}.G)) + sum(abs(Q{i, 1}{j, 1}.Grest));
+%             p3 = patch([t_traj(i)+jrs_info.dt/2; t_traj(i)+jrs_info.dt/2; t_traj(i) - jrs_info.dt/2; t_traj(i) - jrs_info.dt/2], [poly_sup; poly_inf; poly_inf; poly_sup], 'b');
+%             p3.EdgeColor = slice_step_color;
+%             p3.LineWidth = 0.1;
+%             p3.FaceColor = slice_step_color;
+% 
+%             % plot sliced (original + err) polynomial zonotope interval
+%             poly_slice = getSubset(Q{i, 1}{j, 1}, id_slice(j), kvec(j));
+%             poly_slice_inf = poly_slice.c - sum(abs(poly_slice.G)) - sum(abs(poly_slice.Grest));
+%             poly_slice_sup = poly_slice.c + sum(abs(poly_slice.G)) + sum(abs(poly_slice.Grest));
+%             p4 = patch([t_traj(i)+jrs_info.dt/2; t_traj(i)+jrs_info.dt/2; t_traj(i) - jrs_info.dt/2; t_traj(i) - jrs_info.dt/2], [poly_slice_sup; poly_slice_inf; poly_slice_inf; poly_slice_sup], 'b');
+%             p4.EdgeColor = slice_step_color;
+%             p4.LineWidth = 0.1;
+%             p4.FaceColor = slice_step_color;
+% 
+%             % capture slice of time
+%             if i ~= time_to_slice
+%                 p2.FaceAlpha = 0.2;
+%             end
+% 
+%         end
+% 
+%         axis tight;
+%         if plot_pz_time
+%             xl = xlim;
+%             yl = ylim-0.02;
+%             for i = 1:length(t_traj)
+%                 
+%                 poly_inf = yl(1)*T{end, 1}.c - sum(abs(T{end, 1}.G)) - sum(abs(T{end, 1}.Grest));
+%                 poly_sup = yl(1)*T{end, 1}.c + sum(abs(T{end, 1}.G)) + sum(abs(T{end, 1}.Grest));
+%                 p0 = patch([t_traj(i)+jrs_info.dt/2; t_traj(i)+jrs_info.dt/2; t_traj(i) - jrs_info.dt/2; t_traj(i) - jrs_info.dt/2], [poly_sup; poly_inf; poly_inf; poly_sup], 'b');
+%                 p0.EdgeColor = time_color;
+%                 p0.LineWidth = 0.1;
+%                 p0.FaceColor = time_color;
+%             end
+%         
+%             axis tight;
+%             hold off;
+%         end
+%                 % plot scalar trajectories
+%         plot(t_steps, q_des(j,:));
+%         plot(t_steps, q_max(j,:), 'Color', 'r');
+%         plot(t_steps, q_min(j,:), 'Color', 'r');
+% 
+%         if save_plot
+%             filename = sprintf('/Users/kronos/Research/armour/traj_unsliced_%i.eps',j);
+%     
+%             exportgraphics(gcf,filename,'ContentType','vector','BackgroundColor','none');
+%         end
+%     end
+% end
+% 
+% %% plot trajector 3
+% if plot_trajectory_3
+%     for j = 1:length(kvec)
+%         plot_idx = plot_idx + 1;
+%         figure(plot_idx); clf; hold on;
+% 
+%         % plot pz trajectories
+%         for i = 1:length(t_traj)
+%             % plot error polynomial zonotope interval
+%             poly_inf = Q_e{i, 1}{j, 1}.c - sum(abs(Q_e{i, 1}{j, 1}.G)) - sum(abs(Q_e{i, 1}{j, 1}.Grest));
+%             poly_sup = Q_e{i, 1}{j, 1}.c + sum(abs(Q_e{i, 1}{j, 1}.G)) + sum(abs(Q_e{i, 1}{j, 1}.Grest));
+%             p1 = patch([t_traj(i)+jrs_info.dt/2; t_traj(i)+jrs_info.dt/2; t_traj(i) - jrs_info.dt/2; t_traj(i) - jrs_info.dt/2], [poly_sup; poly_inf; poly_inf; poly_sup], 'b');
+%             p1.EdgeColor = slice_step_color;
+%             p1.LineWidth = 0.1;
+%             p1.FaceColor = slice_step_color;
+% 
+%             % plot unslice polynomial zonotope interval
+%             poly_inf = Q_des{i, 1}{j, 1}.c - sum(abs(Q_des{i, 1}{j, 1}.G)) - sum(abs(Q_des{i, 1}{j, 1}.Grest));
+%             poly_sup = Q_des{i, 1}{j, 1}.c + sum(abs(Q_des{i, 1}{j, 1}.G)) + sum(abs(Q_des{i, 1}{j, 1}.Grest));
+%             p2 = patch([t_traj(i)+jrs_info.dt/2; t_traj(i)+jrs_info.dt/2; t_traj(i) - jrs_info.dt/2; t_traj(i) - jrs_info.dt/2], [poly_sup; poly_inf; poly_inf; poly_sup], 'b');
+%             p2.EdgeColor = slice_step_color;
+%             p2.LineWidth = 0.1;
+%             p2.FaceColor = slice_step_color;
+% 
+%             % plot unsliced (original + err) polynomial zonotope interval
+%             poly_inf = Q{i, 1}{j, 1}.c - sum(abs(Q{i, 1}{j, 1}.G)) - sum(abs(Q{i, 1}{j, 1}.Grest));
+%             poly_sup = Q{i, 1}{j, 1}.c + sum(abs(Q{i, 1}{j, 1}.G)) + sum(abs(Q{i, 1}{j, 1}.Grest));
+%             p3 = patch([t_traj(i)+jrs_info.dt/2; t_traj(i)+jrs_info.dt/2; t_traj(i) - jrs_info.dt/2; t_traj(i) - jrs_info.dt/2], [poly_sup; poly_inf; poly_inf; poly_sup], 'b');
+%             p3.EdgeColor = unsliced_w_err_color;
+%             p3.LineWidth = 0.1;
+%             p3.FaceColor = unsliced_w_err_color;
+% 
+%             % plot sliced (original + err) polynomial zonotope interval
+%             poly_slice = getSubset(Q{i, 1}{j, 1}, id_slice(j), kvec(j));
+%             poly_slice_inf = poly_slice.c - sum(abs(poly_slice.G)) - sum(abs(poly_slice.Grest));
+%             poly_slice_sup = poly_slice.c + sum(abs(poly_slice.G)) + sum(abs(poly_slice.Grest));
+%             p4 = patch([t_traj(i)+jrs_info.dt/2; t_traj(i)+jrs_info.dt/2; t_traj(i) - jrs_info.dt/2; t_traj(i) - jrs_info.dt/2], [poly_slice_sup; poly_slice_inf; poly_slice_inf; poly_slice_sup], 'b');
+%             p4.EdgeColor = slice_step_color;
+%             p4.LineWidth = 0.1;
+%             p4.FaceColor = slice_step_color;
+% 
+%             % capture slice of time
+%             if i ~= time_to_slice
+%                 p3.FaceAlpha = 0.2;
+%             end
+% 
+%         end
+% 
+%         axis tight;
+%         if plot_pz_time
+%             xl = xlim;
+%             yl = ylim-0.02;
+%             for i = 1:length(t_traj)
+%                 
+%                 poly_inf = yl(1)*T{end, 1}.c - sum(abs(T{end, 1}.G)) - sum(abs(T{end, 1}.Grest));
+%                 poly_sup = yl(1)*T{end, 1}.c + sum(abs(T{end, 1}.G)) + sum(abs(T{end, 1}.Grest));
+%                 p0 = patch([t_traj(i)+jrs_info.dt/2; t_traj(i)+jrs_info.dt/2; t_traj(i) - jrs_info.dt/2; t_traj(i) - jrs_info.dt/2], [poly_sup; poly_inf; poly_inf; poly_sup], 'b');
+%                 p0.EdgeColor = time_color;
+%                 p0.LineWidth = 0.1;
+%                 p0.FaceColor = time_color;
+%             end
+%         
+%             axis tight;
+%             hold off;
+%         end
+%                 % plot scalar trajectories
+%         plot(t_steps, q_des(j,:));
+%         plot(t_steps, q_max(j,:), 'Color', 'r');
+%         plot(t_steps, q_min(j,:), 'Color', 'r');
+% 
+%         if save_plot
+%             filename = sprintf('/Users/kronos/Research/armour/traj_total_error_%i.eps',j);
+%     
+%             exportgraphics(gcf,filename,'ContentType','vector','BackgroundColor','none');
+%         end
+%     end
+% end
+% 
+% %% plot trajector 4
+% if plot_trajectory_4
+%     for j = 1:length(kvec)
+%         plot_idx = plot_idx + 1;
+%         figure(plot_idx); clf; hold on;
+% 
+%         % plot pz trajectories
+%         for i = 1:length(t_traj)
+%             % plot error polynomial zonotope interval
+%             poly_inf = Q_e{i, 1}{j, 1}.c - sum(abs(Q_e{i, 1}{j, 1}.G)) - sum(abs(Q_e{i, 1}{j, 1}.Grest));
+%             poly_sup = Q_e{i, 1}{j, 1}.c + sum(abs(Q_e{i, 1}{j, 1}.G)) + sum(abs(Q_e{i, 1}{j, 1}.Grest));
+%             p1 = patch([t_traj(i)+jrs_info.dt/2; t_traj(i)+jrs_info.dt/2; t_traj(i) - jrs_info.dt/2; t_traj(i) - jrs_info.dt/2], [poly_sup; poly_inf; poly_inf; poly_sup], 'b');
+%             p1.EdgeColor = slice_step_color;
+%             p1.LineWidth = 0.1;
+%             p1.FaceColor = slice_step_color;
+% 
+%             % plot unslice polynomial zonotope interval
+%             poly_inf = Q_des{i, 1}{j, 1}.c - sum(abs(Q_des{i, 1}{j, 1}.G)) - sum(abs(Q_des{i, 1}{j, 1}.Grest));
+%             poly_sup = Q_des{i, 1}{j, 1}.c + sum(abs(Q_des{i, 1}{j, 1}.G)) + sum(abs(Q_des{i, 1}{j, 1}.Grest));
+%             p2 = patch([t_traj(i)+jrs_info.dt/2; t_traj(i)+jrs_info.dt/2; t_traj(i) - jrs_info.dt/2; t_traj(i) - jrs_info.dt/2], [poly_sup; poly_inf; poly_inf; poly_sup], 'b');
+%             p2.EdgeColor = slice_step_color;
+%             p2.LineWidth = 0.1;
+%             p2.FaceColor = slice_step_color;
+% 
+%             % plot unsliced (original + err) polynomial zonotope interval
+%             poly_inf = Q{i, 1}{j, 1}.c - sum(abs(Q{i, 1}{j, 1}.G)) - sum(abs(Q{i, 1}{j, 1}.Grest));
+%             poly_sup = Q{i, 1}{j, 1}.c + sum(abs(Q{i, 1}{j, 1}.G)) + sum(abs(Q{i, 1}{j, 1}.Grest));
+%             p3 = patch([t_traj(i)+jrs_info.dt/2; t_traj(i)+jrs_info.dt/2; t_traj(i) - jrs_info.dt/2; t_traj(i) - jrs_info.dt/2], [poly_sup; poly_inf; poly_inf; poly_sup], 'b');
+%             p2.EdgeColor = slice_step_color;
+%             p3.LineWidth = 0.1;
+%             p3.FaceColor = slice_step_color;
+% 
+%             % plot sliced (original + err) polynomial zonotope interval
+%             poly_slice = getSubset(Q{i, 1}{j, 1}, id_slice(j), kvec(j));
+%             poly_slice_inf = poly_slice.c - sum(abs(poly_slice.G)) - sum(abs(poly_slice.Grest));
+%             poly_slice_sup = poly_slice.c + sum(abs(poly_slice.G)) + sum(abs(poly_slice.Grest));
+%             p4 = patch([t_traj(i)+jrs_info.dt/2; t_traj(i)+jrs_info.dt/2; t_traj(i) - jrs_info.dt/2; t_traj(i) - jrs_info.dt/2], [poly_slice_sup; poly_slice_inf; poly_slice_inf; poly_slice_sup], 'b');
+%             p4.EdgeColor = sliced_color;
+%             p4.LineWidth = 0.1;
+%             p4.FaceColor = sliced_color;
+% 
+%             % capture slice of time
+%             if i ~= time_to_slice
+%                 p4.FaceAlpha = 0.2;
+%             end
+% 
+%         end
+% 
+%         axis tight;
+%         if plot_pz_time
+%             xl = xlim;
+%             yl = ylim-0.02;
+%             for i = 1:length(t_traj)
+%                 
+%                 poly_inf = yl(1)*T{end, 1}.c - sum(abs(T{end, 1}.G)) - sum(abs(T{end, 1}.Grest));
+%                 poly_sup = yl(1)*T{end, 1}.c + sum(abs(T{end, 1}.G)) + sum(abs(T{end, 1}.Grest));
+%                 p0 = patch([t_traj(i)+jrs_info.dt/2; t_traj(i)+jrs_info.dt/2; t_traj(i) - jrs_info.dt/2; t_traj(i) - jrs_info.dt/2], [poly_sup; poly_inf; poly_inf; poly_sup], 'b');
+%                 p0.EdgeColor = time_color;
+%                 p0.LineWidth = 0.1;
+%                 p0.FaceColor = time_color;
+%             end
+%         
+%             axis tight;
+%             hold off;
+%         end
+%                 % plot scalar trajectories
+%         plot(t_steps, q_des(j,:));
+%         plot(t_steps, q_max(j,:), 'Color', 'r');
+%         plot(t_steps, q_min(j,:), 'Color', 'r');
+% 
+%         if save_plot
+%             filename = sprintf('/Users/kronos/Research/armour/traj_slice_%i.eps',j);
+%     
+%             exportgraphics(gcf,filename,'ContentType','vector','BackgroundColor','none');
+%         end
+%     end
+% end
 
 %% compute forward occupancy
 for i = 1:jrs_info.n_t
