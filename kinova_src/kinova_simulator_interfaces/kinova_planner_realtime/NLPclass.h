@@ -186,7 +186,7 @@ private:
        const armtd_NLP&
     );
 
-    double* q_des = nullptr;
+    Eigen::VectorXd q_des;
 
     const BezierCurve* desired_trajectory = nullptr;
 

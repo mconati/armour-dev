@@ -15,7 +15,7 @@
 
 // Parameters for Trajectories.h:
     // Duration of the Bezier Curve
-    #define duration 2.0
+    #define duration 10.0
 
     // number of time steps (This should be an EVEN number!!!)
     #define NUM_TIME_STEPS 100
