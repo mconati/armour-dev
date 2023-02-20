@@ -56,7 +56,7 @@ qd1 = zeros(7,1); % final velocity is zero
 qdd1 = zeros(7,1); % final acceleration is zero
 
 % for tid = 1:128
-duration = 10;
+duration = 2;
 tid = 100;
 tspan = linspace(0, duration, tid + 1);
 
