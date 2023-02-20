@@ -286,4 +286,18 @@ Section IV:
         outputstream5 << '\n';
     }
     outputstream5.close();
+
+    double position_extremum[2 * NUM_FACTORS];
+    double velocity_extremum[2 * NUM_FACTORS];
+    traj.returnJointPositionExtremum(position_extremum, factors);
+    traj.returnJointVelocityExtremum(velocity_extremum, factors);
+    cout << "Joint position [minimum, maximum]" << endl;
+    for (int i = 0; i < NUM_FACTORS; i++) {
+        cout << "[ " << position_extremum[i] << ", " << position_extremum[i + NUM_FACTORS] << " ]\n";
+    }
+    cout << "Joint velocity [minimum, maximum]" << endl;
+    for (int i = 0; i < NUM_FACTORS; i++) {
+        cout << "[ " << velocity_extremum[i] << ", " << velocity_extremum[i + NUM_FACTORS] << " ]\n";
+    }
+    cout << endl;
 }
