@@ -571,8 +571,8 @@ bool armtd_NLP::eval_f(
     // obj_value = sum((q_plan - q_des).^2);
     obj_value = 0; 
     for(Index i = 0; i < n; i++){
-        double q_plan = q_des_func(desired_trajectory->q0[i], desired_trajectory->qd0[i], desired_trajectory->qdd0[i], k_range[i] * x[i], t_plan);
-        obj_value += pow(q_plan - q_des[i], 2);
+        double q_plan = q_des_func(desired_trajectory->q0[i], desired_trajectory->qd0[i], desired_trajectory->qdd0[i], k_range[i] * x[i], t_plan); // Bohao question: why pass in t_plan here instead of duration?
+        obj_value += pow(q_des[i] - q_plan, 2);
     }
 
     obj_value *= COST_FUNCTION_OPTIMALITY_SCALE; // needs to change in the gradient as well
@@ -634,7 +634,7 @@ bool armtd_NLP::eval_grad_f(
         // sum for each time step resulting in 7x1
         // add each element to corresponding element of grad_f?
 
-        double q_plan = q_des_func(desired_trajectory->q0[i], desired_trajectory->qd0[i], desired_trajectory->qdd0[i], k_range[i] * x[i], t_plan);
+        double q_plan = q_des_func(desired_trajectory->q0[i], desired_trajectory->qd0[i], desired_trajectory->qdd0[i], k_range[i] * x[i], t_plan); // Bohao question: why pass in t_plan here instead of duration?
         double dk_q_plan = pow(t_plan,3) * (6 * pow(t_plan,2) - 15 * t_plan + 10);
         grad_f[i] = (2 * (q_plan - q_des[i]) * dk_q_plan * k_range[i]) * COST_FUNCTION_OPTIMALITY_SCALE;
     }

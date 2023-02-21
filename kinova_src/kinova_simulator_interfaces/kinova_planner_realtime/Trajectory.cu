@@ -19,8 +19,8 @@ BezierCurve::BezierCurve(const Eigen::VectorXd& q0_inp,
     qd0 = qd0_inp;
     qdd0 = qdd0_inp;   
 
-    Tqd0 = qd0 * DURATION; 
-    TTqdd0 = qdd0 * DURATION * DURATION; 
+    Tqd0 = qd0 * duration; 
+    TTqdd0 = qdd0 * duration * duration; 
 
     // pre-allocate memory
     R = PZsparseArray(NUM_JOINTS + 1, NUM_TIME_STEPS);
@@ -810,11 +810,11 @@ double q_des_k_indep(double q0, double Tqd0, double TTqdd0, double s) {
 }
 
 double qd_des_k_indep(double q0, double Tqd0, double TTqdd0, double s) {
-    return (pow(s - 1,2)*(2*Tqd0 + 4*Tqd0*s + 2*TTqdd0*s - 30*Tqd0*pow(s,2) - 5*TTqdd0*pow(s,2)))*0.5 / DURATION;
+    return (pow(s - 1,2)*(2*Tqd0 + 4*Tqd0*s + 2*TTqdd0*s - 30*Tqd0*pow(s,2) - 5*TTqdd0*pow(s,2)))*0.5 / duration;
 }
 
 double qdd_des_k_indep(double q0, double Tqd0, double TTqdd0, double s) {
-    return -(s - 1.0)*(TTqdd0 - (36*Tqd0 + 8*TTqdd0)*s + (60*Tqd0 + 10*TTqdd0)*pow(s, 2))  / (DURATION * DURATION);
+    return -(s - 1.0)*(TTqdd0 - (36*Tqd0 + 8*TTqdd0)*s + (60*Tqd0 + 10*TTqdd0)*pow(s, 2)) / (duration * duration);
 }
 
 #endif

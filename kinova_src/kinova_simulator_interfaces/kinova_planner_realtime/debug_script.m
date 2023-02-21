@@ -33,7 +33,7 @@ link_poly_zonotopes = create_pz_bounding_boxes(robot);
 q0 = [0.0000000000 -1.5707963268 0.0000000000 0.0000000000 0.0000000000 0.0000000000 0.0000000000 ]';
 qd0 = [0.0000000000 0.0000000000 0.0000000000 0.0000000000 0.0000000000 0.0000000000 0.0000000000 ]';
 qdd0 = [0.0000000000 0.0000000000 0.0000000000 0.0000000000 0.0000000000 0.0000000000 0.0000000000 ]';
-qdes = [0.4000000000 -1.5707963268 0.0000000000 0.0000000000 0.0000000000 0.0000000000 0.0000000000 ]';
+qdes = [0.1375736616 -1.5632979589 0.0905309714 -0.0751381965 -0.2789436459 0.2011416812 0.0943825628 ]';
 
 % choose a random k_range and make sure they are aligned with k_range in
 % Parameters.h
@@ -193,6 +193,9 @@ for i = 1:7
 end
 sgtitle('Desired Acceleration Comparison')
 
+vel_check = qd_des_matlab(1,:)' ./ des_vel_center(:,1);
+accel_check = qdd_des_matlab(1,:)' ./ des_accel_center(:,1);
+
 %% Plotting Link Reach Sets
 
 fig_num = fig_num + 1;
@@ -339,10 +342,14 @@ end
 function [q, qd, qdd] = get_desired_traj(beta, t, duration)
 
     if nargin < 3
-        T = 1;
+        duration = 1;
     end
 
     [B, dB, ddB] = Bezier_kernel_deg5(t/duration); %t/dur
+
+    q = zeros(7,length(t));
+    qd = zeros(7,length(t));
+    qdd = zeros(7,length(t));
     
     for j = 1:6
         q = q + beta{j} .* B(:,j)';
@@ -350,6 +357,6 @@ function [q, qd, qdd] = get_desired_traj(beta, t, duration)
         qdd = qdd + beta{j} .* ddB(:,j)';
     end
 
-    qd = qd / T;
-    qdd = qdd / T / T;
+    qd = qd / duration;
+    qdd = qdd / duration / duration;
 end

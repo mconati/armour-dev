@@ -2,6 +2,19 @@ clear;
 close all; 
 clc;
 
+%% To Do
+
+% color consistency between plots
+
+% attempt to fix forward occupancy
+
+% separation constraint plot (maybe a separate one?)
+
+% animation in 3D of friction cone? either on robot tray or subplot
+
+% try reducing the number of Grest on the friction cone 3D plot to reduce
+% time and resources needed
+
 %% setup robot
 
 % robot_name = 'Kinova_Grasp_URDF.urdf';
