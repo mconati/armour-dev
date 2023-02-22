@@ -86,4 +86,14 @@ Check the [README](https://github.com/roahmlab/armour-dev/blob/main/kinova_src/R
 `ARMOUR` is released under a [GNU license](https://github.com/roahmlab/armour-dev/blob/main/LICENSE). For a list of all code/library dependencies, please check dependency section. For a closed-source version of `ARMOUR` for commercial purpose, please contact the authors. 
 
 An overview of the theoretical and implementation details has been published in arxiv. 
-<!---(If you use `ARMOUR` in an academic work, please cite using the following BibTex entry (TODO: fill in reference to our paper)-->
+If you use `ARMOUR` in an academic work, please cite using the following BibTex entry:
+```
+@article{article,
+author = {Michaux, Jonathan and Holmes, Patrick and Zhang, Bohao and Chen, Che and Wang, Baiyue and Sahgal, Shrey and Zhang, Tiancheng and Dey, Sidhartha and Kousik, Shreyas and Vasudevan, Ram},
+year = {2023},
+month = {01},
+pages = {},
+title = {Can't Touch This: Real-Time, Safe Motion Planning and Control for Manipulators Under Uncertainty}
+doi={10.48550/arXiv.2301.13308}}
+```
+
