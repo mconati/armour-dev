@@ -57,6 +57,16 @@ plot_force_trajectory = true;
 
 save_plot = false;
 
+
+%% Color Coding
+
+unsliced_color = 1/256*[90,200,243];
+% slice_color = 1/256*[72,181,163]; % light green
+slice_color = 1/256*[75,154,76]; % dark green
+face_alpha = 0.3;
+
+%% Old Color Code
+
 time_color = 1/256*[207,207,196];
 
 traj_color = 1/256*[146,197,222];
@@ -265,11 +275,11 @@ if plot_force_trajectory
             poly_inf = f_int{1,i}.c(force) - sum(abs(f_int{1,i}.Grest(force,:)));
             poly_sup = f_int{1,i}.c(force) + sum(abs(f_int{1,i}.Grest(force,:)));
         end
-        p1 = patch([t_traj(i)+jrs_info.dt; t_traj(i)+jrs_info.dt; t_traj(i); t_traj(i)], [poly_sup; poly_inf; poly_inf; poly_sup], 'b');
+        p1 = patch([t_traj(i)+jrs_info.dt; t_traj(i)+jrs_info.dt; t_traj(i); t_traj(i)], [poly_sup; poly_inf; poly_inf; poly_sup],'b');
 %         p1.EdgeColor = pz_err_color;
         p1.LineWidth = 0.1;
-%         p1.FaceColor = pz_err_color;
-        p1.FaceAlpha = 0.3;
+        p1.FaceColor = unsliced_color;
+        p1.FaceAlpha = face_alpha;
 
     end
 
@@ -294,11 +304,11 @@ if plot_force_trajectory
             poly_inf = f_sliced{1,i}.c(force) - sum(abs(f_sliced{1,i}.Grest(force,:)));
             poly_sup = f_sliced{1,i}.c(force) + sum(abs(f_sliced{1,i}.Grest(force,:)));
         end
-        p1 = patch([t_traj(i)+jrs_info.dt; t_traj(i)+jrs_info.dt; t_traj(i); t_traj(i)], [poly_sup; poly_inf; poly_inf; poly_sup], 'g');
+        p1 = patch([t_traj(i)+jrs_info.dt; t_traj(i)+jrs_info.dt; t_traj(i); t_traj(i)], [poly_sup; poly_inf; poly_inf; poly_sup],'b');
 %         p1.EdgeColor = pz_err_color;
         p1.LineWidth = 0.1;
-%         p1.FaceColor = pz_err_color;
-        p1.FaceAlpha = 0.3;
+        p1.FaceColor = slice_color;
+        p1.FaceAlpha = face_alpha;
     end
     % plot the nominal values
     plot(t_steps, f_nom(force,:),'-k')
@@ -317,7 +327,12 @@ title('Friction Cone Unsliced Plot')
 for i = 1:length(t_traj)
 
     % plot the overapproximation
-    plot(f_int{i},[1,2])
+    fp1 = plot(f_int{i},[1,2],'Filled',true,'FaceColor',unsliced_color);
+%     fp1.EdgeColor = unsliced_color;
+
+    fp1.LineWidth = 0.1;
+    fp1.FaceColor = unsliced_color;
+    fp1.FaceAlpha = face_alpha;
 
 end
 
@@ -345,7 +360,11 @@ for i = 1:length(t_traj)
 
     f_sliced{i} = getSubset(f_int{i},f_int{i}.id,kvec(f_int{i}.id));
     % plot the overapproximation
-    plot(interval(f_sliced{i}),[1,2],'g')
+    fp2 = plot(interval(f_sliced{i}),[1,2],'Filled',true);
+
+    fp2.LineWidth = 0.1;
+    fp2.FaceColor = slice_color;
+    fp2.FaceAlpha = face_alpha;
 
 end
 
@@ -366,48 +385,52 @@ end
 
 %% Plotting Friction Cone and Force PZ in 3D
 
-plot_idx = plot_idx + 1;
-figure(plot_idx); clf; hold on;
-title('Friction Cone Unsliced Plot')
-
-% time
-t_cont = linspace(0,1); % 1/40 for a single iteration
-% desired trajectory
-for i = 1:length(t_cont)
-    [q_cont_des(:,i), qd_cont_des(:,i), qdd_cont_des(:,i)] = desired_trajectory(P, q_0, qd_0, qdd_0, t_cont(i), kvec);
-    % rnea
-    [u_temp f_temp n_temp] = rnea(q_cont_des(:,i), qd_cont_des(:,i), qd_cont_des(:,i), qdd_cont_des(:,i), true, params.nominal);
-%     tau_int{i} = tau_temp{10,1};
-    f_cont(:,i) = f_temp(:,10);
-    n_cont(:,i) = n_temp(:,10);
-end
-
-for i = 1:1:length(t_traj)
-
-    % plot the overapproximation
-    fc1 = plot(f_int{i},[1,2,3],'Splits',1)
-%     fc1.FaceAlpha = 0.1
-    % plot the nominal value
-    plot3(f_nom(1,i),f_nom(2,i),f_nom(3,i),'xk')
-end
-
-% plot the nominal trajectory
-plot3(f_cont(1,:),f_cont(2,:),f_cont(3,:),'-k', 'LineWidth', 3)
-
-% plot the friction cone
-r = linspace(0,4,10);
-theta = linspace(0,2*pi,50);
-[RR,Theta] = meshgrid(r,theta);
-X = RR.*cos(Theta);
-Y = RR.*sin(Theta);
-Z = u_s.*RR; % A.u_s.*R;
-h1 = surf(X,Y,Z,'EdgeColor','none','FaceColor','r','FaceAlpha','0.05');
-xlabel('x-axis Tangential Force (N)')
-ylabel('y-axis Tangential Force (N)')
-zlabel('z-axis Normal Force (N)')
-axis('square')
-grid on
-view(0,0)
+% plot_idx = plot_idx + 1;
+% figure(plot_idx); clf; hold on;
+% title('Friction Cone Unsliced Plot')
+% 
+% % calculating continuous force trajectory
+% % time
+% t_cont = linspace(0,1/40); % 1/40 for a single iteration
+% % desired trajectory
+% for i = 1:length(t_cont)
+%     [q_cont_des(:,i), qd_cont_des(:,i), qdd_cont_des(:,i)] = desired_trajectory(P, q_0, qd_0, qdd_0, t_cont(i), kvec);
+%     % rnea
+%     [u_temp f_temp n_temp] = rnea(q_cont_des(:,i), qd_cont_des(:,i), qd_cont_des(:,i), qdd_cont_des(:,i), true, params.nominal);
+% %     tau_int{i} = tau_temp{10,1};
+%     f_cont(:,i) = f_temp(:,10);
+%     n_cont(:,i) = n_temp(:,10);
+% end
+% 
+% for i = 1:100:length(t_traj)
+% 
+%     % plot the overapproximation
+%     fc1 = plot(f_int{i},[1,2,3],'Splits',1); %,'Filled',true);
+% %     fp2.LineWidth = 0.1;
+% %     fp2.FaceColor = slice_color;
+% %     fp2.FaceAlpha = 0.3;
+% 
+%     % plot the nominal value
+%     plot3(f_nom(1,i),f_nom(2,i),f_nom(3,i),'xk')
+% end
+% 
+% % plot the nominal trajectory
+% plot3(f_cont(1,:),f_cont(2,:),f_cont(3,:),'-k', 'LineWidth', 3)
+% 
+% % plot the friction cone
+% r = linspace(0,4,10);
+% theta = linspace(0,2*pi,50);
+% [RR,Theta] = meshgrid(r,theta);
+% X = RR.*cos(Theta);
+% Y = RR.*sin(Theta);
+% Z = u_s.*RR; % A.u_s.*R;
+% h1 = surf(X,Y,Z,'EdgeColor','none','FaceColor','r','FaceAlpha','0.05');
+% xlabel('x-axis Tangential Force (N)')
+% ylabel('y-axis Tangential Force (N)')
+% zlabel('z-axis Normal Force (N)')
+% axis('square')
+% grid on
+% view(0,0)
 
 % plotting the friction cone slices
 % plot full red rings at proper z-slices of the friction cone
@@ -422,7 +445,9 @@ title('ZMP Unsliced Plot')
 
 % plot ZMP PZ overapproximation
 for i = 1:length(ZMP_PZ)
-    s1 = plot(ZMP_PZ{i},[1,2],'Filled',true,'EdgeColor','b','FaceColor','b','FaceAlpha',0.1,'EdgeAlpha',0.5);
+    s1 = plot(ZMP_PZ{i},[1,2],'Filled',true);
+    s1.FaceColor = unsliced_color;
+    s1.FaceAlpha = face_alpha;
 end
 
 r=surf_rad;
@@ -448,12 +473,10 @@ title('ZMP Sliced Plot')
 
 % plot ZMP PZ overapproximation
 for i = 1:length(ZMP_PZ_sliced)
-    s2 = plot(ZMP_PZ_sliced{i},[1,2],'Filled',true,'EdgeColor','g','FaceColor','g','FaceAlpha',0.1,'EdgeAlpha',0.5);
-%     p1 = patch([t_traj(i)+jrs_info.dt; t_traj(i)+jrs_info.dt; t_traj(i); t_traj(i)], [ZMP_PZ_sliced{1,i}.sup; ZMP_PZ_sliced{1,i}.inf; ZMP_PZ_sliced{1,i}.inf; ZMP_PZ_sliced{1,i}.sup], 'g');
-%         p1.EdgeColor = pz_err_color;
-%     p1.LineWidth = 0.1;
-%         p1.FaceColor = pz_err_color;
-%     p1.FaceAlpha = 0.3;
+    s2 = plot(ZMP_PZ_sliced{i},[1,2],'Filled',true);
+    s2.LineWidth = 0.1;
+    s2.FaceColor = slice_color;
+    s2.FaceAlpha = face_alpha;
 end
 
 
@@ -476,6 +499,8 @@ tipplot2 = plot(ZMP(1,:),ZMP(2,:),'xk');
 %% Plotting Separation Constraint
 
 % could maybe plot a 1D interval along the z-axis of the tray?
+
+% use the force plot above but add a constraint line along the x-axis?
 
 %% Notes
 % Plotting the 3D force PZ on the robot tray would give info about both the
@@ -508,19 +533,19 @@ if plot_trajectory_1
             % plot unsliced (original + err) polynomial zonotope interval
             poly_inf = Q{i, 1}{j, 1}.c - sum(abs(Q{i, 1}{j, 1}.G)) - sum(abs(Q{i, 1}{j, 1}.Grest));
             poly_sup = Q{i, 1}{j, 1}.c + sum(abs(Q{i, 1}{j, 1}.G)) + sum(abs(Q{i, 1}{j, 1}.Grest));
-            p3 = patch([t_traj(i)+jrs_info.dt; t_traj(i)+jrs_info.dt; t_traj(i); t_traj(i)], [poly_sup; poly_inf; poly_inf; poly_sup], 'b', 'FaceAlpha', 0.2);
-%             p3.EdgeColor = slice_step_color;
-%             p3.LineWidth = 0.1;
-%             p3.FaceColor = slice_step_color;
+            p3 = patch([t_traj(i)+jrs_info.dt; t_traj(i)+jrs_info.dt; t_traj(i); t_traj(i)], [poly_sup; poly_inf; poly_inf; poly_sup],'b');
+            p3.LineWidth = 0.1;
+            p3.FaceColor = unsliced_color;
+            p3.FaceAlpha = face_alpha;
 
             % plot sliced (original + err) polynomial zonotope interval
             poly_slice = getSubset(Q{i, 1}{j, 1}, id_slice(j), kvec(j));
             poly_slice_inf = poly_slice.c - sum(abs(poly_slice.G)) - sum(abs(poly_slice.Grest));
             poly_slice_sup = poly_slice.c + sum(abs(poly_slice.G)) + sum(abs(poly_slice.Grest));
-            p4 = patch([t_traj(i)+jrs_info.dt; t_traj(i)+jrs_info.dt; t_traj(i); t_traj(i)], [poly_slice_sup; poly_slice_inf; poly_slice_inf; poly_slice_sup], 'g', 'FaceAlpha', 0.2);
-%             p4.EdgeColor = slice_step_color;
-%             p4.LineWidth = 0.1;
-%             p4.FaceColor = slice_step_color;
+            p4 = patch([t_traj(i)+jrs_info.dt; t_traj(i)+jrs_info.dt; t_traj(i); t_traj(i)], [poly_slice_sup; poly_slice_inf; poly_slice_inf; poly_slice_sup],'b');
+            p4.LineWidth = 0.1;
+            p4.FaceColor = slice_color;
+            p4.FaceAlpha = face_alpha;
 
             % capture slice of time
             if i ~= time_to_slice
@@ -549,8 +574,8 @@ if plot_trajectory_1
         
         % plot scalar trajectories
         plot(t_steps, q_des(j,:), '-k');
-        plot(t_steps, q_max(j,:), '--r');
-        plot(t_steps, q_min(j,:), '--r');
+%         plot(t_steps, q_max(j,:), '--r');
+%         plot(t_steps, q_min(j,:), '--r');
 
         if save_plot
             filename = sprintf('/Users/kronos/Research/armour/traj_error_%i.eps',j);
