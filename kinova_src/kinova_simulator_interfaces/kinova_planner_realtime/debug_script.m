@@ -172,7 +172,7 @@ for i = 1:7
     subplot(7,1,i)
     hold on
     plot(ts,qd_des_matlab(i,:),'ok')
-    plot(ts,des_vel_center(:,i),'-*r')
+%     plot(ts,des_vel_center(:,i),'-*r')
     plot(ts,des_aux_vel_center(:,i),'--b')
     % plot(ts,des_vel_center+des_vel_radius,'--r')
     % plot(ts,des_vel_center-des_vel_radius,'--r')
@@ -198,9 +198,9 @@ accel_check = qdd_des_matlab(1,:)' ./ des_accel_center(:,1);
 
 %% Plotting Link Reach Sets
 
-fig_num = fig_num + 1;
-figure(fig_num); 
-hold on; view(3); axis equal; axis on;
+% fig_num = fig_num + 1;
+% figure(fig_num); 
+% hold on; view(3); axis equal; axis on;
 
 % choose a random time inside this time interval
 t_lb = tspan(tid);
@@ -209,16 +209,16 @@ t = (t_ub - t_lb) * rand + t_lb;
 
 q_rand = get_desired_traj(beta, t, duration);
 
-fig_num = fig_num + 1;
-figure(fig_num);
-hold on;
+% fig_num = fig_num + 1;
+% figure(fig_num);
+% hold on;
 % plot robot
-A.plot_at_time(q_rand);
-view(3)
-axis('equal')
-xlim([-1.5 1.5])
-ylim([-1.5 1.5])
-zlim([0 1.5])
+% A.plot_at_time(q_rand);
+% view(3)
+% axis('equal')
+% xlim([-1.5 1.5])
+% ylim([-1.5 1.5])
+% zlim([0 1.5])
 
 % ! Ask Bohao about the number 10 vs 7 in the for loop below
 % plot link reachsets
@@ -357,6 +357,6 @@ function [q, qd, qdd] = get_desired_traj(beta, t, duration)
         qdd = qdd + beta{j} .* ddB(:,j)';
     end
 
-    qd = qd / duration;
+    qd = qd / duration; % commenting out these durations matches the c++ and matlab code
     qdd = qdd / duration / duration;
 end
