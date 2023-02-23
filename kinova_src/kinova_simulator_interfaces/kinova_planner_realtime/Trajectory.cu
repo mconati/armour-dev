@@ -19,8 +19,10 @@ BezierCurve::BezierCurve(const Eigen::VectorXd& q0_inp,
     qd0 = qd0_inp;
     qdd0 = qdd0_inp;   
 
-    Tqd0 = qd0 * duration; 
-    TTqdd0 = qdd0 * duration * duration; 
+    Tqd0 = qd0 * DURATION; 
+    TTqdd0 = qdd0 * DURATION * DURATION; 
+
+    cout << TTqdd0.transpose() << endl;
 
     // pre-allocate memory
     R = PZsparseArray(NUM_JOINTS + 1, NUM_TIME_STEPS);
@@ -144,8 +146,8 @@ void BezierCurve::makePolyZono(int s_ind) {
         // This is just a simplified implementation!!!
         // 30*t^2*(t - 1)^2 in qd_des is just a function with one maxima at t = 0.5
         // So as long as NUM_TIME_STEPS is even number, the following bounding trick holds!
-        k_dep_coeff_lb = 30 * pow(s_lb,2) * pow(s_lb - 1,2);
-        k_dep_coeff_ub = 30 * pow(s_ub,2) * pow(s_ub - 1,2);
+        k_dep_coeff_lb = (30 * pow(s_lb,2) * pow(s_lb - 1,2)) / DURATION;
+        k_dep_coeff_ub = (30 * pow(s_ub,2) * pow(s_ub - 1,2)) / DURATION;
         if (k_dep_coeff_ub < k_dep_coeff_lb) { // we are at t >= 0.5, which is a monotonically decreasing region 
             swap(k_dep_coeff_lb, k_dep_coeff_ub);
         }
@@ -188,22 +190,22 @@ void BezierCurve::makePolyZono(int s_ind) {
         qda_des(i, s_ind) = PZsparse(qd_des_center, qda_des_coeff, qda_des_degree, 2);
 
         // Part 3: qdd_des
-        double temp_lb = 60 * s_lb * (2 * pow(s_lb,2) - 3 * s_lb + 1);
-        double temp_ub = 60 * s_ub * (2 * pow(s_ub,2) - 3 * s_ub + 1);
+        double temp_lb = (60 * s_lb * (2 * pow(s_lb,2) - 3 * s_lb + 1)) / DURATION / DURATION;
+        double temp_ub = (60 * s_ub * (2 * pow(s_ub,2) - 3 * s_ub + 1)) / DURATION / DURATION;
         if (s_ub <= QDD_DES_K_DEP_MAXIMA) { // monotonically increasing region
             k_dep_coeff_lb = temp_lb;
             k_dep_coeff_ub = temp_ub;
         }
         else if (s_lb <= QDD_DES_K_DEP_MAXIMA) { // maxima lives inside
             k_dep_coeff_lb = min(temp_lb, temp_ub);
-            k_dep_coeff_ub = 60 * QDD_DES_K_DEP_MAXIMA * (2 * pow(QDD_DES_K_DEP_MAXIMA,2) - 3 * QDD_DES_K_DEP_MAXIMA + 1);
+            k_dep_coeff_ub = (60 * QDD_DES_K_DEP_MAXIMA * (2 * pow(QDD_DES_K_DEP_MAXIMA,2) - 3 * QDD_DES_K_DEP_MAXIMA + 1)) / DURATION / DURATION;
         }
         else if (s_ub <= QDD_DES_K_DEP_MINIMA) { // monotonically decreasing region
-            k_dep_coeff_lb = temp_ub;
+            k_dep_coeff_lb = temp_ub;   
             k_dep_coeff_ub = temp_lb;
         }
         else if (s_lb <= QDD_DES_K_DEP_MINIMA) { // minima lives inside
-            k_dep_coeff_lb = 60 * QDD_DES_K_DEP_MINIMA * (2 * pow(QDD_DES_K_DEP_MINIMA,2) - 3 * QDD_DES_K_DEP_MINIMA + 1);
+            k_dep_coeff_lb = (60 * QDD_DES_K_DEP_MINIMA * (2 * pow(QDD_DES_K_DEP_MINIMA,2) - 3 * QDD_DES_K_DEP_MINIMA + 1)) / DURATION / DURATION;
             k_dep_coeff_ub = max(temp_lb, temp_ub);
         }
         else { // monotonically increasing region
@@ -421,8 +423,8 @@ void BezierCurve::returnJointVelocityExtremum(double* extremum, const double* k)
             maxVelocity = max(maxVelocity, extremum3);
         }
 
-        extremum[i              ] = minVelocity / duration;
-        extremum[i + NUM_FACTORS] = maxVelocity / duration;
+        extremum[i              ] = minVelocity / DURATION;
+        extremum[i + NUM_FACTORS] = maxVelocity / DURATION;
     }
 }
 
@@ -524,8 +526,8 @@ void BezierCurve::returnJointVelocityExtremumGradient(double* extremumGradient, 
 
         for (int j = 0; j < NUM_FACTORS; j++) {
             if (i == j) {
-                extremumGradient[(i              ) * NUM_FACTORS + j] = minVelocityGradient * k_range[i] / duration;
-                extremumGradient[(i + NUM_FACTORS) * NUM_FACTORS + j] = maxVelocityGradient * k_range[i] / duration;
+                extremumGradient[(i              ) * NUM_FACTORS + j] = minVelocityGradient * k_range[i] / DURATION;
+                extremumGradient[(i + NUM_FACTORS) * NUM_FACTORS + j] = maxVelocityGradient * k_range[i] / DURATION;
             }
             else {
                 extremumGradient[(i              ) * NUM_FACTORS + j] = 0.0;
@@ -810,11 +812,11 @@ double q_des_k_indep(double q0, double Tqd0, double TTqdd0, double s) {
 }
 
 double qd_des_k_indep(double q0, double Tqd0, double TTqdd0, double s) {
-    return (pow(s - 1,2)*(2*Tqd0 + 4*Tqd0*s + 2*TTqdd0*s - 30*Tqd0*pow(s,2) - 5*TTqdd0*pow(s,2)))*0.5 / duration;
+    return (pow(s - 1,2)*(2*Tqd0 + 4*Tqd0*s + 2*TTqdd0*s - 30*Tqd0*pow(s,2) - 5*TTqdd0*pow(s,2)))*0.5 / DURATION;
 }
 
 double qdd_des_k_indep(double q0, double Tqd0, double TTqdd0, double s) {
-    return -(s - 1.0)*(TTqdd0 - (36*Tqd0 + 8*TTqdd0)*s + (60*Tqd0 + 10*TTqdd0)*pow(s, 2))  / (duration * duration);
+    return -(s - 1.0)*(TTqdd0 - (36*Tqd0 + 8*TTqdd0)*s + (60*Tqd0 + 10*TTqdd0)*pow(s, 2))  / (DURATION * DURATION);
 }
 
 #endif

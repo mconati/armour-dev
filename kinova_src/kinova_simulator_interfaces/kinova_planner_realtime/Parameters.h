@@ -7,7 +7,7 @@
 // #include "KinovaForceInfo.h"
 #include "KinovaFixedGripperInfo.h"
 
-#define DEBUG_MODE true
+// #define DEBUG_MODE true
 
 // Parameters for PZsparse.h:
     // monomials with a coefficient smaller than this number will be reduced (should be close to V_m magnitude)
@@ -15,7 +15,7 @@
 
 // Parameters for Trajectories.h:
     // Duration of the Bezier Curve
-    #define duration 2.0
+    #define DURATION 4.0
 
     // number of time steps (This should be an EVEN number!!!)
     #define NUM_TIME_STEPS 100

@@ -553,4 +553,8 @@ Section IV:
     }
     outputstream8.close();
 
+    for(int i=0;i<NUM_TIME_STEPS;i++){
+        cout << qd_center(1,i) << endl;
+    }
+
 }
