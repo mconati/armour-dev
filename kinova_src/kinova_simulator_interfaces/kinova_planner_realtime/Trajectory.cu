@@ -22,7 +22,7 @@ BezierCurve::BezierCurve(const Eigen::VectorXd& q0_inp,
     Tqd0 = qd0 * DURATION; 
     TTqdd0 = qdd0 * DURATION * DURATION; 
 
-    cout << TTqdd0.transpose() << endl;
+    // cout << TTqdd0.transpose() << endl;
 
     // pre-allocate memory
     R = PZsparseArray(NUM_JOINTS + 1, NUM_TIME_STEPS);

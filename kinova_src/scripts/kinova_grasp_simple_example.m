@@ -17,12 +17,14 @@ goal_radius = pi/30;
 dimension = 3 ;
 verbosity = 10;
 
+DURATION = 2.0;
+
 u_s = 0.609382421; 
 surf_rad =  0.058 / 2;
 
 %%% for planner
 traj_type = 'bernstein'; % pick 'orig' (ARMTD) or 'bernstein' (ARMOUR)
-use_cuda_flag = false;
+use_cuda_flag = true;
 
 %%% for agent
 agent_urdf = 'Kinova_Grasp_URDF.urdf';
@@ -59,7 +61,7 @@ stop_threshold = 4 ; % number of failed iterations before exiting
 
 % simple rotation
 start = [0;-pi/2;0;0;0;0;0];
-goal = [pi/4;-pi/2;0;0;0;0;0];
+goal = [pi/20;-pi/2;0;0;0;0;0];
 % start = [-pi/6;-pi/2;-pi/2;pi/2;0;pi/2;pi/2];
 % goal = [pi/6;-pi/2;pi/2;pi/2;pi;-pi/2;pi/2];
 
@@ -148,7 +150,8 @@ P = uarmtd_planner('verbose', verbosity, ...
                    'input_constraints_flag', true, ...
                    'use_robust_input', use_robust_input, ...
                    'traj_type', traj_type, ...
-                   'use_cuda', use_cuda_flag) ;
+                   'use_cuda', use_cuda_flag,...
+                   'DURATION', DURATION) ; % 't_move_temp', t_move't_plan', t_plan,...'t_stop', t_stop
 
 if if_use_RRT
     P.HLP = arm_end_effector_RRT_star_HLP('plot_waypoint_flag',plot_waypoint_flag,...
@@ -224,8 +227,10 @@ for i = 2:length(A.time)
 end
 
 figure(1001)
+hold on
 title('Acceleration')
-plot(A.time,qdd_post)
+% plot(A.time,qdd_post,'o')
+plot(A.time,A.reference_acceleration)
 
 % Calling RNEA
 
@@ -344,3 +349,10 @@ for i=1:length(P.info.planning_time)
     plan_time = [plan_time P.info.planning_time{i}];
 end
 mean(plan_time)
+
+%% numerically calculating acceleration
+
+numerical_accel = gradient(A.time)./gradient(A.state(A.joint_speed_indices,:));
+
+figure()
+plot(A.time,numerical_accel)

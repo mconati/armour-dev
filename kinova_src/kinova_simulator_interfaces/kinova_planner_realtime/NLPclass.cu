@@ -217,7 +217,7 @@ void armtd_NLP::compute(
     // check if a new x is passed in
     if (new_x){
         // timing
-        auto start_compute = std::chrono::high_resolution_clock::now();
+        // auto start_compute = std::chrono::high_resolution_clock::now();
 
         // update values
 
@@ -532,9 +532,9 @@ void armtd_NLP::compute(
 
             
         }
-        auto stop_compute = std::chrono::high_resolution_clock::now();
-        auto duration_compute = std::chrono::duration_cast<std::chrono::milliseconds>(stop_compute - start_compute);
-        cout << "        Time Taken to Calculate Compute Function: " << duration_compute.count() << " milliseconds" << endl;
+        // auto stop_compute = std::chrono::high_resolution_clock::now();
+        // auto duration_compute = std::chrono::duration_cast<std::chrono::milliseconds>(stop_compute - start_compute);
+        // cout << "        Time Taken to Calculate Compute Function: " << duration_compute.count() << " milliseconds" << endl;
 
     }
     else{

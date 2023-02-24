@@ -2,7 +2,7 @@ classdef uarmtd_agent < robot_arm_agent
     % update 20220126 to use new robust input
     %% properties
     properties
-        robot; % rigidBodyTree from robotics toolbox
+        robot; % rigidBodyajee from robotics toolbox
         params; % stores kinematic and inertial params
         M_min_eigenvalue; % lower bound on eigenvalues of mass matrix
         transmision_inertia;
@@ -16,7 +16,7 @@ classdef uarmtd_agent < robot_arm_agent
 
         % timing
         t_total = 1;
-        traj_check_time_discretization = 0.01;
+        traj_check_time_discretization = 0.02;
         
         % additional trajectories to log:
         reference_state = [];
@@ -104,7 +104,7 @@ classdef uarmtd_agent < robot_arm_agent
                 'gravity_direction',gravity_direction,...
                 'animation_set_view_flag',set_view_when_animating,...
                 'animation_view',animation_view,...
-                'animation_time_discretization', 0.01,...
+                'animation_time_discretization', 0.02,...
                 varargin{:}) ;
             
             A.robot = robot;

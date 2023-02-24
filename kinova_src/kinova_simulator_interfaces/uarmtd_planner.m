@@ -4,7 +4,7 @@ classdef uarmtd_planner < robot_arm_generic_planner
     
     properties
         % housekeeping
-        time_discretization = 0.01;        
+        time_discretization = 0.02;        
         trajopt_start_tic;
         iter = 0;
         first_iter_pause_flag = true ;
@@ -49,18 +49,30 @@ classdef uarmtd_planner < robot_arm_generic_planner
         use_cuda = false;
 
         kinova_test_folder_path = '';
+
+%         t_plan = 0.5; % already defined in superclass planner.m
+        DURATION = 1;
     end
     
     methods
         function P = uarmtd_planner(varargin)
-            t_move = 0.5;
+            for i = 1:nargin
+                if strcmp(varargin{i}, 'DURATION')
+                    DURATION = varargin{i+1};
+                    break
+                else
+                    DURATION = 1;
+                end
+            end
+            t_move = 0.5 * DURATION; %P.DURATION;
             lookahead_distance = 0.4;
             HLP = robot_arm_straight_line_HLP( );
             P@robot_arm_generic_planner('lookahead_distance', lookahead_distance, 't_move', t_move, 'HLP', HLP, ...
                 varargin{:}) ;
             
             % hard code planning time...
-            P.t_plan = 0.5;
+%             P.t_plan = 0.5;
+            P.DURATION = DURATION;
 
             % init info object
             P.init_info()
@@ -208,7 +220,7 @@ classdef uarmtd_planner < robot_arm_generic_planner
                         if length(k_opt) == 1
                             P.vdisp('Unable to find new trajectory!',3)
                             k_opt = nan;
-                        elseif planning_time > 1.0 % P.t_plan
+                        elseif planning_time > P.t_plan
                             P.vdisp('Solver Took Too Long!',3)
                             k_opt = nan;
                         else
@@ -1044,10 +1056,13 @@ classdef uarmtd_planner < robot_arm_generic_planner
         function [q_des, qd_des, qdd_des] = desired_trajectory(P, q_0, q_dot_0, q_ddot_0, t, k)
             % at a given time t and traj. param k value, return
             % the desired position, velocity, and acceleration.
+
             switch P.traj_type
             case 'orig'
                 t_plan = P.t_plan;
-                t_stop = P.t_stop;
+                P.t_stop
+                fprintf('is this t_stop correct')
+                t_stop = P.t_stop; % where does this come from?
                 k_scaled = P.jrs_info.c_k_orig + P.jrs_info.g_k_orig.*k;
                 
                 if ~isnan(k)
@@ -1082,13 +1097,14 @@ classdef uarmtd_planner < robot_arm_generic_planner
                         qdd_des = zeros(size(q_0));
                     end
                 end
+
             case 'bernstein'
                 % assuming K = [-1, 1] corresponds to final position for now!!
                 n_q = length(q_0);
                 if ~isnan(k)
                     q1 = q_0 + P.jrs_info.c_k_bernstein + P.jrs_info.g_k_bernstein.*k;
                     for j = 1:n_q
-                        beta{j} = match_deg5_bernstein_coefficients({q_0(j); q_dot_0(j); q_ddot_0(j); q1(j); 0; 0});
+                        beta{j} = match_deg5_bernstein_coefficients({q_0(j); q_dot_0(j); q_ddot_0(j); q1(j); 0; 0},P.DURATION);
                         alpha{j} = bernstein_to_poly(beta{j}, 5);
                     end
                     q_des = zeros(length(q_0), 1);
@@ -1096,15 +1112,19 @@ classdef uarmtd_planner < robot_arm_generic_planner
                     qdd_des = zeros(length(q_0), 1);
                     for j = 1:n_q
                         for coeff_idx = 0:5
-                            q_des(j) = q_des(j) + alpha{j}{coeff_idx+1}*t^coeff_idx;% change t/duration
+                            q_des(j) = q_des(j) + alpha{j}{coeff_idx+1}*(t/P.DURATION)^coeff_idx;
                             if coeff_idx > 0
-                                qd_des(j) = qd_des(j) + coeff_idx*alpha{j}{coeff_idx+1}*t^(coeff_idx-1); % multiply by 1/T
+                                qd_des(j) = qd_des(j) + coeff_idx*alpha{j}{coeff_idx+1}*(t/P.DURATION)^(coeff_idx-1);
                             end
                             if coeff_idx > 1
-                                qdd_des(j) = qdd_des(j) + (coeff_idx)*(coeff_idx-1)*alpha{j}{coeff_idx+1}*t^(coeff_idx-2);
+                                qdd_des(j) = qdd_des(j) + (coeff_idx)*(coeff_idx-1)*alpha{j}{coeff_idx+1}*(t/P.DURATION)^(coeff_idx-2);
                             end
                         end
                     end
+
+                    qd_des = qd_des / P.DURATION;
+                    qdd_des = qdd_des / P.DURATION / P.DURATION;
+
                 else
                     % bring the trajectory to a stop using previous trajectory...
                     t_plan = P.t_plan;

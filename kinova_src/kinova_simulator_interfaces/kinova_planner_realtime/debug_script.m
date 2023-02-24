@@ -56,7 +56,7 @@ qd1 = zeros(7,1); % final velocity is zero
 qdd1 = zeros(7,1); % final acceleration is zero
 
 % for tid = 1:128
-duration = 4;
+duration = 2;
 tid = 100;
 tspan = linspace(0, duration, tid + 1);
 
@@ -193,6 +193,9 @@ for i = 1:7
 end
 sgtitle('Desired Acceleration Comparison')
 
+% these won't match perfectly because c++ center is at the center of each
+% time interval and the matlab value is at a random point in the time
+% interval.
 vel_check = qd_des_matlab(1,:)' ./ des_vel_center(:,1);
 accel_check = qdd_des_matlab(1,:)' ./ des_accel_center(:,1);
 

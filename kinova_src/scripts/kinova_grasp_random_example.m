@@ -17,6 +17,8 @@ goal_radius = pi/30;
 dimension = 3 ;
 verbosity = 10;
 
+DURATION = 2;
+
 %%% number of random obstacles
 num_obstacles = 0;
 
@@ -54,8 +56,8 @@ plot_while_running = true ;
 
 % simulation
 max_sim_time = 172800 ; % 48 hours
-max_sim_iter = 600 ;
-stop_threshold = 4 ; % number of failed iterations before exiting
+max_sim_iter = 1200 ;
+stop_threshold = 3 ; % number of failed iterations before exiting
 
 %%% for world
 % start = [-1; -1; -1; -1; -1; -1; -1]; % start configuration
@@ -126,7 +128,8 @@ P = uarmtd_planner('verbose', verbosity, ...
                    'input_constraints_flag', true, ...
                    'use_robust_input', use_robust_input, ...
                    'traj_type', traj_type, ...
-                   'use_cuda', use_cuda_flag) ;
+                   'use_cuda', use_cuda_flag,...
+                   'DURATION', DURATION) ;
 
 if if_use_RRT
     P.HLP = arm_end_effector_RRT_star_HLP('plot_waypoint_flag',plot_waypoint_flag,...
