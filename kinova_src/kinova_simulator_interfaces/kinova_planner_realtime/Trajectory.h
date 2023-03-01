@@ -31,9 +31,12 @@
 //
 class BezierCurve{
 public:
-    double* q0 = nullptr;
-    double* qd0 = nullptr;
-    double* qdd0 = nullptr;
+    Eigen::VectorXd q0;
+    Eigen::VectorXd qd0;
+    Eigen::VectorXd qdd0;
+
+    Eigen::VectorXd Tqd0; // qd0 * T
+    Eigen::VectorXd TTqdd0; // qdd0 * T ^ 2
 
     double q_des_k_indep_extrema_1[NUM_FACTORS] = {0.0};
     double q_des_k_indep_extrema_2[NUM_FACTORS] = {0.0};
@@ -50,7 +53,7 @@ public:
     double qdd_des_k_indep_extremum_1[NUM_FACTORS] = {0.0};
     double qdd_des_k_indep_extremum_2[NUM_FACTORS] = {0.0};
 
-    double dt;
+    double ds = 0;
 
     // PZsparse cos_q_des[NUM_TIME_STEPS * NUM_FACTORS];
     // PZsparse sin_q_des[NUM_TIME_STEPS * NUM_FACTORS];
@@ -68,9 +71,11 @@ public:
     // joint acceleration
     PZsparseArray qdda_des;
 
-    BezierCurve() {};
+    BezierCurve();
 
-    BezierCurve(double* q0_inp, double* qd0_inp, double* qdd0_inp);
+    BezierCurve(const Eigen::VectorXd& q0_inp, 
+                const Eigen::VectorXd& qd0_inp, 
+                const Eigen::VectorXd& qdd0_inp);
 
     ~BezierCurve() {};
 
@@ -92,31 +97,31 @@ public:
 
 // helper functions
 // q0, qd0, qdd0, k here are scalars since all joints are using the same Bezier curve representation
-double q_des_func(double q0, double qd0, double qdd0, double k, double t);
+double q_des_func(double q0, double Tqd0, double TTqdd0, double k, double t);
 
-double qd_des_func(double q0, double qd0, double qdd0, double k, double t);
+double qd_des_func(double q0, double Tqd0, double TTqdd0, double k, double t);
 
-double qdd_des_func(double q0, double qd0, double qdd0, double k, double t);
+double qdd_des_func(double q0, double Tqd0, double TTqdd0, double k, double t);
 
 // derivative of the second extrema of q_des (when qd_des = 0) w.r.t k 
-double q_des_extrema2_k_derivative(double q0, double qd0, double qdd0, double k);
+double q_des_extrema2_k_derivative(double q0, double Tqd0, double TTqdd0, double k);
 
 // derivative of the third extrema of q_des (when qd_des = 0) w.r.t k 
-double q_des_extrema3_k_derivative(double q0, double qd0, double qdd0, double k);
+double q_des_extrema3_k_derivative(double q0, double Tqd0, double TTqdd0, double k);
 
-// derivative of the second extrema of qd_des (when qd_des = 0) w.r.t k 
-double qd_des_extrema2_k_derivative(double q0, double qd0, double qdd0, double k);
+// derivative of the second extrema of qd_des (when qdd_des = 0) w.r.t k 
+double qd_des_extrema2_k_derivative(double q0, double Tqd0, double TTqdd0, double k);
 
-// derivative of the third extrema of qd_des (when qd_des = 0) w.r.t k 
-double qd_des_extrema3_k_derivative(double q0, double qd0, double qdd0, double k);
+// derivative of the third extrema of qd_des (when qdd_des = 0) w.r.t k 
+double qd_des_extrema3_k_derivative(double q0, double Tqd0, double TTqdd0, double k);
 
 // k-independent part of q_des
-double q_des_k_indep(double q0, double qd0, double qdd0, double t);
+double q_des_k_indep(double q0, double Tqd0, double TTqdd0, double t);
 
 // k-independent part of qd_des
-double qd_des_k_indep(double q0, double qd0, double qdd0, double t);
+double qd_des_k_indep(double q0, double Tqd0, double TTqdd0, double t);
 
 // k-independent part of qdd_des
-double qdd_des_k_indep(double q0, double qd0, double qdd0, double t);
+double qdd_des_k_indep(double q0, double Tqd0, double TTqdd0, double t);
 
 #endif

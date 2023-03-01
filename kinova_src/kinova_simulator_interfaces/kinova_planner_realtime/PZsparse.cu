@@ -312,6 +312,32 @@ void PZsparse::simplify() {
         i = j;
     }
 
+    // for (uint i = 0; i < polynomial.size(); i++) {
+    //     if (polynomial[i].coeff.norm() == 0) {
+    //         continue;
+    //     }
+
+    //     uint64_t degree = polynomial[i].degree;
+
+    //     for (uint j = 0; j < polynomial.size(); j++) {
+    //         if (j == i || polynomial[j].coeff.norm() == 0) {
+    //             continue;
+    //         }
+    //         if (polynomial[j].degree == degree) {
+    //             polynomial[i].coeff += polynomial[j].coeff;
+    //             polynomial[j].coeff.setZero();
+    //         }
+    //     }
+
+    //     Eigen::MatrixXd temp = polynomial[i].coeff;
+    //     if (temp.norm() <= SIMPLIFY_THRESHOLD) {
+    //         reduce_amount += temp.cwiseAbs();
+    //     }
+    //     else {
+    //         polynomial_new.emplace_back(polynomial[i]);
+    //     }
+    // }
+
     polynomial = polynomial_new;
 
     if (reduce_amount.norm() != 0) {
@@ -1090,9 +1116,13 @@ PZsparse cross(const Eigen::MatrixXd& a, const PZsparse& b) {
 
     PZsparseArray res(3, 1);
 
-    res(0, 0) = a(1, 0) * b(2, 0) - a(2, 0) * b(1, 0);
-    res(1, 0) = a(2, 0) * b(0, 0) - a(0, 0) * b(2, 0);
-    res(2, 0) = a(0, 0) * b(1, 0) - a(1, 0) * b(0, 0);
+    PZsparse b0 = b(0, 0);
+    PZsparse b1 = b(1, 0);
+    PZsparse b2 = b(2, 0);
+
+    res(0, 0) = a(1, 0) * b2 - a(2, 0) * b1;
+    res(1, 0) = a(2, 0) * b0 - a(0, 0) * b2;
+    res(2, 0) = a(0, 0) * b1 - a(1, 0) * b0;
 
     return stack(res);
 }
@@ -1102,9 +1132,16 @@ PZsparse cross(const PZsparse& a, const PZsparse& b) {
 
     PZsparseArray res(3, 1);
 
-    res(0, 0) = a(1, 0) * b(2, 0) - a(2, 0) * b(1, 0);
-    res(1, 0) = a(2, 0) * b(0, 0) - a(0, 0) * b(2, 0);
-    res(2, 0) = a(0, 0) * b(1, 0) - a(1, 0) * b(0, 0);
+    PZsparse a0 = a(0, 0);
+    PZsparse a1 = a(1, 0);
+    PZsparse a2 = a(2, 0);
+    PZsparse b0 = b(0, 0);
+    PZsparse b1 = b(1, 0);
+    PZsparse b2 = b(2, 0);
+
+    res(0, 0) = a1 * b2 - a2 * b1;
+    res(1, 0) = a2 * b0 - a0 * b2;
+    res(2, 0) = a0 * b1 - a1 * b0;
 
     return stack(res);
 }
@@ -1114,9 +1151,13 @@ PZsparse cross(const PZsparse& a, const Eigen::MatrixXd& b) {
 
     PZsparseArray res(3, 1);
 
-    res(0, 0) = a(1, 0) * b(2, 0) - a(2, 0) * b(1, 0);
-    res(1, 0) = a(2, 0) * b(0, 0) - a(0, 0) * b(2, 0);
-    res(2, 0) = a(0, 0) * b(1, 0) - a(1, 0) * b(0, 0);
+    PZsparse a0 = a(0, 0);
+    PZsparse a1 = a(1, 0);
+    PZsparse a2 = a(2, 0);
+
+    res(0, 0) = a1 * b(2, 0) - a2 * b(1, 0);
+    res(1, 0) = a2 * b(0, 0) - a0 * b(2, 0);
+    res(2, 0) = a0 * b(1, 0) - a1 * b(0, 0);
 
     return stack(res);
 }

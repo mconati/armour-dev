@@ -5,13 +5,14 @@
 #include "KinovaInfo.h"
 // #include "KinovaWithoutGripperInfo.h"
 
-#define DEBUG_MODE false
-
 // Parameters for PZsparse.h:
     // monomials with a coefficient smaller than this number will be reduced
-    #define SIMPLIFY_THRESHOLD 2e-4
+    #define SIMPLIFY_THRESHOLD 1e-4
 
 // Parameters for Trajectories.h:
+    // duration of the Bezier curve
+    #define DURATION 2.0
+
     // number of time steps (This should be an EVEN number!!!)
     #define NUM_TIME_STEPS 64
 
@@ -38,6 +39,9 @@
 
     // threshold for input constraint considered to be violated (unit: Newton * meter)
     #define TORQUE_INPUT_CONSTRAINT_VIOLATION_THRESHOLD 1e-2
+
+    // scale the cost function value so that it could converge faster (be careful with it!)
+    #define COST_FUNCTION_OPTIMALITY_SCALE 10.0
 
 // Parameters for armour_main.cpp
     #define IPOPT_OPTIMIZATION_TOLERANCE 1e-3

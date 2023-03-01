@@ -36,10 +36,10 @@ Section I:
     // declare this first and make sure we always have a new output
     std::ofstream outputstream1(outputfilename1);
 
-    double q0[NUM_FACTORS] = {0.0};
-    double qd0[NUM_FACTORS] = {0.0};
-    double qdd0[NUM_FACTORS] = {0.0};
-    double q_des[NUM_FACTORS] = {0.0};
+    Eigen::VectorXd q0(NUM_FACTORS); q0.setZero();
+    Eigen::VectorXd qd0(NUM_FACTORS); qd0.setZero();
+    Eigen::VectorXd qdd0(NUM_FACTORS); qdd0.setZero();
+    Eigen::VectorXd q_des(NUM_FACTORS); q_des.setZero();
 
     int num_obstacles = 0;
     double obstacles[MAX_OBSTACLE_NUM * (MAX_OBSTACLE_GENERATOR_NUM + 1) * 3] = {0.0};
@@ -197,11 +197,17 @@ Section III:
 
     double factors[NUM_FACTORS] = {0.5, 0.6, 0.7, 0.0, -0.5, -0.6, -0.7};
 
+    Eigen::MatrixXd qd_des_sliced_center(NUM_FACTORS, NUM_TIME_STEPS);
     Eigen::MatrixXd torque_sliced_center(NUM_FACTORS, NUM_TIME_STEPS);
     Eigen::Vector3d link_sliced_center[NUM_TIME_STEPS * NUM_JOINTS];
 
-    #pragma omp parallel for shared(kd, factors, torque_sliced_center, link_sliced_center) private(openmp_t_ind) schedule(static, NUM_TIME_STEPS / NUM_THREADS)
+    #pragma omp parallel for shared(kd, factors, qd_des_sliced_center, torque_sliced_center, link_sliced_center) private(openmp_t_ind) schedule(static, NUM_TIME_STEPS / NUM_THREADS)
     for(openmp_t_ind = 0; openmp_t_ind < NUM_TIME_STEPS; openmp_t_ind++) {
+        for (int k = 0; k < NUM_FACTORS; k++) {
+            MatrixXInt res = traj.qd_des(k, openmp_t_ind).slice(factors);
+            qd_des_sliced_center(k, openmp_t_ind) = getCenter(res(0));
+        }
+
         for (int k = 0; k < NUM_FACTORS; k++) {
             MatrixXInt res = kd.u_nom(k, openmp_t_ind).slice(factors);
             torque_sliced_center(k, openmp_t_ind) = getCenter(res(0));
@@ -217,8 +223,19 @@ Section III:
 Section IV:
     Prepare output
 */
-
     // output FRS and other information, you can comment them if they are unnecessary
+    // std::ofstream outputstream2(outputfilename2);
+    // outputstream2 << std::setprecision(10);
+    // for (int i = 0; i < NUM_TIME_STEPS; i++) {
+    //     for (int j = 0; j < NUM_JOINTS; j++) {
+    //         for (int l = 0; l < 3; l++) {
+    //             outputstream2 << link_sliced_center[i * NUM_JOINTS + j](l) << ' ';
+    //         }
+    //         outputstream2 << '\n';
+    //     }
+    //     outputstream2 << '\n';
+    // }
+    // outputstream2.close();
     std::ofstream outputstream2(outputfilename2);
     outputstream2 << std::setprecision(10);
     for (int i = 0; i < NUM_TIME_STEPS; i++) {
@@ -263,9 +280,24 @@ Section IV:
     outputstream5 << std::setprecision(10);
     for (int i = 0; i < NUM_TIME_STEPS; i++) {
         for (int j = 0; j < NUM_FACTORS; j++) {
-            outputstream5 << torque_sliced_center(j, i) << ' ';
+            // outputstream5 << torque_sliced_center(j, i) << ' ';
+            outputstream5 << qd_des_sliced_center(j, i) << ' ';
         }
         outputstream5 << '\n';
     }
     outputstream5.close();
+
+    double position_extremum[2 * NUM_FACTORS];
+    double velocity_extremum[2 * NUM_FACTORS];
+    traj.returnJointPositionExtremum(position_extremum, factors);
+    traj.returnJointVelocityExtremum(velocity_extremum, factors);
+    cout << "Joint position [minimum, maximum]" << endl;
+    for (int i = 0; i < NUM_FACTORS; i++) {
+        cout << "[ " << position_extremum[i] << ", " << position_extremum[i + NUM_FACTORS] << " ]\n";
+    }
+    cout << "Joint velocity [minimum, maximum]" << endl;
+    for (int i = 0; i < NUM_FACTORS; i++) {
+        cout << "[ " << velocity_extremum[i] << ", " << velocity_extremum[i + NUM_FACTORS] << " ]\n";
+    }
+    cout << endl;
 }
