@@ -66,7 +66,7 @@ t = (t_ub - t_lb) * rand + t_lb;
 q = get_desired_traj(beta, t);
 
 % plot robot
-A.plot_at_time(q);
+% A.plot_at_time(q);
 
 % plot link reachsets
 for j = 1:7
