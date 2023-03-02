@@ -17,16 +17,25 @@ class pzsparse {
         const std::string ofile2 = "/armour_joint_position_center.out";
         const std::string ofile3 = "/armour_joint_position_radius.out";
 
-        double q0[NUM_FACTORS] = {0.0};
-        double qd0[NUM_FACTORS] = {0.0};
-        double qdd0[NUM_FACTORS] = {0.0};
-        double q_des[NUM_FACTORS] = {0.0};
+        // Eigen::VectorXd a ({1.5, 2.5, 3.5});
+        // Eigen::MatrixXd b ({1.5, 2.5, 3.5});
 
-        double t_plan = 1;
+        Eigen::VectorXd q0 = Eigen::VectorXd::Zero(NUM_FACTORS);
+        Eigen::VectorXd qd0 = Eigen::VectorXd::Zero(NUM_FACTORS);
+        Eigen::VectorXd qdd0 = Eigen::VectorXd::Zero(NUM_FACTORS);
+        Eigen::VectorXd q_des = Eigen::VectorXd::Zero(NUM_FACTORS);
 
-        int num_obstacles;
-        double obstacles[MAX_OBSTACLE_NUM * (MAX_OBSTACLE_GENERATOR_NUM + 1) * 3];
+        // Eigen::VectorXd q0; //q0.setZero(NUM_FACTORS);
+        // Eigen::MatrixXd qd0; //qd0.setZero();
+        // Eigen::MatrixXd qdd0; //qdd0.setZero();
+        // Eigen::MatrixXd q_des; //q_des.setZero();
+
+        double t_plan = DURATION;
+
+        int num_obstacles = 0;
+        double obstacles[MAX_OBSTACLE_NUM * (MAX_OBSTACLE_GENERATOR_NUM + 1) * 3] = {0.0};
         std::shared_ptr<Obstacles> O_ptr{nullptr};
+        // Obstacles O(obstacles, num_obstacles); 
         // Obstacles O;
 
 
@@ -63,8 +72,8 @@ class pzsparse {
             std::cout << "Obstacles allocated!" << std::endl;
         }
 
-        void set_goal(py::array_t<double> qdes_vec){
-            auto qdes_ = qdes_vec.unchecked<1>();
+        void set_goal(Eigen::Ref<Eigen::VectorXd> qdes_vec){
+            auto qdes_ = qdes_vec; //.unchecked<1>();
             cout << "Goal set to: \n [";
             for (int i = 0; i < NUM_FACTORS; i++) {
                 q_des[i] = qdes_(i);
@@ -73,10 +82,10 @@ class pzsparse {
             cout << "]" << endl;
         }
 
-        void set_state(py::array_t<double> q0_vec, py::array_t<double> qd0_vec, py::array_t<double> qdd0_vec){
-            auto q0_ = q0_vec.unchecked<1>();
-            auto qd0_ = qd0_vec.unchecked<1>();
-            auto qdd0_ = qdd0_vec.unchecked<1>();
+        void set_state(Eigen::Ref<Eigen::VectorXd> q0_vec, Eigen::Ref<Eigen::VectorXd> qd0_vec, Eigen::Ref<Eigen::VectorXd> qdd0_vec){
+            auto q0_ = q0_vec; //.unchecked<1>();
+            auto qd0_ = qd0_vec; //.unchecked<1>();
+            auto qdd0_ = qdd0_vec; //.unchecked<1>();
             cout << "States set to:" << endl;
             cout << "[q0,     qd0,     qdd0]" << endl;
             for (int i = 0; i < NUM_FACTORS; i++){
@@ -136,8 +145,8 @@ class pzsparse {
             return num_obstacles;
         }
         
-        py::array_t<double> optimize(py::array_t<double> q0_vec, py::array_t<double> qd0_vec, py::array_t<double> qdd0_vec, 
-                                    py::array_t<double> qgoal_vec) {
+        py::array_t<double> optimize(Eigen::Ref<Eigen::VectorXd> q0_vec, Eigen::Ref<Eigen::VectorXd> qd0_vec, Eigen::Ref<Eigen::VectorXd> qdd0_vec, 
+                                    Eigen::Ref<Eigen::VectorXd> qgoal_vec) {
             
 
             set_goal(qgoal_vec);
@@ -399,15 +408,15 @@ class pzsparse {
             return k_opt;
         }
 
-        py::array_t<double> getDesTraj(py::array_t<double> q0, py::array_t<double> qd0, py::array_t<double> qdd0, py::array_t<double> k, double t){
+        py::array_t<double> getDesTraj(Eigen::Ref<Eigen::VectorXd> q0, Eigen::Ref<Eigen::VectorXd> qd0, Eigen::Ref<Eigen::VectorXd> qdd0, py::array_t<double> k, double t){
             // return desired trajectory: [q, qd, qdd]
             int size = NUM_FACTORS * 3;
             auto traj_d = py::array_t<double>(size);
             double *traj_d_ptr = static_cast<double *>(traj_d.request().ptr);
 
-            auto q0_ = q0.unchecked<1>();
-            auto qd0_ = qd0.unchecked<1>();
-            auto qdd0_ = qdd0.unchecked<1>();
+            auto q0_ = q0;//.unchecked<1>();
+            auto qd0_ = qd0;//.unchecked<1>();
+            auto qdd0_ = qdd0;//.unchecked<1>();
             auto k_ = k.unchecked<1>();
 
             for (int i = 0; i < NUM_FACTORS; i++){

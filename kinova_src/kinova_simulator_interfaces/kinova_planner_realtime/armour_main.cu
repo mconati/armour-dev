@@ -77,7 +77,7 @@ Section I:
 
     inputstream.close();
 
-    double t_plan = 1.0; // optimize the distance between q_des and the desired trajectories at t_plan
+    double t_plan = DURATION; // optimize the distance between q_des and the desired trajectories at t_plan
      
     /*
 Section II:
