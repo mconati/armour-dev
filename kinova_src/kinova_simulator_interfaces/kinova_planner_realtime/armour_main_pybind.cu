@@ -4,6 +4,7 @@
 
 #include <pybind11/pybind11.h>
 #include <pybind11/numpy.h>
+#include <pybind11/eigen.h>
 #include <memory>
 
 namespace py = pybind11;
@@ -408,21 +409,24 @@ class pzsparse {
             return k_opt;
         }
 
-        py::array_t<double> getDesTraj(Eigen::Ref<Eigen::VectorXd> q0, Eigen::Ref<Eigen::VectorXd> qd0, Eigen::Ref<Eigen::VectorXd> qdd0, py::array_t<double> k, double t){
+        py::array_t<double> getDesTraj(Eigen::Ref<Eigen::VectorXd> q0, Eigen::Ref<Eigen::VectorXd> qd0, Eigen::Ref<Eigen::VectorXd> qdd0, Eigen::Ref<Eigen::VectorXd> k, double t){
             // return desired trajectory: [q, qd, qdd]
             int size = NUM_FACTORS * 3;
             auto traj_d = py::array_t<double>(size);
             double *traj_d_ptr = static_cast<double *>(traj_d.request().ptr);
 
-            auto q0_ = q0;//.unchecked<1>();
-            auto qd0_ = qd0;//.unchecked<1>();
-            auto qdd0_ = qdd0;//.unchecked<1>();
-            auto k_ = k.unchecked<1>();
+            // double *q0_ = static_cast<double *>(q0.request().ptr);//.unchecked<1>();
+            // double *qd0_ = static_cast<double *>(qd0.request().ptr);//.unchecked<1>();
+            // double *qdd0_ = static_cast<double *>(qdd0.request().ptr);//.unchecked<1>();
+            auto q0_ = q0;
+            auto qd0_ = qd0;
+            auto qdd0_ = qdd0;
+            auto k_ = k; //.unchecked<1>();
 
             for (int i = 0; i < NUM_FACTORS; i++){
-                traj_d_ptr[3*i] = q_des_func(q0_(i), qd0_(i), qdd0_(i), k_(i), t);
-                traj_d_ptr[3*i+1] = qd_des_func(q0_(i), qd0_(i), qdd0_(i), k_(i), t);
-                traj_d_ptr[3*i+2] = qdd_des_func(q0_(i), qd0_(i), qdd0_(i), k_(i), t);
+                traj_d_ptr[3*i] = q_des_func(q0_[i], qd0_[i], qdd0_[i], k_[i], t);
+                traj_d_ptr[3*i+1] = qd_des_func(q0_[i], qd0_[i], qdd0_[i], k_[i], t);
+                traj_d_ptr[3*i+2] = qdd_des_func(q0_[i], qd0_[i], qdd0_[i], k_[i], t);
             }
             
             return traj_d;
