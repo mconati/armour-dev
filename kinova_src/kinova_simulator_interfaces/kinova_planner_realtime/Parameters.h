@@ -11,10 +11,10 @@
 
 // Parameters for Trajectories.h:
     // duration of the Bezier curve
-    #define DURATION 1.0
+    #define DURATION 2.0
 
     // number of time steps (This should be an EVEN number!!!)
-    #define NUM_TIME_STEPS 64
+    #define NUM_TIME_STEPS 40
 
     // range of parameters (size of generators in PZ).
     // const double k_range[NUM_FACTORS] = { M_PI / 24, M_PI / 24, M_PI / 24, M_PI / 24, M_PI / 24, M_PI / 24, M_PI / 30 }; // (radian)
