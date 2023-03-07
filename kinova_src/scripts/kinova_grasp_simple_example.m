@@ -38,7 +38,7 @@ use_CAD_flag = true; % plot robot with CAD or bounding boxes
 
 %%% for LLC
 use_robust_input = true;
-LLC_V_max = 1e-4;
+LLC_V_max = 1e-2;
 
 %%% for HLP
 if_use_RRT = false;

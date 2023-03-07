@@ -62,7 +62,7 @@ else
 	end
 end
 
-bernstein_final_range = pi/60*ones(n_q, 1);
+bernstein_final_range = pi/32*ones(n_q, 1);
 % bernstein_final_range = pi/24*ones(n_q, 1);
 % bernstein_final_range = [pi/24; pi/72; pi/24; pi/72; pi/72; pi/72; pi/72];
 

@@ -42,7 +42,7 @@ use_CAD_flag = true; % plot robot with CAD or bounding boxes
 
 %%% for LLC
 use_robust_input = true;
-LLC_V_max = 1e-4; % 5e-5;
+LLC_V_max = 1e-2; % 5e-5;
 
 %%% for HLP
 if_use_RRT = false;
@@ -84,7 +84,7 @@ joint_speed_limits = [-1.3963, -1.3963, -1.3963, -1.3963, -1.2218, -1.2218, -1.2
 joint_input_limits = [-56.7, -56.7, -56.7, -56.7, -29.4, -29.4, -29.4;
                        56.7,  56.7,  56.7,  56.7,  29.4,  29.4,  29.4]; % matlab doesn't import these from urdf so hard code into class
 transmision_inertia = [8.02999999999999936 11.99620246153036440 9.00254278617515169 11.58064393167063599 8.46650409179141228 8.85370693737424297 8.85873036646853151]; % matlab doesn't import these from urdf so hard code into class
-M_min_eigenvalue = 8.29938; % 5.095620491878957; % matlab doesn't import these from urdf so hard code into class
+M_min_eigenvalue = 8.2998203638; % 5.095620491878957; % matlab doesn't import these from urdf so hard code into class
 
 %% automated from here
 if plot_while_running
