@@ -20,7 +20,7 @@ verbosity = 10;
 DURATION = 2;
 
 %%% number of random obstacles
-num_obstacles = 0;
+num_obstacles = 5;
 
 %%% Surface Parameters for Grasp Trial
 u_s = 0.609382421;
@@ -42,7 +42,7 @@ use_CAD_flag = true; % plot robot with CAD or bounding boxes
 
 %%% for LLC
 use_robust_input = true;
-LLC_V_max = 5e-5;
+LLC_V_max = 1e-4; % 5e-5;
 
 %%% for HLP
 if_use_RRT = false;
@@ -84,7 +84,7 @@ joint_speed_limits = [-1.3963, -1.3963, -1.3963, -1.3963, -1.2218, -1.2218, -1.2
 joint_input_limits = [-56.7, -56.7, -56.7, -56.7, -29.4, -29.4, -29.4;
                        56.7,  56.7,  56.7,  56.7,  29.4,  29.4,  29.4]; % matlab doesn't import these from urdf so hard code into class
 transmision_inertia = [8.02999999999999936 11.99620246153036440 9.00254278617515169 11.58064393167063599 8.46650409179141228 8.85370693737424297 8.85873036646853151]; % matlab doesn't import these from urdf so hard code into class
-M_min_eigenvalue = 5.095620491878957; % matlab doesn't import these from urdf so hard code into class
+M_min_eigenvalue = 8.29938; % 5.095620491878957; % matlab doesn't import these from urdf so hard code into class
 
 %% automated from here
 if plot_while_running
@@ -93,7 +93,7 @@ end
 
 % run loop
 tic;
-W = kinova_grasp_world_static('create_random_obstacles_flag', true, 'goal_radius', goal_radius, 'N_obstacles', num_obstacles, 'dimension',dimension,'workspace_goal_check', 0, 'verbose',verbosity, 'goal_type', goal_type, 'grasp_constraint_flag', true,'ik_start_goal_flag', true, 'u_s', u_s, 'surf_rad', surf_rad) ; % 'obstacles', obstacles,length(obstacles), 'start', start, 'goal', goal,
+W = kinova_grasp_world_static('create_random_obstacles_flag', true, 'goal_radius', goal_radius,'N_random_obstacles', num_obstacles, 'N_obstacles', num_obstacles, 'dimension',dimension,'workspace_goal_check', 0, 'verbose',verbosity, 'goal_type', goal_type, 'grasp_constraint_flag', true,'ik_start_goal_flag', false, 'u_s', u_s, 'surf_rad', surf_rad) ; % 'obstacles', obstacles,length(obstacles), 'start', start, 'goal', goal,
 W.robot = robot;
 
 % create arm agent
@@ -123,13 +123,13 @@ end
 A.LLC.setup(A);
 
 P = uarmtd_planner('verbose', verbosity, ...
-                   'first_iter_pause_flag', false, ...
+                   'first_iter_pause_flag', true, ...
                    'use_q_plan_for_cost', true, ...
                    'input_constraints_flag', true, ...
                    'use_robust_input', use_robust_input, ...
                    'traj_type', traj_type, ...
                    'use_cuda', use_cuda_flag,...
-                   'DURATION', DURATION) ;
+                   'DURATION', DURATION) ; % _wrapper
 
 if if_use_RRT
     P.HLP = arm_end_effector_RRT_star_HLP('plot_waypoint_flag',plot_waypoint_flag,...
@@ -172,15 +172,20 @@ end
 summary = S.run();
 
 
-%% Calculating the Acceleration
+%% Plotting States
 
 figure(101)
 subplot(3,1,1)
+title('Joint Positions')
 plot(A.time,A.state(A.joint_state_indices,:))
 subplot(3,1,2)
+title('Joint Velocities')
 plot(A.time,A.state(A.joint_speed_indices,:))
 subplot(3,1,3)
+title('Joint Torques')
 plot(A.time,A.input)
+
+% Calculating the Acceleration
 
 joint_angles = A.state(A.joint_state_indices,:);
 joint_angular_velocity = A.state(A.joint_speed_indices,:);
@@ -188,19 +193,23 @@ joint_angular_velocity = A.state(A.joint_speed_indices,:);
 qdd_post = zeros(7,length(A.time));
 % calculating the acceleration in post to compare with what is stored
 for i = 2:length(A.time)
-    [M, C, g] = A.calculate_dynamics(joint_angles(:,i-1), joint_angular_velocity(:,i-1), A.params.true);
+    [M, C, g] = A.calculate_dynamics(joint_angles(:,i), joint_angular_velocity(:,i), A.params.true);
 
     for j = 1:A.n_inputs
         M(j,j) = M(j,j) + A.transmision_inertia(j);
     end
     % can I call u=A.LLC.get_control_inputs() here with the P.info?
     
-    % need to initialize this with a column of zeros and start at the
-    % second index - fixed
-    qdd_post(:,i) = M\(A.input(:,i)-C*joint_angular_velocity(:,i-1)-g);
+    qdd_post(:,i) = M\(A.input(:,i)-C*joint_angular_velocity(:,i)-g);
 %         qdd_post(:,i) = M\(A.input(:,i)-C*joint_angular_velocity(:,i)-g);
 
 end
+
+figure(1001)
+hold on
+title('Acceleration')
+% plot(A.time,qdd_post,'o')
+plot(A.time,A.reference_acceleration)
 
 % Calling RNEA
 
@@ -229,31 +238,31 @@ end
 
 % if plot_force
 
-figure(3)
-% plot the x-axis force (in the tray frame)
-subplot(1,3,1)
-hold on
-plot(A.time(1:end), force(1,:), 'k')
-xlabel('time (s)')
-ylabel('x-axis Force (N)')
-axis('square')
-grid on
-% plot the y-axis force (in the tray frame)
-subplot(1,3,2)
-hold on
-plot(A.time(1:end), force(2,:), 'k')
-xlabel('time (s)')
-ylabel('y-axis Force (N)')
-axis('square')
-grid on
-% plot the z-axis force (in the tray frame)
-subplot(1,3,3)
-hold on
-plot(A.time(1:end), force(3,:), 'k')
-xlabel('time (s)')
-ylabel('z-axis Force (N)')
-axis('square')
-grid on
+    figure(3)
+    % plot the x-axis force (in the tray frame)
+    subplot(1,3,1)
+    hold on
+    plot(A.time(1:end), force(1,:), 'k')
+    xlabel('time (s)')
+    ylabel('x-axis Force (N)')
+    axis('square')
+    grid on
+    % plot the y-axis force (in the tray frame)
+    subplot(1,3,2)
+    hold on
+    plot(A.time(1:end), force(2,:), 'k')
+    xlabel('time (s)')
+    ylabel('y-axis Force (N)')
+    axis('square')
+    grid on
+    % plot the z-axis force (in the tray frame)
+    subplot(1,3,3)
+    hold on
+    plot(A.time(1:end), force(3,:), 'k')
+    xlabel('time (s)')
+    ylabel('z-axis Force (N)')
+    axis('square')
+    grid on
     
 % end
 
@@ -283,31 +292,41 @@ end
 
 % if plot_constraint
     
-figure(4)
-% plot the separation constraint
-subplot(1,3,1)
-hold on
-plot(A.time(1:end),sep, 'k')
-xlabel('time (s)')
-ylabel('Separation Constraint')
-axis('square')
-grid on
-% plot the slipping constraint
-subplot(1,3,2)
-hold on
-plot(A.time(1:end),slip, 'k')
-xlabel('time (s)')
-ylabel('Slipping Constraint')
-axis('square')
-grid on
-% plot the tipping constraint
-subplot(1,3,3)
-hold on
-plot(A.time(1:end),tip, 'k')
-xlabel('time (s)')
-ylabel('Tipping Constraint')
-axis('square')
-grid on
+    figure(4)
+    % plot the separation constraint
+    subplot(1,3,1)
+    hold on
+    plot(A.time(1:end),sep, 'k')
+    xlabel('time (s)')
+    ylabel('Separation Constraint')
+    axis('square')
+    grid on
+    % plot the slipping constraint
+    subplot(1,3,2)
+    hold on
+    plot(A.time(1:end),slip, 'k')
+    plot(A.time(1:end),slip2, 'c')
+    xlabel('time (s)')
+    ylabel('Slipping Constraint')
+    axis('square')
+    grid on
+    % plot the tipping constraint
+    subplot(1,3,3)
+    hold on
+    plot(A.time(1:end),tip, 'k')
+    plot(A.time(1:end),tip2, 'c')
+    xlabel('time (s)')
+    ylabel('Tipping Constraint')
+    axis('square')
+    grid on
 
 % end
+
+% Mean Planning Time
+plan_time = [];
+for i=1:length(P.info.planning_time)
+    plan_time = [plan_time P.info.planning_time{i}];
+end
+mean_plan_time = mean(plan_time)
+max_plan_time = max(plan_time)
 

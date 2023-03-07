@@ -8,7 +8,7 @@
 clear ; clc ; figure(1); clf; view(3); grid on;
 
 %% user parameters
-world_save_dir = 'saved_worlds/rtd-force/experiment_random_buffered';
+world_save_dir = 'saved_worlds/rtd-force/dur2s_largeStateBuffer_10Obs_03052023';
 if ~exist(world_save_dir, 'dir')
     mkdir(world_save_dir);
 end
@@ -18,20 +18,24 @@ surf_rad =  0.058 / 2;
 grasp_constraint_flag = true;
 
 transmision_inertia = [8.02999999999999936 11.99620246153036440 9.00254278617515169 11.58064393167063599 8.46650409179141228 8.85370693737424297 8.85873036646853151]; % matlab doesn't import these from urdf so hard code into class
-M_min_eigenvalue = 5.095620491878957; % matlab doesn't import these from urdf so hard code into class
+M_min_eigenvalue = 8.29938; % matlab doesn't import these from urdf so hard code into class
 
-obstacle_flag = 0;
-N_obstacle_min = 0 ;
-N_obstacle_max = 0 ;
-N_obstacle_delta = 3 ;
+obstacle_flag = 1;
+N_obstacle_min = 10 ;
+N_obstacle_max = 10 ;
+N_obstacle_delta = 1 ;
 N_worlds_per_obstacle = 100;
+
 dimension = 3 ;
 nLinks = 10 ;
 verbosity = 10 ;
 allow_replan_errors = true ;
-t_plan = 0.5 ;
-time_discretization = 0.01 ;
-T = 1 ;
+
+t_plan = 1 ;
+time_discretization = 0.02 ;
+T = 2 ;
+DURATION = 2;
+
 use_cuda_flag = true;
 agent_move_mode = 'integrator' ; % pick 'direct' or 'integrator'
 
@@ -60,10 +64,14 @@ A = uarmtd_agent(robot, params, ...
                      'joint_speed_limits', joint_speed_limits, ...
                      'joint_input_limits', joint_input_limits,...
                      'M_min_eigenvalue', M_min_eigenvalue, ...
-                     'transmision_inertia', transmision_inertia);
+                     'transmision_inertia', transmision_inertia,...
+                     't_total', DURATION);
 A.LLC = uarmtd_robust_CBF_LLC();
 
 %% automated from here
+
+test1 = N_obstacle_min:N_obstacle_delta:N_obstacle_max
+test2 = 1:N_worlds_per_obstacle
 
 if obstacle_flag
     for i = N_obstacle_min:N_obstacle_delta:N_obstacle_max
@@ -94,7 +102,7 @@ else
         % use this to start from random start config:
         W = kinova_grasp_world_static('robot',robot,'include_base_obstacle', 1, 'goal_radius', pi/30,'dimension',dimension,'workspace_goal_check', 0,...
             'verbose',verbosity, 'creation_buffer', 0.075, 'base_creation_buffer', 0.075,...
-            'grasp_constraint_flag', true,'ik_start_goal_flag', false,'u_s', u_s, 'surf_rad', surf_rad) ;
+            'grasp_constraint_flag', grasp_constraint_flag,'ik_start_goal_flag', false,'u_s', u_s, 'surf_rad', surf_rad) ;
 
         % set up world using arm
         I = A.get_agent_info ;

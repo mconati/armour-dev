@@ -38,7 +38,7 @@ use_CAD_flag = true; % plot robot with CAD or bounding boxes
 
 %%% for LLC
 use_robust_input = true;
-LLC_V_max = 1e-2;
+LLC_V_max = 1e-4;
 
 %%% for HLP
 if_use_RRT = false;
@@ -61,7 +61,7 @@ stop_threshold = 4 ; % number of failed iterations before exiting
 
 % simple rotation
 start = [0;-pi/2;0;0;0;0;0];
-goal = [pi/20;-pi/2;0;0;0;0;0];
+goal = [pi/4;-pi/2;0;0;0;0;0];
 % start = [-pi/6;-pi/2;-pi/2;pi/2;0;pi/2;pi/2];
 % goal = [pi/6;-pi/2;pi/2;pi/2;pi;-pi/2;pi/2];
 
@@ -107,7 +107,7 @@ joint_speed_limits = [-1.3963, -1.3963, -1.3963, -1.3963, -1.2218, -1.2218, -1.2
 joint_input_limits = [-56.7, -56.7, -56.7, -56.7, -29.4, -29.4, -29.4;
                        56.7,  56.7,  56.7,  56.7,  29.4,  29.4,  29.4]; % matlab doesn't import these from urdf so hard code into class
 transmision_inertia = [8.02999999999999936 11.99620246153036440 9.00254278617515169 11.58064393167063599 8.46650409179141228 8.85370693737424297 8.85873036646853151]; % matlab doesn't import these from urdf so hard code into class
-M_min_eigenvalue = 5.095620491878957; % matlab doesn't import these from urdf so hard code into class
+M_min_eigenvalue = 8.29938; % matlab doesn't import these from urdf so hard code into class
 
 %% automated from here
 if plot_while_running
@@ -130,7 +130,8 @@ A = uarmtd_agent(robot, params,...
                  'add_measurement_noise_', false, ...
                  'measurement_noise_size_', 0,...
                  'M_min_eigenvalue', M_min_eigenvalue, ...
-                 'transmision_inertia', transmision_inertia);
+                 'transmision_inertia', transmision_inertia,...
+                 't_total', DURATION);
 
 % LLC
 if use_robust_input
@@ -151,7 +152,7 @@ P = uarmtd_planner('verbose', verbosity, ...
                    'use_robust_input', use_robust_input, ...
                    'traj_type', traj_type, ...
                    'use_cuda', use_cuda_flag,...
-                   'DURATION', DURATION) ; % 't_move_temp', t_move't_plan', t_plan,...'t_stop', t_stop
+                   'DURATION', DURATION) ; % 't_move_temp', t_move't_plan', t_plan,...'t_stop', t_stop % _wrapper
 
 if if_use_RRT
     P.HLP = arm_end_effector_RRT_star_HLP('plot_waypoint_flag',plot_waypoint_flag,...
@@ -348,11 +349,14 @@ plan_time = [];
 for i=1:length(P.info.planning_time)
     plan_time = [plan_time P.info.planning_time{i}];
 end
-mean(plan_time)
+mean_plan_time = mean(plan_time)
+max_plan_time = max(plan_time)
+iterations = summary.total_iterations
+num_brakes = sum(summary.stop_check)
 
 %% numerically calculating acceleration
 
-numerical_accel = gradient(A.time)./gradient(A.state(A.joint_speed_indices,:));
-
-figure()
-plot(A.time,numerical_accel)
+% numerical_accel = gradient(A.time)./gradient(A.state(A.joint_speed_indices,:));
+% 
+% figure()
+% plot(A.time,numerical_accel)

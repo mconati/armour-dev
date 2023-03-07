@@ -6,7 +6,7 @@ classdef uarmtd_robust_CBF_LLC < robot_arm_LLC
         Kr = 10;
         V_max = 1e-7; % 3.1e-7; % max allowable value of lyapunov function
         r_norm_threshold = 0;
-        alpha_constant = 1;
+        alpha_constant = 10;
         alpha = [];
         use_true_params_for_robust = false;
         use_disturbance_norm = false;

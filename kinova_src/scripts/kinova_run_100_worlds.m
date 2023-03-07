@@ -28,6 +28,9 @@ goal_radius = pi/30;
 dimension = 3 ;
 verbosity = 10;
 
+% trajectory duration (must match C++)
+DURATION = 2;
+
 %%% for planner
 traj_type = 'bernstein'; % pick 'orig' or 'bernstein'
 allow_replan_errors = true ;
@@ -52,7 +55,7 @@ use_CAD_flag = true;
 add_measurement_noise_ = false;
 measurement_noise_size_ = 0;
 
-%%% for LLC
+%%% for LLC (must match C++)
 LLC_V_max = 1e-2;
 use_true_params_for_robust = false;
 if_use_mex_controller = true;
@@ -65,23 +68,23 @@ plot_waypoint_arm_flag  = true ;
 lookahead_distance = 0.1 ;
 
 % plotting
-plot_while_running = true ;
+plot_while_running = false ;
 
 % simulation
-max_sim_time = 86400 ; % 48 hours
-max_sim_iter = 600 ;
-stop_threshold = 5 ; % number of failed iterations before exiting
+max_sim_time = 86400 ; % 24 hours = 86400 sec; 48 hours = sec
+max_sim_iter = 1000 ;
+stop_threshold = 3 ; % number of failed iterations before exiting
 
 % file handling
 save_file_header = 'trial_' ;
-file_location = '../results/rtd-force/experiment_paper_02012023' ;
+file_location = '../results/rtd-force/dur2s_largeStateBuffer_10Obs_03072023_v2' ;
 if ~exist(file_location, 'dir')
     mkdir(file_location);
 end
 
 % world file
 world_file_header = 'scene';
-world_file_folder = '../saved_worlds/rtd-force/experiment_random_buffered/';
+world_file_folder = '../saved_worlds/rtd-force/dur2s_largeStateBuffer_10Obs_03052023/';
 world_file_location = sprintf('%s*%s*', world_file_folder, world_file_header);
 world_file_list = dir(world_file_location);
 
@@ -109,7 +112,7 @@ if plot_while_running
 end
 
 tic
-for idx = 1:length(world_file_list)
+for idx = 1:100 % length(world_file_list)
     clc; 
     fprintf("THIS IS WORLD %d\n\n", idx);
 
@@ -133,7 +136,8 @@ for idx = 1:length(world_file_list)
                      'add_measurement_noise_', add_measurement_noise_, ...
                      'measurement_noise_size_', measurement_noise_size_,...
                      'M_min_eigenvalue', M_min_eigenvalue, ...
-                     'transmision_inertia', transmision_inertia);
+                     'transmision_inertia', transmision_inertia,...
+                     't_total', DURATION);
 
     % LLC
     if use_robust_input
@@ -154,7 +158,8 @@ for idx = 1:length(world_file_list)
                        'use_robust_input', use_robust_input, ...
                        'traj_type', traj_type, ...
                        'use_cuda', use_cuda_flag,...
-                       'save_FO_zono_flag', save_FO_zono_flag) ;
+                       'save_FO_zono_flag', save_FO_zono_flag,...
+                       'DURATION',DURATION) ; % _wrapper
 
     if if_use_RRT
         P.HLP = arm_end_effector_RRT_star_HLP('plot_waypoint_flag',plot_waypoint_flag,...

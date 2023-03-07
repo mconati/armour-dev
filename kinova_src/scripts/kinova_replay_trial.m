@@ -1,7 +1,8 @@
 %% user parameters
 clear;
 
-filename = 'trial_scene_040_.mat';
+% filename = 'trial_scene_059_.mat';
+filename = 'trial_scene_010_068.csv.mat';
 
 verbosity = 0 ;
 dimension = 3 ;
@@ -70,3 +71,10 @@ if plot_start_and_end_config_only
 else
     animate(A);
 end
+
+figure()
+plot(A.time,A.reference_acceleration)
+title('Joint Acceleration')
+figure()
+plot(A.time,A.state(A.joint_speed_indices,:))
+title('Joint Speeds')

@@ -49,9 +49,9 @@ classdef kinova_grasp_world_static < world
             % W = arm_world_static('Aproperty1',value1,'property2',value2,...)
             
             default_goal_radius = 0.05 ; % rad/joint
-            W@world('start',[],'goal',[],'N_obstacles',0,...
+            W@world('start',[],'goal',[],...
                 'goal_radius',default_goal_radius,...
-                varargin{:}) ;
+                varargin{:}) ;%'N_obstacles',0,...
             
             W.plot_data.obstacles = [] ;
             W.plot_data.goal = [] ;
@@ -142,10 +142,11 @@ classdef kinova_grasp_world_static < world
             
             % set any joint limits that are +Inf to 2*pi and -Inf to -2*pi
             % changed to +- 1000 to match cuda code
+            % do -pi/pi for rtd-force so last joint doesn't have to go all the way around
             joint_state_limits = I.joint_state_limits ;
             joint_limit_infs = isinf(joint_state_limits) ;
-            joint_state_limits(1,joint_limit_infs(1,:)) = -pi; % 2*pi ;
-            joint_state_limits(2,joint_limit_infs(2,:)) = pi; % +2*pi ;
+            joint_state_limits(1,joint_limit_infs(1,:)) = -pi/2; % restricting to prevent large rotations hopefully
+            joint_state_limits(2,joint_limit_infs(2,:)) = pi/2;
             
             W.arm_joint_state_limits = joint_state_limits ;
             W.arm_n_links_and_joints = size(joint_state_limits,2) ;
@@ -298,9 +299,11 @@ classdef kinova_grasp_world_static < world
                 % solving for a config other than home config
                     [q, solInfo1] = ik('cube_link',[1 0 0 rand_x; 0 1 0 rand_y; 0 0 1 rand_z; 0 0 0 1],weights,initialguess);
                     % put check for config in joint limits here?
-    
-                    q_lower = W.arm_joint_state_limits(1,:)+.025; % + 0.01; % tighten the bounds to make sure valid
-                    q_upper = W.arm_joint_state_limits(2,:)-.025; % + 0.01; % tighten the bounds to make sure valid
+                    
+%                     q = mod(q,pi);
+
+                    q_lower = W.arm_joint_state_limits(1,:)+.1; % + 0.01; % tighten the bounds to make sure valid
+                    q_upper = W.arm_joint_state_limits(2,:)-.1; % + 0.01; % tighten the bounds to make sure valid
                     for i = 1:length(q)
 %                         test = append(num2str(q_lower(i)),' ',num2str(q(i)),' ',num2str(q_upper(i)));
 %                         disp(test)
@@ -598,7 +601,7 @@ classdef kinova_grasp_world_static < world
             
             % create time vector for checking
             t_agent = agent_info.time(end);
-            t_check = t_start:W.collision_check_time_discretization:t_agent; % just copied this so using same time discretization
+            t_check = t_start:A.traj_check_time_discretization:t_agent; % just copied this so using same time discretization
             
             if isempty(t_check) || t_check(end) ~= t_agent
                 t_check = [t_check, t_agent];
