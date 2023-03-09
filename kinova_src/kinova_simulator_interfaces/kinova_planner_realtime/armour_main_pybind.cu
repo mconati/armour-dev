@@ -75,20 +75,20 @@ class pzsparse {
 
         void set_goal(Eigen::Ref<Eigen::VectorXd> qdes_vec){
             auto qdes_ = qdes_vec; //.unchecked<1>();
-            cout << "Goal set to: \n [";
+            // cout << "Goal set to: \n [";
             for (int i = 0; i < NUM_FACTORS; i++) {
                 q_des[i] = qdes_(i);
-                cout << q_des[i] << ' ';
+                // cout << q_des[i] << ' ';
             }
-            cout << "]" << endl;
+            // cout << "]" << endl;
         }
 
         void set_state(Eigen::Ref<Eigen::VectorXd> q0_vec, Eigen::Ref<Eigen::VectorXd> qd0_vec, Eigen::Ref<Eigen::VectorXd> qdd0_vec){
             auto q0_ = q0_vec; //.unchecked<1>();
             auto qd0_ = qd0_vec; //.unchecked<1>();
             auto qdd0_ = qdd0_vec; //.unchecked<1>();
-            cout << "States set to:" << endl;
-            cout << "[q0,     qd0,     qdd0]" << endl;
+            // cout << "States set to:" << endl;
+            // cout << "[q0,     qd0,     qdd0]" << endl;
             for (int i = 0; i < NUM_FACTORS; i++){
                 q0[i] = q0_(i);
                 qd0[i] = qd0_(i);
@@ -339,7 +339,7 @@ class pzsparse {
             auto k_opt = py::array_t<double>(NUM_FACTORS);
             double *k_opt_ptr = static_cast<double *>(k_opt.request().ptr);
 
-            cout << "k_opt: \n [ ";
+            cout << "cpp planner raw solution: \n [ ";
             if (mynlp->feasible) {
                 for (int i = 0; i < NUM_FACTORS; i++) {
                     cout << mynlp->solution[i] << ' ';
