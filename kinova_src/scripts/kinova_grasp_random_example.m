@@ -21,6 +21,7 @@ DURATION = 2;
 
 %%% number of random obstacles
 num_obstacles = 5;
+creation_buffer = 0.075; % meter: buffer from initial/goal configuration
 
 %%% Surface Parameters for Grasp Trial
 u_s = 0.609382421;
@@ -43,6 +44,8 @@ use_CAD_flag = true; % plot robot with CAD or bounding boxes
 %%% for LLC
 use_robust_input = true;
 LLC_V_max = 1e-2; % 5e-5;
+alpha_constant = 1;
+Kr = 5;
 
 %%% for HLP
 if_use_RRT = false;
@@ -93,7 +96,7 @@ end
 
 % run loop
 tic;
-W = kinova_grasp_world_static('create_random_obstacles_flag', true, 'goal_radius', goal_radius,'N_random_obstacles', num_obstacles, 'N_obstacles', num_obstacles, 'dimension',dimension,'workspace_goal_check', 0, 'verbose',verbosity, 'goal_type', goal_type, 'grasp_constraint_flag', true,'ik_start_goal_flag', false, 'u_s', u_s, 'surf_rad', surf_rad) ; % 'obstacles', obstacles,length(obstacles), 'start', start, 'goal', goal,
+W = kinova_grasp_world_static('create_random_obstacles_flag', true, 'goal_radius', goal_radius,'N_random_obstacles', num_obstacles, 'N_obstacles', num_obstacles, 'dimension',dimension,'creation_buffer', creation_buffer, 'workspace_goal_check', 0, 'verbose',verbosity, 'goal_type', goal_type, 'grasp_constraint_flag', true,'ik_start_goal_flag', false, 'u_s', u_s, 'surf_rad', surf_rad) ; % 'obstacles', obstacles,length(obstacles), 'start', start, 'goal', goal,
 W.robot = robot;
 
 % create arm agent
@@ -115,6 +118,8 @@ if use_robust_input
     A.LLC = uarmtd_robust_CBF_LLC('verbose', verbosity, ...
                                   'use_true_params_for_robust', false, ...
                                   'V_max', LLC_V_max, ...
+                                  'alpha_constant', alpha_constant, ...
+                                  'Kr', Kr, ...
                                   'if_use_mex_controller', true);
 else
     A.LLC = uarmtd_nominal_passivity_LLC('verbose', verbosity);
@@ -208,8 +213,11 @@ end
 figure(1001)
 hold on
 title('Acceleration')
-% plot(A.time,qdd_post,'o')
 plot(A.time,A.reference_acceleration)
+figure(1002)
+hold on
+title('Acceleration v2')
+plot(A.time,qdd_post)
 
 % Calling RNEA
 

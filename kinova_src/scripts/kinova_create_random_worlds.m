@@ -8,7 +8,7 @@
 clear ; clc ; figure(1); clf; view(3); grid on;
 
 %% user parameters
-world_save_dir = 'saved_worlds/rtd-force/dur2s_largeStateBuffer_10Obs_03052023';
+world_save_dir = 'saved_worlds/rtd-force/dur2s_largeStateBuffer_10Obs_03082023';
 if ~exist(world_save_dir, 'dir')
     mkdir(world_save_dir);
 end

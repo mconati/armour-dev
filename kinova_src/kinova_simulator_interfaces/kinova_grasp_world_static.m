@@ -515,14 +515,14 @@ classdef kinova_grasp_world_static < world
             % ZMP_Moment = n(:,10) + cross([0;0;cup_height],f(:,10));
             
             sep = -1*fz; %fz; %
-            slip = sqrt(fx^2+fy^2) - 0.3*abs(fz);
+            slip = sqrt(fx^2+fy^2) - W.u_s*abs(fz) + 0.65; % offset to make initial/goal closer to horizontal
             ZMP = cross([0;0;1],n(:,10))./dot([0;0;1],f(:,10));
 %             ZMP = cross(ZMP_Moment,[0;0;1])./dot([0;0;1],f(:,10)); % RNEA
 %             passes out the force and moment at the joint so original ZMP
 %             was correct
-            tip = sqrt(ZMP(1)^2 + ZMP(2)^2) - 0.025; % + tip_threshold;
+            tip = sqrt(ZMP(1)^2 + ZMP(2)^2) - W.surf_rad; % + tip_threshold;
             
-            if (sep > 0) || (slip > 0) || (tip > 0)
+            if (sep > 0) || (slip > 0) || (tip > 0) % greater than zero is violation
                 out = true;
             end            
         end

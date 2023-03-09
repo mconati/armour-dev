@@ -168,7 +168,7 @@ classdef uarmtd_planner < robot_arm_generic_planner
                     % cuda-dev/PZsparse-Bernstein/Trajectory.h 
                     % !!!!!!
 %                     P.jrs_info.g_k_bernstein = [pi/24; pi/24; pi/24; pi/24; pi/24; pi/24; pi/24];
-                    P.jrs_info.g_k_bernstein = pi/32*ones(P.jrs_info.n_q, 1);
+                    P.jrs_info.g_k_bernstein = pi/48*ones(P.jrs_info.n_q, 1);
 
     
                     q_des = P.HLP.get_waypoint(agent_info,world_info,P.lookahead_distance) ;

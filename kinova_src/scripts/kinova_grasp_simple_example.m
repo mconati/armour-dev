@@ -39,6 +39,8 @@ use_CAD_flag = true; % plot robot with CAD or bounding boxes
 %%% for LLC
 use_robust_input = true;
 LLC_V_max = 1e-2;
+alpha_constant = 1;
+Kr = 5;
 
 %%% for HLP
 if_use_RRT = false;
@@ -60,10 +62,26 @@ stop_threshold = 4 ; % number of failed iterations before exiting
 % goal = [1; 1; 1; 1; 1; 1; 1]; % goal configuration
 
 % simple rotation
-start = [0;-pi/2;0;0;0;0;0];
-goal = [pi/4;-pi/2;0;0;0;0;0];
-% start = [-pi/6;-pi/2;-pi/2;pi/2;0;pi/2;pi/2];
-% goal = [pi/6;-pi/2;pi/2;pi/2;pi;-pi/2;pi/2];
+% start = [0;-pi/2;0;0;0;0;0];
+% goal = [pi/4;-pi/2;0;0;0;0;0];
+
+start = [-pi/6;-pi/2;-pi/2;pi/2;0;pi/2;pi/2];
+goal = [pi/6;-pi/2;pi/2;pi/2;pi;-pi/2;pi/2];
+
+% start = [0.4933;
+%     0.9728;
+%     0.6090;
+%    -0.3981;
+%     0.4258;
+%    -1.5576;
+%     0.7482];
+% goal = [0.3808;
+%     1.8013;
+%     0.8670;
+%    -0.7256;
+%     0.7211;
+%    -2.0458;
+%     1.4523];
 
 % start = [1.60560000000000;
 % -0.159490569928781;
@@ -138,6 +156,8 @@ if use_robust_input
     A.LLC = uarmtd_robust_CBF_LLC('verbose', verbosity, ...
                                   'use_true_params_for_robust', false, ...
                                   'V_max', LLC_V_max, ...
+                                  'alpha_constant', alpha_constant, ...
+                                  'Kr', Kr, ...
                                   'if_use_mex_controller', true);
 else
     A.LLC = uarmtd_nominal_passivity_LLC('verbose', verbosity);
