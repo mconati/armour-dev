@@ -223,6 +223,7 @@ function output = compare_desired_v2(data)
     debug_q_des = debug_q_des(nan_end:end,:);
     debug_qd_des = debug_qd_des(nan_end:end,:);
     debug_qdd_des = debug_qdd_des(nan_end:end,:);
+    debug_non_nan_indices = find(~isnan(time));
     
     % Debug Joint States Data
     state_pos = data(:,26:32);
@@ -240,48 +241,80 @@ function output = compare_desired_v2(data)
     end
     t_first_iter = time(idx_first_iter);
 
+    %% Brake Indices
+
+    % Manually Gathered
+    brake_indices = [4128, 5039, 7901] - 1 - (length(time)-length(debug_non_nan_indices));
+
+    %% Calculating Jump in Desired States
+
+    j = 1;
+    for i = 2:length(debug_qd_des)
+        debug_q_des_jump(i-1) = debug_q_des(i) - debug_q_des(i-1);
+        debug_qd_des_jump(i-1) = debug_qd_des(i) - debug_qd_des(i-1);
+        debug_qdd_des_jump(i-1) = debug_qdd_des(i) - debug_qdd_des(i-1);
+        if abs(debug_qd_des_jump(i-1)) > 1e-2
+            debug_q_des_jump(i-1)
+            debug_qd_des_jump(i-1)
+            debug_qdd_des_jump(i-1)
+            jump_idx(j) = i-1;
+            j = j + 1;
+        end
+    end
+
     %% Calculating Desired Trajectory from k_opt
 
     k_range = [pi/48, pi/48, pi/48, pi/48, pi/48, pi/48, pi/60]'; % needs to match hardware
 %     k_range = pi/72*ones(7,1);
     
-        % desired trajectory constraints
-        q1 = debug_q_des(idx_first_iter,:)' + debug_k_opt(idx_first_iter,:)' .* k_range; % final position is k*k_range away from initial
-        qd1 = zeros(7,1); % final velocity is zero
-        qdd1 = zeros(7,1); % final acceleration is zero
+    % desired trajectory constraints
+    q1 = debug_q_des(idx_first_iter,:)' + debug_k_opt(idx_first_iter,:)' .* k_range; % final position is k*k_range away from initial
+    qd1 = zeros(7,1); % final velocity is zero
+    qdd1 = zeros(7,1); % final acceleration is zero
+
+    duration = 4;
+    tid = 100;
+    tspan = linspace(0, duration, tid + 1);
     
-        duration = 4;
-        tid = 100;
-        tspan = linspace(0, duration, tid + 1);
-        
-        beta = match_deg5_bernstein_coefficients({debug_q_des(1,:)', debug_qd_des(1,:)', debug_qdd_des(1,:)', q1, qd1, qdd1}, duration);
-    
-        for i = 1:length(tspan)
-            [q, qd, qdd] = get_desired_traj(beta, tspan(i), duration);
-            q_des_matlab(:,i) = q;
-            qd_des_matlab(:,i) = qd;
-            qdd_des_matlab(:,i) = qdd;
-        end
-        q_des_matlab = q_des_matlab';
-        qd_des_matlab = qd_des_matlab';
-        qdd_des_matlab = qdd_des_matlab';
+    beta = match_deg5_bernstein_coefficients({debug_q_des(1,:)', debug_qd_des(1,:)', debug_qdd_des(1,:)', q1, qd1, qdd1}, duration);
+
+    for i = 1:length(tspan)
+        [q, qd, qdd] = get_desired_traj(beta, tspan(i), duration);
+        q_des_matlab(:,i) = q;
+        qd_des_matlab(:,i) = qd;
+        qdd_des_matlab(:,i) = qdd;
+    end
+    q_des_matlab = q_des_matlab';
+    qd_des_matlab = qd_des_matlab';
+    qdd_des_matlab = qdd_des_matlab';
+
+    %% Plotting 
 
     figure(1)
     hold on
     title('debug desired')
-    subplot(3,1,1)
-    plot(time,debug_q_des)
-    subplot(3,1,2)
-    plot(time,debug_qd_des)
-    subplot(3,1,3)
-    plot(time,debug_qdd_des)
 
-    figure(2)
-    title('Joint States')
-    subplot(2,1,1)
-    plot(time,state_pos)
-    subplot(2,1,2)
-    plot(time,state_vel)
+    subplot(3,1,1)
+    hold on
+    plot(time,debug_q_des)
+    plot([time(brake_indices) time(brake_indices)],[-5 5],'--r') % don't match because NaN issue. 
+
+    subplot(3,1,2)
+    hold on
+    plot(time,debug_qd_des)
+    plot([time(brake_indices) time(brake_indices)],[-0.15 0.15],'--r') % don't match because NaN issue. 
+
+    subplot(3,1,3)
+    hold on
+    plot(time,debug_qdd_des)
+    plot([time(brake_indices) time(brake_indices)],[-0.5 0.5],'--r') % don't match because NaN issue. 
+
+%     figure(2)
+%     title('Joint States')
+%     subplot(2,1,1)
+%     plot(time,state_pos)
+%     subplot(2,1,2)
+%     plot(time,state_vel)
 
     figure(3)
 
