@@ -7,7 +7,7 @@
 
 // Parameters for PZsparse.h:
     // monomials with a coefficient smaller than this number will be reduced
-    #define SIMPLIFY_THRESHOLD 1e-4
+    #define SIMPLIFY_THRESHOLD 2e-4
 
 // Parameters for Trajectories.h:
     // duration of the Bezier curve

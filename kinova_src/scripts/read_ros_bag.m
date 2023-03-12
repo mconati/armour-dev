@@ -197,56 +197,63 @@ function output = compare_desired_v2(data)
     %% Loading Data
 
     % Debug Topic
-    time = data(:,68);
-    debug_k_opt = data(:,79:85);
-    debug_q_des = data(:,47:53);
-    debug_qd_des = data(:,54:60);
-    debug_qdd_des = data(:,61:67);
+    time = data(:,68); % correct index
+    debug_q_des = data(:,47:53); % correct indices
+    debug_qd_des = data(:,54:60); % correct indices
+    debug_qdd_des = data(:,61:67); % correct indices
 
     % Debug Joint States
     state_pos = data(:,26:32);
     state_vel = data(:,40:46);
 
+    % Debug From Trajectory Topic
+    debug_traj_k_opt = data(:,79:85);
+    debug_traj_pos = data(:,86:92);
+    debug_traj_vel = data(:,96:102);
+    debug_traj_accel = data(:,69:75);
+
+    % Debug Joint States Data
+    state_pos = data(:,26:32);
+    state_vel = data(:,40:46);
+    
     % Trajectory Topic
     traj_k_opt = data(:,113:119);
     traj_pos = data(:,120:126);
-    traj_vel = data(:,96:102);
+    traj_vel = data(:,130:136);
     traj_accel = data(:,103:109);
 
     %% Processing Data
 
     % Debug Topic Data
+    % Offset for NaN Rows
     nan_end = 1;
+    % Adjusting Time to Start at Zero
     time = time(nan_end:end);
     time = time-time(1);
-    debug_k_opt = debug_k_opt(nan_end:end,:);
+    % Adjusting Data to Get Rid of NaN Rows at Beginning
+    debug_traj_k_opt = debug_traj_k_opt(nan_end:end,:);
+    debug_traj_pos = debug_traj_pos(nan_end:end,:);
+    debug_traj_vel = debug_traj_vel(nan_end:end,:);
+    debug_traj_accel = debug_traj_accel(nan_end:end,:);
     debug_q_des = debug_q_des(nan_end:end,:);
     debug_qd_des = debug_qd_des(nan_end:end,:);
     debug_qdd_des = debug_qdd_des(nan_end:end,:);
+    % Find Other NaN Row Indices
     debug_non_nan_indices = find(~isnan(time));
-    
-    % Debug Joint States Data
-    state_pos = data(:,26:32);
-    state_vel = data(:,40:46);
 
     % Trajectory Topic Data
-    non_nan_idx = find(~isnan(traj_k_opt));
+    traj_non_nan_idx = find(~isnan(traj_k_opt(:,1)));
 
 
     %% First Iteration
     
     idx_first_iter = 1;
-    while norm(debug_k_opt(idx_first_iter,:)) - norm(debug_k_opt(1,:)) == 0
+    while norm(debug_traj_k_opt(idx_first_iter,:)) - norm(debug_traj_k_opt(1,:)) == 0
         idx_first_iter = idx_first_iter+1;
     end
     t_first_iter = time(idx_first_iter);
 
-    %% Brake Indices
-
-    % Manually Gathered
-    brake_indices = [4128, 5039, 7901] - 1 - (length(time)-length(debug_non_nan_indices));
-
-    %% Calculating Jump in Desired States
+    %% Finding Jumps in Desired States
 
     j = 1;
     for i = 2:length(debug_qd_des)
@@ -262,13 +269,15 @@ function output = compare_desired_v2(data)
         end
     end
 
+    brake_indices = jump_idx;
+
     %% Calculating Desired Trajectory from k_opt
 
     k_range = [pi/48, pi/48, pi/48, pi/48, pi/48, pi/48, pi/60]'; % needs to match hardware
 %     k_range = pi/72*ones(7,1);
     
     % desired trajectory constraints
-    q1 = debug_q_des(idx_first_iter,:)' + debug_k_opt(idx_first_iter,:)' .* k_range; % final position is k*k_range away from initial
+    q1 = debug_q_des(idx_first_iter,:)' + debug_traj_k_opt(idx_first_iter,:)' .* k_range; % final position is k*k_range away from initial
     qd1 = zeros(7,1); % final velocity is zero
     qdd1 = zeros(7,1); % final acceleration is zero
 
@@ -290,25 +299,27 @@ function output = compare_desired_v2(data)
 
     %% Plotting 
 
+    % Desired Variables
     figure(1)
     hold on
     title('debug desired')
-
+    % Desired Position
     subplot(3,1,1)
     hold on
     plot(time,debug_q_des)
-    plot([time(brake_indices) time(brake_indices)],[-5 5],'--r') % don't match because NaN issue. 
-
+    plot([time(brake_indices) time(brake_indices)],[-5 5],'--r')
+    % Desired Velocity
     subplot(3,1,2)
     hold on
     plot(time,debug_qd_des)
-    plot([time(brake_indices) time(brake_indices)],[-0.15 0.15],'--r') % don't match because NaN issue. 
-
+    plot([time(brake_indices) time(brake_indices)],[-0.15 0.15],'--r')
+    % Desired Acceleration
     subplot(3,1,3)
     hold on
     plot(time,debug_qdd_des)
-    plot([time(brake_indices) time(brake_indices)],[-0.5 0.5],'--r') % don't match because NaN issue. 
+    plot([time(brake_indices) time(brake_indices)],[-0.5 0.5],'--r')
 
+    % Plot Measured Joint States
 %     figure(2)
 %     title('Joint States')
 %     subplot(2,1,1)
@@ -316,7 +327,33 @@ function output = compare_desired_v2(data)
 %     subplot(2,1,2)
 %     plot(time,state_vel)
 
+    % Plotting k_opt
     figure(3)
+    hold on
+    title('k_{opt}')
+    plot(time,debug_traj_k_opt)
+    plot(time(traj_non_nan_idx-1)+1.5,traj_k_opt(traj_non_nan_idx,:),'--o')
+    % Looks like all the k_opt are published before they are needed and the
+    % ones in debug match up in value.
+
+    % Plot Trajectory Message Velocity vs Desired Velocity from Debug
+    figure(4)
+    hold on
+    title('Desired Velocity Comparison')
+    plot(time,debug_qd_des)
+    plot(time(traj_non_nan_idx-1)+1.5,traj_vel(traj_non_nan_idx,:),'--o')
+
+%     figure(3)
+%     title('k_{opt}')
+%     hold on
+%     plot(time,debug_k_opt)
+%     plot(time(non_nan_idx(1:end)-1),debug_traj_k_opt(non_nan_idx(1:end),:),'o')
+% 
+%     figure(4)
+%     title('Desired Velocity Comparison')
+%     hold on
+%     plot(time,debug_qd_des)
+%     plot(time(non_nan_idx(1:end)-1),debug_traj_vel(non_nan_idx(1:end),:),'o')
 
     test;
 
