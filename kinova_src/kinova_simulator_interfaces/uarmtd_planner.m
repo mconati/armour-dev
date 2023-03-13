@@ -167,8 +167,9 @@ classdef uarmtd_planner < robot_arm_generic_planner
                     % Make sure this is consistent with the k_range in
                     % cuda-dev/PZsparse-Bernstein/Trajectory.h 
                     % !!!!!!
-                    P.jrs_info.g_k_bernstein = [pi/72; pi/72; pi/72; pi/72; pi/72; pi/72; pi/72];
-%                     P.jrs_info.g_k_bernstein = [pi/72; pi/72; pi/72; pi/72; pi/72; pi/72; pi/72];
+%                     P.jrs_info.g_k_bernstein = [pi/24; pi/24; pi/24; pi/24; pi/24; pi/24; pi/24];
+                    P.jrs_info.g_k_bernstein = pi/48*ones(P.jrs_info.n_q, 1);
+
     
                     q_des = P.HLP.get_waypoint(agent_info,world_info,P.lookahead_distance) ;
                     if isempty(q_des)

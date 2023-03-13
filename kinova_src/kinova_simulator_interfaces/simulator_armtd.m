@@ -251,6 +251,7 @@ classdef simulator_armtd < simulator
 
                         % updating time
                         collision_check = W.collision_check(agent_info,false) ;
+%                         collision_check = false;
                         
                         if isa(A,'multi_link_agent')
                             S.vdisp('Checking for self-intersection.',2)

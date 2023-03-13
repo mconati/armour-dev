@@ -28,6 +28,9 @@ goal_radius = pi/30;
 dimension = 3 ;
 verbosity = 10;
 
+% trajectory duration (must match C++)
+DURATION = 2;
+
 %%% for planner
 traj_type = 'bernstein'; % pick 'orig' or 'bernstein'
 allow_replan_errors = true ;
@@ -52,10 +55,12 @@ use_CAD_flag = true;
 add_measurement_noise_ = false;
 measurement_noise_size_ = 0;
 
-%%% for LLC
+%%% for LLC (must match C++)
 LLC_V_max = 1e-2;
 use_true_params_for_robust = false;
 if_use_mex_controller = true;
+alpha_constant = 1;
+Kr = 5;
 
 %%% for HLP
 if_use_RRT = false;
@@ -65,23 +70,23 @@ plot_waypoint_arm_flag  = true ;
 lookahead_distance = 0.1 ;
 
 % plotting
-plot_while_running = true ;
+plot_while_running = false ;
 
 % simulation
-max_sim_time = 86400 ; % 48 hours
-max_sim_iter = 600 ;
-stop_threshold = 5 ; % number of failed iterations before exiting
+max_sim_time = 86400 ; % 24 hours = 86400 sec; 48 hours = sec
+max_sim_iter = 1000 ;
+stop_threshold = 3 ; % number of failed iterations before exiting
 
 % file handling
 save_file_header = 'trial_' ;
-file_location = '../results/rtd-force/experiment_paper_02012023' ;
+file_location = '../results/rtd-force/dur2s_largeStateBuffer_10Obs_03082023' ;
 if ~exist(file_location, 'dir')
     mkdir(file_location);
 end
 
 % world file
 world_file_header = 'scene';
-world_file_folder = '../saved_worlds/rtd-force/experiment_random_buffered/';
+world_file_folder = '../saved_worlds/rtd-force/dur2s_largeStateBuffer_10Obs_03082023/';
 world_file_location = sprintf('%s*%s*', world_file_folder, world_file_header);
 world_file_list = dir(world_file_location);
 
@@ -98,7 +103,7 @@ joint_speed_limits = [-1.3963, -1.3963, -1.3963, -1.3963, -1.2218, -1.2218, -1.2
 joint_input_limits = [-56.7, -56.7, -56.7, -56.7, -29.4, -29.4, -29.4;
                        56.7,  56.7,  56.7,  56.7,  29.4,  29.4,  29.4]; % matlab doesn't import these from urdf so hard code into class
 transmision_inertia = [8.02999999999999936 11.99620246153036440 9.00254278617515169 11.58064393167063599 8.46650409179141228 8.85370693737424297 8.85873036646853151]; % matlab doesn't import these from urdf so hard code into class
-M_min_eigenvalue = 8.29938; % matlab doesn't import these from urdf so hard code into class
+M_min_eigenvalue = 8.2998203638; % matlab doesn't import these from urdf so hard code into class
 
 use_cuda_flag = true;
 
@@ -109,7 +114,7 @@ if plot_while_running
 end
 
 tic
-for idx = 1:length(world_file_list)
+for idx = 5:length(world_file_list) % length(world_file_list)
     clc; 
     fprintf("THIS IS WORLD %d\n\n", idx);
 
@@ -133,13 +138,16 @@ for idx = 1:length(world_file_list)
                      'add_measurement_noise_', add_measurement_noise_, ...
                      'measurement_noise_size_', measurement_noise_size_,...
                      'M_min_eigenvalue', M_min_eigenvalue, ...
-                     'transmision_inertia', transmision_inertia);
+                     'transmision_inertia', transmision_inertia,...
+                     't_total', DURATION);
 
     % LLC
     if use_robust_input
         A.LLC = uarmtd_robust_CBF_LLC('verbose', verbosity, ...
                                       'use_true_params_for_robust', use_true_params_for_robust, ...
                                       'V_max', LLC_V_max, ...
+                                      'alpha_constant', alpha_constant, ...
+                                      'Kr', Kr, ...
                                       'if_use_mex_controller', if_use_mex_controller);
     else
         A.LLC = uarmtd_nominal_passivity_LLC('verbose', verbosity);
@@ -154,7 +162,8 @@ for idx = 1:length(world_file_list)
                        'use_robust_input', use_robust_input, ...
                        'traj_type', traj_type, ...
                        'use_cuda', use_cuda_flag,...
-                       'save_FO_zono_flag', save_FO_zono_flag) ;
+                       'save_FO_zono_flag', save_FO_zono_flag,...
+                       'DURATION',DURATION) ; % _wrapper
 
     if if_use_RRT
         P.HLP = arm_end_effector_RRT_star_HLP('plot_waypoint_flag',plot_waypoint_flag,...

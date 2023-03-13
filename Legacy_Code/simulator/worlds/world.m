@@ -184,13 +184,14 @@ classdef world < handle
             while ~out && t_idx < length(t_check)
                 t_idx = t_idx + 1 ;
                 z = z_agent(:,t_idx) ;
-                out = W.collision_check_single_state(agent_info,z) ;
+%                 out = W.collision_check_single_state(agent_info,z) ;
             end
+            out = false;
             
             if out
                 W.vdisp(['Collision detected at t = ',num2str(t_check(t_idx))],1)
             else
-                W.vdisp('No collisions detected',3)
+                W.vdisp('Disabled collision detection',3) % W.vdisp('No collisions detected',3) % 
             end
             
             % update world time

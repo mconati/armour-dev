@@ -3,7 +3,7 @@ classdef uarmtd_robust_CBF_LLC < robot_arm_LLC
     % performance within some ultimate bound
     
     properties
-        Kr = 10;
+        Kr = 1;
         V_max = 1e-7; % 3.1e-7; % max allowable value of lyapunov function
         r_norm_threshold = 0;
         alpha_constant = 1;
