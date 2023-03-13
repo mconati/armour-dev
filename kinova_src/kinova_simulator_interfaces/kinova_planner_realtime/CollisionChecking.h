@@ -35,9 +35,9 @@ public:
 
     Obstacles();
 
-	void initialize(const double* obstacles_inp, const int num_obstacles_inp);
-
 	~Obstacles();
+
+    void initialize(const double* obstacles_inp, const int num_obstacles_inp);
 
 	void initializeHyperPlane(const Eigen::Matrix<double, 3, 3 + 3>* link_independent_generators);
 
