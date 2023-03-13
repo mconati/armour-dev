@@ -15,13 +15,13 @@
 
 // Parameters for Trajectories.h:
     // Duration of the Bezier Curve
-    #define DURATION 2.0
+    #define DURATION 1.5
 
     // number of time steps (This should be an EVEN number!!!)
-    #define NUM_TIME_STEPS 100
+    #define NUM_TIME_STEPS 40
 
     // range of parameters (size of generators in PZ).
-    const double k_range[NUM_FACTORS] = { M_PI / 48, M_PI / 48, M_PI / 48, M_PI / 48, M_PI / 48, M_PI / 48, M_PI / 48 }; // (radian)
+    const double k_range[NUM_FACTORS] = { M_PI / 48, M_PI / 48, M_PI / 48, M_PI / 48, M_PI / 48, M_PI / 48, M_PI / 60 }; // (radian)
 
 // Parameters for CollisionChecking.h:
     // maximum number of obstacles (used for memory pre-allocation)
@@ -42,9 +42,6 @@
     // threshold for input constraint considered to be violated (unit: Newton * meter)
     #define TORQUE_INPUT_CONSTRAINT_VIOLATION_THRESHOLD 1e-2
 
-    // scale the cost function value so that it could converge faster (be careful with it!)
-    #define COST_FUNCTION_OPTIMALITY_SCALE 10.0
-
     // threshold for separation constraint (unit: Newton)
     #define SEPARATION_CONSTRAINT_VIOLATION_THRESHOLD 1e-6
 
@@ -60,7 +57,7 @@
 // Parameters for armour_main.cpp
     #define IPOPT_OPTIMIZATION_TOLERANCE 1e-4
 
-    #define IPOPT_MAX_CPU_TIME 10 // 14.0
+    #define IPOPT_MAX_CPU_TIME 14 // 14.0
 
     #define IPOPT_PRINT_LEVEL 0
 

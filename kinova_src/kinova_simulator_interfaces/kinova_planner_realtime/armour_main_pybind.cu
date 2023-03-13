@@ -46,6 +46,10 @@ class pzsparse {
         double v_norm[NUM_TIME_STEPS * NUM_FACTORS];
         double jointPositionRadius[NUM_TIME_STEPS * NUM_FACTORS * 3];
 
+        /** FORCE CONSTRAINTS */
+        double u_s = 0.609382421; // 0.5; // static coefficient of friction between tray and object
+        double surf_rad =  0.058 / 2; // 0.0762; // RADIUS of contact area between tray and object (area assumed to be circular)
+
         void set_obstacles(py::array_t<double> obstacle_vec){
             auto obstacle_ = obstacle_vec.unchecked<2>();
             num_obstacles = obstacle_.shape(0);
@@ -271,7 +275,7 @@ class pzsparse {
             // Solve optimization
             SmartPtr<armtd_NLP> mynlp = new armtd_NLP();
             try {
-                mynlp->set_parameters(q_des, t_plan, &traj, &kd, &torque_radius, O_ptr.get());
+                mynlp->set_parameters(q_des, t_plan, &traj, &kd, &torque_radius, O_ptr.get(), u_s, surf_rad);
             }
             catch (int errorCode) {
                 WARNING_PRINT("        CUDA & C++: Error initializing Ipopt! Check previous error message!");

@@ -29,12 +29,12 @@ class pzsparse {
 
         std::ofstream outputstream1;
 
-        double q0[NUM_FACTORS] = {0.0};
-        double qd0[NUM_FACTORS] = {0.0};
-        double qdd0[NUM_FACTORS] = {0.0};
-        double q_des[NUM_FACTORS] = {0.0};
+        Eigen::VectorXd q0 = Eigen::VectorXd::Zero(NUM_FACTORS);
+        Eigen::VectorXd qd0 = Eigen::VectorXd::Zero(NUM_FACTORS);
+        Eigen::VectorXd qdd0 = Eigen::VectorXd::Zero(NUM_FACTORS);
+        Eigen::VectorXd q_des = Eigen::VectorXd::Zero(NUM_FACTORS);
 
-        double t_plan = 1;
+        double t_plan = DURATION;
 
         int num_obstacles;
         double obstacles[MAX_OBSTACLE_NUM * (MAX_OBSTACLE_GENERATOR_NUM + 1) * 3];

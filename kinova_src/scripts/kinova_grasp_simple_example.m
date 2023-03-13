@@ -65,38 +65,11 @@ stop_threshold = 4 ; % number of failed iterations before exiting
 % start = [0;-pi/2;0;0;0;0;0];
 % goal = [pi/4;-pi/2;0;0;0;0;0];
 
-start = [-pi/6;-pi/2;-pi/2;pi/2;0;pi/2;pi/2];
-goal = [pi/6;-pi/2;pi/2;pi/2;pi;-pi/2;pi/2];
+% start = [-pi/6;-pi/2;-pi/2;pi/2;0;pi/2;pi/2];
+% goal = [pi/6;-pi/2;pi/2;pi/2;pi;-pi/2;pi/2];
 
-% start = [0.4933;
-%     0.9728;
-%     0.6090;
-%    -0.3981;
-%     0.4258;
-%    -1.5576;
-%     0.7482];
-% goal = [0.3808;
-%     1.8013;
-%     0.8670;
-%    -0.7256;
-%     0.7211;
-%    -2.0458;
-%     1.4523];
-
-% start = [1.60560000000000;
-% -0.159490569928781;
-% -1.56770902931599;
-% -0.845551078749901;
-% -0.0163822583789873;
-% 2.16000000000000;
-% -3.31497484097283];
-% goal = [1.35699949162188;
-% -0.0574597782525521;
-% 2.43188521636437;
-% -0.692567319303937;
-% 2.99403842768718;
-% -0.990958192493399;
-% 2.04347442405308];
+start = [-pi/4; -pi/6; 0; -2*pi/3; 0; pi/3; 0];
+goal = [pi/4; -pi/3; 0; -2*pi/3; 0; pi/2; 0];
 
 % swing
 % start = [0;-pi/2;0;0;0;0;0];
@@ -126,6 +99,14 @@ joint_input_limits = [-56.7, -56.7, -56.7, -56.7, -29.4, -29.4, -29.4;
                        56.7,  56.7,  56.7,  56.7,  29.4,  29.4,  29.4]; % matlab doesn't import these from urdf so hard code into class
 transmision_inertia = [8.02999999999999936 11.99620246153036440 9.00254278617515169 11.58064393167063599 8.46650409179141228 8.85370693737424297 8.85873036646853151]; % matlab doesn't import these from urdf so hard code into class
 M_min_eigenvalue = 8.29938; % matlab doesn't import these from urdf so hard code into class
+
+
+figure(1)
+show(robot,start)
+title('Start')
+figure(2)
+show(robot,goal)
+title('Goal')
 
 %% automated from here
 if plot_while_running
