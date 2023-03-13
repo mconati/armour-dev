@@ -10,7 +10,7 @@ using namespace Ipopt;
 
 class armtd_NLP: public TNLP
 {
-public:
+public: 
     /** Default constructor */
     armtd_NLP();
 

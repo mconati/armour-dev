@@ -344,7 +344,7 @@ classdef kinova_world_static < world
             % Run a collision check for the given state and return true if
             % it is in collision. This gets called by W.collision_check.
             
-            O = W.obstacles(1:end-1) ; % temporarily ignore ground obstacles
+            O = W.obstacles ; 
             N_O = length(O) ; % in case W.N_obstacles is wrong
             out = false ; % optimism!
             o_idx = 1 ;
@@ -353,12 +353,6 @@ classdef kinova_world_static < world
             while (o_idx <= N_O) && ~out
                 O_idx = O{o_idx} ;
                 out = W.collision_check_single_obstacle(O_idx,V_arm) ;
-
-                if out
-                    disp(q);
-                    disp(O_idx.Z);
-                end
-
                 o_idx = o_idx + 1 ;
             end
         end

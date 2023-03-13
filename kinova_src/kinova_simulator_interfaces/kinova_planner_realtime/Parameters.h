@@ -25,7 +25,7 @@
 
 // Parameters for CollisionChecking.h:
     // maximum number of obstacles (used for memory pre-allocation)
-    #define MAX_OBSTACLE_NUM 40
+    #define MAX_OBSTACLE_NUM 10
 
     // number of generators of obstacle zonotopes
     #define MAX_OBSTACLE_GENERATOR_NUM 3
@@ -37,10 +37,13 @@
     #define NUM_THREADS 32
 
     // threshold for collision avoidance constraint considered to be violated (unit: meter)
-    #define COLLISION_AVOIDANCE_CONSTRAINT_VIOLATION_THRESHOLD 1e-4
+    #define COLLISION_AVOIDANCE_CONSTRAINT_VIOLATION_THRESHOLD -1e-4
 
     // threshold for input constraint considered to be violated (unit: Newton * meter)
-    #define TORQUE_INPUT_CONSTRAINT_VIOLATION_THRESHOLD 1e-4
+    #define TORQUE_INPUT_CONSTRAINT_VIOLATION_THRESHOLD 1e-2
+
+    // scale the cost function value so that it could converge faster (be careful with it!)
+    #define COST_FUNCTION_OPTIMALITY_SCALE 10.0
 
     // threshold for separation constraint (unit: Newton)
     #define SEPARATION_CONSTRAINT_VIOLATION_THRESHOLD 1e-6

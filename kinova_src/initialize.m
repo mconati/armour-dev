@@ -70,3 +70,7 @@ cd ../../
 kinova_test_folder_path = pwd;
 
 save('kinova_test_folder_path.mat', 'kinova_test_folder_path');
+
+%% Create dir
+mkdir kinova_simulator_interfaces/kinova_planner_realtime/buffer/
+mkdir kinova_simulator_interfaces/kinova_planner_realtime_armtd_comparison/buffer

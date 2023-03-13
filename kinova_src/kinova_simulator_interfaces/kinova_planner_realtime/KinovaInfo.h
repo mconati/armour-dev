@@ -24,7 +24,7 @@ const double trans[(NUM_JOINTS + 1) * 3] = {  0,          0,     0.15643,
 											0,   -0.20843,   -0.006375,
 											0, 0.00017505,    -0.10593,
 											0,   -0.10593, -0.00017505,
-											0,          0,   -0.061525,
+											0,          0,   -0.061525 - 0.10155,
 											0,          0,           0 };
 
 
@@ -66,12 +66,20 @@ const double inertia_uncertainty = 0.03;
 
 // joint friction
 const double friction[NUM_JOINTS] = {0.5217383101288284, 0.5769579059927288, 0.4213397946418778, 0.4945515376566732, 0.1611070502661354, 0.1333491185514130, 0.1434440181717370};
+<<<<<<< HEAD
 
 /* const double friction[NUM_JOINTS] = {0.0}; // disable friction in Matlab simulation for now */
 
 // joint damping
 const double damping[NUM_JOINTS] = {10.5, 7.4064845817230722, 9.9727633408172860, 8.2667950822503915, 8.8572249026528151, 8.7110831569332845, 8.8881903638306934};
 /* const double damping[NUM_JOINTS] = {0.0}; // disable damping in Matlab simulation for now */
+=======
+// const double friction[NUM_JOINTS] = {0.0}; // disable friction in Matlab simulation for now
+
+// joint damping
+const double damping[NUM_JOINTS] = {10.5, 7.4064845817230722, 9.9727633408172860, 8.2667950822503915, 8.8572249026528151, 8.7110831569332845, 8.8881903638306934};
+// const double damping[NUM_JOINTS] = {0.0}; // disable damping in Matlab simulation for now
+>>>>>>> pybind
 
 // joint armature / motor transmission inertia
 const double armature[NUM_JOINTS] = {8.03, 11.9962024615303644, 9.0025427861751517, 11.5806439316706360, 8.4665040917914123, 8.8537069373742430, 8.8587303664685315};
@@ -100,8 +108,8 @@ const double alpha = 10.0;
 const double V_m = 1e-2;
 const double M_max = 21.90042595;
 const double M_min = 8.2998203638;
-// const double eps = sqrt(2 * V_m / M_min);
-const double eps = 0;
+const double eps = sqrt(2 * V_m / M_min);
+// const double eps = 0;
 const double K = 10.0;
 const double qe = eps / K;
 const double qde = 2 * eps;
@@ -109,6 +117,6 @@ const double qdae = eps;
 const double qddae = 2 * K * eps;
 
 // The number of 1 should be strictly equal to NUM_FACTORS !!!
-const bool JOINTS_WE_CARE_IN_COLLISION_AVOIDANCE[NUM_JOINTS] = {1, 1, 1, 1, 1, 1, 1};
+// const bool JOINTS_WE_CARE_IN_COLLISION_AVOIDANCE[NUM_JOINTS] = {1, 1, 1, 1, 1, 1, 1};
 
 #endif

@@ -42,9 +42,9 @@ classdef uarmtd_planner < robot_arm_generic_planner
         combs;
 
         % for JRSs and trajectories:
-        taylor_degree = 6;
+        taylor_degree = 1;
         traj_type = 'bernstein'; % choose 'orig' for original ARMTD, or 'bernstein'
-        use_waypoint_for_bernstein_center = false; % if true, centers bernstein final configuration range around waypoint
+%         use_waypoint_for_bernstein_center = false; % if true, centers bernstein final configuration range around waypoint
         jrs_type = 'online';
         use_cuda = false;
 
@@ -165,7 +165,7 @@ classdef uarmtd_planner < robot_arm_generic_planner
                     P.jrs_info.c_k_bernstein = zeros(7,1);
                     % !!!!!!
                     % Make sure this is consistent with the k_range in
-                    % cuda-dev/PZsparse-Bernstein/Trajectory.h 
+                    % kinova_src/kinova_simulator_interfaces/kinova_planner_realtime/Parameters.h 
                     % !!!!!!
 %                     P.jrs_info.g_k_bernstein = [pi/24; pi/24; pi/24; pi/24; pi/24; pi/24; pi/24];
                     P.jrs_info.g_k_bernstein = pi/48*ones(P.jrs_info.n_q, 1);
@@ -241,11 +241,17 @@ classdef uarmtd_planner < robot_arm_generic_planner
                         link_frs_generators = readmatrix('armour_joint_position_radius.out', 'FileType', 'text');
                         control_input_radius = readmatrix('armour_control_input_radius.out', 'FileType', 'text');
                         constraints_value = readmatrix('armour_constraints.out', 'FileType', 'text');
+<<<<<<< HEAD
                         contact_constraint_radii = readmatrix('armour_force_constraint_radius.out', 'FileType', 'text');
                         wrench_radii = readmatrix('armour_wrench_values.out', 'FileType', 'text');
 
                         link_frs_vertices = cell(7,1);
                         for tid = 1:10:P.jrs_info.n_t
+=======
+
+                        link_frs_vertices = cell(7,1);
+                        for tid = [1:10:128, 128]
+>>>>>>> pybind
                             for j = 1:7
                                 c = link_frs_center((tid-1)*7+j, :)';
                                 g = link_frs_generators( ((tid-1)*7+j-1)*3+1 : ((tid-1)*7+j)*3, :);
@@ -385,14 +391,31 @@ classdef uarmtd_planner < robot_arm_generic_planner
     
                     if terminal_output == 0
                         % read FRS information if needed
-                        joint_frs_center = readmatrix('armtd_main_joint_position_center.out', 'FileType', 'text');
+                        link_frs_center = readmatrix('armtd_main_joint_position_center.out', 'FileType', 'text');
                         joint_frs_radius = readmatrix('armtd_main_joint_position_radius.out', 'FileType', 'text');
                         constraints_value = readmatrix('armtd_main_constraints.out', 'FileType', 'text');
+
+                        link_radius = [[0.070, 0.070, 0.070] 
+									   [0.070, 0.070, 0.070] 
+									   [0.070, 0.070, 0.070] 
+									   [0.070, 0.070, 0.070] 
+									   [0.070, 0.070, 0.070] 
+									   [0.057, 0.057, 0.057] 
+									   [0.100, 0.100, 0.100]];
+                        
+                        link_frs_vertices = cell(6,1);
+                        for tid = [1:10:100,100]
+                            for j = 2:7
+                                c1 = link_frs_center((tid-1)*7+(j-1), :)';
+                                c2 = link_frs_center((tid-1)*7+j, :)';
+                                g = joint_frs_radius((tid-1)*7+j, :);
+                                Z = zonotope(0.5 * (c1 + c2), [0.5 * (c2 - c1), diag(g + link_radius(j))]);
+                                link_frs_vertices{j-1} = [link_frs_vertices{j-1}; vertices(Z)'];
+                            end
+                        end
                     else
                         k_opt = nan;
-                        joint_frs_center = [];
-                        joint_frs_radius = [];
-                        constraints_value = [];
+                        link_frs_vertices = [];
                     end
                 else
                     error('Unrecognized trajectory type!');
@@ -432,7 +455,11 @@ classdef uarmtd_planner < robot_arm_generic_planner
                     P.info.FO_zono = [P.info.FO_zono, {FO_zono}];
                     P.info.sliced_FO_zono = [P.info.sliced_FO_zono, {sliced_FO_zono}];
                 else
+<<<<<<< HEAD
 %                     P.info.sliced_FO_zono = [P.info.sliced_FO_zono, {[joint_frs_center, joint_frs_radius]}];
+=======
+%                     P.info.sliced_FO_zono = [P.info.sliced_FO_zono, {[link_frs_center, link_frs_generators]}];
+>>>>>>> pybind
                     P.info.sliced_FO_zono = [P.info.sliced_FO_zono, {link_frs_vertices}]; % disable recording for now
                 end
             end
@@ -464,21 +491,23 @@ classdef uarmtd_planner < robot_arm_generic_planner
                 [q_des, dq_des, ddq_des, q, dq, dq_a, ddq_a, R_des, R_t_des, R, R_t, jrs_info] = load_offline_jrs(q_0, q_dot_0, q_ddot_0,...
                     P.agent_info.params.pz_nominal.joint_axes, P.use_robust_input);
             else
-                if P.use_waypoint_for_bernstein_center
+%                 if P.use_waypoint_for_bernstein_center
+%                     [q_des, dq_des, ddq_des, q, dq, dq_a, ddq_a, R_des, R_t_des, R, R_t, jrs_info] = create_jrs_online(q_0, q_dot_0, q_ddot_0,...
+%                         P.agent_info.params.pz_nominal.joint_axes, P.taylor_degree, P.traj_type, P.use_robust_input, waypoint);
+%                 else
                     [q_des, dq_des, ddq_des, q, dq, dq_a, ddq_a, R_des, R_t_des, R, R_t, jrs_info] = create_jrs_online(q_0, q_dot_0, q_ddot_0,...
-                        P.agent_info.params.pz_nominal.joint_axes, P.taylor_degree, P.traj_type, P.use_robust_input, waypoint);
-                else
-                    [q_des, dq_des, ddq_des, q, dq, dq_a, ddq_a, R_des, R_t_des, R, R_t, jrs_info] = create_jrs_online(q_0, q_dot_0, q_ddot_0,...
-                        P.agent_info.params.pz_nominal.joint_axes, P.taylor_degree, P.traj_type, P.use_robust_input);
-                end
+                        P.agent_info.params.pz_nominal.joint_axes, P.taylor_degree, P.traj_type, P.use_robust_input, P.agent_info.LLC_info);
+%                 end
             end
             P.jrs_info = jrs_info;
 
             %% create FO and input poly zonotopes:
             % set up zeros and overapproximation of r
             for j = 1:jrs_info.n_q
-                zero_cell{j, 1} = polyZonotope_ROAHM(0); 
-                r{j, 1} = polyZonotope_ROAHM(0, [], P.agent_info.LLC_info.ultimate_bound);
+                zero_cell{j, 1} = polyZonotope_ROAHM(0);
+                if P.use_robust_input
+                    r{j, 1} = polyZonotope_ROAHM(0, [], P.agent_info.LLC_info.ultimate_bound);
+                end
             end
             
             % get forward kinematics and forward occupancy

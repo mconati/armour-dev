@@ -569,7 +569,7 @@ bool armtd_NLP::eval_f(
     // auto start_nom = std::chrono::high_resolution_clock::now();
 
     // obj_value = sum((q_plan - q_des).^2);
-    obj_value = 0; 
+    obj_value = 0;
     for(Index i = 0; i < n; i++){
         double q_plan = q_des_func(desired_trajectory->q0[i], desired_trajectory->qd0[i], desired_trajectory->qdd0[i], k_range[i] * x[i], t_plan); // Bohao question: why pass in t_plan here instead of duration?
         obj_value += pow(q_des[i] - q_plan, 2);

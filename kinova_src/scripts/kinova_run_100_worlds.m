@@ -9,6 +9,7 @@
 % Edited: 02 June 2022 to work with updated UARMTD code
 % Edited: 25 September 2022 to work with updated UARMTD code for kinova
 % Edited: 10 November 2022 clean up
+% Edited: 20 January 2023 clean up
 
 initialize_script_path = matlab.desktop.editor.getActiveFilename;
 cd(initialize_script_path(1:end-23));
@@ -73,9 +74,15 @@ lookahead_distance = 0.1 ;
 plot_while_running = false ;
 
 % simulation
+<<<<<<< HEAD
 max_sim_time = 86400 ; % 24 hours = 86400 sec; 48 hours = sec
 max_sim_iter = 1000 ;
 stop_threshold = 3 ; % number of failed iterations before exiting
+=======
+max_sim_time = 172800 ; % 48 hours
+max_sim_iter = 300 ;
+stop_threshold = 4 ; % number of failed iterations before exiting
+>>>>>>> pybind
 
 % file handling
 save_file_header = 'trial_' ;
@@ -109,10 +116,6 @@ use_cuda_flag = true;
 
 %% automated from here
 % run loop
-if plot_while_running
-    figure(1); clf; view(3); grid on;
-end
-
 tic
 for idx = 5:length(world_file_list) % length(world_file_list)
     clc; 
@@ -205,7 +208,16 @@ for idx = 5:length(world_file_list) % length(world_file_list)
     % run simulation
     summary = S.run() ;
     
+<<<<<<< HEAD
     %% save summary
     filename = [file_location,'/',save_file_header,world_filename(1:end),'.mat'] ;
     save(filename, 'world_filename', 'summary', 'A', 'P', 'W', 'S','-v7.3')
+=======
+    % save summary
+    filename = [file_location,'/',save_file_header,world_filename(1:end-4),'.mat'] ;
+%     save(filename, 'world_filename', 'summary') ;
+
+    % save all info
+    save(filename,'world_filename', 'summary', 'A', 'P', 'W');
+>>>>>>> pybind
 end

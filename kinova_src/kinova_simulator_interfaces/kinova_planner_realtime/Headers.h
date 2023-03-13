@@ -22,7 +22,6 @@
 #include <cstdint>
 
 #define WARNING_PRINT printf
-#define PRINT printf
 
 // // cuda stuff
 // #ifndef DEVICE_INDEPENDENT
