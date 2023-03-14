@@ -23,7 +23,8 @@ catch
 %     data = readmatrix('ARMOUR_Added_Mass_02_15_2023_v1_Reduced.csv'); % Raw Data
 %     data = readmatrix('HardwareDurationValidation03082023.csv');
 %     data = readmatrix('ARMOUR_BrakeDebugging_03112023.csv');
-    data = readmatrix('ARMOUR_BrakeDebugging_03112023_12_26_13.csv');
+%     data = readmatrix('ARMOUR_BrakeDebugging_03112023_12_26_13.csv');
+    data = readmatrix('ForceRosBag.csv');
 
 %     processFunction(data)
     compare_desired_v2(data)
@@ -247,29 +248,33 @@ function output = compare_desired_v2(data)
 
     %% First Iteration
     
-    idx_first_iter = 1;
-    while norm(debug_traj_k_opt(idx_first_iter,:)) - norm(debug_traj_k_opt(1,:)) == 0
-        idx_first_iter = idx_first_iter+1;
+    for idx_first_iter = 2:length(time)
+        if ~(norm(debug_traj_k_opt(idx_first_iter,:)) - norm(debug_traj_k_opt(1,:)) == 0) & ~isnan(debug_traj_k_opt(idx_first_iter,:))
+            break
+        else
+            idx_first_iter = idx_first_iter+1;
+        end
     end
+    idx_first_iter = idx_first_iter-1;
     t_first_iter = time(idx_first_iter);
 
     %% Finding Jumps in Desired States
 
-    j = 1;
-    for i = 2:length(debug_qd_des)
-        debug_q_des_jump(i-1) = debug_q_des(i) - debug_q_des(i-1);
-        debug_qd_des_jump(i-1) = debug_qd_des(i) - debug_qd_des(i-1);
-        debug_qdd_des_jump(i-1) = debug_qdd_des(i) - debug_qdd_des(i-1);
-        if abs(debug_qd_des_jump(i-1)) > 1e-2
-            debug_q_des_jump(i-1)
-            debug_qd_des_jump(i-1)
-            debug_qdd_des_jump(i-1)
-            jump_idx(j) = i-1;
-            j = j + 1;
-        end
-    end
-
-    brake_indices = jump_idx;
+%     j = 1;
+%     for i = 2:length(debug_qd_des)
+%         debug_q_des_jump(i-1) = debug_q_des(i) - debug_q_des(i-1);
+%         debug_qd_des_jump(i-1) = debug_qd_des(i) - debug_qd_des(i-1);
+%         debug_qdd_des_jump(i-1) = debug_qdd_des(i) - debug_qdd_des(i-1);
+%         if abs(debug_qd_des_jump(i-1)) > 1e-2
+%             debug_q_des_jump(i-1)
+%             debug_qd_des_jump(i-1)
+%             debug_qdd_des_jump(i-1)
+%             jump_idx(j) = i-1;
+%             j = j + 1;
+%         end
+%     end
+% 
+%     brake_indices = jump_idx;
 
     %% Calculating Desired Trajectory from k_opt
 
@@ -277,11 +282,11 @@ function output = compare_desired_v2(data)
 %     k_range = pi/72*ones(7,1);
     
     % desired trajectory constraints
-    q1 = debug_q_des(idx_first_iter,:)' + debug_traj_k_opt(idx_first_iter,:)' .* k_range; % final position is k*k_range away from initial
+    q1 = debug_q_des(idx_first_iter-1,:)' + debug_traj_k_opt(idx_first_iter-1,:)' .* k_range; % final position is k*k_range away from initial
     qd1 = zeros(7,1); % final velocity is zero
     qdd1 = zeros(7,1); % final acceleration is zero
 
-    duration = 4;
+    duration = 1.5;
     tid = 100;
     tspan = linspace(0, duration, tid + 1);
     
@@ -300,24 +305,24 @@ function output = compare_desired_v2(data)
     %% Plotting 
 
     % Desired Variables
-    figure(1)
-    hold on
-    title('debug desired')
-    % Desired Position
-    subplot(3,1,1)
-    hold on
-    plot(time,debug_q_des)
-    plot([time(brake_indices) time(brake_indices)],[-5 5],'--r')
-    % Desired Velocity
-    subplot(3,1,2)
-    hold on
-    plot(time,debug_qd_des)
-    plot([time(brake_indices) time(brake_indices)],[-0.15 0.15],'--r')
-    % Desired Acceleration
-    subplot(3,1,3)
-    hold on
-    plot(time,debug_qdd_des)
-    plot([time(brake_indices) time(brake_indices)],[-0.5 0.5],'--r')
+%     figure(1)
+%     hold on
+%     title('debug desired')
+%     % Desired Position
+%     subplot(3,1,1)
+%     hold on
+%     plot(time,debug_q_des)
+% %     plot([time(brake_indices) time(brake_indices)],[-5 5],'--r')
+%     % Desired Velocity
+%     subplot(3,1,2)
+%     hold on
+%     plot(time,debug_qd_des)
+% %     plot([time(brake_indices) time(brake_indices)],[-0.15 0.15],'--r')
+%     % Desired Acceleration
+%     subplot(3,1,3)
+%     hold on
+%     plot(time,debug_qdd_des)
+% %     plot([time(brake_indices) time(brake_indices)],[-0.5 0.5],'--r')
 
     % Plot Measured Joint States
 %     figure(2)
@@ -328,20 +333,20 @@ function output = compare_desired_v2(data)
 %     plot(time,state_vel)
 
     % Plotting k_opt
-    figure(3)
-    hold on
-    title('k_{opt}')
-    plot(time,debug_traj_k_opt)
-    plot(time(traj_non_nan_idx-1)+1.5,traj_k_opt(traj_non_nan_idx,:),'--o')
+%     figure(3)
+%     hold on
+%     title('k_{opt}')
+%     plot(time,debug_traj_k_opt)
+%     plot(time(traj_non_nan_idx-1)+1.5,traj_k_opt(traj_non_nan_idx,:),'--o')
     % Looks like all the k_opt are published before they are needed and the
     % ones in debug match up in value.
 
     % Plot Trajectory Message Velocity vs Desired Velocity from Debug
-    figure(4)
-    hold on
-    title('Desired Velocity Comparison')
-    plot(time,debug_qd_des)
-    plot(time(traj_non_nan_idx-1)+1.5,traj_vel(traj_non_nan_idx,:),'--o')
+%     figure(4)
+%     hold on
+%     title('Desired Velocity Comparison')
+%     plot(time,debug_qd_des)
+%     plot(time(traj_non_nan_idx-1)+1.5,traj_vel(traj_non_nan_idx,:),'--o')
 
 %     figure(3)
 %     title('k_{opt}')
@@ -349,11 +354,11 @@ function output = compare_desired_v2(data)
 %     plot(time,debug_k_opt)
 %     plot(time(non_nan_idx(1:end)-1),debug_traj_k_opt(non_nan_idx(1:end),:),'o')
 % 
-%     figure(4)
-%     title('Desired Velocity Comparison')
-%     hold on
-%     plot(time,debug_qd_des)
-%     plot(time(non_nan_idx(1:end)-1),debug_traj_vel(non_nan_idx(1:end),:),'o')
+    figure(6)
+    title('Desired Velocity Comparison')
+    hold on
+    plot(time(1:idx_first_iter,:),debug_qd_des(1:idx_first_iter,:))
+    plot(tspan, qd_des_matlab,'o')
 
     test;
 
