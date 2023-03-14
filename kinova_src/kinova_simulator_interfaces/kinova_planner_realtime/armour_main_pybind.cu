@@ -32,13 +32,16 @@ class pzsparse {
         // Eigen::MatrixXd q_des; //q_des.setZero();
 
         double t_plan = DURATION;
+        // Kinova Hardware Demo Values: u_s = 0.609382421; surf_rad =  0.058/2;
+        double u_s = 0.609382421; // 0.5; // static coefficient of friction between tray and object
+        double surf_rad =  0.058 / 2; // 0.0762; // RADIUS of contact area between tray and object (area assumed to be circular) 
+        // Note: might want to change this to be input to the C++ code from matlab?
 
         int num_obstacles = 0;
         double obstacles[MAX_OBSTACLE_NUM * (MAX_OBSTACLE_GENERATOR_NUM + 1) * 3] = {0.0};
         std::shared_ptr<Obstacles> O_ptr{nullptr};
         // Obstacles O(obstacles, num_obstacles); 
         // Obstacles O;
-
 
         BezierCurve traj;
         PZsparse p[NUM_TIME_STEPS * NUM_FACTORS * 3];
@@ -271,7 +274,7 @@ class pzsparse {
             // Solve optimization
             SmartPtr<armtd_NLP> mynlp = new armtd_NLP();
             try {
-                mynlp->set_parameters(q_des, t_plan, &traj, &kd, &torque_radius, O_ptr.get());
+                mynlp->set_parameters(q_des, t_plan, &traj, &kd, &torque_radius, O_ptr.get(), u_s, surf_rad);
             }
             catch (int errorCode) {
                 WARNING_PRINT("        CUDA & C++: Error initializing Ipopt! Check previous error message!");
