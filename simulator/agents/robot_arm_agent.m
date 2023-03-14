@@ -585,6 +585,7 @@ classdef robot_arm_agent < multi_link_agent
             agent_info.get_joint_locations = @(q) A.get_joint_locations(q) ;
             agent_info.get_link_rotations_and_translations = @(t_or_q) A.get_link_rotations_and_translations(t_or_q) ;
             agent_info.inverse_kinematics = @(J,q_0) A.inverse_kinematics(J,q_0) ;
+            agent_info.inverse_kinematics_flat_end_effector = @(J,q_0) A.inverse_kinematics_flat_end_effector(J,q_0) ;
             agent_info.get_end_effector_location = @(q) A.get_end_effector_location(q) ;
         end
         
@@ -1033,6 +1034,45 @@ classdef robot_arm_agent < multi_link_agent
             
             % optimize!
             [q,~,exitflag] = fmincon(opt_fun,q0,[],[],[],[],lb,ub,[],options) ;
+        end
+
+        %% inverse kinematics with flat constraints
+        function [q,exitflag] = inverse_kinematics_flat_end_effector(A,J,q0)
+            % q = A.inverse_kinematics_end_effector(J,q0)
+            %
+            % Given an end-effector location J \in \R^d where d is the
+            % dimension of the agent (2 or 3), find the configuration q
+            % that gets the arm to that end effector location (or fail
+            % trying! aaaah!)
+            
+            % set up the initial guess
+            if nargin < 3
+                q0 = A.state(A.joint_state_indices,end) ;
+            end
+            
+            % create the function to solve for the config
+            opt_fun = @(x) inverse_kinematics_flat_end_effector_opt_fun(A,J,x) ;
+            
+            % create bounds on the solution
+            lb = A.joint_state_limits(1,:)' ;
+            ub = A.joint_state_limits(2,:)' ;
+            
+            % set options
+            options = optimoptions('fmincon') ;
+            if A.verbose < 2
+                options.Display = 'off' ;
+            end
+            
+            % optimize!
+            [q,~,exitflag] = fmincon(opt_fun,q0,[],[],[],[],lb,ub,[],options) ;
+        end
+
+        function f = inverse_kinematics_flat_end_effector_opt_fun(A,p_des,x)
+            x = [x; 0; 0; 0];
+            T = forward_kinematics(x, A.params.nominal.T0, A.params.nominal.joint_axes);
+            p = T(1:3,4);
+            eul = rotm2eul(T(1:3,1:3), 'XYZ');
+            f = sum((p - p_des) .^ 2) + eul(1) ^ 2 + eul(2) ^ 2;
         end
         
         %% moving
