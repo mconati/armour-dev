@@ -131,6 +131,10 @@ classdef uarmtd_planner < robot_arm_generic_planner
                 P.iter = P.iter + 1;
                 planning_time = tic;
                 q_des = P.HLP.get_waypoint(agent_info,world_info,P.lookahead_distance) ;
+
+                % try using RTS HLP here?
+                
+
                 if isempty(q_des)
                     P.vdisp('Waypoint creation failed! Using global goal instead.', 3)
                     q_des = P.HLP.goal ;

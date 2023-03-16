@@ -70,7 +70,7 @@ plot_waypoint_arm_flag  = true ;
 lookahead_distance = 0.1 ;
 
 % plotting
-plot_while_running = false ;
+plot_while_running = true ;
 
 % simulation
 max_sim_time = 86400 ; % 24 hours = 86400 sec; 48 hours = sec
@@ -114,7 +114,7 @@ if plot_while_running
 end
 
 tic
-for idx = 5:length(world_file_list) % length(world_file_list)
+for idx = 44:length(world_file_list) % length(world_file_list)
     clc; 
     fprintf("THIS IS WORLD %d\n\n", idx);
 
