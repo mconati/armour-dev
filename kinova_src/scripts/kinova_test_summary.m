@@ -85,11 +85,11 @@ for i = 1:length(summary_files)
     infeasible_check = [infeasible_check, i];
 
     if ismember(i,infeasible_check)
-        i
-        data.summary.total_iterations
+        fprintf('%d %d %d\n\n', i, data.summary.goal_check, data.summary.total_iterations);
+
 %         data.summary.total_simulated_time
-        data.summary.total_real_time
-        sum(data.summary.stop_check)
+%         data.summary.total_real_time
+%         sum(data.summary.stop_check)
     end
 
 end

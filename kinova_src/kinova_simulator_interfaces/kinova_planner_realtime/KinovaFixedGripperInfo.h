@@ -86,7 +86,6 @@ const double torque_limits[NUM_FACTORS] = { 56.7, 56.7, 56.7, 56.7, 29.4, 29.4, 
 
 const double gravity = 9.81;
 
-
 // link zonotope information
 const double link_zonotope_center[NUM_JOINTS][3] = {{ 0.000000, -0.001297, -0.088375 },
 													{ 0.000000, -0.089400, -0.007877 },
@@ -112,7 +111,7 @@ const double V_m = 1e-2;
 const double M_max = 21.90042595;
 const double M_min = 8.2998203638;
 const double eps = sqrt(2 * V_m / M_min);
-const double K = 5.0; // 10.0
+const double K = 5.0;
 const double qe = eps / K;
 const double qde = 2 * eps;
 const double qdae = eps;

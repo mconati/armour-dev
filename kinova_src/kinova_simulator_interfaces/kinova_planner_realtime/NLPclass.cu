@@ -199,10 +199,10 @@ bool armtd_NLP::get_starting_point(
 
     for( Index i = 0; i < n; i++ ) {
         // initialize to zero
-        x[i] = 0.0;
+        // x[i] = 0.0;
 
         // try to avoid local minimum
-        // x[i] = min(max((q_des[i] - desired_trajectory->q0[i]) / k_range[i], -0.5), 0.5);
+        x[i] = min(max((q_des[i] - desired_trajectory->q0[i]) / k_range[i], -0.8), 0.8);
     }
 
     return true;
