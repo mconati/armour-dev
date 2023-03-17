@@ -18,7 +18,7 @@
     #define DURATION 2.0
 
     // number of time steps (This should be an EVEN number!!!)
-    #define NUM_TIME_STEPS 100
+    #define NUM_TIME_STEPS 128
 
     // range of parameters (size of generators in PZ).
     const double k_range[NUM_FACTORS] = { M_PI / 48, M_PI / 48, M_PI / 48, M_PI / 48, M_PI / 48, M_PI / 48, M_PI / 48 }; // (radian)
@@ -51,13 +51,19 @@
     // threshold for tipping constraint violation (unit: meter) // squared?
     #define TIPPING_CONSTRAINT_VIOLATION_THRESHOLD 1e-6
 
+    // threshold for state limits violation (unit: radian)
+    #define STATE_LIMITS_VIOLATION_THRESHOLD 1e-4
+
+    // threshold for state limits violation (unit: radian / sec)
+    #define VELOCITY_LIMITS_VIOLATION_THRESHOLD 1e-3
+
     // scale the cost function value so that it could converge faster (be careful with it!)
-    #define COST_FUNCTION_OPTIMALITY_SCALE 10.0
+    #define COST_FUNCTION_OPTIMALITY_SCALE 1.0
 
 // Parameters for armour_main.cpp
     #define IPOPT_OPTIMIZATION_TOLERANCE 1e-4
 
-    #define IPOPT_MAX_CPU_TIME 10 // 14.0
+    #define IPOPT_MAX_CPU_TIME 13.0 // 14.0
 
     #define IPOPT_PRINT_LEVEL 0
 

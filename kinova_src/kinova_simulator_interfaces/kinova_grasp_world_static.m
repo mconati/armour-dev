@@ -6,7 +6,7 @@ classdef kinova_grasp_world_static < world
         create_random_obstacles_flag = true ;
         obstacle_size_range = [0.01 0.5] ; % [min, max] side length
         create_configuration_timeout = 200 ;
-        create_obstacle_timeout =  100 ;
+        create_obstacle_timeout =  1200 ;
         min_dist_in_config_space_between_start_and_goal
         workspace_goal_check = 0;
 
@@ -418,23 +418,24 @@ classdef kinova_grasp_world_static < world
             % Run a collision check for the given state and return true if
             % it is in collision. This gets called by W.collision_check.
             
-            O = W.obstacles(1:end-1) ; % temporarily ignore ground obstacles
-            N_O = length(O) ; % in case W.N_obstacles is wrong
-            out = false ; % optimism!
-            o_idx = 1 ;
-            V_arm = I.get_collision_check_volume(q) ;
-            
-            while (o_idx <= N_O) && ~out
-                O_idx = O{o_idx} ;
-                out = W.collision_check_single_obstacle(O_idx,V_arm) ;
-
-                if out
-                    disp(q);
-                    disp(O_idx.Z);
-                end
-
-                o_idx = o_idx + 1 ;
-            end
+%             O = W.obstacles(1:end-1) ; % temporarily ignore ground obstacles
+%             N_O = length(O) ; % in case W.N_obstacles is wrong
+%             out = false ; % optimism!
+%             o_idx = 1 ;
+%             V_arm = I.get_collision_check_volume(q) ;
+%             
+%             while (o_idx <= N_O) && ~out
+%                 O_idx = O{o_idx} ;
+%                 out = W.collision_check_single_obstacle(O_idx,V_arm) ;
+% 
+%                 if out
+%                     disp(q);
+%                     disp(O_idx.Z);
+%                 end
+% 
+%                 o_idx = o_idx + 1 ;
+%             end
+            out = false;
         end
         
         function out = collision_check_single_obstacle(W,obstacle_object,arm_volume)

@@ -8,7 +8,7 @@
 clear ; clc ; figure(1); clf; view(3); grid on;
 
 %% user parameters
-world_save_dir = 'saved_worlds/rtd-force/dur2s_largeStateBuffer_10Obs_03082023';
+world_save_dir = '../saved_worlds/rtd-force/dur2s_largeStateBuffer_10Obs_03082023_10';
 if ~exist(world_save_dir, 'dir')
     mkdir(world_save_dir);
 end
@@ -24,7 +24,7 @@ obstacle_flag = 1;
 N_obstacle_min = 10 ;
 N_obstacle_max = 10 ;
 N_obstacle_delta = 1 ;
-N_worlds_per_obstacle = 100;
+N_worlds_per_obstacle = 10;
 
 dimension = 3 ;
 nLinks = 10 ;
@@ -52,7 +52,7 @@ robot.Gravity = [0 0 -9.81];
 % model = rmfield(model, 'friction');
 % model = rmfield(model, 'damping');
 params = load_robot_params(robot,...
-                            'add_uncertainty_to', add_uncertainty_to, ...
+                           'add_uncertainty_to', add_uncertainty_to, ...
                            'links_with_uncertainty', links_with_uncertainty,...
                            'uncertain_mass_range', uncertain_mass_range);
 joint_speed_limits = [-1.3963, -1.3963, -1.3963, -1.3963, -1.2218, -1.2218, -1.2218;

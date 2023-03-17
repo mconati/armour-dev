@@ -37,7 +37,7 @@ use_robust_input = true;
 LLC_V_max = 5e-5;
 
 %%% for HLP
-if_use_RRT = false;
+if_use_RRT = true;
 HLP_grow_tree_mode = 'new' ; % pick 'new' or 'keep'
 plot_waypoint_flag = true ;
 plot_waypoint_arm_flag  = true ;

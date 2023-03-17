@@ -223,7 +223,7 @@ classdef simulator_armtd < simulator
                                        '''s t_move property is empty!'])
                             end
 
-                            A.move(t_move,T_nom,U_nom,Z_nom,planner_info) ;
+                        A.move(t_move,T_nom,U_nom,Z_nom,planner_info) ;
                         end
 
                     %% Note (22 July 2019)

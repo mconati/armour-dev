@@ -163,7 +163,7 @@ classdef uarmtd_planner < robot_arm_generic_planner
 
                 %%%%% This one
                 if strcmp(P.traj_type, 'bernstein')
-                    P.jrs_info.n_t = 100;
+                    P.jrs_info.n_t = 128;
                     P.jrs_info.n_q = 7;
                     P.jrs_info.n_k = 7;
                     P.jrs_info.c_k_bernstein = zeros(7,1);
@@ -215,7 +215,7 @@ classdef uarmtd_planner < robot_arm_generic_planner
                     % call cuda program in terminal
                     % you have to be in the proper path!
 %                     terminal_output = system('./../kinova_simulator_interfaces/kinova_planner_realtime/armour_main'); % armour path
-                    terminal_output = system('./../kinova_simulator_interfaces/kinova_planner_realtime/rtd_force_main_v2'); % rtd-force path
+                    terminal_output = system('env -i bash -i -c "./../kinova_simulator_interfaces/kinova_planner_realtime/rtd_force_main_v2"'); % rtd-force path
     
                     if terminal_output == 0
                         data = readmatrix('armour.out', 'FileType', 'text');
