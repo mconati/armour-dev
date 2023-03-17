@@ -39,7 +39,7 @@ use_CAD_flag = true; % plot robot with CAD or bounding boxes
 %%% for LLC
 use_robust_input = true;
 LLC_V_max = 1e-2;
-alpha_constant = 1;
+alpha_constant = 10;
 Kr = 5;
 
 %%% for HLP
@@ -50,7 +50,7 @@ plot_waypoint_arm_flag  = true ;
 lookahead_distance = 0.1 ;
 
 % plotting
-plot_while_running = true ;
+plot_while_running = false ;
 
 % simulation
 max_sim_time = 172800 ; % 48 hours
