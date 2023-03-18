@@ -13,7 +13,7 @@ q_valid_list = qs.q_valid_list;
 %% Graph Parameters
 
 k_range = pi/72;
-edge_threshold = 50*k_range;
+edge_threshold = 40*k_range;
 
 %% Create Graph
 
@@ -42,3 +42,7 @@ for i = 1:1:round(length(q_valid_list)/1)
 end
 
 plot(Q_Graph)
+
+%% Saving Graph
+
+save('Q_Graph_7200Nodes_40krange.mat','Q_Graph')
