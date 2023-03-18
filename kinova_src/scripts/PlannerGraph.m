@@ -26,7 +26,7 @@ M_min_eigenvalue = 8.29938; % matlab doesn't import these from urdf so hard code
 
 %% Generate Random Configurations
 
-num_tries = 100000000;
+num_tries = 1000000;
 q_list = nan(7,num_tries);
 
 % counter = 0;
