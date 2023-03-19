@@ -7,13 +7,13 @@ clc;
 
 %% Load Data
 
-qs = load('PlannerGraphSmallNodeSet.mat')
+qs = load('PlannerGraphResult1.mat')
 q_valid_list = qs.q_valid_list;
 
 %% Graph Parameters
 
 k_range = pi/72;
-edge_threshold = 40*k_range;
+edge_threshold = 7*k_range;
 
 %% Create Graph
 
@@ -24,7 +24,7 @@ Q_Graph = addnode(Q_Graph,length(q_valid_list));
 
 %% Iterate Through q List and Add Edges Where Appropriate
 for i = 1:1:round(length(q_valid_list)/1)
-    for j = 1:1:round(length(q_valid_list)/1)
+    for j = i:1:round(length(q_valid_list)/1)
 
         if i ~= j
 
@@ -45,4 +45,4 @@ plot(Q_Graph)
 
 %% Saving Graph
 
-save('Q_Graph_7200Nodes_40krange.mat','Q_Graph')
+save('Q_Graph_70kNodes_7krange.mat','Q_Graph')

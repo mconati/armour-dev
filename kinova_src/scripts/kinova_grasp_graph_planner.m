@@ -18,6 +18,7 @@ dimension = 3 ;
 verbosity = 10;
 
 DURATION = 2.0;
+k_range = pi/72; % used for graph planner check
 
 u_s = 0.609382421; 
 surf_rad =  0.058 / 2;
@@ -57,42 +58,6 @@ max_sim_time = 172800 ; % 48 hours
 max_sim_iter = 600 ;
 stop_threshold = 4 ; % number of failed iterations before exiting
 
-%%% for world
-% start = [-1; -1; -1; -1; -1; -1; -1]; % start configuration
-% goal = [1; 1; 1; 1; 1; 1; 1]; % goal configuration
-
-% simple rotation
-% start = [0;-pi/2;0;0;0;0;0];
-% goal = [pi/4;-pi/2;0;0;0;0;0];
-
-start = [-pi/6;-pi/2;-pi/2;pi/2;0;pi/2;pi/2];
-goal = [pi/6;-pi/2;pi/2;pi/2;pi;-pi/2;pi/2];
-
-% start = [0.4933;
-%     0.9728;
-%     0.6090;
-%    -0.3981;
-%     0.4258;
-%    -1.5576;
-%     0.7482];
-% goal = [0.3808;
-%     1.8013;
-%     0.8670;
-%    -0.7256;
-%     0.7211;
-%    -2.0458;
-%     1.4523];
-
-
-% swing
-% start = [0;-pi/2;0;0;0;0;0];
-% goal = [pi;-pi/2;pi;0;0;0;0];
-
-% random that struggles to reach goal
-% use to debug gradients as well
-% start = [0.9534;-1.4310;0.1330;0.6418;-0.9534;-0.9534;0.0637];
-% goal = [1.62310000000000;-1.59990000000000;-0.137000000000000;0.493080000000000;-3.26490000000000;-2.23000000000000;-0.246620000000000];
-
 obstacles{1} = box_obstacle_zonotope('center', [3; 3; 3],...
                                      'side_lengths', [0.1; 0.1; 0.1]) ;
 % obstacles{2} = box_obstacle_zonotope('center', [0.3; 0; 0.4],...
@@ -113,14 +78,13 @@ joint_input_limits = [-56.7, -56.7, -56.7, -56.7, -29.4, -29.4, -29.4;
 transmision_inertia = [8.02999999999999936 11.99620246153036440 9.00254278617515169 11.58064393167063599 8.46650409179141228 8.85370693737424297 8.85873036646853151]; % matlab doesn't import these from urdf so hard code into class
 M_min_eigenvalue = 8.29938; % matlab doesn't import these from urdf so hard code into class
 
-%% automated from here
+%% 
+
 if plot_while_running
     figure(1); clf; view(3); grid on;
 end
 
-% run loop
 tic;
-W = kinova_grasp_world_static('create_random_obstacles_flag', false, 'goal_radius', goal_radius, 'N_obstacles',length(obstacles),'dimension',dimension,'workspace_goal_check', 0, 'verbose',verbosity, 'start', start, 'goal', goal, 'obstacles', obstacles, 'goal_type', goal_type, 'grasp_constraint_flag', true,'ik_start_goal_flag', true,'u_s', u_s, 'surf_rad', surf_rad) ;
 
 % create arm agent
 A = uarmtd_agent(robot, params,...
@@ -150,6 +114,145 @@ else
 end
 
 A.LLC.setup(A);
+
+%%% for world
+
+% simple rotation
+start = [0;-pi/2;0;0;0;0;0];
+goal = [pi/4;-pi/2;0;0;0;0;0];
+
+random_start_goal = false;
+if random_start_goal
+    % random start and goal for graph planner (needs to be incorporated
+    % properly eventually)
+    finding_start = true;
+    while finding_start
+    
+        % create random q
+        q_rand = randomConfiguration(robot);
+    
+        q_aug = [q_rand; 0; 0; 0];
+    
+        % generate forward kinematics of random configuration
+        q_fk_res = forward_kinematics(q_aug, params.nominal.T0, params.nominal.joint_axes);
+    
+        % get the euler angles of the random configuration
+    %     q_ee_euler_angles = tform2eul(q_fk_res);
+        q_ee_euler_angles = rotm2eul(q_fk_res(1:3,1:3), 'XYZ');
+    
+    %     % if valid, add to list of q's
+        if abs(q_ee_euler_angles(1))<0.15 & abs(q_ee_euler_angles(2))<0.15 % & abs(q_ee_euler_angles(3))<0.03
+            start = q_rand;
+            finding_start = false;
+        end
+    end
+    finding_goal = true;
+    while finding_goal
+    
+        % create random q
+        q_rand = randomConfiguration(robot);
+    
+        q_aug = [q_rand; 0; 0; 0];
+    
+        % generate forward kinematics of random configuration
+        q_fk_res = forward_kinematics(q_aug, params.nominal.T0, params.nominal.joint_axes);
+    
+        % get the euler angles of the random configuration
+    %     q_ee_euler_angles = tform2eul(q_fk_res);
+        q_ee_euler_angles = rotm2eul(q_fk_res(1:3,1:3), 'XYZ');
+    
+    %     % if valid, add to list of q's
+        if abs(q_ee_euler_angles(1))<0.15 & abs(q_ee_euler_angles(2))<0.15 % & abs(q_ee_euler_angles(3))<0.03
+            goal = q_rand;
+            finding_goal = false;
+        end
+    end
+end
+
+%% Graph Planner Waypoints
+
+% Load Configuration Graph
+
+% Note that these need to match and in future store the configuration and
+% collision checking points in each node. 
+
+config_struct = load('PlannerGraphResult2.mat');
+q_valid_list = config_struct.q_valid_list;
+
+graph_struct = load('QGraph700kPartial.mat');
+Q_Graph = graph_struct.Q_Graph;
+
+% Reduce Graph to Largest Connected Component
+
+[bin, binsize] = conncomp(Q_Graph,'Type','weak');
+
+idx = (binsize(bin) == max(binsize));
+
+Q_Graph_Reduced = subgraph(Q_Graph,idx);
+q_valid_list_reduced = q_valid_list(:,idx);
+
+% Generate Path
+
+% collision checking to remove nodes in collision
+
+% find closest nodes to start and goal? assign as first and last waypoints?
+% or just add start and goal as nodes, assuming they are collision free?
+% but they wouldn't be connected.
+
+% iterate through the whole graph and check for closest node? or check for
+% node within a certain range?
+start_dist = inf;
+start_node = NaN;
+goal_dist = inf;
+goal_node = NaN;
+
+for i = 1:length(q_valid_list_reduced)
+
+    if norm(q_valid_list_reduced(:,i)-start) < start_dist
+        start_dist = norm(q_valid_list_reduced(:,i)-start);
+        start_node = i;
+    end
+    if norm(q_valid_list_reduced(:,i)-goal) < goal_dist
+        goal_dist = norm(q_valid_list_reduced(:,i)-goal);
+        goal_node = i;
+    end
+
+end
+if goal_node == start_node
+    fprintf('Start and Goal Nodes are the Same!!!')
+end
+if start_dist > 7*k_range 
+    fprintf('Start Node is Far Away!!!')
+    start_dist
+end
+if goal_dist > 7*k_range
+    fprintf('Goal Node is Far Away!!!')
+    goal_dist
+end
+
+% if nodes are far away, could straight line plan to them?
+
+% generate path
+[Path, dist, waypoint_nodes] = shortestpath(Q_Graph_Reduced,start_node,goal_node);
+% NOTE THIS GENERATES NODES THAT CANNOT BE COMPARED TO ORIGINAL Q_GRAPH
+% WITHOUT WORK
+% need to add q configurations to Q_Graph and then do subgraph
+
+% % get actual waypoint configurations
+% counter = 1;
+% iter = true;
+% while iter == true
+% 
+%     % use idx to find correct waypoints
+% 
+% 
+% end
+% % waypoints = q_valid_list(:,waypoint_nodes);
+
+%%
+
+% run loop
+W = kinova_grasp_world_static('create_random_obstacles_flag', false, 'goal_radius', goal_radius, 'N_obstacles',length(obstacles),'dimension',dimension,'workspace_goal_check', 0, 'verbose',verbosity, 'start', start, 'goal', goal, 'obstacles', obstacles, 'goal_type', goal_type, 'grasp_constraint_flag', true,'ik_start_goal_flag', true,'u_s', u_s, 'surf_rad', surf_rad) ;
 
 P = uarmtd_planner('verbose', verbosity, ...
                    'first_iter_pause_flag', false, ...
