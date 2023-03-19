@@ -282,16 +282,16 @@ function output = compare_desired_v2(data)
 %     k_range = pi/72*ones(7,1);
     
     % desired trajectory constraints
-    q1 = debug_q_des(idx_first_iter-1,:)' + debug_traj_k_opt(idx_first_iter-1,:)' .* k_range; % final position is k*k_range away from initial
+    q1 = debug_q_des(1,:)' + debug_traj_k_opt(1,:)'; % already multiplied by k_range .* k_range; % final position is k*k_range away from initial
     qd1 = zeros(7,1); % final velocity is zero
     qdd1 = zeros(7,1); % final acceleration is zero
 
-    duration = 1.5;
+    duration = 2;
     tid = 100;
     tspan = linspace(0, duration, tid + 1);
     
-    beta = match_deg5_bernstein_coefficients({debug_q_des(1,:)', debug_qd_des(1,:)', debug_qdd_des(1,:)', q1, qd1, qdd1}, duration);
-
+    beta = match_deg5_bernstein_coefficients({debug_q_des(1,:)', debug_qd_des(1,:)', debug_qdd_des(1,:)', q1, qd1, qdd1}, duration);    
+    
     for i = 1:length(tspan)
         [q, qd, qdd] = get_desired_traj(beta, tspan(i), duration);
         q_des_matlab(:,i) = q;
