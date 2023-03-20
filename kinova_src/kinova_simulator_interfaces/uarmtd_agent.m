@@ -142,7 +142,7 @@ classdef uarmtd_agent < robot_arm_agent
             % add robot params and LLC info
             agent_info.params = A.params;
             agent_info.link_poly_zonotopes = A.link_poly_zonotopes;
-            if isfield(A, 'LLC')
+            if any(strcmp(properties(A), 'LLC')) % isfield(A, 'LLC')
                 agent_info.LLC_info = A.LLC.get_LLC_info();
             end
         end
