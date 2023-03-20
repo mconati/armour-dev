@@ -110,7 +110,7 @@ classdef simulator_armtd < simulator
                     % get planner ready
                     agent_info = A.get_agent_info() ;
                     world_info = W.get_world_info(agent_info,P) ;
-                    P.setup(agent_info,world_info) ;
+                     P.setup(agent_info,world_info) ;
 
                     % check to make sure gif start is ready
                     if S.save_gif

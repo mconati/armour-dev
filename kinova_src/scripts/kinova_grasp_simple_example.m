@@ -24,7 +24,7 @@ surf_rad =  0.058 / 2;
 
 %%% for planner
 traj_type = 'bernstein'; % pick 'orig' (ARMTD) or 'bernstein' (ARMOUR)
-use_cuda_flag = true;
+use_cuda_flag = false;
 
 %%% for agent
 agent_urdf = 'Kinova_Grasp_URDF.urdf';
@@ -43,7 +43,7 @@ alpha_constant = 10;
 Kr = 5;
 
 %%% for HLP
-if_use_RRT = true;
+if_use_RRT = false;
 HLP_grow_tree_mode = 'new' ; % pick 'new' or 'keep'
 plot_waypoint_flag = true ;
 plot_waypoint_arm_flag  = true ;

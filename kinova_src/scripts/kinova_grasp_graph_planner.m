@@ -17,7 +17,7 @@ goal_radius = pi/30;
 dimension = 3 ;
 verbosity = 10;
 
-DURATION = 2.0;
+DURATION = 1.0;
 k_range = pi/72; % used for graph planner check
 
 u_s = 0.609382421; 
@@ -25,7 +25,7 @@ surf_rad =  0.058 / 2;
 
 %%% for planner
 traj_type = 'bernstein'; % pick 'orig' (ARMTD) or 'bernstein' (ARMOUR)
-use_cuda_flag = true;
+use_cuda_flag = false;
 
 %%% for agent
 agent_urdf = 'Kinova_Grasp_URDF.urdf';
@@ -38,20 +38,22 @@ agent_move_mode = 'integrator' ; % pick 'direct' or 'integrator'
 use_CAD_flag = true; % plot robot with CAD or bounding boxes
 
 %%% for LLC
-use_robust_input = true;
+use_robust_input = false;
 LLC_V_max = 1e-2;
 alpha_constant = 10;
 Kr = 5;
 
 %%% for HLP
-if_use_RRT = true;
+if_use_RRT = false;
 HLP_grow_tree_mode = 'new' ; % pick 'new' or 'keep'
 plot_waypoint_flag = true ;
 plot_waypoint_arm_flag  = true ;
 lookahead_distance = 0.1 ;
 
+if_use_graph_planner = true;
+
 % plotting
-plot_while_running = false ;
+plot_while_running = true ;
 
 % simulation
 max_sim_time = 172800 ; % 48 hours
@@ -83,37 +85,6 @@ M_min_eigenvalue = 8.29938; % matlab doesn't import these from urdf so hard code
 if plot_while_running
     figure(1); clf; view(3); grid on;
 end
-
-tic;
-
-% create arm agent
-A = uarmtd_agent(robot, params,...
-                 'verbose', verbosity,...
-                 'animation_set_axes_flag', 0,... 
-                 'animation_set_view_flag', 0,...
-                 'move_mode', agent_move_mode,...
-                 'use_CAD_flag', use_CAD_flag,...
-                 'joint_speed_limits', joint_speed_limits, ...
-                 'joint_input_limits', joint_input_limits, ...
-                 'add_measurement_noise_', false, ...
-                 'measurement_noise_size_', 0,...
-                 'M_min_eigenvalue', M_min_eigenvalue, ...
-                 'transmision_inertia', transmision_inertia,...
-                 't_total', DURATION);
-
-% LLC
-if use_robust_input
-    A.LLC = uarmtd_robust_CBF_LLC('verbose', verbosity, ...
-                                  'use_true_params_for_robust', false, ...
-                                  'V_max', LLC_V_max, ...
-                                  'alpha_constant', alpha_constant, ...
-                                  'Kr', Kr, ...
-                                  'if_use_mex_controller', true);
-else
-    A.LLC = uarmtd_nominal_passivity_LLC('verbose', verbosity);
-end
-
-A.LLC.setup(A);
 
 %%% for world
 
@@ -179,7 +150,7 @@ end
 config_struct = load('PlannerGraphResult2.mat');
 q_valid_list = config_struct.q_valid_list;
 
-graph_struct = load('QGraph700kPartial.mat');
+graph_struct = load('QGraph700kPartial_AllInfo.mat');
 Q_Graph = graph_struct.Q_Graph;
 
 % Reduce Graph to Largest Connected Component
@@ -206,7 +177,7 @@ start_node = NaN;
 goal_dist = inf;
 goal_node = NaN;
 
-for i = 1:length(q_valid_list_reduced)
+for i = 1:numnodes(Q_Graph_Reduced) % length(q_valid_list_reduced)
 
     if norm(q_valid_list_reduced(:,i)-start) < start_dist
         start_dist = norm(q_valid_list_reduced(:,i)-start);
@@ -249,10 +220,45 @@ end
 % end
 % % waypoints = q_valid_list(:,waypoint_nodes);
 
+Q_Nodes = table2array(Q_Graph_Reduced.Nodes)';
+
+waypoints = Q_Nodes(:,Path);
+
 %%
 
 % run loop
 W = kinova_grasp_world_static('create_random_obstacles_flag', false, 'goal_radius', goal_radius, 'N_obstacles',length(obstacles),'dimension',dimension,'workspace_goal_check', 0, 'verbose',verbosity, 'start', start, 'goal', goal, 'obstacles', obstacles, 'goal_type', goal_type, 'grasp_constraint_flag', true,'ik_start_goal_flag', true,'u_s', u_s, 'surf_rad', surf_rad) ;
+
+tic;
+
+% create arm agent
+A = uarmtd_agent(robot, params,...
+                 'verbose', verbosity,...
+                 'animation_set_axes_flag', 0,... 
+                 'animation_set_view_flag', 0,...
+                 'move_mode', agent_move_mode,...
+                 'use_CAD_flag', use_CAD_flag,...
+                 'joint_speed_limits', joint_speed_limits, ...
+                 'joint_input_limits', joint_input_limits, ...
+                 'add_measurement_noise_', false, ...
+                 'measurement_noise_size_', 0,...
+                 'M_min_eigenvalue', M_min_eigenvalue, ...
+                 'transmision_inertia', transmision_inertia,...
+                 't_total', DURATION);
+
+% LLC
+if use_robust_input
+    A.LLC = uarmtd_robust_CBF_LLC('verbose', verbosity, ...
+                                  'use_true_params_for_robust', false, ...
+                                  'V_max', LLC_V_max, ...
+                                  'alpha_constant', alpha_constant, ...
+                                  'Kr', Kr, ...
+                                  'if_use_mex_controller', true);
+else
+    A.LLC = uarmtd_nominal_passivity_LLC('verbose', verbosity);
+end
+
+A.LLC.setup(A);
 
 P = uarmtd_planner('verbose', verbosity, ...
                    'first_iter_pause_flag', false, ...
@@ -270,6 +276,10 @@ if if_use_RRT
                                                'plot_waypoint_arm_flag',plot_waypoint_arm_flag,...
                                                'grow_tree_mode',HLP_grow_tree_mode,...
                                                'buffer',0.1) ;
+end
+
+if if_use_graph_planner
+    P.HLP = robot_arm_graph_planner_HLP('waypoints',waypoints);
 end
 
 % set up world using arm
