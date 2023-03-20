@@ -1051,7 +1051,7 @@ classdef robot_arm_agent < multi_link_agent
             end
             
             % create the function to solve for the config
-            opt_fun = @(x) inverse_kinematics_flat_end_effector_opt_fun(A,J,x) ;
+            opt_fun = @(x) inverse_kinematics_flat_end_effector_opt_fun(A,q0(1:4),J,x) ;
             
             % create bounds on the solution
             lb = A.joint_state_limits(1,:)' ;
@@ -1064,15 +1064,15 @@ classdef robot_arm_agent < multi_link_agent
 %             end
             
             % optimize!
-            [q,~,exitflag] = fmincon(opt_fun,q0,[],[],[],[],lb,ub,[],options) ;
+            [q,~,exitflag] = fmincon(opt_fun,q0(5:7),[],[],[],[],lb,ub,[],options) ;
         end
 
-        function f = inverse_kinematics_flat_end_effector_opt_fun(A,p_des,x)
-            x = [x; 0; 0; 0];
+        function f = inverse_kinematics_flat_end_effector_opt_fun(A,q0_first_four,p_des,x)
+            x = [q0_first_four; x; 0; 0; 0];
             T = forward_kinematics(x, A.params.nominal.T0, A.params.nominal.joint_axes);
             p = T(1:3,4);
             eul = rotm2eul(T(1:3,1:3), 'XYZ');
-            f = sum((p - p_des) .^ 2) + eul(1) ^ 2 + eul(2) ^ 2;
+            f = 0 * sum((p - p_des) .^ 2) + eul(1) ^ 2 + eul(2) ^ 2;
         end
         
         %% moving
