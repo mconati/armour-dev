@@ -836,6 +836,9 @@ void armtd_NLP::finalize_solution(
     IpoptCalculatedQuantities* ip_cq
 )
 {
+
+    cout << obj_value << endl;
+
     // here is where we would store the solution to variables, or write to a file, etc
     // so we could use the solution.
 

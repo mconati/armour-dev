@@ -65,12 +65,12 @@ const double inertia[NUM_JOINTS * 9] = {  0.00457, 0.000001, 0.000002, 0.000001,
 const double inertia_uncertainty = 0.03;
 
 // joint friction
-// const double friction[NUM_JOINTS] = {0.5217383101288284, 0.5769579059927288, 0.4213397946418778, 0.4945515376566732, 0.1611070502661354, 0.1333491185514130, 0.1434440181717370};
-const double friction[NUM_JOINTS] = {0.0}; // disable friction in Matlab simulation for now
+const double friction[NUM_JOINTS] = {0.5217383101288284, 0.5769579059927288, 0.4213397946418778, 0.4945515376566732, 0.1611070502661354, 0.1333491185514130, 0.1434440181717370};
+// const double friction[NUM_JOINTS] = {0.0}; // disable friction in Matlab simulation for now
 
 // joint damping
-// const double damping[NUM_JOINTS] = {10.5, 7.4064845817230722, 9.9727633408172860, 8.2667950822503915, 8.8572249026528151, 8.7110831569332845, 8.8881903638306934};
-const double damping[NUM_JOINTS] = {0.0}; // disable damping in Matlab simulation for now
+const double damping[NUM_JOINTS] = {10.5, 7.4064845817230722, 9.9727633408172860, 8.2667950822503915, 8.8572249026528151, 8.7110831569332845, 8.8881903638306934};
+// const double damping[NUM_JOINTS] = {0.0}; // disable damping in Matlab simulation for now
 
 // joint armature / motor transmission inertia
 const double armature[NUM_JOINTS] = {8.03, 11.9962024615303644, 9.0025427861751517, 11.5806439316706360, 8.4665040917914123, 8.8537069373742430, 8.8587303664685315};
@@ -88,14 +88,15 @@ const double gravity = 9.81;
 
 
 // link zonotope information
+
 const double link_zonotope_center[NUM_JOINTS][3] = {{ 0.000000, -0.001297, -0.088375 },
 													{ 0.000000, -0.089400, -0.007877 },
 													{ 0.000000, -0.001502, -0.129375 },
 													{ 0.000000, -0.087450, -0.013648 },
 													{ 0.000001, -0.009023, -0.071752 },
 													{ 0.000000, -0.041661, -0.009251 },
-													{ 0.000000, -0.018585, -0.033462 },
-													{ 0.0,      -0.00,     -0.0}};
+													{ 0.000000, -0.018585, -0.033462 - 0.05 },
+													{ 0.0,       0.0225,     0.0325}}; 
 
 const double link_zonotope_generators[NUM_JOINTS][3] = {{ 0.046358, 0.047354, 0.086000 },
 														{ 0.046000, 0.135400, 0.047501 },
@@ -103,11 +104,11 @@ const double link_zonotope_generators[NUM_JOINTS][3] = {{ 0.046358, 0.047354, 0.
 														{ 0.046000, 0.133450, 0.042293 },
 														{ 0.034999, 0.044023, 0.069252 },
 														{ 0.035000, 0.076739, 0.044076 },
-														{ 0.045500, 0.056085, 0.030963 },
-														{ 0.07,     0.09,     0.07}}; 
+														{ 0.045500, 0.056085, 0.12}, // 0.030963
+														{ 0.0575,     0.06,     0.035}}; 
 
 // ultimate bound
-const double alpha = 1.0; // 1.0
+const double alpha = 10.0; // 1.0
 const double V_m = 1e-2;
 const double M_max = 21.90042595;
 const double M_min = 8.2998203638;
