@@ -1059,9 +1059,9 @@ classdef robot_arm_agent < multi_link_agent
             
             % set options
             options = optimoptions('fmincon') ;
-            if A.verbose < 2
+%             if A.verbose < 2
                 options.Display = 'off' ;
-            end
+%             end
             
             % optimize!
             [q,~,exitflag] = fmincon(opt_fun,q0,[],[],[],[],lb,ub,[],options) ;
