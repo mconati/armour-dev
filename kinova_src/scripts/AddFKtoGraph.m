@@ -34,11 +34,15 @@ params = load_robot_params(robot, ...
                            'links_with_uncertainty', links_with_uncertainty,...
                            'uncertain_mass_range', uncertain_mass_range);
 
-test = nan(length(Q_Nodes));
-
-test_cells = num2cell(test); % ,length(Q_Nodes));
+% test = nan(2,length(Q_Nodes));
+% 
+% test_cells = num2cell(test); % ,length(Q_Nodes));
+% 
+% Q_Graph_Reduced.Nodes.Test = test_cells';
 
 %% Loop Through Joints and Calculate, Then Store Forward Kinematics
+
+parpool('threads')
 
 for i = 1:length(Q_Nodes)
 
@@ -48,18 +52,32 @@ for i = 1:length(Q_Nodes)
     % generate points between the joints to check for collition
     alpha = linspace(0,1,5); % this is the number of points including the two joints
 
+    counter = 1;
     for j = 1:length(q_cur_fk)-1
         
         % calculate points along the link
         points = alpha.*q_cur_fk{j}(1:3,4) + (1-alpha).*q_cur_fk{j+1}(1:3,4);
 
+        
+        for k = 1:length(points)
+            for l = 1:3
+                points_storage(i,counter) = points(l,k);
+                counter = counter + 1;
+            end
+        end
+
 %         figure(101)
 %         hold on
 %         plot3(points(1,:),points(2,:),points(3,:),'ok')
 
-%         Q_Graph_Reduced.Nodes.CollisionPoints = 
-
     end
 
-
 end
+
+%% Add Collision Points to Graph
+
+% Q_Graph_Reduced.Nodes.CollisionPoints = points_storage;
+
+%% Save Graph
+
+% save('Connected_70k_w_Collision.mat','Q_Graph_Reduced')
