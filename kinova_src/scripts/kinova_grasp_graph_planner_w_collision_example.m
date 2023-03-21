@@ -162,14 +162,24 @@ Q_Nodes = Q_Attributes(:,1:7);
 Q_Collision_Data = Q_Attributes(:,8:end);
 
 % Format Collision Points
+[q_col_row, q_col_col] = size(Q_Collision_Data);
 
-Q_Collision_Points
+offset = 0;
+for i = 1:q_col_row
+    for j = 1:10
+        for k = 1:15
+            collision_points(:,k) = Q_Collision_Data(i,k*offset:k*(offset+3))'
+            offset = offset + 15;
+        end
+        Q_Collision_Points{i,j} = collision_points
+    end
+end
 
-% Collision Check and Remove Nodes
+%% Collision Check and Remove Nodes
 
 in()
 
-% Generate Path
+%% Generate Path
 
 % collision checking to remove nodes in collision
 
