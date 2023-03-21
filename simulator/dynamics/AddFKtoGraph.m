@@ -34,13 +34,32 @@ params = load_robot_params(robot, ...
                            'links_with_uncertainty', links_with_uncertainty,...
                            'uncertain_mass_range', uncertain_mass_range);
 
+test = nan(length(Q_Nodes));
+
+test_cells = num2cell(test); % ,length(Q_Nodes));
+
 %% Loop Through Joints and Calculate, Then Store Forward Kinematics
 
 for i = 1:length(Q_Nodes)
 
     % calculate forward kinematics
-    q_cur_fk = forward_kinematics_modified(Q_Nodes(:,i),params.true.T0,params.true.joint_axes);
+    q_cur_fk = forward_kinematics_modified([Q_Nodes(:,i);0;0;0],params.true.T0,params.true.joint_axes);
 
+    % generate points between the joints to check for collition
+    alpha = linspace(0,1,5); % this is the number of points including the two joints
+
+    for j = 1:length(q_cur_fk)-1
+        
+        % calculate points along the link
+        points = alpha.*q_cur_fk{j}(1:3,4) + (1-alpha).*q_cur_fk{j+1}(1:3,4);
+
+%         figure(101)
+%         hold on
+%         plot3(points(1,:),points(2,:),points(3,:),'ok')
+
+%         Q_Graph_Reduced.Nodes.CollisionPoints = 
+
+    end
 
 
 end
