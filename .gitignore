@@ -16,3 +16,4 @@ kinova_src/kinova_simulator_interfaces/kinova_planner_realtime/link_c.csv
 kinova_src/kinova_simulator_interfaces/kinova_planner_realtime/obstacles.csv
 kinova_src/scripts/adj_matrix.txt
 kinova_src/scripts/thousandNodes.csv
+kinova_src/kinova_simulator_interfaces/kinova_planner_realtime/collision_checker
