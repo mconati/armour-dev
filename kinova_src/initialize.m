@@ -45,23 +45,23 @@ end
 
 cd ../../
 
-%% Initialize real-time armtd planner for comparison
-fprintf("Start compiling ARMTD\n\n");
+%% Initialize sample based high level planner
+fprintf("Start compiling sample based HLP\n\n");
 
-cd kinova_simulator_interfaces/kinova_planner_realtime_armtd_comparison
+cd kinova_simulator_interfaces/kinova_samplebased_HLP_realtime
 
-armtd_buffer_path = [pwd, '/BufferPath.h'];
-fid = fopen(armtd_buffer_path, 'w');
+HLP_buffer_path = [pwd, '/BufferPath.h'];
+fid = fopen(HLP_buffer_path, 'w');
 fprintf(fid, '#include <string>\n');
-fprintf(fid, 'const std::string pathname = "%s/buffer/";', pwd);
+fprintf(fid, 'const std::string pathname = "%s/";', pwd);
 fclose(fid);
 
-terminal_output = system('./compile.sh');
+terminal_output = system('./compile_collision_checker.sh');
 
 if terminal_output ~= 0
     error('Error when compiling ARMTD real time planner code!');
 else
-    fprintf("Successfully compiled ARMTD\n\n");
+    fprintf("Successfully compiled HLP\n\n");
 end
 
 cd ../../

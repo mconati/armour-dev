@@ -116,7 +116,5 @@ classdef robot_arm_graph_planner_HLP < high_level_planner
             HLP.waypoints = [HLP.waypoints, waypoint];
             HLP.current_waypoint_index = HLP.current_waypoint_index + 1;
         end
-
-
     end
 end

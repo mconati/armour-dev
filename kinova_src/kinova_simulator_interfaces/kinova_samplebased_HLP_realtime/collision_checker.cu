@@ -1,11 +1,12 @@
 #include "FastCollisionChecking.h"
+#include "BufferPath.h"
 
-const std::string inputfilename1 = "obstacles.csv";
-const std::string inputfilename2 = "joint_positions.csv";
-const std::string inputfilename3 = "adj_matrix_milnodes_modwrap_mult3.csv";
-const std::string outputfilename1 = "node_feasibility.csv";
-const std::string outputfilename2 = "link_c.csv";
-const std::string outputfilename3 = "collision_free_adj_matrix.csv";
+const std::string inputfilename1 = pathname + "obstacles.csv";
+const std::string inputfilename2 = pathname + "joint_positions.csv";
+const std::string inputfilename3 = pathname + "adj_matrix_milnodes_modwrap_mult3.csv";
+const std::string outputfilename1 = pathname + "node_feasibility.csv";
+const std::string outputfilename2 = pathname + "link_c.csv";
+const std::string outputfilename3 = pathname + "collision_free_adj_matrix.csv";
 
 #define NUM_EDGES 1292962
 #define COLLISION_THRESHOLD -0.05
