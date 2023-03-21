@@ -46,7 +46,7 @@ parfor i = 1:num_tries
     q_ee_euler_angles = rotm2eul(q_fk_res(1:3,1:3), 'XYZ');
 
 %     % if valid, add to list of q's
-    if abs(q_ee_euler_angles(1))<0.15 & abs(q_ee_euler_angles(2))<0.15 % & abs(q_ee_euler_angles(3))<0.03
+    if abs(q_ee_euler_angles(1))<0.05 & abs(q_ee_euler_angles(2))<0.05 % & abs(q_ee_euler_angles(3))<0.03
         q_list(:,i) = q_rand;
     end
 
