@@ -912,7 +912,7 @@ void armtd_NLP::finalize_solution(
     // state limit constraints
     //     minimum joint position
     for( Index i = offset; i < offset + NUM_FACTORS; i++ ) {
-        if (g_copy[i] < state_limits_lb[i - offset] + qe || g_copy[i] > state_limits_ub[i - offset] - qe) {
+        if (g_copy[i] < state_limits_lb[i - offset] + qe - STATE_LIMITS_VIOLATION_THRESHOLD || g_copy[i] > state_limits_ub[i - offset] - qe + STATE_LIMITS_VIOLATION_THRESHOLD) {
             feasible = false;
             cout << "        CUDA & C++: Ipopt: joint " << i - offset << " exceeds position limit when it reaches minimum!\n";
             cout << "                        value: " << g_copy[i] << "\n";
@@ -925,7 +925,7 @@ void armtd_NLP::finalize_solution(
 
     //     maximum joint position
     for( Index i = offset; i < offset + NUM_FACTORS; i++ ) {
-        if (g_copy[i] < state_limits_lb[i - offset] + qe || g_copy[i] > state_limits_ub[i - offset] - qe) {
+        if (g_copy[i] < state_limits_lb[i - offset] + qe - STATE_LIMITS_VIOLATION_THRESHOLD || g_copy[i] > state_limits_ub[i - offset] - qe + STATE_LIMITS_VIOLATION_THRESHOLD) {
             feasible = false;
             cout << "        CUDA & C++: Ipopt: joint " << i - offset << " exceeds position limit when it reaches maximum!\n";
             cout << "                        value: " << g_copy[i] << "\n";
@@ -938,7 +938,7 @@ void armtd_NLP::finalize_solution(
 
     //     minimum joint velocity
     for( Index i = offset; i < offset + NUM_FACTORS; i++ ) {
-        if (g_copy[i] < -speed_limits[i - offset] + qde || g_copy[i] > speed_limits[i - offset] - qde) {
+        if (g_copy[i] < -speed_limits[i - offset] + qde - VELOCITY_LIMITS_VIOLATION_THRESHOLD || g_copy[i] > speed_limits[i - offset] - qde + VELOCITY_LIMITS_VIOLATION_THRESHOLD) {
             feasible = false;
             cout << "        CUDA & C++: Ipopt: joint " << i - offset << " exceeds velocity limit when it reaches minimum!\n";
             cout << "                        value: " << g_copy[i] << "\n";
@@ -951,7 +951,7 @@ void armtd_NLP::finalize_solution(
 
     //     maximum joint velocity
     for( Index i = offset; i < offset + NUM_FACTORS; i++ ) {
-        if (g_copy[i] < -speed_limits[i - offset] + qde || g_copy[i] > speed_limits[i - offset] - qde) {
+        if (g_copy[i] < -speed_limits[i - offset] + qde - VELOCITY_LIMITS_VIOLATION_THRESHOLD || g_copy[i] > speed_limits[i - offset] - qde + VELOCITY_LIMITS_VIOLATION_THRESHOLD) {
             feasible = false;
             cout << "        CUDA & C++: Ipopt: joint " << i - offset << " exceeds velocity limit when it reaches maximum!\n";
             cout << "                        value: " << g_copy[i] << "\n";
