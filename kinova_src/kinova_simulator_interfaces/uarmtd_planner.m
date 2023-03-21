@@ -85,7 +85,7 @@ classdef uarmtd_planner < robot_arm_generic_planner
             P.jrs_info.c_kvi = data.c_kvi;
 
             data = load('kinova_test_folder_path');
-            P.kinova_test_folder_path = data.kinova_test_folder_path;
+            P.kinova_test_folder_path = data.kinova_test_folder_path; % name; % 
         end
         
         function init_info(P)
@@ -163,7 +163,7 @@ classdef uarmtd_planner < robot_arm_generic_planner
 
                 %%%%% This one
                 if strcmp(P.traj_type, 'bernstein')
-                    P.jrs_info.n_t = 128;
+                    P.jrs_info.n_t = 100;
                     P.jrs_info.n_q = 7;
                     P.jrs_info.n_k = 7;
                     P.jrs_info.c_k_bernstein = zeros(7,1);
@@ -172,7 +172,7 @@ classdef uarmtd_planner < robot_arm_generic_planner
                     % cuda-dev/PZsparse-Bernstein/Trajectory.h 
                     % !!!!!!
 %                     P.jrs_info.g_k_bernstein = [pi/24; pi/24; pi/24; pi/24; pi/24; pi/24; pi/24];
-                    P.jrs_info.g_k_bernstein = pi/48*ones(P.jrs_info.n_q, 1);
+                    P.jrs_info.g_k_bernstein = pi/72*ones(P.jrs_info.n_q, 1);
 
     
                     q_des = P.HLP.get_waypoint(agent_info,world_info,P.lookahead_distance) ;
@@ -248,15 +248,15 @@ classdef uarmtd_planner < robot_arm_generic_planner
                         contact_constraint_radii = readmatrix('armour_force_constraint_radius.out', 'FileType', 'text');
                         wrench_radii = readmatrix('armour_wrench_values.out', 'FileType', 'text');
 
-                        link_frs_vertices = cell(7,1);
-                        for tid = 1:10:P.jrs_info.n_t
-                            for j = 1:7
-                                c = link_frs_center((tid-1)*7+j, :)';
-                                g = link_frs_generators( ((tid-1)*7+j-1)*3+1 : ((tid-1)*7+j)*3, :);
-                                Z = zonotope(c, g);
-                                link_frs_vertices{j} = [link_frs_vertices{j}; vertices(Z)'];
-                            end
-                        end
+%                         link_frs_vertices = cell(7,1);
+%                         for tid = 1:10:P.jrs_info.n_t
+%                             for j = 1:7
+%                                 c = link_frs_center((tid-1)*7+j, :)';
+%                                 g = link_frs_generators( ((tid-1)*7+j-1)*3+1 : ((tid-1)*7+j)*3, :);
+%                                 Z = zonotope(c, g);
+%                                 link_frs_vertices{j} = [link_frs_vertices{j}; vertices(Z)'];
+%                             end
+%                         end
                     else
                         k_opt = nan;
                     end
@@ -418,28 +418,28 @@ classdef uarmtd_planner < robot_arm_generic_planner
             P.info.constraints_value = [P.info.constraints_value {constraints_value}];
 
 
-            if P.save_FO_zono_flag
-                if ~P.use_cuda
-                    for i = 1:P.jrs_info.n_t
-                        for j = 1:P.agent_info.params.pz_nominal.num_bodies
-                            FO_zono{i}{j} = zonotope(FO{i}{j});
-                            if trajopt_failed
-                                % no safe slice
-                                sliced_FO_zono{i}{j} = [];
-                            else
-                                % slice and save
-                                fully_sliceable_tmp = polyZonotope_ROAHM(FO{i}{j}.c, FO{i}{j}.G, [], FO{i}{j}.expMat, FO{i}{j}.id);
-                                sliced_FO_zono{i}{j} = zonotope([slice(fully_sliceable_tmp, k_opt), FO{i}{j}.Grest]);
-                            end
-                        end
-                    end
-                    P.info.FO_zono = [P.info.FO_zono, {FO_zono}];
-                    P.info.sliced_FO_zono = [P.info.sliced_FO_zono, {sliced_FO_zono}];
-                else
-%                     P.info.sliced_FO_zono = [P.info.sliced_FO_zono, {[joint_frs_center, joint_frs_radius]}];
-                    P.info.sliced_FO_zono = [P.info.sliced_FO_zono, {link_frs_vertices}]; % disable recording for now
-                end
-            end
+%             if P.save_FO_zono_flag
+%                 if ~P.use_cuda
+%                     for i = 1:P.jrs_info.n_t
+%                         for j = 1:P.agent_info.params.pz_nominal.num_bodies
+%                             FO_zono{i}{j} = zonotope(FO{i}{j});
+%                             if trajopt_failed
+%                                 % no safe slice
+%                                 sliced_FO_zono{i}{j} = [];
+%                             else
+%                                 % slice and save
+%                                 fully_sliceable_tmp = polyZonotope_ROAHM(FO{i}{j}.c, FO{i}{j}.G, [], FO{i}{j}.expMat, FO{i}{j}.id);
+%                                 sliced_FO_zono{i}{j} = zonotope([slice(fully_sliceable_tmp, k_opt), FO{i}{j}.Grest]);
+%                             end
+%                         end
+%                     end
+%                     P.info.FO_zono = [P.info.FO_zono, {FO_zono}];
+%                     P.info.sliced_FO_zono = [P.info.sliced_FO_zono, {sliced_FO_zono}];
+%                 else
+% %                     P.info.sliced_FO_zono = [P.info.sliced_FO_zono, {[joint_frs_center, joint_frs_radius]}];
+%                     P.info.sliced_FO_zono = [P.info.sliced_FO_zono, {link_frs_vertices}]; % disable recording for now
+%                 end
+%             end
 
             % create outputs:
             T = 0:P.time_discretization:P.t_stop ;

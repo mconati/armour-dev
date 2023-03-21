@@ -17,7 +17,7 @@ goal_radius = pi/30;
 dimension = 3 ;
 verbosity = 10;
 
-DURATION = 1.0;
+DURATION = 2.0;
 k_range = pi/72; % used for graph planner check
 
 u_s = 0.609382421; 
@@ -25,7 +25,7 @@ surf_rad =  0.058 / 2;
 
 %%% for planner
 traj_type = 'bernstein'; % pick 'orig' (ARMTD) or 'bernstein' (ARMOUR)
-use_cuda_flag = false;
+use_cuda_flag = true;
 
 %%% for agent
 agent_urdf = 'Kinova_Grasp_URDF.urdf';
@@ -38,7 +38,7 @@ agent_move_mode = 'integrator' ; % pick 'direct' or 'integrator'
 use_CAD_flag = true; % plot robot with CAD or bounding boxes
 
 %%% for LLC
-use_robust_input = false;
+use_robust_input = true;
 LLC_V_max = 1e-2;
 alpha_constant = 10;
 Kr = 5;
@@ -60,7 +60,7 @@ max_sim_time = 172800 ; % 48 hours
 max_sim_iter = 600 ;
 stop_threshold = 4 ; % number of failed iterations before exiting
 
-obstacles{1} = box_obstacle_zonotope('center', [3; 3; 3],...
+obstacles{1} = box_obstacle_zonotope('center', [-0.75; 0.35; 0.25],...
                                      'side_lengths', [0.1; 0.1; 0.1]) ;
 % obstacles{2} = box_obstacle_zonotope('center', [0.3; 0; 0.4],...
 %                                      'side_lengths', [0.1; 0.8; 0.05]) ;
@@ -222,7 +222,7 @@ end
 
 Q_Nodes = table2array(Q_Graph_Reduced.Nodes)';
 
-waypoints = Q_Nodes(:,Path);
+graph_waypoints = Q_Nodes(:,Path);
 
 %%
 
@@ -269,7 +269,8 @@ P = uarmtd_planner('verbose', verbosity, ...
                    'use_cuda', use_cuda_flag,...
                    'plot_HLP_flag', true, ...
                    'lookahead_distance', 0.1, ...
-                   'DURATION', DURATION) ; % 't_move_temp', t_move't_plan', t_plan,...'t_stop', t_stop % _wrapper
+                   'DURATION', DURATION,...
+                   't_plan',0.5*DURATION) ; % 't_move_temp', t_move't_plan', t_plan,...'t_stop', t_stop % _wrapper
 
 if if_use_RRT
     P.HLP = arm_end_effector_flat_RRT_star_HLP('plot_waypoint_flag',plot_waypoint_flag,...
@@ -279,7 +280,7 @@ if if_use_RRT
 end
 
 if if_use_graph_planner
-    P.HLP = robot_arm_graph_planner_HLP('waypoints',waypoints);
+    P.HLP = robot_arm_graph_planner_HLP('graph_waypoints',graph_waypoints);
 end
 
 % set up world using arm

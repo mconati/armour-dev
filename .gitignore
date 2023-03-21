@@ -1,5 +1,6 @@
 *.asv
 *.mat
+*.csv
 *.in
 *.out
 *.mexa64
