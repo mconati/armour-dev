@@ -2,7 +2,10 @@
 
 const std::string inputfilename1 = "obstacles.csv";
 const std::string inputfilename2 = "joint_positions.csv";
-const std::string outputfilename = "link_c.csv";
+const std::string outputfilename1 = "node_feasibility.csv";
+const std::string outputfilename2 = "link_c.csv";
+
+#define COLLISION_THRESHOLD -0.05
 
 int main() {
 /*
@@ -27,10 +30,12 @@ Section I:
     Eigen::Vector3d link_sliced_center[NUM_NODES * NUM_JOINTS];
     Eigen::Matrix<double, 3, LINK_FRS_GENERATOR_NUM> link_independent_generators[NUM_NODES * NUM_JOINTS];
 
-    int num_obstacles = 10;
+    const int num_obstacles = 10;
     double obstacles[MAX_OBSTACLE_NUM * (MAX_OBSTACLE_GENERATOR_NUM + 1) * 3] = {0.0};
 
     std::ifstream inputstream1(inputfilename1);
+
+    auto start0 = std::chrono::high_resolution_clock::now();
   
     // inputstream1 >> num_obstacles;
     if (num_obstacles > MAX_OBSTACLE_NUM || num_obstacles < 0) {
@@ -64,54 +69,77 @@ Section I:
 
     inputstream2.close();
 
-/*
-Section II: Buffer obstacles and initialize collision checking hyperplanes
-*/
-    auto start1 = std::chrono::high_resolution_clock::now();
+    auto stop0 = std::chrono::high_resolution_clock::now();
+    auto duration0 = std::chrono::duration_cast<std::chrono::milliseconds>(stop0 - start0);
+    cout << "        CUDA & C++: Time taken by loading data: " << duration0.count() << " milliseconds" << endl;
 
-    try {
-        O.initializeHyperPlane(link_independent_generators);
+    double* link_c = new double[NUM_JOINTS * NUM_NODES * num_obstacles];
+    std::ofstream outputstream1(outputfilename1);
+    std::ofstream outputstream2(outputfilename2);
+
+    for (int k = 0; k < NUM_NODES / NUM_NODES_AT_ONE_TIME; k++) {
+        /*
+        Section II: Buffer obstacles and initialize collision checking hyperplanes
+        */
+        auto start1 = std::chrono::high_resolution_clock::now();
+
+        try {
+            O.initializeHyperPlane(link_independent_generators + k * NUM_NODES_AT_ONE_TIME * NUM_JOINTS);
+        }
+        catch (int errorCode) {
+            WARNING_PRINT("        CUDA & C++: Error initializing collision checking hyperplanes! Check previous error message!");
+            return -1;
+        }
+
+        auto stop1 = std::chrono::high_resolution_clock::now();
+        auto duration1 = std::chrono::duration_cast<std::chrono::milliseconds>(stop1 - start1);
+        // cout << "        CUDA & C++: Time taken by initializing collision checking hyperplanes: " << duration1.count() << " milliseconds" << endl;
+
+        /*
+        Section III:
+            Collision checking
+        */
+
+        auto start2 = std::chrono::high_resolution_clock::now();
+
+        try {
+            O.linkFRSConstraints(link_sliced_center + k * NUM_NODES_AT_ONE_TIME * NUM_JOINTS, link_c);
+        }
+        catch (int errorCode) {
+            WARNING_PRINT("        CUDA & C++: Error peforming collision checking! Check previous error message!");
+            return -1;
+        }
+        
+        auto stop2 = std::chrono::high_resolution_clock::now();
+        auto duration2 = std::chrono::duration_cast<std::chrono::milliseconds>(stop2 - start2);
+        // cout << "        CUDA & C++: Time taken by peforming collision checking: " << duration1.count() << " milliseconds" << endl;
+
+        /*
+        Section IV:
+            Prepare output
+        */
+        for (int i = 0; i < NUM_NODES_AT_ONE_TIME * num_obstacles; i++) {
+            for (int j = 0; j < NUM_JOINTS; j++) {
+                outputstream2 << link_c[j * NUM_NODES_AT_ONE_TIME * num_obstacles + i] << ' ';
+            }
+            outputstream2 << '\n';
+        }
+        for (int i = 0; i < NUM_NODES_AT_ONE_TIME; i++) {
+            bool node_feasibility = true;
+            for (int j = 0; j < NUM_JOINTS; j++) {
+                for (int h = 0; h < num_obstacles; h++) {
+                    if (link_c[(j * NUM_NODES_AT_ONE_TIME + i) * num_obstacles + h] > COLLISION_THRESHOLD) {
+                        node_feasibility = false;
+                        break;
+                    }
+                }
+            }
+            outputstream1 << node_feasibility << endl;
+        }
     }
-    catch (int errorCode) {
-        WARNING_PRINT("        CUDA & C++: Error initializing collision checking hyperplanes! Check previous error message!");
-        return -1;
-    }
-
-    auto stop1 = std::chrono::high_resolution_clock::now();
-    auto duration1 = std::chrono::duration_cast<std::chrono::milliseconds>(stop1 - start1);
-    cout << "        CUDA & C++: Time taken by initializing collision checking hyperplanes: " << duration1.count() << " milliseconds" << endl;
-
-/*
-Section III:
-    Collision checking
-*/
-    double link_c[NUM_JOINTS * NUM_NODES * num_obstacles] = {0};
-
-    auto start2 = std::chrono::high_resolution_clock::now();
-
-    try {
-        O.linkFRSConstraints(link_sliced_center, link_c);
-    }
-    catch (int errorCode) {
-        WARNING_PRINT("        CUDA & C++: Error peforming collision checking! Check previous error message!");
-        return -1;
-    }
-	
-    auto stop2 = std::chrono::high_resolution_clock::now();
-    auto duration2 = std::chrono::duration_cast<std::chrono::milliseconds>(stop2 - start2);
-    cout << "        CUDA & C++: Time taken by peforming collision checking: " << duration1.count() << " milliseconds" << endl;
-
-/*
-Section IV:
-    Prepare output
-*/
-    std::ofstream outputstream(outputfilename);
-
-    for (int i = 0; i < NUM_JOINTS * NUM_NODES * num_obstacles; i++) {
-        outputstream << link_c[i] << '\n';
-    }
-
-    outputstream.close();
+    
+    outputstream2.close();
+    delete[] link_c;
     
     return 0;
 }

@@ -134,7 +134,7 @@ JP(8,:) = T(1:3,4);
 T = forward_kinematics([W.start(1:i);0;0;0], params.nominal.T0, params.nominal.joint_axes);
 JP(9,:) = T(1:3,4);
 
-% just repeat with the same joint positions
+% just repeat with the same joint positions for testing
 joint_positions = [];
 for i = 1:NUM_NODES
     joint_positions = [joint_positions; JP];
@@ -146,13 +146,13 @@ writematrix(Zs, 'obstacles.csv', 'Delimiter', ' ');
 % call collision checker in CUDA
 system('./collision_checker');
 
+%% verification
 link_c = readmatrix('link_c.csv');
-link_c = reshape(link_c', [10, NUM_NODES, 8]); % obstacle index, node index, link index
+link_c = reshape(link_c, [10, NUM_NODES, 8]); % obstacle index, node index, link index
 
 % just choose one of the node since they are the same
-link_c = squeeze(link_c(:,44,:));
+link_c = squeeze(link_c(:,1,:));
 
-%% verification
 disp('difference with Matlab results');
 for o = 1:10
     for i = 1:8

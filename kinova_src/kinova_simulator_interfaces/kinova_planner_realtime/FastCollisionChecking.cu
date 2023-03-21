@@ -16,9 +16,9 @@ void SimplifiedObstacles::initialize(const double* obstacles_inp, const int num_
 
     // build pre-defined hyper-plane equations for collision checking between links and obstacles
     if (obstacles != nullptr && num_obstacles > 0) {
-        cudaMalloc((void**)&dev_A, NUM_JOINTS * NUM_NODES * MAX_OBSTACLE_NUM * COMB_NUM * sizeof(Eigen::Vector3d));
-        cudaMalloc((void**)&dev_d, NUM_JOINTS * NUM_NODES * MAX_OBSTACLE_NUM * COMB_NUM * sizeof(double));
-		cudaMalloc((void**)&dev_delta, NUM_JOINTS * NUM_NODES * MAX_OBSTACLE_NUM * COMB_NUM * sizeof(double));
+        cudaMalloc((void**)&dev_A, NUM_JOINTS * NUM_NODES_AT_ONE_TIME * MAX_OBSTACLE_NUM * COMB_NUM * sizeof(Eigen::Vector3d));
+        cudaMalloc((void**)&dev_d, NUM_JOINTS * NUM_NODES_AT_ONE_TIME * MAX_OBSTACLE_NUM * COMB_NUM * sizeof(double));
+		cudaMalloc((void**)&dev_delta, NUM_JOINTS * NUM_NODES_AT_ONE_TIME * MAX_OBSTACLE_NUM * COMB_NUM * sizeof(double));
 
         // initialize constant memory
         // obstacle data
@@ -43,14 +43,14 @@ void SimplifiedObstacles::initialize(const double* obstacles_inp, const int num_
         cudaMemcpyToSymbol(dev_combA, combA, COMB_NUM * sizeof(uint));
         cudaMemcpyToSymbol(dev_combB, combB, COMB_NUM * sizeof(uint));
 
-        cudaMalloc((void**)&dev_buffered_c, NUM_NODES * MAX_OBSTACLE_NUM * sizeof(Eigen::Vector3d));
-        cudaMalloc((void**)&dev_buffered_G, NUM_NODES * MAX_OBSTACLE_NUM * sizeof(Eigen::Matrix<double, 3, BUFFER_OBSTACLE_GENERATOR_NUM>));
+        cudaMalloc((void**)&dev_buffered_c, NUM_NODES_AT_ONE_TIME * MAX_OBSTACLE_NUM * sizeof(Eigen::Vector3d));
+        cudaMalloc((void**)&dev_buffered_G, NUM_NODES_AT_ONE_TIME * MAX_OBSTACLE_NUM * sizeof(Eigen::Matrix<double, 3, BUFFER_OBSTACLE_GENERATOR_NUM>));
 
-		cudaMalloc((void**)&dev_link_independent_generators, NUM_NODES * NUM_JOINTS * sizeof(Eigen::Matrix<double, 3, LINK_FRS_GENERATOR_NUM>));
+		cudaMalloc((void**)&dev_link_independent_generators, NUM_NODES_AT_ONE_TIME * NUM_JOINTS * sizeof(Eigen::Matrix<double, 3, LINK_FRS_GENERATOR_NUM>));
 
-        cudaMalloc((void**)&dev_link_sliced_center, NUM_NODES * NUM_JOINTS * sizeof(Eigen::Vector3d));
+        cudaMalloc((void**)&dev_link_sliced_center, NUM_NODES_AT_ONE_TIME * NUM_JOINTS * sizeof(Eigen::Vector3d));
 
-        cudaMalloc((void**)&dev_link_c, NUM_NODES * MAX_OBSTACLE_NUM * sizeof(double));
+        cudaMalloc((void**)&dev_link_c, NUM_NODES_AT_ONE_TIME * MAX_OBSTACLE_NUM * sizeof(double));
     }
 }
 
@@ -72,13 +72,13 @@ SimplifiedObstacles::~SimplifiedObstacles() {
 void SimplifiedObstacles::initializeHyperPlane(const Eigen::Matrix<double, 3, LINK_FRS_GENERATOR_NUM>* link_independent_generators) {
     if (num_obstacles == 0) return;
 
-    cudaMemcpy(dev_link_independent_generators, link_independent_generators, NUM_NODES * NUM_JOINTS * sizeof(Eigen::Matrix<double, 3, LINK_FRS_GENERATOR_NUM>), cudaMemcpyHostToDevice);
+    cudaMemcpy(dev_link_independent_generators, link_independent_generators, NUM_NODES_AT_ONE_TIME * NUM_JOINTS * sizeof(Eigen::Matrix<double, 3, LINK_FRS_GENERATOR_NUM>), cudaMemcpyHostToDevice);
 
     for (uint i = 0; i < NUM_JOINTS; i++) {
         dim3 block1(3, num_obstacles);
-        bufferObstaclesKernel << < NUM_NODES, block1 >> > (dev_link_independent_generators, dev_buffered_c, dev_buffered_G, i);
+        bufferObstaclesKernel << < NUM_NODES_AT_ONE_TIME, block1 >> > (dev_link_independent_generators, dev_buffered_c, dev_buffered_G, i);
 
-        dim3 grid1(NUM_NODES, num_obstacles);
+        dim3 grid1(NUM_NODES_AT_ONE_TIME, num_obstacles);
         polytope_PH << < grid1, COMB_NUM >> > (dev_buffered_c, dev_buffered_G, dev_A, dev_d, dev_delta, i);
     }
 
@@ -90,17 +90,17 @@ void SimplifiedObstacles::linkFRSConstraints(Eigen::Vector3d* link_sliced_center
                                     
     bool ifComputeGradient = true;
 
-    cudaMemcpy(dev_link_sliced_center, link_sliced_center, NUM_NODES * NUM_JOINTS * sizeof(Eigen::Vector3d), cudaMemcpyHostToDevice);
+    cudaMemcpy(dev_link_sliced_center, link_sliced_center, NUM_NODES_AT_ONE_TIME * NUM_JOINTS * sizeof(Eigen::Vector3d), cudaMemcpyHostToDevice);
 
     for (uint i = 0; i < NUM_JOINTS; i++) {
-        dim3 grid1(NUM_NODES, num_obstacles);
+        dim3 grid1(NUM_NODES_AT_ONE_TIME, num_obstacles);
 
 		checkCollisionKernel << < grid1, COMB_NUM >> > (dev_A, dev_d, dev_delta,
 														dev_link_sliced_center,
 														i, 
 														dev_link_c);
             
-        cudaMemcpy(link_c + i * NUM_NODES * num_obstacles, dev_link_c, NUM_NODES * num_obstacles * sizeof(double), cudaMemcpyDeviceToHost);
+        cudaMemcpy(link_c + i * NUM_NODES_AT_ONE_TIME * num_obstacles, dev_link_c, NUM_NODES_AT_ONE_TIME * num_obstacles * sizeof(double), cudaMemcpyDeviceToHost);
     }
 }
 
