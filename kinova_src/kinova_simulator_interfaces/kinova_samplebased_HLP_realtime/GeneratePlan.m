@@ -1,18 +1,3 @@
-%% description
-% This script iterates through a list of presaved random worlds and runs
-% the ARMOUR planner on them. It then saves information on how well each the
-% planner performed in each trial.
-%
-% Authors: Bohao Zhang (adapted from Patrick Holmes code)
-% Created 25 November 2019
-% Edited 16 January 2020
-% Edited: 02 June 2022 to work with updated UARMTD code
-% Edited: 25 September 2022 to work with updated UARMTD code for kinova
-% Edited: 10 November 2022 clean up
-
-initialize_script_path = matlab.desktop.editor.getActiveFilename;
-cd(initialize_script_path(1:end-32));
-
 close all; clear; clc;
 
 %% user parameters
@@ -101,7 +86,6 @@ M_min_eigenvalue = 8.2998203638; % matlab doesn't import these from urdf so hard
 use_cuda_flag = true;
 
 %% perform collision checking
-tic
 idx = 87;
 
 % parameters
@@ -116,56 +100,43 @@ W = kinova_grasp_world_static('create_random_obstacles_flag', false, 'goal_radiu
                         'verbose',verbosity, 'start', start, 'goal', goal, 'obstacles', obstacles, 'goal_type', goal_type,...
                         'grasp_constraint_flag', true,'ik_start_goal_flag', true, 'u_s', u_s, 'surf_rad', surf_rad) ;
 
+
+%% planner start
+load('millionNodes.mat');
+
+tic;
+
 % obstacle number hardcoded as 10
 Zs = [];
 for i = 1:10
     Zs = [Zs; obstacles{i}.Z'];
 end
 
-% we have 8 links here
-% provide 8 joint position + end effector position
-JP = zeros(9,3);
-for i = 1:7
-    T = forward_kinematics(W.start(1:i), params.nominal.T0, params.nominal.joint_axes);
-    JP(i,:) = T(1:3,4);
-end
-T = forward_kinematics([W.start(1:i);0], params.nominal.T0, params.nominal.joint_axes);
-JP(8,:) = T(1:3,4);
-T = forward_kinematics([W.start(1:i);0;0;0], params.nominal.T0, params.nominal.joint_axes);
-JP(9,:) = T(1:3,4);
-
-% just repeat with the same joint positions for testing
-joint_positions = [];
-for i = 1:NUM_NODES
-    joint_positions = [joint_positions; JP];
-end
-
-writematrix(joint_positions, 'joint_positions.csv', 'Delimiter', ' ');
+% write obstacle info to file as the input of the CUDA collision checker
 writematrix(Zs, 'obstacles.csv', 'Delimiter', ' ');
 
 % call collision checker in CUDA
 system('./collision_checker');
 
-%% verification
-link_c = readmatrix('link_c.csv');
-link_c = reshape(link_c, [10, NUM_NODES, 8]); % obstacle index, node index, link index
+adj_matrix_sparse_data = readmatrix('collision_free_adj_matrix.csv');
+adj_matrix_sparse = sparse(adj_matrix_sparse_data(:,1)+1, ...
+                           adj_matrix_sparse_data(:,2)+1, ...
+                           adj_matrix_sparse_data(:,3), ...
+                           1e6, 1e6);
+G = graph(adj_matrix_sparse, 'lower');
 
-% just choose one of the node since they are the same
-link_c = squeeze(link_c(:,1,:));
+[bins, binsize] = conncomp(G);
+[~, max_id] = max(binsize);
+G_maxconn = subgraph(G, bins == max_id);
 
-disp('difference with Matlab results');
-for o = 1:10
-    for i = 1:8
-        % link zonotope (1D)
-        Z_c = 0.5 * (JP(i,:) + JP(i+1,:));
-        Z_g = 0.5 * (JP(i,:) - JP(i+1,:));
-    
-        buffered_Z = [obstacles{o}.Z, Z_g'];
-    
-        [PA, Pb] = polytope_PH(buffered_Z);
-    
-        c = -max(PA * Z_c' - Pb);
+q_subgraph = q_valid_list(:, bins == max_id);
+difference_to_goal = vecnorm(wrapToPi(W.goal - q_subgraph));
+difference_to_start = vecnorm(wrapToPi(W.start - q_subgraph));
+[end_diff, end_idx] = min(difference_to_goal);
+[start_diff, start_idx] = min(difference_to_start);
 
-        disp(link_c(o,i) - c);
-    end
-end
+[path, len] = shortestpath(G_maxconn, start_idx, end_idx);
+
+waypoints = q_subgraph(:,path);
+
+toc;

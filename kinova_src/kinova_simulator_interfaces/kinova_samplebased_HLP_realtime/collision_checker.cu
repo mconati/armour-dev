@@ -2,10 +2,14 @@
 
 const std::string inputfilename1 = "obstacles.csv";
 const std::string inputfilename2 = "joint_positions.csv";
+const std::string inputfilename3 = "adj_matrix_milnodes_modwrap_mult3.csv";
 const std::string outputfilename1 = "node_feasibility.csv";
 const std::string outputfilename2 = "link_c.csv";
+const std::string outputfilename3 = "collision_free_adj_matrix.csv";
 
+#define NUM_EDGES 1292962
 #define COLLISION_THRESHOLD -0.05
+#define EDGE_THRESHOLD 100
 
 int main() {
 /*
@@ -27,15 +31,10 @@ Section I:
     //                                                                             0.75382,   0.51895,  0.4731, 0.030969, 0, 0, 0,  0.22312, 0, 0, 0,  0.22981};
 
     SimplifiedObstacles O;
-    Eigen::Vector3d link_sliced_center[NUM_NODES * NUM_JOINTS];
-    Eigen::Matrix<double, 3, LINK_FRS_GENERATOR_NUM> link_independent_generators[NUM_NODES * NUM_JOINTS];
-
     const int num_obstacles = 10;
     double obstacles[MAX_OBSTACLE_NUM * (MAX_OBSTACLE_GENERATOR_NUM + 1) * 3] = {0.0};
 
     std::ifstream inputstream1(inputfilename1);
-
-    auto start0 = std::chrono::high_resolution_clock::now();
   
     // inputstream1 >> num_obstacles;
     if (num_obstacles > MAX_OBSTACLE_NUM || num_obstacles < 0) {
@@ -51,79 +50,65 @@ Section I:
 
     O.initialize(obstacles, num_obstacles); 
 
+    Eigen::Vector3d link_sliced_center[NUM_NODES_AT_ONE_TIME * NUM_JOINTS];
+    Eigen::Matrix<double, 3, LINK_FRS_GENERATOR_NUM> link_independent_generators[NUM_NODES_AT_ONE_TIME * NUM_JOINTS];
+    double* link_c = new double[NUM_JOINTS * NUM_NODES_AT_ONE_TIME * num_obstacles];
+    bool* node_feasibilities = new bool[NUM_NODES];
     std::ifstream inputstream2(inputfilename2);
+    // std::ofstream outputstream1(outputfilename1);
+    // std::ofstream outputstream2(outputfilename2);
 
-    for (int i = 0; i < NUM_NODES; i++) {
-        Eigen::Vector3d pos1;
-        inputstream2 >> pos1(0) >> pos1(1) >> pos1(2);
-        Eigen::Vector3d pos2;
-        for (int j = 0; j < NUM_JOINTS; j++) {
-            inputstream2 >> pos2(0) >> pos2(1) >> pos2(2);
-
-            link_sliced_center[i * NUM_JOINTS + j] = 0.5 * (pos1 + pos2);
-            link_independent_generators[i * NUM_JOINTS + j] = 0.5 * (pos1 - pos2);
-
-            pos1 = pos2;
-        }
-    }
-
-    inputstream2.close();
-
-    auto stop0 = std::chrono::high_resolution_clock::now();
-    auto duration0 = std::chrono::duration_cast<std::chrono::milliseconds>(stop0 - start0);
-    cout << "        CUDA & C++: Time taken by loading data: " << duration0.count() << " milliseconds" << endl;
-
-    double* link_c = new double[NUM_JOINTS * NUM_NODES * num_obstacles];
-    std::ofstream outputstream1(outputfilename1);
-    std::ofstream outputstream2(outputfilename2);
+    auto start1 = std::chrono::high_resolution_clock::now();
 
     for (int k = 0; k < NUM_NODES / NUM_NODES_AT_ONE_TIME; k++) {
+        for (int i = 0; i < NUM_NODES_AT_ONE_TIME; i++) {
+            Eigen::Vector3d pos1;
+            inputstream2 >> pos1(0) >> pos1(1) >> pos1(2);
+            Eigen::Vector3d pos2;
+            for (int j = 0; j < NUM_JOINTS; j++) {
+                inputstream2 >> pos2(0) >> pos2(1) >> pos2(2);
+
+                link_sliced_center[i * NUM_JOINTS + j] = 0.5 * (pos1 + pos2);
+                link_independent_generators[i * NUM_JOINTS + j] = 0.5 * (pos1 - pos2);
+
+                pos1 = pos2;
+            }
+        }
+
         /*
         Section II: Buffer obstacles and initialize collision checking hyperplanes
         */
-        auto start1 = std::chrono::high_resolution_clock::now();
-
         try {
-            O.initializeHyperPlane(link_independent_generators + k * NUM_NODES_AT_ONE_TIME * NUM_JOINTS);
+            O.initializeHyperPlane(link_independent_generators);
         }
         catch (int errorCode) {
             WARNING_PRINT("        CUDA & C++: Error initializing collision checking hyperplanes! Check previous error message!");
             return -1;
         }
 
-        auto stop1 = std::chrono::high_resolution_clock::now();
-        auto duration1 = std::chrono::duration_cast<std::chrono::milliseconds>(stop1 - start1);
-        // cout << "        CUDA & C++: Time taken by initializing collision checking hyperplanes: " << duration1.count() << " milliseconds" << endl;
-
         /*
         Section III:
             Collision checking
         */
 
-        auto start2 = std::chrono::high_resolution_clock::now();
-
         try {
-            O.linkFRSConstraints(link_sliced_center + k * NUM_NODES_AT_ONE_TIME * NUM_JOINTS, link_c);
+            O.linkFRSConstraints(link_sliced_center, link_c);
         }
         catch (int errorCode) {
             WARNING_PRINT("        CUDA & C++: Error peforming collision checking! Check previous error message!");
             return -1;
         }
         
-        auto stop2 = std::chrono::high_resolution_clock::now();
-        auto duration2 = std::chrono::duration_cast<std::chrono::milliseconds>(stop2 - start2);
-        // cout << "        CUDA & C++: Time taken by peforming collision checking: " << duration1.count() << " milliseconds" << endl;
-
         /*
         Section IV:
             Prepare output
         */
-        for (int i = 0; i < NUM_NODES_AT_ONE_TIME * num_obstacles; i++) {
-            for (int j = 0; j < NUM_JOINTS; j++) {
-                outputstream2 << link_c[j * NUM_NODES_AT_ONE_TIME * num_obstacles + i] << ' ';
-            }
-            outputstream2 << '\n';
-        }
+        // for (int i = 0; i < NUM_NODES_AT_ONE_TIME * num_obstacles; i++) {
+        //     for (int j = 0; j < NUM_JOINTS; j++) {
+        //         outputstream2 << link_c[j * NUM_NODES_AT_ONE_TIME * num_obstacles + i] << ' ';
+        //     }
+        //     outputstream2 << '\n';
+        // }
         for (int i = 0; i < NUM_NODES_AT_ONE_TIME; i++) {
             bool node_feasibility = true;
             for (int j = 0; j < NUM_JOINTS; j++) {
@@ -134,12 +119,35 @@ Section I:
                     }
                 }
             }
-            outputstream1 << node_feasibility << endl;
+            // outputstream1 << node_feasibility << endl;
+            node_feasibilities[k * NUM_NODES_AT_ONE_TIME + i] = node_feasibility;
         }
     }
-    
-    outputstream2.close();
+
+    auto stop1 = std::chrono::high_resolution_clock::now();
+    auto duration1 = std::chrono::duration_cast<std::chrono::milliseconds>(stop1 - start1);
+    cout << "Time taken by peforming collision checking: " << duration1.count() << " milliseconds" << endl;
+
+    std::ifstream inputstream3(inputfilename3);
+    std::ofstream outputstream3(outputfilename3);
+
+    for (int i = 0; i < NUM_EDGES; i++) {
+        int node_a = 0, node_b = 0;
+        double edge_distance = 0;
+        inputstream3 >> node_a >> node_b >> edge_distance;
+
+        if (node_feasibilities[node_a] && node_feasibilities[node_b] && edge_distance < EDGE_THRESHOLD) {
+            outputstream3 << node_a << ' ' << node_b << ' ' << edge_distance << '\n';
+        }
+    }
+
+    inputstream2.close();
+    inputstream3.close();
+    // outputstream1.close();
+    // outputstream2.close();
+    outputstream3.close();
     delete[] link_c;
+    delete[] node_feasibilities;
     
     return 0;
 }
