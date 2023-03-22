@@ -12,7 +12,7 @@ using namespace std;
 using namespace std::chrono;
 
 #define NUMBER_OF_NODES 1000000
-#define EDGE_THRESHOLD 0.1154 // This is norm(pi / 72 * ones(7,1))
+#define EDGE_THRESHOLD 0.1154*3 // This is norm(pi / 72 * ones(7,1))
 
 Eigen::VectorXd wrapToPi(const Eigen::VectorXd& angles) {
     Eigen::VectorXd wrapped_angles(7);
@@ -30,7 +30,7 @@ Eigen::VectorXd wrapToPi(const Eigen::VectorXd& angles) {
 }
 
 int main() {
-    ifstream input_file("millionNodesFlatNodesCorrect.csv");
+    ifstream input_file("millionFlatNodesCorrect_spaces.csv");
     std::vector<Eigen::VectorXd> nodes;
     nodes.reserve(NUMBER_OF_NODES);
     if (input_file.is_open()) {
@@ -46,7 +46,7 @@ int main() {
 
     auto start_time = high_resolution_clock::now();
 
-    ofstream output_file("adj_matrix.txt"); 
+    ofstream output_file("adj_matrix_mil_mult3.txt"); 
 
     #pragma omp parallel for
     for (int i = 1; i < NUMBER_OF_NODES; i++) {

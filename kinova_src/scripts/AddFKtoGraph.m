@@ -5,7 +5,7 @@ clc;
 
 %% Load Graph
 
-graph_struct = load('QGraph700kPartial_AllInfo.mat');
+graph_struct = load('QGraph1mil_Config.mat');
 Q_Graph = graph_struct.Q_Graph;
 
 % Reduce Graph to Largest Connected Component
@@ -42,8 +42,6 @@ params = load_robot_params(robot, ...
 
 %% Loop Through Joints and Calculate, Then Store Forward Kinematics
 
-parpool('threads')
-
 for i = 1:length(Q_Nodes)
 
     % calculate forward kinematics
@@ -76,8 +74,8 @@ end
 
 %% Add Collision Points to Graph
 
-% Q_Graph_Reduced.Nodes.CollisionPoints = points_storage;
+Q_Graph_Reduced.Nodes.CollisionPoints = points_storage;
 
 %% Save Graph
 
-% save('Connected_70k_w_Collision.mat','Q_Graph_Reduced')
+save('QGraph1mil_AllInfo.mat','Q_Graph_Reduced')
