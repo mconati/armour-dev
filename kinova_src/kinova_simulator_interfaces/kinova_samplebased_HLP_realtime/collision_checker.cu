@@ -2,15 +2,15 @@
 #include "BufferPath.h"
 
 const std::string inputfilename1 = pathname + "obstacles.csv";
-const std::string inputfilename2 = pathname + "joint_positions.csv";
-const std::string inputfilename3 = pathname + "adj_matrix_milnodes_modwrap_mult3.csv";
+const std::string inputfilename2 = pathname + "joint_positions_uniform.csv";
+const std::string inputfilename3 = pathname + "adj_matrix_uniform_mult5.csv";
 const std::string outputfilename1 = pathname + "node_feasibility.csv";
 const std::string outputfilename2 = pathname + "link_c.csv";
 const std::string outputfilename3 = pathname + "collision_free_adj_matrix.csv";
 
-#define NUM_EDGES 1292962
-#define COLLISION_THRESHOLD -0.05
-#define EDGE_THRESHOLD 100
+#define NUM_EDGES 50221615
+#define COLLISION_THRESHOLD -0.10
+#define EDGE_THRESHOLD 1000
 
 int main() {
 /*
@@ -56,7 +56,7 @@ Section I:
     double* link_c = new double[NUM_JOINTS * NUM_NODES_AT_ONE_TIME * num_obstacles];
     bool* node_feasibilities = new bool[NUM_NODES];
     std::ifstream inputstream2(inputfilename2);
-    // std::ofstream outputstream1(outputfilename1);
+    std::ofstream outputstream1(outputfilename1);
     // std::ofstream outputstream2(outputfilename2);
 
     auto start1 = std::chrono::high_resolution_clock::now();
@@ -120,7 +120,7 @@ Section I:
                     }
                 }
             }
-            // outputstream1 << node_feasibility << endl;
+            outputstream1 << node_feasibility << endl;
             node_feasibilities[k * NUM_NODES_AT_ONE_TIME + i] = node_feasibility;
         }
     }
@@ -144,7 +144,7 @@ Section I:
 
     inputstream2.close();
     inputstream3.close();
-    // outputstream1.close();
+    outputstream1.close();
     // outputstream2.close();
     outputstream3.close();
     delete[] link_c;

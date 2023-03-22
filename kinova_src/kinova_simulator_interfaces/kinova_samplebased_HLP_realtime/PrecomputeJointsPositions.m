@@ -1,6 +1,6 @@
 clear; clc;
 
-load('millionNodes.mat');
+load('uniformNodes.mat');
 
 robot = importrobot('Kinova_Grasp_URDF.urdf');
 robot.DataFormat = 'col';
@@ -19,4 +19,4 @@ for i = 1:NUM_NODES
 end
 
 %% write to csv file
-writematrix(joint_positions, 'joint_positions.csv', 'Delimiter', ' ');
+writematrix(joint_positions, 'joint_positions_uniform.csv', 'Delimiter', ' ');

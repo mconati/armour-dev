@@ -7,7 +7,8 @@ classdef kinova_samplebased_HLP < robot_arm_graph_planner_HLP
     methods
         function HLP = kinova_samplebased_HLP(varargin)
             HLP@robot_arm_graph_planner_HLP(varargin{:}) ;
-            HLP.sample_nodes = load('millionNodes.mat');
+%             HLP.sample_nodes = load('millionNodes.mat');
+            HLP.sample_nodes = load('../kinova_simulator_interfaces/kinova_samplebased_HLP_realtime/uniformNodes.mat');
         end
 
         function HLP = generatePath(HLP, obstacles, start, goal)
@@ -18,16 +19,16 @@ classdef kinova_samplebased_HLP < robot_arm_graph_planner_HLP
             end
             
             % write obstacle info to file as the input of the CUDA collision checker
-            writematrix(Zs, 'obstacles.csv', 'Delimiter', ' ');
+            writematrix(Zs, '../kinova_simulator_interfaces/kinova_samplebased_HLP_realtime/obstacles.csv', 'Delimiter', ' ');
             
             % call collision checker in CUDA
             system('./../kinova_simulator_interfaces/kinova_samplebased_HLP_realtime/collision_checker');
             
-            adj_matrix_sparse_data = readmatrix('collision_free_adj_matrix.csv');
+            adj_matrix_sparse_data = readmatrix('../kinova_simulator_interfaces/kinova_samplebased_HLP_realtime/collision_free_adj_matrix.csv');
             adj_matrix_sparse = sparse(adj_matrix_sparse_data(:,1)+1, ...
                                        adj_matrix_sparse_data(:,2)+1, ...
                                        adj_matrix_sparse_data(:,3), ...
-                                       1e6, 1e6);
+                                       size(HLP.sample_nodes.q_valid_list,2), size(HLP.sample_nodes.q_valid_list,2));
             G = graph(adj_matrix_sparse, 'lower');
             
             [bins, binsize] = conncomp(G);
