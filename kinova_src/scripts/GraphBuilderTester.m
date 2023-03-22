@@ -16,7 +16,7 @@ end
 for i = 1:num_points
     for j = 1:num_points
         if i ~= j
-            q_dist(i,j) = norm(q(:,i)-q(:,j));
+            q_dist(i,j) = norm(angdiff(q(:,i)-q(:,j)));
         else
             q_dist(i,j) = inf;
         end
