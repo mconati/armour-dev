@@ -1037,7 +1037,7 @@ classdef robot_arm_agent < multi_link_agent
         end
 
         %% inverse kinematics with flat constraints
-        function [q,exitflag] = inverse_kinematics_flat_end_effector(A,J,q0)
+        function [q,exitflag] = inverse_kinematics_flat_end_effector(A,J,q0,yaw_des)
             % q = A.inverse_kinematics_end_effector(J,q0)
             %
             % Given an end-effector location J \in \R^d where d is the
@@ -1051,7 +1051,11 @@ classdef robot_arm_agent < multi_link_agent
             end
             
             % create the function to solve for the config
-            opt_fun = @(x) inverse_kinematics_flat_end_effector_opt_fun(A,q0(1:4),J,x) ;
+            if nargin > 3
+                opt_fun = @(x) inverse_kinematics_flat_end_effector_opt_fun(A,q0(1:4),J,x,yaw_des) ;
+            else
+                opt_fun = @(x) inverse_kinematics_flat_end_effector_opt_fun(A,q0(1:4),J,x) ;
+            end
             
             % create bounds on the solution
             lb = A.joint_state_limits(1,:)' ;
@@ -1064,15 +1068,23 @@ classdef robot_arm_agent < multi_link_agent
 %             end
             
             % optimize!
-            [q,~,exitflag] = fmincon(opt_fun,q0(5:7),[],[],[],[],lb,ub,[],options) ;
+            [q,fval,exitflag] = fmincon(opt_fun,q0(5:7),[],[],[],[],lb(5:7),ub(5:7),[],options) ;
+
+            % only return solution with cost closer to 0
+            if fval > 1e-3
+                q = nan(size(q));
+            end
         end
 
-        function f = inverse_kinematics_flat_end_effector_opt_fun(A,q0_first_four,p_des,x)
+        function f = inverse_kinematics_flat_end_effector_opt_fun(A,q0_first_four,p_des,x,yaw_des)
             x = [q0_first_four; x; 0; 0; 0];
             T = forward_kinematics(x, A.params.nominal.T0, A.params.nominal.joint_axes);
             p = T(1:3,4);
             eul = rotm2eul(T(1:3,1:3), 'XYZ');
             f = 0 * sum((p - p_des) .^ 2) + eul(1) ^ 2 + eul(2) ^ 2;
+            if nargin > 4
+                f = f + (eul(3) - yaw_des) ^ 2;
+            end
         end
         
         %% moving
