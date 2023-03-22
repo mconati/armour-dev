@@ -1,15 +1,3 @@
-%% description
-% This script iterates through a list of presaved random worlds and runs
-% the ARMOUR planner on them. It then saves information on how well each the
-% planner performed in each trial.
-%
-% Authors: Bohao Zhang (adapted from Patrick Holmes code)
-% Created 25 November 2019
-% Edited 16 January 2020
-% Edited: 02 June 2022 to work with updated UARMTD code
-% Edited: 25 September 2022 to work with updated UARMTD code for kinova
-% Edited: 10 November 2022 clean up
-
 initialize_script_path = matlab.desktop.editor.getActiveFilename;
 cd(initialize_script_path(1:end-32));
 
@@ -101,7 +89,6 @@ M_min_eigenvalue = 8.2998203638; % matlab doesn't import these from urdf so hard
 use_cuda_flag = true;
 
 %% perform collision checking
-tic
 idx = 87;
 
 % parameters
@@ -115,6 +102,8 @@ world_filename = world_file_list(idx).name;
 W = kinova_grasp_world_static('create_random_obstacles_flag', false, 'goal_radius', goal_radius, 'N_obstacles',length(obstacles),'dimension',dimension,'workspace_goal_check', 0,...
                         'verbose',verbosity, 'start', start, 'goal', goal, 'obstacles', obstacles, 'goal_type', goal_type,...
                         'grasp_constraint_flag', true,'ik_start_goal_flag', true, 'u_s', u_s, 'surf_rad', surf_rad) ;
+
+return;
 
 % obstacle number hardcoded as 10
 Zs = [];
@@ -151,7 +140,7 @@ link_c = readmatrix('link_c.csv');
 link_c = reshape(link_c, [10, NUM_NODES, 8]); % obstacle index, node index, link index
 
 % just choose one of the node since they are the same
-link_c = squeeze(link_c(:,1,:));
+link_c = squeeze(link_c(:,777,:));
 
 disp('difference with Matlab results');
 for o = 1:10
