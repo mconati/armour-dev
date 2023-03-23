@@ -74,7 +74,7 @@ plot_while_running = false ;
 
 % simulation
 max_sim_time = 86400 ; % 24 hours = 86400 sec; 48 hours = sec
-max_sim_iter = 3000 ;
+max_sim_iter = 1000 ;
 stop_threshold = 3 ; % number of failed iterations before exiting
 
 % file handling
@@ -114,7 +114,7 @@ if plot_while_running
 end
 
 tic
-for idx = 1:length(world_file_list)
+for idx = 1:1 % 1:length(world_file_list)
     clc; 
     fprintf("THIS IS WORLD %d\n\n", idx);
 
@@ -163,7 +163,9 @@ for idx = 1:length(world_file_list)
                        'traj_type', traj_type, ...
                        'use_cuda', use_cuda_flag,...
                        'save_FO_zono_flag', save_FO_zono_flag,...
-                       'DURATION',DURATION) ; % _wrapper
+                       'DURATION',DURATION, ...
+                       'lookahead_distance',lookahead_distance, ...
+                       'plot_HLP_flag', true) ; % _wrapper
 
     P.HLP = kinova_samplebased_HLP();
     P.HLP.generatePath(W.obstacles, W.start, W.goal);
