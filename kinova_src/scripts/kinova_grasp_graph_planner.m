@@ -24,7 +24,7 @@ grasp_constraint_flag = true;
 use_robust_input = true;
 
 goal_type = 'configuration'; % pick 'end_effector_location' or 'configuration'
-goal_radius = pi/30;
+goal_radius = deg2rad(3);
 dimension = 3 ;
 verbosity = 10;
 
@@ -113,7 +113,7 @@ if plot_while_running
     figure(1); clf; view(3); grid on;
 end
 
-idx = 13:13;
+idx = 17:17;
 
 % read world CSV to get start and goal, populate obstacles:
 world_filename = world_file_list(idx).name;
@@ -129,8 +129,6 @@ W = kinova_grasp_world_static('create_random_obstacles_flag', false, 'goal_radiu
 %     W.obstacles{i}.Z(1,1) = W.obstacles{i}.Z(1,1) + 1000;
 % %     W.obstacles{i}.zono.Z(1,1) = W.obstacles{i}.zono.Z(1,1) + 1000;
 % end
-
-samplebased_HLP = kinova_samplebased_HLP();
 
 % create arm agent
 A = uarmtd_agent(robot, params,...

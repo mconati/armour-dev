@@ -31,6 +31,7 @@ classdef kinova_grasp_world_static < world
         
         % goal plotting
         goal_plot_patch_data
+        start_plot_patch_data
         goal_plot_face_color = [0 1 0] ;
         goal_plot_face_alpha = 0.1 ;
         goal_plot_edge_color = [0 1 0] ;
@@ -85,6 +86,7 @@ classdef kinova_grasp_world_static < world
                 
                 if strcmp(W.goal_type,'configuration')
                     W.goal_plot_patch_data = I.get_collision_check_volume(W.goal) ;
+                    W.start_plot_patch_data = I.get_collision_check_volume(W.start) ;
                 end
                 
                 % create random obstacles
@@ -428,10 +430,10 @@ classdef kinova_grasp_world_static < world
 %                 O_idx = O{o_idx} ;
 %                 out = W.collision_check_single_obstacle(O_idx,V_arm) ;
 % 
-%                 if out
-%                     disp(q);
-%                     disp(O_idx.Z);
-%                 end
+% %                 if out
+% %                     disp(q);
+% %                     disp(O_idx.Z);
+% %                 end
 % 
 %                 o_idx = o_idx + 1 ;
 %             end
@@ -661,13 +663,13 @@ classdef kinova_grasp_world_static < world
         %% goal check
         function out = goal_check(W,agent_info)
             
-            z = agent_info.state(W.arm_joint_state_indices,:) ;
+            z = agent_info.state(W.arm_joint_state_indices,end) ;
             
             switch W.goal_type
                 case 'configuration'
-                    dz = abs(z - repmat(W.goal,1,size(z,2))) ;
+                    dz = abs(angdiff(z - W.goal)) ;
                     dz_log = dz <= W.goal_radius ;
-                    out = any(all(dz_log,1)) ;
+                    out = all(dz_log,1) ;
                 case 'end_effector_location'
                     % get the joint locations
                     J = agent_info.get_joint_locations(z) ;
@@ -761,6 +763,13 @@ classdef kinova_grasp_world_static < world
                                     'LineStyle',W.goal_plot_edge_style) ;
                             case 3
                                 data = patch(G,...
+                                    'LineStyle',W.goal_plot_edge_style,...
+                                    'FaceColor',W.goal_plot_face_color,...
+                                    'FaceAlpha',W.goal_plot_face_alpha,...
+                                    'EdgeColor',W.goal_plot_edge_color,...
+                                    'EdgeAlpha',W.goal_plot_edge_alpha) ;
+
+                                data_another = patch(W.start_plot_patch_data,...
                                     'LineStyle',W.goal_plot_edge_style,...
                                     'FaceColor',W.goal_plot_face_color,...
                                     'FaceAlpha',W.goal_plot_face_alpha,...

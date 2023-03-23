@@ -9,7 +9,7 @@ const std::string outputfilename2 = pathname + "link_c.csv";
 const std::string outputfilename3 = pathname + "collision_free_adj_matrix.csv";
 
 #define NUM_EDGES 50221615
-#define COLLISION_THRESHOLD -0.10
+#define COLLISION_THRESHOLD -0.15
 #define EDGE_THRESHOLD 1000
 
 int main() {
