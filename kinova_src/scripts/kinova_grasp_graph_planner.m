@@ -67,7 +67,7 @@ if_use_RRT = false;
 HLP_grow_tree_mode = 'new' ;
 plot_waypoint_flag = true ;
 plot_waypoint_arm_flag  = true ;
-lookahead_distance = 0.1 ;
+lookahead_distance = 0.1 ; % used if RRT is false
 
 % plotting
 plot_while_running = true ;
@@ -169,7 +169,8 @@ P = uarmtd_planner('verbose', verbosity, ...
                    'traj_type', traj_type, ...
                    'use_cuda', use_cuda_flag,...
                    'save_FO_zono_flag', save_FO_zono_flag,...
-                   'DURATION',DURATION) ; % _wrapper
+                   'DURATION',DURATION,...
+                   'lookahead_distance',lookahead_distance) ; % _wrapper
 
 P.HLP = kinova_samplebased_HLP();
 P.HLP.generatePath(W.obstacles, W.start, W.goal);
