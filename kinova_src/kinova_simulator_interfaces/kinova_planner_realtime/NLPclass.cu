@@ -3,6 +3,17 @@
 
 #include "NLPclass.h"
 
+double wrap_to_pi(const double angle) {
+    double wrapped_angle = angle;
+    while (wrapped_angle < -M_PI) {
+        wrapped_angle += 2*M_PI;
+    }
+    while (wrapped_angle > M_PI) {
+        wrapped_angle -= 2*M_PI;
+    }
+    return wrapped_angle;
+}
+
 // constructor
 armtd_NLP::armtd_NLP()
 {
@@ -570,10 +581,18 @@ bool armtd_NLP::eval_f(
 
     // obj_value = sum((q_plan - q_des).^2);
     obj_value = 0; 
+    Eigen::VectorXd q_plan(7);
     for(Index i = 0; i < n; i++){
-        double q_plan = q_des_func(desired_trajectory->q0[i], desired_trajectory->qd0[i], desired_trajectory->qdd0[i], k_range[i] * x[i], t_plan); // Bohao question: why pass in t_plan here instead of duration?
-        obj_value += pow(q_des[i] - q_plan, 2);
+        q_plan(i) = q_des_func(desired_trajectory->q0[i], desired_trajectory->qd0[i], desired_trajectory->qdd0[i], k_range[i] * x[i], t_plan); // Bohao question: why pass in t_plan here instead of duration?
     }
+
+    obj_value = pow(wrap_to_pi(q_des[0] - q_plan[0]), 2) +
+                pow(wrap_to_pi(q_des[2] - q_plan[2]), 2) + 
+                pow(wrap_to_pi(q_des[4] - q_plan[4]), 2) + 
+                pow(wrap_to_pi(q_des[6] - q_plan[6]), 2) + 
+                pow(q_des[1] - q_plan[1], 2) + 
+                pow(q_des[3] - q_plan[3], 2) + 
+                pow(q_des[5] - q_plan[5], 2);
 
     obj_value *= COST_FUNCTION_OPTIMALITY_SCALE; // needs to change in the gradient as well
 
@@ -597,8 +616,6 @@ bool armtd_NLP::eval_f(
     // for(Index i = 0; i < NUM_TIME_STEPS; i++){
     //     obj_value += cost_slip_ub[i];
     // }
-
-    
 
     return true;
 }
@@ -636,20 +653,26 @@ bool armtd_NLP::eval_grad_f(
 
         double q_plan = q_des_func(desired_trajectory->q0[i], desired_trajectory->qd0[i], desired_trajectory->qdd0[i], k_range[i] * x[i], t_plan); // Bohao question: why pass in t_plan here instead of duration?
         double dk_q_plan = pow(t_plan,3) * (6 * pow(t_plan,2) - 15 * t_plan + 10);
-        grad_f[i] = (2 * (q_plan - q_des[i]) * dk_q_plan * k_range[i]) * COST_FUNCTION_OPTIMALITY_SCALE;
+        if (i % 2 == 0) {
+            grad_f[i] = (2 * wrap_to_pi(q_plan - q_des[i]) * dk_q_plan * k_range[i]);
+        }
+        else {
+            grad_f[i] = (2 * (q_plan - q_des[i]) * dk_q_plan * k_range[i]);
+        }
+        grad_f[i] *= COST_FUNCTION_OPTIMALITY_SCALE;
     }
 
     // auto start_grad = std::chrono::high_resolution_clock::now();
 
     // new cost term gradient
-    Index offset = NUM_TIME_STEPS*NUM_FACTORS; // offset to pass over separation constraint
-    for(Index i=0; i<NUM_TIME_STEPS;i++){
-        // sum cost_grad_slip and grad_f column-wise
-        for(Index j = 0; j < n; j++){
-            // grad_f[j] += cost_grad_slip[i];
-            grad_f[j] += force_constraint_gradient[i*NUM_FACTORS+offset+j];
-        }
-    }
+    // Index offset = NUM_TIME_STEPS * NUM_FACTORS; // offset to pass over separation constraint
+    // for(Index i=0; i<NUM_TIME_STEPS;i++){
+    //     // sum cost_grad_slip and grad_f column-wise
+    //     for(Index j = 0; j < n; j++){
+    //         // grad_f[j] += cost_grad_slip[i];
+    //         grad_f[j] += force_constraint_gradient[i*NUM_FACTORS+offset+j];
+    //     }
+    // }
 
     // auto stop_grad = std::chrono::high_resolution_clock::now();
     // auto duration_grad = std::chrono::duration<long, std::nano>(stop_grad - start_grad);
@@ -838,6 +861,9 @@ void armtd_NLP::finalize_solution(
 {
     // here is where we would store the solution to variables, or write to a file, etc
     // so we could use the solution.
+
+    cout << "        CUDA & C++: Ipopt: desired joint angles: " << q_des.transpose() << endl;
+    cout << "        CUDA & C++: Ipopt: final cost function value: " << obj_value / COST_FUNCTION_OPTIMALITY_SCALE << endl;
 
     // store the solution
     for( Index i = 0; i < n; i++ ) {

@@ -56,6 +56,14 @@ classdef kinova_samplebased_HLP < robot_arm_graph_planner_HLP
 
             HLP.graph_waypoints = q_subgraph(:,path);
         end
+
+        function plot(HLP)
+            % plot the waypoint
+            if ~isempty(HLP.current_waypoint_patch_data)
+                HLP.plot_data.waypoint_arm_volume = patch(HLP.current_waypoint_patch_data,...
+                    'FaceColor','g','FaceAlpha',0.1) ;
+            end
+        end
     end
 end
 

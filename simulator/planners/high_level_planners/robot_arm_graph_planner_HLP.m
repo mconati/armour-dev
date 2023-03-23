@@ -32,7 +32,7 @@ classdef robot_arm_graph_planner_HLP < high_level_planner
         graph
         graph_waypoints
         current_graph_waypoint_index = 0;
-
+        current_waypoint_patch_data = [];
     end
     methods
         %%  constructor
@@ -52,7 +52,7 @@ classdef robot_arm_graph_planner_HLP < high_level_planner
         end
         
         %% get waypoint
-        function waypoint = get_waypoint(HLP,agent_info,~,lookahead_distance)
+        function waypoint = get_waypoint(HLP,agent_info,world_info,lookahead_distance)
 
             q_cur = agent_info.state(HLP.arm_joint_state_indices, end);
 
@@ -68,11 +68,10 @@ classdef robot_arm_graph_planner_HLP < high_level_planner
                 % call Straight Line Planner function to get waypoint in
                 % direction of graph waypoint goal
                 waypoint = get_SLP_to_waypoint(HLP,new_goal,agent_info,lookahead_distance);
-
             else
 
                 % check how close to current waypoint
-                cur_dist = norm(q_cur-HLP.current_waypoint);
+                cur_dist = norm(q_cur - HLP.graph_waypoints(:,HLP.current_graph_waypoint_index));
 
                 % decide waypoint based on distance
                 if cur_dist > lookahead_distance
@@ -93,6 +92,9 @@ classdef robot_arm_graph_planner_HLP < high_level_planner
                     end
                 end
             end
+
+%             HLP.current_waypoint_patch_data = agent_info.get_collision_check_volume(waypoint) ;
+            HLP.current_waypoint_patch_data = agent_info.get_collision_check_volume(HLP.graph_waypoints(:,HLP.current_graph_waypoint_index)) ;
         end
 
         function waypoint = get_SLP_to_waypoint(HLP,goal,agent_info,lookahead_distance)

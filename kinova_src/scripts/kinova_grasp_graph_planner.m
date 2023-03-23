@@ -70,7 +70,7 @@ plot_waypoint_arm_flag  = true ;
 lookahead_distance = 0.1 ; % used if RRT is false
 
 % plotting
-plot_while_running = true ;
+plot_while_running = false ;
 
 % simulation
 max_sim_time = 86400 ; % 24 hours = 86400 sec; 48 hours = sec
@@ -170,7 +170,8 @@ P = uarmtd_planner('verbose', verbosity, ...
                    'use_cuda', use_cuda_flag,...
                    'save_FO_zono_flag', save_FO_zono_flag,...
                    'DURATION',DURATION,...
-                   'lookahead_distance',lookahead_distance) ; % _wrapper
+                   'lookahead_distance',lookahead_distance, ...
+                   'plot_HLP_flag', true) ; % _wrapper
 
 P.HLP = kinova_samplebased_HLP();
 P.HLP.generatePath(W.obstacles, W.start, W.goal);

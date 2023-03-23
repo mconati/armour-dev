@@ -65,9 +65,8 @@ classdef uarmtd_planner < robot_arm_generic_planner
                 end
             end
             t_move = 0.5 * DURATION; %P.DURATION;
-            lookahead_distance = 0.4;
             HLP = robot_arm_straight_line_HLP( );
-            P@robot_arm_generic_planner('lookahead_distance', lookahead_distance, 't_move', t_move, 'HLP', HLP, ...
+            P@robot_arm_generic_planner('t_move', t_move, 'HLP', HLP, ...
                 varargin{:}) ;
             
             % hard code planning time...
@@ -163,7 +162,7 @@ classdef uarmtd_planner < robot_arm_generic_planner
 
                 %%%%% This one
                 if strcmp(P.traj_type, 'bernstein')
-                    P.jrs_info.n_t = 100;
+                    P.jrs_info.n_t = 128;
                     P.jrs_info.n_q = 7;
                     P.jrs_info.n_k = 7;
                     P.jrs_info.c_k_bernstein = zeros(7,1);
