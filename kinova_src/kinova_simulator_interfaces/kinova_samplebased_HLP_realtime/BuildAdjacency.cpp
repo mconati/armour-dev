@@ -11,8 +11,8 @@
 using namespace std;
 using namespace std::chrono;
 
-#define NUMBER_OF_NODES 2139173
-#define EDGE_THRESHOLD 0.1154*5 // This is norm(pi / 72 * ones(7,1))
+#define NUMBER_OF_NODES 2140000
+#define EDGE_THRESHOLD 0.1154*6 // This is norm(pi / 72 * ones(7,1))
 
 Eigen::VectorXd wrapToPi(const Eigen::VectorXd& angles) {
     Eigen::VectorXd wrapped_angles = angles;

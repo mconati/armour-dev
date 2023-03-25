@@ -22,3 +22,6 @@ kinova_src/kinova_simulator_interfaces/kinova_samplebased_HLP_realtime/collision
 kinova_src/scripts/adj_matrix.txt
 kinova_src/scripts/thousandNodes.csv
 kinova_src/scripts/BuildAdjacency
+kinova_src/kinova_simulator_interfaces/kinova_samplebased_HLP_realtime/BuildAdjacency
+kinova_src/results/rtd-force/
+kinova_src/scripts/adj_matrix_uniform_mult3.txt

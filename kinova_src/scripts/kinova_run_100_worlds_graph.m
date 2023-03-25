@@ -51,7 +51,7 @@ links_with_uncertainty = {}; % if add_uncertainty_to = 'link', specify links her
 uncertain_mass_range = [0.97, 1.03];
 
 agent_move_mode = 'integrator' ; % pick 'direct' or 'integrator'
-use_CAD_flag = true;
+use_CAD_flag = false;
 add_measurement_noise_ = false;
 measurement_noise_size_ = 0;
 
@@ -114,7 +114,7 @@ if plot_while_running
 end
 
 tic
-for idx = 1:1 % 1:length(world_file_list)
+for idx = 1:length(world_file_list)
     clc; 
     fprintf("THIS IS WORLD %d\n\n", idx);
 
@@ -188,7 +188,7 @@ for idx = 1:1 % 1:length(world_file_list)
                         'max_sim_iterations',max_sim_iter,...
                         'stop_sim_when_ultimate_bound_exceeded', use_robust_input) ; 
     
-    % %% plotting
+    %% plotting
     if plot_while_running
         figure(1) ; clf ; axis equal ; xlim([-1 1]); ylim([-1 1]); zlim([0 2]); grid on; hold on ;
 
