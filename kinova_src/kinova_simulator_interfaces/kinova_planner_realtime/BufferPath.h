@@ -1,2 +1,2 @@
 #include <string>
-const std::string pathname = "/home/roahmlab/Documents/armour-dev/kinova_src/kinova_simulator_interfaces/kinova_planner_realtime/buffer/";
+const std::string pathname = "/home/baiyuew/ROAHM/planning_wksp/src/kinova_perception/kinova_planning/src/rtd-pybullet/armour-dev/kinova_src/kinova_simulator_interfaces/kinova_planner_realtime/buffer/";

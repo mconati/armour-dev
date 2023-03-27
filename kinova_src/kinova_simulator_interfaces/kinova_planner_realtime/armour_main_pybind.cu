@@ -1,4 +1,5 @@
 #include "NLPclass.h"
+#include "FastCollisionChecking.h"
 #include "ReachsetsPath.h"
 #include <cmath>
 
@@ -40,6 +41,7 @@ class pzsparse {
         int num_obstacles = 0;
         double obstacles[MAX_OBSTACLE_NUM * (MAX_OBSTACLE_GENERATOR_NUM + 1) * 3] = {0.0};
         std::shared_ptr<Obstacles> O_ptr{nullptr};
+        std::shared_ptr<SimplifiedObstacles> O_ptr2{nullptr};
         // Obstacles O(obstacles, num_obstacles); 
         // Obstacles O;
 
@@ -73,6 +75,10 @@ class pzsparse {
             O_ptr = std::make_unique<Obstacles>();
             O_ptr->initialize(obstacles, num_obstacles);
             // O.initialize(obstacles, num_obstacles);
+
+            O_ptr2 = std::make_unique<SimplifiedObstacles>();
+            O_ptr2->initialize(obstacles, num_obstacles);
+
             std::cout << "Obstacles allocated!" << std::endl;
         }
 
@@ -433,6 +439,174 @@ class pzsparse {
             return traj_d;
         }
 
+        // add collision checking function here and below in pybind function
+        // take in the obstacles (from the pybind class above?), the precomputed joint locations from the matlab script, and adjacency matrix. 
+        // return new adjacency matrix?
+
+        
+
+        // the pybind is initialized in bulletPlanner.py with the initialization of a armour planner
+
+         int graphCollisionCheck() {
+            /*
+            Eigen::Ref<Eigen::MatrixXd>
+
+            This function collision checks nodes in a graph and removes those in collision from the adjacency matrix. A new, collision-free adjacency
+            matrix is returned.
+
+            TODO: 
+            - ensure that the output adjacency matrix is checked. an adjacency matrix with only zeros is returned if an error is thrown.
+            - replace reading the old adjacency matrix from a file to taking in the adjacency matrix from python
+            */
+
+            std::string output_message = "In C++ graphCollisionCheck";
+            std::cout << output_message << std::endl;
+
+            std::string pathname_collision = "/home/baiyuew/ROAHM/planning_wksp/src/kinova_perception/kinova_planning/src/rtd-pybullet/armour-dev/kinova_src/kinova_simulator_interfaces/kinova_planner_realtime/";
+
+            // Hard Coded Files (need to be replaced if graph changes)
+            const std::string inputfilename2 = pathname_collision + "joint_positions_composite.csv";
+            const std::string inputfilename3 = pathname_collision + "adj_matrix_composite_range0p3.txt";
+            // const std::string outputfilename1 = pathname_collision + "node_feasibility.csv";
+            // const std::string outputfilename2 = pathname_collision + "link_c.csv";
+            const std::string outputfilename3 = pathname_collision + "collision_free_adj_matrix.csv";
+
+            #define NUM_EDGES 28338492 // 50221615
+            #define COLLISION_THRESHOLD -0.10
+            #define EDGE_THRESHOLD 1000
+
+            // O.initialize(obstacles, num_obstacles); // done above
+
+            Eigen::Vector3d link_sliced_center[NUM_NODES_AT_ONE_TIME * NUM_JOINTS];
+            Eigen::Matrix<double, 3, LINK_FRS_GENERATOR_NUM> link_independent_generators[NUM_NODES_AT_ONE_TIME * NUM_JOINTS];
+            double* link_c = new double[NUM_JOINTS * NUM_NODES_AT_ONE_TIME * num_obstacles];
+            bool* node_feasibilities = new bool[NUM_NODES];
+            std::ifstream inputstream2(inputfilename2);
+            // std::ofstream outputstream1(outputfilename1);
+            // std::ofstream outputstream2(outputfilename2);
+
+            // pre-allocate new adjacency matrix
+
+            // Eigen::MatrixXi new_adj_nodes = Eigen::MatrixXi::Zero(NUM_EDGES,2);
+            // Eigen::VectorXd new_edge_distance = Eigen::VectorXd::Zero(NUM_EDGES);
+
+            // Eigen::MatrixXd new_adj_matrix = Eigen::MatrixXd::Zero(NUM_EDGES,3);
+
+            // auto new_adj_matrix = py::array_t<double>(NUM_EDGES,3);
+            // double *new_adj_matrix_ptr = static_cast<double *>(new_adj_matrix.request().ptr);
+
+            auto start1 = std::chrono::high_resolution_clock::now();
+
+            // reading joint positions
+            for (int k = 0; k < NUM_NODES / NUM_NODES_AT_ONE_TIME; k++) {
+            for (int i = 0; i < NUM_NODES_AT_ONE_TIME; i++) {
+                Eigen::Vector3d pos1;
+                inputstream2 >> pos1(0) >> pos1(1) >> pos1(2);
+                Eigen::Vector3d pos2;
+                for (int j = 0; j < NUM_JOINTS; j++) {
+                    inputstream2 >> pos2(0) >> pos2(1) >> pos2(2);
+
+                    link_sliced_center[i * NUM_JOINTS + j] = 0.5 * (pos1 + pos2);
+                    link_independent_generators[i * NUM_JOINTS + j] = 0.5 * (pos1 - pos2);
+
+                    pos1 = pos2;
+                }
+            }
+
+            /*
+            Section II: Buffer obstacles and initialize collision checking hyperplanes
+            */
+            try {
+                O_ptr2->initializeHyperPlane(link_independent_generators);
+            }
+            catch (int errorCode) {
+                WARNING_PRINT("        CUDA & C++: Error initializing collision checking hyperplanes! Check previous error message!");
+                return -1; // new_adj_matrix;
+            }
+
+            /*
+            Section III:
+                Collision checking
+            */
+
+            try {
+                O_ptr2->linkFRSConstraints(link_sliced_center, link_c);
+            }
+            catch (int errorCode) {
+                WARNING_PRINT("        CUDA & C++: Error peforming collision checking! Check previous error message!");
+                return -1; // new_adj_matrix;
+            }
+
+            /*
+            Section IV:
+                Prepare output
+            */
+            // for (int i = 0; i < NUM_NODES_AT_ONE_TIME * num_obstacles; i++) {
+            //     for (int j = 0; j < NUM_JOINTS; j++) {
+            //         outputstream2 << link_c[j * NUM_NODES_AT_ONE_TIME * num_obstacles + i] << ' ';
+            //     }
+            //     outputstream2 << '\n';
+            // }
+            for (int i = 0; i < NUM_NODES_AT_ONE_TIME; i++) {
+                bool node_feasibility = true;
+                for (int j = 0; j < NUM_JOINTS; j++) {
+                    for (int h = 0; h < num_obstacles; h++) {
+                        if (link_c[(j * NUM_NODES_AT_ONE_TIME + i) * num_obstacles + h] > COLLISION_THRESHOLD) {
+                            node_feasibility = false;
+                            break;
+                        }
+                    }
+                }
+                // outputstream1 << node_feasibility << endl;
+                node_feasibilities[k * NUM_NODES_AT_ONE_TIME + i] = node_feasibility;
+            }
+            }
+
+            auto stop1 = std::chrono::high_resolution_clock::now();
+            auto duration1 = std::chrono::duration_cast<std::chrono::milliseconds>(stop1 - start1);
+            cout << "Time taken by peforming collision checking: " << duration1.count() << " milliseconds" << endl;
+
+            // building adjacency matrix
+            std::ifstream inputstream3(inputfilename3);
+            std::ofstream outputstream3(outputfilename3);
+
+            // build the new adjacency matrix
+            for (int i = 0; i < NUM_EDGES; i++) {
+                int node_a = 0, node_b = 0; //was int
+                double edge_distance = 0.0;
+                inputstream3 >> node_a >> node_b >> edge_distance; // TODO replace this when passing in old adjacency matrix
+
+                if (node_feasibilities[node_a] && node_feasibilities[node_b] && edge_distance < EDGE_THRESHOLD) {
+                    // new_adj_nodes[i,0] = node_a;
+                    // new_adj_nodes[i,1] = node_b;
+                    // new_edge_distance[i,0] = edge_distance;
+
+                    // new_adj_matrix(i,0) = (float)node_a;
+                    // new_adj_matrix(i,1) = (float)node_b; // trying to cast
+                    // new_adj_matrix(i,2) = edge_distance;
+
+                    // new_adj_matrix_ptr[i,0] = static_cast<float>node_a;
+                    // new_adj_matrix_ptr[i,1] = static_cast<float>node_b; // trying to cast
+                    // new_adj_matrix_ptr[i,2] = edge_distance;
+
+                    outputstream3 << node_a << ' ' << node_b << ' ' << edge_distance << '\n';
+                }
+            }
+
+
+
+            inputstream2.close();
+            inputstream3.close();
+            // outputstream1.close();
+            // outputstream2.close();
+            outputstream3.close();
+            delete[] link_c;
+            delete[] node_feasibilities;
+
+            return 0; // new_adj_matrix;
+
+        }
+
         void free()
         {
             O_ptr.reset();
@@ -457,6 +631,7 @@ PYBIND11_MODULE(armour_main_pybind, m) {
         .def("optimize", &pzsparse::optimize)
         .def("getDesTraj", &pzsparse::getDesTraj)
         .def("setDataDir", &pzsparse::set_datadir)
-        .def("getDataDir", &pzsparse::get_datadir);
+        .def("getDataDir", &pzsparse::get_datadir)
+        .def("graphCollisionCheck", &pzsparse::graphCollisionCheck);
         // .def("free", &pzsparse::free);
 }

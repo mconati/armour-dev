@@ -641,15 +641,15 @@ bool armtd_NLP::eval_grad_f(
 
     // auto start_grad = std::chrono::high_resolution_clock::now();
 
-    // new cost term gradient
-    Index offset = NUM_TIME_STEPS*NUM_FACTORS; // offset to pass over separation constraint
-    for(Index i=0; i<NUM_TIME_STEPS;i++){
-        // sum cost_grad_slip and grad_f column-wise
-        for(Index j = 0; j < n; j++){
-            // grad_f[j] += cost_grad_slip[i];
-            grad_f[j] += force_constraint_gradient[i*NUM_FACTORS+offset+j];
-        }
-    }
+    // // new cost term gradient
+    // Index offset = NUM_TIME_STEPS*NUM_FACTORS; // offset to pass over separation constraint
+    // for(Index i=0; i<NUM_TIME_STEPS;i++){
+    //     // sum cost_grad_slip and grad_f column-wise
+    //     for(Index j = 0; j < n; j++){
+    //         // grad_f[j] += cost_grad_slip[i];
+    //         grad_f[j] += force_constraint_gradient[i*NUM_FACTORS+offset+j];
+    //     }
+    // }
 
     // auto stop_grad = std::chrono::high_resolution_clock::now();
     // auto duration_grad = std::chrono::duration<long, std::nano>(stop_grad - start_grad);

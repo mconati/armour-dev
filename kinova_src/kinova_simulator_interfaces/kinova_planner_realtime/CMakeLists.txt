@@ -30,6 +30,7 @@ cuda_add_library(armour_main_pybind SHARED
   NLPclass.cu
   # NLPclass_freeinput.cu
   CollisionChecking.cu
+  FastCollisionChecking.cu
   Dynamics.cu
   Trajectory.cu
   PZsparse.cu
