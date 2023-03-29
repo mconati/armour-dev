@@ -80,9 +80,6 @@ classdef uarmtd_planner < robot_arm_generic_planner
             P.combs.maxcombs = 200;
             P.combs.combs = generate_combinations_upto(200);
 
-            data = load('c_kvi.mat');
-            P.jrs_info.c_kvi = data.c_kvi;
-
             data = load('kinova_test_folder_path');
             P.kinova_test_folder_path = data.kinova_test_folder_path; % name; % 
         end
@@ -130,9 +127,6 @@ classdef uarmtd_planner < robot_arm_generic_planner
                 P.iter = P.iter + 1;
                 planning_time = tic;
                 q_des = P.HLP.get_waypoint(agent_info,world_info,P.lookahead_distance) ;
-
-                % try using RTS HLP here?
-                
 
                 if isempty(q_des)
                     P.vdisp('Waypoint creation failed! Using global goal instead.', 3)
@@ -182,7 +176,8 @@ classdef uarmtd_planner < robot_arm_generic_planner
     
                     % organize input to cuda program
                     P.vdisp('Calling CUDA & C++ Program!',3);
-                    cuda_input_file = fopen([P.kinova_test_folder_path, '/kinova_simulator_interfaces/kinova_planner_realtime/buffer/armour.in'], 'w');
+%                     cuda_input_file = fopen([P.kinova_test_folder_path, '/kinova_simulator_interfaces/kinova_planner_realtime/buffer/armour.in'], 'w');  
+                    cuda_input_file = fopen([P.kinova_test_folder_path, '/kinova_simulator_interfaces/kinova_planner_realtime_original/buffer/armour.in'], 'w');
                 
                     for ind = 1:length(q_0)
                         fprintf(cuda_input_file, '%.10f ', q_0(ind));
@@ -213,11 +208,12 @@ classdef uarmtd_planner < robot_arm_generic_planner
     
                     % call cuda program in terminal
                     % you have to be in the proper path!
-%                     terminal_output = system('./../kinova_simulator_interfaces/kinova_planner_realtime/armour_main'); % armour path
-                    terminal_output = system('env -i bash -i -c "./../kinova_simulator_interfaces/kinova_planner_realtime/rtd_force_main_v2"'); % rtd-force path
+%                     terminal_output = system('env -i bash -i -c "./../kinova_simulator_interfaces/kinova_planner_realtime/rtd_force_main_v2"'); % rtd-force path
+                    terminal_output = system('env -i bash -i -c "./../kinova_simulator_interfaces/kinova_planner_realtime_original/armour_main"'); % armour path
     
                     if terminal_output == 0
-                        data = readmatrix('armour.out', 'FileType', 'text');
+%                         data = readmatrix([P.kinova_test_folder_path, '/kinova_simulator_interfaces/kinova_planner_realtime/buffer/armour.out'], 'FileType', 'text');
+                        data = readmatrix([P.kinova_test_folder_path, '/kinova_simulator_interfaces/kinova_planner_realtime_original/buffer/armour.out'], 'FileType', 'text');
                         k_opt = data(1:end-1);
                         planning_time = data(end) / 1000.0; % original data is milliseconds
     
@@ -240,12 +236,15 @@ classdef uarmtd_planner < robot_arm_generic_planner
     
                     if terminal_output == 0
                         % read FRS information if needed
-                        link_frs_center = readmatrix('armour_joint_position_center.out', 'FileType', 'text');
-                        link_frs_generators = readmatrix('armour_joint_position_radius.out', 'FileType', 'text');
-                        control_input_radius = readmatrix('armour_control_input_radius.out', 'FileType', 'text');
-                        constraints_value = readmatrix('armour_constraints.out', 'FileType', 'text');
-                        contact_constraint_radii = readmatrix('armour_force_constraint_radius.out', 'FileType', 'text');
-                        wrench_radii = readmatrix('armour_wrench_values.out', 'FileType', 'text');
+%                         link_frs_center = readmatrix('armour_joint_position_center.out', 'FileType', 'text');
+%                         link_frs_generators = readmatrix('armour_joint_position_radius.out', 'FileType', 'text');
+%                         control_input_radius = readmatrix('armour_control_input_radius.out', 'FileType', 'text');
+%                         constraints_value = readmatrix('armour_constraints.out', 'FileType', 'text');
+%                         contact_constraint_radii = readmatrix('armour_force_constraint_radius.out', 'FileType', 'text');
+%                         wrench_radii = readmatrix('armour_wrench_values.out', 'FileType', 'text');
+                        constraints_value = [];
+                        contact_constraint_radii = [];
+                        wrench_radii = [];
 
 %                         link_frs_vertices = cell(7,1);
 %                         for tid = 1:10:P.jrs_info.n_t
@@ -264,141 +263,8 @@ classdef uarmtd_planner < robot_arm_generic_planner
 %                     pause()
                 
                 %%%%% Bernstein is above
-
-
-                elseif strcmp(P.traj_type, 'orig')
-                    P.jrs_info.n_t = 100;
-                    P.jrs_info.n_q = 7;
-                    P.jrs_info.n_k = 7;
-                    P.jrs_info.c_k_orig = zeros(7,1);
-                    P.jrs_info.g_k_orig = zeros(7,1);
-
-                    q_des = P.HLP.get_waypoint(agent_info,world_info,P.lookahead_distance) ;
-                    if isempty(q_des)
-                        P.vdisp('Waypoint creation failed! Using global goal instead.', 3)
-                        q_des = P.HLP.goal ;
-                    end
-
-                    % organize input to cuda program
-                    P.vdisp('Calling CUDA & C++ Program!',3);
-                    JRS_filename = cell(P.jrs_info.n_q,1);
-                    for i = 1:length(q_0)
-                        [~, closest_idx] = min(abs(q_dot_0(i) - P.jrs_info.c_kvi));
-                        filename = sprintf('%sJRS_%0.3f.mat', 'offline_jrs/orig_parameterization/', P.jrs_info.c_kvi(closest_idx));
-                        
-                        JRS_filename{i} = filename;
-                    end
-    
-                    cuda_input_file = fopen([P.kinova_test_folder_path, '/kinova_simulator_interfaces/kinova_planner_realtime_armtd_comparison/buffer/armtd_main.in'], 'w');
-                    
-                    % q_0
-                    for ind = 1:length(q_0)
-                        fprintf(cuda_input_file, '%.10f ', q_0(ind));
-                    end
-                    fprintf(cuda_input_file, '\n');
-                    
-                    % q_dot_0
-                    for ind = 1:length(q_dot_0)
-                        fprintf(cuda_input_file, '%.10f ', q_dot_0(ind));
-                    end
-                    fprintf(cuda_input_file, '\n');
-                    
-                    % q_des
-                    for ind = 1:length(q_des)
-                        fprintf(cuda_input_file, '%.10f ', q_des(ind));
-                    end
-                    fprintf(cuda_input_file, '\n');
-                    
-                    k_range = zeros(7,1);
-                    
-                    for ind = 1:7
-                        data = load(JRS_filename{ind});
-                    
-                        % cos(q)
-                        for i = 1:100
-                            c = data.JRS{i}.Z(1,1);
-                            fprintf(cuda_input_file, '%.10f ', c);
-                        end
-                        fprintf(cuda_input_file, '\n');
-                        for i = 1:100
-                            g = data.JRS{i}.Z(1,2);
-                            fprintf(cuda_input_file, '%.10f ', g);
-                        end
-                        fprintf(cuda_input_file, '\n');
-                        for i = 1:100
-                            r = sum(abs(data.JRS{i}.Z(1,3:end)), 2);
-                            fprintf(cuda_input_file, '%.10f ', r);
-                        end
-                        fprintf(cuda_input_file, '\n');
-                        
-                        % sin(q)
-                        for i = 1:100
-                            c = data.JRS{i}.Z(2,1);
-                            fprintf(cuda_input_file, '%.10f ', c);
-                        end
-                        fprintf(cuda_input_file, '\n');
-                        for i = 1:100
-                            g = data.JRS{i}.Z(2,2);
-                            fprintf(cuda_input_file, '%.10f ', g);
-                        end
-                        fprintf(cuda_input_file, '\n');
-                        for i = 1:100
-                            r = sum(abs(data.JRS{i}.Z(2,3:end)), 2);
-                            fprintf(cuda_input_file, '%.10f ', r);
-                        end
-                        fprintf(cuda_input_file, '\n');
-                        
-                        P.jrs_info.g_k_orig(ind) = data.JRS{1}.Z(5,2);
-                        fprintf(cuda_input_file, '%.10f\n ', P.jrs_info.g_k_orig(ind));
-                    end
-
-                    fprintf(cuda_input_file, '%d\n', max(length(world_info.obstacles), 0));
-                    for obs_ind = 1:length(world_info.obstacles)
-                        temp = reshape(world_info.obstacles{obs_ind}.Z, [1,size(world_info.obstacles{obs_ind}.Z,1) * size(world_info.obstacles{obs_ind}.Z,2)]);
-                        for ind = 1:length(temp)
-                            fprintf(cuda_input_file, '%.10f ', temp(ind));
-                        end
-                        fprintf(cuda_input_file, '\n');
-                    end
-    
-                    fclose(cuda_input_file);
-
-                    % call cuda program in terminal
-                    % you have to be in the proper path!
-                    terminal_output = system('./../kinova_simulator_interfaces/kinova_planner_realtime_armtd_comparison/armtd_main');
-    
-                    if terminal_output == 0
-                        data = readmatrix('armtd_main.out', 'FileType', 'text');
-                        k_opt = data(1:end-1);
-                        planning_time = data(end) / 1000.0; % original data is milliseconds
-    
-                        if length(k_opt) == 1
-                            P.vdisp('Unable to find new trajectory!',3)
-                            k_opt = nan;
-                        else
-                            P.vdisp('New trajectory found!',3);
-                            for i = 1:length(k_opt)
-                                fprintf('%7.6f ', k_opt(i));
-                            end
-                            fprintf('\n');
-                        end
-                    else
-                        error('CUDA program error! Check the executable path in armour-dev/kinova_src/kinova_simulator_interfaces/uarmtd_planner');
-                    end
-    
-                    if terminal_output == 0
-                        % read FRS information if needed
-                        joint_frs_center = readmatrix('armtd_main_joint_position_center.out', 'FileType', 'text');
-                        joint_frs_radius = readmatrix('armtd_main_joint_position_radius.out', 'FileType', 'text');
-                        constraints_value = readmatrix('armtd_main_constraints.out', 'FileType', 'text');
-                    else
-                        k_opt = nan;
-                        joint_frs_center = [];
-                        joint_frs_radius = [];
-                        constraints_value = [];
-                    end
                 else
-                    error('Unrecognized trajectory type!');
+                    error('Unrecognized trajectory type! orig is not supported!');
                 end
             end
             

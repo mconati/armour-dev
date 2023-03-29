@@ -74,12 +74,13 @@ plot_while_running = false ;
 
 % simulation
 max_sim_time = 86400 ; % 24 hours = 86400 sec; 48 hours = sec
-max_sim_iter = 1000 ;
+max_sim_iter = 3000 ;
 stop_threshold = 3 ; % number of failed iterations before exiting
 
 % file handling
 save_file_header = 'trial_' ;
-file_location = '../results/rtd-force/dur2s_largeStateBuffer_10Obs_03082023_graph' ;
+% file_location = '../results/rtd-force/dur2s_largeStateBuffer_10Obs_03082023_graph' ;
+file_location = '../results/rtd-force/dur2s_largeStateBuffer_10Obs_03082023_graph_armour' ;
 if ~exist(file_location, 'dir')
     mkdir(file_location);
 end
