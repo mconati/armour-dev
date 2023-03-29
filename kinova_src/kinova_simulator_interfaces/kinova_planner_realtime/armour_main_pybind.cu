@@ -10,6 +10,9 @@
 
 namespace py = pybind11;
 
+#define NUM_EDGES 112826403 // 50221615
+#define COLLISION_THRESHOLD -0.05 // -0.10
+#define EDGE_THRESHOLD 0.5 // 1000
 
 class pzsparse {
     private:
@@ -464,16 +467,41 @@ class pzsparse {
 
             std::string pathname_collision = "/home/baiyuew/ROAHM/planning_wksp/src/kinova_perception/kinova_planning/src/rtd-pybullet/armour-dev/kinova_src/kinova_simulator_interfaces/kinova_planner_realtime/";
 
-            // Hard Coded Files (need to be replaced if graph changes)
-            const std::string inputfilename2 = pathname_collision + "joint_positions_composite.csv";
-            const std::string inputfilename3 = pathname_collision + "adj_matrix_composite_range0p3.txt";
-            // const std::string outputfilename1 = pathname_collision + "node_feasibility.csv";
-            // const std::string outputfilename2 = pathname_collision + "link_c.csv";
-            const std::string outputfilename3 = pathname_collision + "collision_free_adj_matrix.csv";
+            // file names
+            // composite set
+                // joint_positions_composite.csv
+                // adj_matrix_composite_range0p3.txt
+                // edges: 28338492
+            // uniform nodes hardware only version 2
+                // joint_positions_uniform_v2.csv
+                // adj_matrix_uniform_hardware_only_v2_range0p3.txt
+                // edges: 16140775
+            // uniform nodes hardware only version 3
+                // joint_positions_uniform_v3.csv
+                // adj_matrix_uniform_hardware_only_v3_range0p3.txt
+                // edges: 17740918
+            // uniform nodes hardware only version 4
+                // joint_positions_uniform_v4.csv
+                // adj_matrix_uniform_hardware_only_v4_range0p3.txt
+                // edges: 17707982
+            // uniform nodes hardware only version 4 dense and shifted valid only
+                // joint_positions_uniform_dense_validOnly_v4.csv
+                // adj_matrix_uniform_hardware_dense_shiftedValidOnly_v4_range0p3.txt
+                // edges: 5482178
+            // uniform nodes hardware dense shifted and random nodes
+                // joint_positions_uniform_hardware_dense_rand.csv
+                // adj_matrix_uniform_hardware_dense_rand_range0p3.txt
+                // edges: 11930750
+            // matlab files
+                // joint_positions_uniform.csv
+                // adj_matrix_uniform_mult5.txt
 
-            #define NUM_EDGES 28338492 // 50221615
-            #define COLLISION_THRESHOLD -0.10
-            #define EDGE_THRESHOLD 1000
+            // Hard Coded Files (need to be replaced if graph changes)
+            const std::string inputfilename2 = pathname_collision + "joint_positions_uniform.csv";
+            const std::string inputfilename3 = pathname_collision + "adj_matrix_uniform_mult5.csv";
+            const std::string outputfilename1 = pathname_collision + "node_feasibility.csv";
+            const std::string outputfilename2 = pathname_collision + "link_c.csv";
+            const std::string outputfilename3 = pathname_collision + "collision_free_adj_matrix.csv";
 
             // O.initialize(obstacles, num_obstacles); // done above
 
@@ -482,8 +510,8 @@ class pzsparse {
             double* link_c = new double[NUM_JOINTS * NUM_NODES_AT_ONE_TIME * num_obstacles];
             bool* node_feasibilities = new bool[NUM_NODES];
             std::ifstream inputstream2(inputfilename2);
-            // std::ofstream outputstream1(outputfilename1);
-            // std::ofstream outputstream2(outputfilename2);
+            std::ofstream outputstream1(outputfilename1);
+            std::ofstream outputstream2(outputfilename2);
 
             // pre-allocate new adjacency matrix
 
@@ -499,67 +527,67 @@ class pzsparse {
 
             // reading joint positions
             for (int k = 0; k < NUM_NODES / NUM_NODES_AT_ONE_TIME; k++) {
-            for (int i = 0; i < NUM_NODES_AT_ONE_TIME; i++) {
-                Eigen::Vector3d pos1;
-                inputstream2 >> pos1(0) >> pos1(1) >> pos1(2);
-                Eigen::Vector3d pos2;
-                for (int j = 0; j < NUM_JOINTS; j++) {
-                    inputstream2 >> pos2(0) >> pos2(1) >> pos2(2);
+                for (int i = 0; i < NUM_NODES_AT_ONE_TIME; i++) {
+                    Eigen::Vector3d pos1;
+                    inputstream2 >> pos1(0) >> pos1(1) >> pos1(2);
+                    Eigen::Vector3d pos2;
+                    for (int j = 0; j < NUM_JOINTS; j++) {
+                        inputstream2 >> pos2(0) >> pos2(1) >> pos2(2);
 
-                    link_sliced_center[i * NUM_JOINTS + j] = 0.5 * (pos1 + pos2);
-                    link_independent_generators[i * NUM_JOINTS + j] = 0.5 * (pos1 - pos2);
+                        link_sliced_center[i * NUM_JOINTS + j] = 0.5 * (pos1 + pos2);
+                        link_independent_generators[i * NUM_JOINTS + j] = 0.5 * (pos1 - pos2);
 
-                    pos1 = pos2;
-                }
-            }
-
-            /*
-            Section II: Buffer obstacles and initialize collision checking hyperplanes
-            */
-            try {
-                O_ptr2->initializeHyperPlane(link_independent_generators);
-            }
-            catch (int errorCode) {
-                WARNING_PRINT("        CUDA & C++: Error initializing collision checking hyperplanes! Check previous error message!");
-                return -1; // new_adj_matrix;
-            }
-
-            /*
-            Section III:
-                Collision checking
-            */
-
-            try {
-                O_ptr2->linkFRSConstraints(link_sliced_center, link_c);
-            }
-            catch (int errorCode) {
-                WARNING_PRINT("        CUDA & C++: Error peforming collision checking! Check previous error message!");
-                return -1; // new_adj_matrix;
-            }
-
-            /*
-            Section IV:
-                Prepare output
-            */
-            // for (int i = 0; i < NUM_NODES_AT_ONE_TIME * num_obstacles; i++) {
-            //     for (int j = 0; j < NUM_JOINTS; j++) {
-            //         outputstream2 << link_c[j * NUM_NODES_AT_ONE_TIME * num_obstacles + i] << ' ';
-            //     }
-            //     outputstream2 << '\n';
-            // }
-            for (int i = 0; i < NUM_NODES_AT_ONE_TIME; i++) {
-                bool node_feasibility = true;
-                for (int j = 0; j < NUM_JOINTS; j++) {
-                    for (int h = 0; h < num_obstacles; h++) {
-                        if (link_c[(j * NUM_NODES_AT_ONE_TIME + i) * num_obstacles + h] > COLLISION_THRESHOLD) {
-                            node_feasibility = false;
-                            break;
-                        }
+                        pos1 = pos2;
                     }
                 }
-                // outputstream1 << node_feasibility << endl;
-                node_feasibilities[k * NUM_NODES_AT_ONE_TIME + i] = node_feasibility;
-            }
+
+                /*
+                Section II: Buffer obstacles and initialize collision checking hyperplanes
+                */
+                try {
+                    O_ptr2->initializeHyperPlane(link_independent_generators);
+                }
+                catch (int errorCode) {
+                    WARNING_PRINT("        CUDA & C++: Error initializing collision checking hyperplanes! Check previous error message!");
+                    return -1; // new_adj_matrix;
+                }
+
+                /*
+                Section III:
+                    Collision checking
+                */
+
+                try {
+                    O_ptr2->linkFRSConstraints(link_sliced_center, link_c);
+                }
+                catch (int errorCode) {std::
+                    WARNING_PRINT("        CUDA & C++: Error peforming collision checking! Check previous error message!");
+                    return -1; // new_adj_matrix;
+                }
+
+                /*
+                Section IV:
+                    Prepare output
+                */
+                for (int i = 0; i < NUM_NODES_AT_ONE_TIME * num_obstacles; i++) {
+                    for (int j = 0; j < NUM_JOINTS; j++) {
+                        outputstream2 << link_c[j * NUM_NODES_AT_ONE_TIME * num_obstacles + i] << ' ';
+                    }
+                    outputstream2 << '\n';
+                }
+                for (int i = 0; i < NUM_NODES_AT_ONE_TIME; i++) {
+                    bool node_feasibility = true;
+                    for (int j = 0; j < NUM_JOINTS; j++) {
+                        for (int h = 0; h < num_obstacles; h++) {
+                            if (link_c[(j * NUM_NODES_AT_ONE_TIME + i) * num_obstacles + h] > COLLISION_THRESHOLD) {
+                                node_feasibility = false;
+                                break;
+                            }
+                        }
+                    }
+                    outputstream1 << node_feasibility << endl;
+                    node_feasibilities[k * NUM_NODES_AT_ONE_TIME + i] = node_feasibility;
+                }
             }
 
             auto stop1 = std::chrono::high_resolution_clock::now();
@@ -569,6 +597,24 @@ class pzsparse {
             // building adjacency matrix
             std::ifstream inputstream3(inputfilename3);
             std::ofstream outputstream3(outputfilename3);
+
+
+            if (!node_feasibilities[0]) {
+                // checking 1st node for feasibility as start in hardware
+                std::string output1 = "Start Node is infeasible";
+                std::cout << std::endl << output1 << std::endl;
+            }
+            if (!node_feasibilities[1]) {
+                // checking 2nd node for feasibility as goal in hardware
+                std::string output2 = "Goal Node is infeasible";
+                std::cout << std::endl << output2 << std::endl;
+            }
+            if (!node_feasibilities[13]) {
+                // checking 20th node for feasibility as goal in hardware
+                std::string output3 = "New Goal Node is infeasible";
+                std::cout << std::endl << output3 << std::endl;
+            }
+            
 
             // build the new adjacency matrix
             for (int i = 0; i < NUM_EDGES; i++) {
@@ -589,6 +635,9 @@ class pzsparse {
                     // new_adj_matrix_ptr[i,1] = static_cast<float>node_b; // trying to cast
                     // new_adj_matrix_ptr[i,2] = edge_distance;
 
+                    // std::string output2 = "Feasible Node";
+                    // std::cout << output2 << std::endl;
+
                     outputstream3 << node_a << ' ' << node_b << ' ' << edge_distance << '\n';
                 }
             }
@@ -597,8 +646,8 @@ class pzsparse {
 
             inputstream2.close();
             inputstream3.close();
-            // outputstream1.close();
-            // outputstream2.close();
+            outputstream1.close();
+            outputstream2.close();
             outputstream3.close();
             delete[] link_c;
             delete[] node_feasibilities;

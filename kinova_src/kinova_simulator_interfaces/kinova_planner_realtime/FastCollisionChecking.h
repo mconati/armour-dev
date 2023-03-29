@@ -3,7 +3,7 @@
 
 #include "Parameters.h"
 
-#define NUM_NODES 6401000 // composite set of nodes: 6401000
+#define NUM_NODES 2140000 // matlab: 2139173 // composite set of nodes: 6401000 // uniform nodes v2: 66487 // uniform nodes v3: 67062 // uniform nodes v4: 66989 // uniform nodes v4 dense shifted: 1264000 //uniform dense rand: 3264000
 #define NUM_NODES_AT_ONE_TIME 20000 // can not be larger than 20000 !!!
 #define LINK_FRS_GENERATOR_NUM 1
 #define BUFFER_OBSTACLE_GENERATOR_NUM_FAST (MAX_OBSTACLE_GENERATOR_NUM + LINK_FRS_GENERATOR_NUM)

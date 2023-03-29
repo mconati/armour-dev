@@ -15,13 +15,13 @@
 
 // Parameters for Trajectories.h:
     // Duration of the Bezier Curve
-    #define DURATION 2.0
+    #define DURATION 1.75
 
     // number of time steps (This should be an EVEN number!!!)
     #define NUM_TIME_STEPS 60
 
     // range of parameters (size of generators in PZ).
-    const double k_range[NUM_FACTORS] = { M_PI / 72, M_PI / 72, M_PI / 72, M_PI / 72, M_PI / 72, M_PI / 72, M_PI / 72 }; // (radian)
+    const double k_range[NUM_FACTORS] = { M_PI / 60, M_PI / 60, M_PI / 60, M_PI / 60, M_PI / 60, M_PI / 60, M_PI / 60 }; // (radian)
 
 // Parameters for CollisionChecking.h:
     // maximum number of obstacles (used for memory pre-allocation)
@@ -57,7 +57,7 @@
 // Parameters for armour_main.cpp
     #define IPOPT_OPTIMIZATION_TOLERANCE 1e-4
 
-    #define IPOPT_MAX_CPU_TIME 12 // 14.0
+    #define IPOPT_MAX_CPU_TIME 14 // 14.0
 
     #define IPOPT_PRINT_LEVEL 0
 
