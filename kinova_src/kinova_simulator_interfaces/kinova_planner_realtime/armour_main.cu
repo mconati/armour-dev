@@ -77,7 +77,7 @@ Section I:
 
     inputstream.close();
 
-    double t_plan = 1.0; // optimize the distance between q_des and the desired trajectories at t_plan
+    double t_plan = 0.5; // optimize the distance between q_des and the desired trajectories at t_plan
      
     /*
 Section II:
@@ -96,7 +96,7 @@ Section II:
     BezierCurve traj(q0, qd0, qdd0);
 
     try {
-        #pragma omp parallel for shared(traj) private(openmp_s_ind) schedule(static, NUM_TIME_STEPS / NUM_THREADS)
+        #pragma omp parallel for shared(traj) private(openmp_s_ind) schedule(dynamic, 1)
         for(openmp_s_ind = 0; openmp_s_ind < NUM_TIME_STEPS; openmp_s_ind++) {
             traj.makePolyZono(openmp_s_ind);
         }
@@ -113,7 +113,7 @@ Section II:
     Eigen::Matrix<double, 3, 3 + 3> link_independent_generators[NUM_TIME_STEPS * NUM_JOINTS];
 
     try {
-        #pragma omp parallel for shared(kd, link_independent_generators) private(openmp_s_ind) schedule(static, NUM_TIME_STEPS / NUM_THREADS)
+        #pragma omp parallel for shared(kd, link_independent_generators) private(openmp_s_ind) schedule(dynamic)
         for(openmp_s_ind = 0; openmp_s_ind < NUM_TIME_STEPS; openmp_s_ind++) {
             // compute link PZs through forward kinematics
             kd.fk(openmp_s_ind);

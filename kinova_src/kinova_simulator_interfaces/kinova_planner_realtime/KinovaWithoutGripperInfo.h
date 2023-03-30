@@ -100,12 +100,12 @@ const double link_zonotope_generators[NUM_JOINTS][3] = {{ 0.046358, 0.047354, 0.
 														{ 0.045500, 0.056085, 0.030963 }};
 
 // ultimate bound
-const double alpha = 1.0;
+const double alpha = 10.0;
 const double V_m = 1e-2;
 const double M_max = 15.79635774;
 const double M_min = 5.095620491878957;
 const double eps = sqrt(2 * V_m / M_min);
-const double K = 10.0;
+const double K = 5.0;
 const double qe = eps / K;
 const double qde = 2 * eps;
 const double qdae = eps;
