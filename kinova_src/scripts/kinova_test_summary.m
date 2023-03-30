@@ -17,7 +17,9 @@ save_file_header = 'trial_' ;
 % file_location = '/home/roahmlab/Documents/armour-dev/kinova_src/results/rtd-force/dur2s_largeStateBuffer_noObs_03052023_v2' ;
 % file_location = '/home/roahmlab/Documents/armour-dev/kinova_src/results/rtd-force/dur2s_largeStateBuffer_noObs_03052023_v2_single' ;
 % file_location = '/home/roahmlab/Documents/armour-dev/kinova_src/results/rtd-force/dur2s_largeStateBuffer_10Obs_03072023' ;
-file_location = '/home/roahmlab/Documents/armour-dev/kinova_src/results/rtd-force/dur2s_largeStateBuffer_10Obs_03082023' ;
+% file_location = '/home/roahmlab/Documents/armour-dev/kinova_src/results/rtd-force/dur2s_largeStateBuffer_10Obs_03082023' ;
+% file_location = '/home/roahmlab/Documents/armour-dev/kinova_src/results/rtd-force/dur2s_largeStateBuffer_10Obs_03082023_graph' ;
+file_location = '/home/roahmlab/Documents/armour-dev/kinova_src/results/rtd-force/dur2s_largeStateBuffer_10Obs_03082023_graph_armour' ;
 
 % file_location = '../results/hard' ;
 addpath(file_location);

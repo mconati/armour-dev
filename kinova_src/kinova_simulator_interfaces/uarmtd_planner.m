@@ -176,8 +176,8 @@ classdef uarmtd_planner < robot_arm_generic_planner
     
                     % organize input to cuda program
                     P.vdisp('Calling CUDA & C++ Program!',3);
-%                     cuda_input_file = fopen([P.kinova_test_folder_path, '/kinova_simulator_interfaces/kinova_planner_realtime/buffer/armour.in'], 'w');  
-                    cuda_input_file = fopen([P.kinova_test_folder_path, '/kinova_simulator_interfaces/kinova_planner_realtime_original/buffer/armour.in'], 'w');
+                    cuda_input_file = fopen([P.kinova_test_folder_path, '/kinova_simulator_interfaces/kinova_planner_realtime/buffer/armour.in'], 'w');  
+%                     cuda_input_file = fopen([P.kinova_test_folder_path, '/kinova_simulator_interfaces/kinova_planner_realtime_original/buffer/armour.in'], 'w');
                 
                     for ind = 1:length(q_0)
                         fprintf(cuda_input_file, '%.10f ', q_0(ind));
@@ -208,12 +208,12 @@ classdef uarmtd_planner < robot_arm_generic_planner
     
                     % call cuda program in terminal
                     % you have to be in the proper path!
-%                     terminal_output = system('env -i bash -i -c "./../kinova_simulator_interfaces/kinova_planner_realtime/rtd_force_main_v2"'); % rtd-force path
-                    terminal_output = system('env -i bash -i -c "./../kinova_simulator_interfaces/kinova_planner_realtime_original/armour_main"'); % armour path
+                    terminal_output = system('env -i bash -i -c "./../kinova_simulator_interfaces/kinova_planner_realtime/rtd_force_main_v2"'); % rtd-force path
+%                     terminal_output = system('env -i bash -i -c "./../kinova_simulator_interfaces/kinova_planner_realtime_original/armour_main"'); % armour path
     
                     if terminal_output == 0
-%                         data = readmatrix([P.kinova_test_folder_path, '/kinova_simulator_interfaces/kinova_planner_realtime/buffer/armour.out'], 'FileType', 'text');
-                        data = readmatrix([P.kinova_test_folder_path, '/kinova_simulator_interfaces/kinova_planner_realtime_original/buffer/armour.out'], 'FileType', 'text');
+                        data = readmatrix([P.kinova_test_folder_path, '/kinova_simulator_interfaces/kinova_planner_realtime/buffer/armour.out'], 'FileType', 'text');
+%                         data = readmatrix([P.kinova_test_folder_path, '/kinova_simulator_interfaces/kinova_planner_realtime_original/buffer/armour.out'], 'FileType', 'text');
                         k_opt = data(1:end-1);
                         planning_time = data(end) / 1000.0; % original data is milliseconds
     
@@ -236,15 +236,15 @@ classdef uarmtd_planner < robot_arm_generic_planner
     
                     if terminal_output == 0
                         % read FRS information if needed
-%                         link_frs_center = readmatrix('armour_joint_position_center.out', 'FileType', 'text');
-%                         link_frs_generators = readmatrix('armour_joint_position_radius.out', 'FileType', 'text');
-%                         control_input_radius = readmatrix('armour_control_input_radius.out', 'FileType', 'text');
-%                         constraints_value = readmatrix('armour_constraints.out', 'FileType', 'text');
-%                         contact_constraint_radii = readmatrix('armour_force_constraint_radius.out', 'FileType', 'text');
-%                         wrench_radii = readmatrix('armour_wrench_values.out', 'FileType', 'text');
-                        constraints_value = [];
-                        contact_constraint_radii = [];
-                        wrench_radii = [];
+                        link_frs_center = readmatrix('armour_joint_position_center.out', 'FileType', 'text');
+                        link_frs_generators = readmatrix('armour_joint_position_radius.out', 'FileType', 'text');
+                        control_input_radius = readmatrix('armour_control_input_radius.out', 'FileType', 'text');
+                        constraints_value = readmatrix('armour_constraints.out', 'FileType', 'text');
+                        contact_constraint_radii = readmatrix('armour_force_constraint_radius.out', 'FileType', 'text');
+                        wrench_radii = readmatrix('armour_wrench_values.out', 'FileType', 'text');
+%                         constraints_value = [];
+%                         contact_constraint_radii = [];
+%                         wrench_radii = [];
 
 %                         link_frs_vertices = cell(7,1);
 %                         for tid = 1:10:P.jrs_info.n_t
@@ -258,9 +258,6 @@ classdef uarmtd_planner < robot_arm_generic_planner
                     else
                         k_opt = nan;
                     end
-
-%                     fprintf('paused, check armour_constraints.out and press key to continue')
-%                     pause()
                 
                 %%%%% Bernstein is above
                 else
