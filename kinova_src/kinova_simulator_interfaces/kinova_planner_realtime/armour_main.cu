@@ -112,37 +112,57 @@ Section II:
     KinematicsDynamics kd(&traj);
     Eigen::Matrix<double, 3, 3 + 3> link_independent_generators[NUM_TIME_STEPS * NUM_JOINTS];
 
-    try {
-        #pragma omp parallel for shared(kd, link_independent_generators) private(openmp_s_ind) schedule(dynamic)
-        for(openmp_s_ind = 0; openmp_s_ind < NUM_TIME_STEPS; openmp_s_ind++) {
-            // compute link PZs through forward kinematics
-            kd.fk(openmp_s_ind);
+    if (!TURN_OFF_INPUT_CONSTRAINTS) {
+        try {
+            #pragma omp parallel for shared(kd, link_independent_generators) private(openmp_s_ind) schedule(dynamic)
+            for(openmp_s_ind = 0; openmp_s_ind < NUM_TIME_STEPS; openmp_s_ind++) {
+                // compute link PZs through forward kinematics
+                kd.fk(openmp_s_ind);
 
-            // reduce non-only-k-dependent generators so that slice takes less time
-            for (int i = 0; i < NUM_JOINTS; i++) {
-                link_independent_generators[openmp_s_ind * NUM_JOINTS + i] = kd.links(i, openmp_s_ind).reduce_link_PZ();
-            }
+                // reduce non-only-k-dependent generators so that slice takes less time
+                for (int i = 0; i < NUM_JOINTS; i++) {
+                    link_independent_generators[openmp_s_ind * NUM_JOINTS + i] = kd.links(i, openmp_s_ind).reduce_link_PZ();
+                }
 
-            // compute nominal torque
-            kd.rnea_nominal(openmp_s_ind);
+                // compute nominal torque
+                kd.rnea_nominal(openmp_s_ind);
 
-            // compute interval torque
-            kd.rnea_interval(openmp_s_ind);
+                // compute interval torque
+                kd.rnea_interval(openmp_s_ind);
 
-            // compute max disturbance (stored in u_nom_int)
-            for (int i = 0; i < NUM_FACTORS; i++) {
-                kd.u_nom_int(i, openmp_s_ind) = kd.u_nom_int(i, openmp_s_ind) - kd.u_nom(i, openmp_s_ind);
-            }
+                // compute max disturbance (stored in u_nom_int)
+                for (int i = 0; i < NUM_FACTORS; i++) {
+                    kd.u_nom_int(i, openmp_s_ind) = kd.u_nom_int(i, openmp_s_ind) - kd.u_nom(i, openmp_s_ind);
+                }
 
-            // reduce non-only-k-dependent generators so that slice takes less time
-            for (int i = 0; i < NUM_FACTORS; i++) {
-                kd.u_nom(i, openmp_s_ind).reduce();
+                // reduce non-only-k-dependent generators so that slice takes less time
+                for (int i = 0; i < NUM_FACTORS; i++) {
+                    kd.u_nom(i, openmp_s_ind).reduce();
+                }
             }
         }
+        catch (int errorCode) {
+            WARNING_PRINT("        CUDA & C++: Error computing link PZs and nominal torque PZs! Check previous error message!");
+            return -1;
+        }
     }
-    catch (int errorCode) {
-        WARNING_PRINT("        CUDA & C++: Error computing link PZs and nominal torque PZs! Check previous error message!");
-        return -1;
+    else {
+        try {
+            #pragma omp parallel for shared(kd, link_independent_generators) private(openmp_s_ind) schedule(dynamic)
+            for(openmp_s_ind = 0; openmp_s_ind < NUM_TIME_STEPS; openmp_s_ind++) {
+                // compute link PZs through forward kinematics
+                kd.fk(openmp_s_ind);
+
+                // reduce non-only-k-dependent generators so that slice takes less time
+                for (int i = 0; i < NUM_JOINTS; i++) {
+                    link_independent_generators[openmp_s_ind * NUM_JOINTS + i] = kd.links(i, openmp_s_ind).reduce_link_PZ();
+                }
+            }
+        }
+        catch (int errorCode) {
+            WARNING_PRINT("        CUDA & C++: Error computing link PZs and nominal torque PZs! Check previous error message!");
+            return -1;
+        }
     }
 
     /*
@@ -152,39 +172,41 @@ Section II:
     Eigen::MatrixXd torque_radius(NUM_FACTORS, NUM_TIME_STEPS);
     torque_radius.setZero();
 
-    try {
-        for(int t_ind = 0; t_ind < NUM_TIME_STEPS; t_ind++) {
-            // (1) add the bound of robust input (||v||)
-            Interval rho_max_temp = Interval(0.0);
-            for (int i = 0; i < NUM_FACTORS; i++) {
-                // compute norm of disturbance
-                MatrixXInt temp = kd.u_nom_int(i, t_ind).toInterval(); // should be a 1-dim Interval
-                rho_max_temp += temp(0) * temp(0);
+    if (!TURN_OFF_INPUT_CONSTRAINTS) {
+        try {
+            for(int t_ind = 0; t_ind < NUM_TIME_STEPS; t_ind++) {
+                // (1) add the bound of robust input (||v||)
+                Interval rho_max_temp = Interval(0.0);
+                for (int i = 0; i < NUM_FACTORS; i++) {
+                    // compute norm of disturbance
+                    MatrixXInt temp = kd.u_nom_int(i, t_ind).toInterval(); // should be a 1-dim Interval
+                    rho_max_temp += temp(0) * temp(0);
 
-                torque_radius(i, t_ind) = alpha * (M_max - M_min) * eps + 0.5 * max(abs(temp(0).lower()), abs(temp(0).upper()));
-            }
-            rho_max_temp = sqrt(rho_max_temp);
-            
-            for (int i = 0; i < NUM_FACTORS; i++) {
-                torque_radius(i, t_ind) += 0.5 * rho_max_temp.upper();
-            }
+                    torque_radius(i, t_ind) = alpha * (M_max - M_min) * eps + 0.5 * max(abs(temp(0).lower()), abs(temp(0).upper()));
+                }
+                rho_max_temp = sqrt(rho_max_temp);
+                
+                for (int i = 0; i < NUM_FACTORS; i++) {
+                    torque_radius(i, t_ind) += 0.5 * rho_max_temp.upper();
+                }
 
-            // (2) add the radius of the nominal input PZ (after reducing)
-            for (int i = 0; i < NUM_FACTORS; i++) {
-                torque_radius(i, t_ind) += kd.u_nom(i, t_ind).independent(0);
-            }
+                // (2) add the radius of the nominal input PZ (after reducing)
+                for (int i = 0; i < NUM_FACTORS; i++) {
+                    torque_radius(i, t_ind) += kd.u_nom(i, t_ind).independent(0);
+                }
 
-            // (3) add friction
-            for (int i = 0; i < NUM_FACTORS; i++) {
-                torque_radius(i, t_ind) += friction[i];
-            }
+                // (3) add friction
+                for (int i = 0; i < NUM_FACTORS; i++) {
+                    torque_radius(i, t_ind) += friction[i];
+                }
 
-            // so that torque_radius would be the radius of the total control input PZ from now
+                // so that torque_radius would be the radius of the total control input PZ from now
+            }
         }
-    }
-    catch (int errorCode) {
-        WARNING_PRINT("        CUDA & C++: Error computing torque PZs! Check previous error message!");
-        return -1;
+        catch (int errorCode) {
+            WARNING_PRINT("        CUDA & C++: Error computing torque PZs! Check previous error message!");
+            return -1;
+        }
     }
 
     /*

@@ -11,6 +11,7 @@ use_robust_input = true;
 
 save_file_header = 'trial_' ;
 file_location = '../results/random' ;
+file_location = '../results/random_turnoffinputconstraints' ;
 % file_location = '../results/hard' ;
 addpath(file_location);
 

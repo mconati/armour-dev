@@ -50,9 +50,8 @@ classdef uarmtd_planner < robot_arm_generic_planner
     methods
         function P = uarmtd_planner(varargin)
             t_move = 0.5;
-            lookahead_distance = 0.4;
             HLP = robot_arm_straight_line_HLP( );
-            P@robot_arm_generic_planner('lookahead_distance', lookahead_distance, 't_move', t_move, 'HLP', HLP, ...
+            P@robot_arm_generic_planner('t_move', t_move, 'HLP', HLP, ...
                 varargin{:}) ;
             
             % hard code planning time...
@@ -145,7 +144,7 @@ classdef uarmtd_planner < robot_arm_generic_planner
                     % Make sure this is consistent with the k_range in
                     % kinova_src/kinova_simulator_interfaces/kinova_planner_realtime/Parameters.h 
                     % !!!!!!
-                    P.jrs_info.g_k_bernstein = [pi/24; pi/24; pi/24; pi/24; pi/24; pi/24; pi/30];
+                    P.jrs_info.g_k_bernstein = [pi/48; pi/48; pi/48; pi/48; pi/48; pi/48; pi/48];
     
                     q_des = P.HLP.get_waypoint(agent_info,world_info,P.lookahead_distance) ;
                     if isempty(q_des)

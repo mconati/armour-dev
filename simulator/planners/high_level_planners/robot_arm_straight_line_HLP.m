@@ -46,6 +46,9 @@ classdef robot_arm_straight_line_HLP < high_level_planner
             q_cur = agent_info.state(HLP.arm_joint_state_indices, end) ;
             q_goal = HLP.goal ;
             dir_des = q_goal - q_cur ;
+            full_rotate_joints = agent_info.joint_state_limits(1,:) == -Inf;
+            dir_des(full_rotate_joints) = angdiff(q_cur(full_rotate_joints), ...
+                                                  q_goal(full_rotate_joints));
             dir_des = dir_des./norm(dir_des) ;
             if nargin < 4
                 lookahead_distance = HLP.default_lookahead_distance ;
