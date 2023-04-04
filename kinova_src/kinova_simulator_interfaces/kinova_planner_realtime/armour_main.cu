@@ -335,15 +335,17 @@ Section IV:
     }
     outputstream3.close();
 
-    std::ofstream outputstream4(outputfilename4);
-    outputstream4 << std::setprecision(10);
-    for (int i = 0; i < NUM_TIME_STEPS; i++) {
-        for (int j = 0; j < NUM_FACTORS; j++) {
-            outputstream4 << torque_radius(j, i) << ' '; // this is radius of final control input
+    if (!TURN_OFF_INPUT_CONSTRAINTS) {
+        std::ofstream outputstream4(outputfilename4);
+        outputstream4 << std::setprecision(10);
+        for (int i = 0; i < NUM_TIME_STEPS; i++) {
+            for (int j = 0; j < NUM_FACTORS; j++) {
+                outputstream4 << torque_radius(j, i) << ' '; // this is radius of final control input
+            }
+            outputstream4 << '\n';
         }
-        outputstream4 << '\n';
+        outputstream4.close();
     }
-    outputstream4.close();
 
     std::ofstream outputstream5(outputfilename5);
     outputstream5 << std::setprecision(6);

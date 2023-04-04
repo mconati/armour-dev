@@ -32,15 +32,18 @@
     // threshold for collision avoidance constraint considered to be violated (unit: meter)
     #define COLLISION_AVOIDANCE_CONSTRAINT_VIOLATION_THRESHOLD 1e-4
 
+    // scale the cost function value so that it could converge faster (be careful with it!)
+    #define COST_FUNCTION_OPTIMALITY_SCALE 10.0
+    
 // Parameters for armour_main.cpp
-    #define IPOPT_OPTIMIZATION_TOLERANCE 1e-6
+    #define IPOPT_OPTIMIZATION_TOLERANCE 1e-7
 
-    #define IPOPT_MAX_CPU_TIME 14.0
+    #define IPOPT_MAX_CPU_TIME 20.0
 
     #define IPOPT_PRINT_LEVEL 0
 
     #define IPOPT_MU_STRATEGY "adaptive"
 
-    #define IPOPT_LINEAR_SOLVER "ma27"
+    #define IPOPT_LINEAR_SOLVER "ma97"
 
 #endif

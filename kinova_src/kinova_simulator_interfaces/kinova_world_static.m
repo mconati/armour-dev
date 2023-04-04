@@ -420,9 +420,9 @@ classdef kinova_world_static < world
             
             switch W.goal_type
                 case 'configuration'
-                    dz = abs(z - repmat(W.goal,1,size(z,2))) ;
-                    dz_log = dz <= W.goal_radius ;
-                    out = any(all(dz_log,1)) ;
+                    dz = abs(angdiff(z, repmat(W.goal,1,size(z,2)))) ;
+                    dz_log = vecnorm(dz) <= W.goal_radius ;
+                    out = any(dz_log) ;
                 case 'end_effector_location'
                     % get the joint locations
                     J = agent_info.get_joint_locations(z) ;

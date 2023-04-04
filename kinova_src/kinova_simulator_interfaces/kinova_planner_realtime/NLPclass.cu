@@ -216,13 +216,12 @@ bool armtd_NLP::eval_f(
     }
 
     // obj_value = sum((q_plan - q_des).^2);
-    obj_value = 0; 
-    Eigen::VectorXd q_plan(7);
+    Eigen::VectorXd q_plan(n);
     for(Index i = 0; i < n; i++){
         q_plan[i] = q_des_func(desired_trajectory->q0[i], desired_trajectory->Tqd0[i], desired_trajectory->TTqdd0[i], k_range[i] * x[i], t_plan);
-        obj_value += pow(q_plan[i] - q_des[i], 2);
     }
 
+    // kinova has 4 infinite rotation joints
     obj_value = pow(wrap_to_pi(q_des[0] - q_plan[0]), 2) +
                 pow(wrap_to_pi(q_des[2] - q_plan[2]), 2) + 
                 pow(wrap_to_pi(q_des[4] - q_plan[4]), 2) + 
@@ -251,13 +250,15 @@ bool armtd_NLP::eval_grad_f(
     }
 
     for(Index i = 0; i < n; i++){
-        double q_plan = q_des_func(desired_trajectory->q0[i], desired_trajectory->Tqd0[i], desired_trajectory->TTqdd0[i], k_range[i] * x[i], t_plan); // Bohao question: why pass in t_plan here instead of duration?
-        double dk_q_plan = pow(t_plan,3) * (6 * pow(t_plan,2) - 15 * t_plan + 10);
+        double q_plan = q_des_func(desired_trajectory->q0[i], desired_trajectory->Tqd0[i], desired_trajectory->TTqdd0[i], k_range[i] * x[i], t_plan);
+        double dk_q_plan = pow(t_plan,3) * (6 * pow(t_plan,2) - 15 * t_plan + 10) * k_range[i];
+
+        // kinova has 4 infinite rotation joints
         if (i % 2 == 0) {
-            grad_f[i] = (2 * wrap_to_pi(q_plan - q_des[i]) * dk_q_plan * k_range[i]);
+            grad_f[i] = (2 * wrap_to_pi(q_plan - q_des[i]) * dk_q_plan);
         }
         else {
-            grad_f[i] = (2 * (q_plan - q_des[i]) * dk_q_plan * k_range[i]);
+            grad_f[i] = (2 * (q_plan - q_des[i]) * dk_q_plan);
         }
         grad_f[i] *= COST_FUNCTION_OPTIMALITY_SCALE;
     }

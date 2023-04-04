@@ -124,7 +124,7 @@ Section II:
 
     int openmp_t_ind; // loop index
 
-    #pragma omp parallel for shared(traj) private(openmp_t_ind) schedule(static, NUM_TIME_STEPS / NUM_THREADS)
+    #pragma omp parallel for shared(traj) private(openmp_t_ind) schedule(dynamic)
     for(openmp_t_ind = 0; openmp_t_ind < NUM_TIME_STEPS; openmp_t_ind++) {
         // Part 1: convert parameterized Bezier curve desired trajectory to PZsparse
         traj.makePolyZono(openmp_t_ind);
@@ -166,15 +166,15 @@ Section III:
 
     SmartPtr<IpoptApplication> app = IpoptApplicationFactory();
 
-    app->Options()->SetNumericValue("tol", 1e-6);
-	app->Options()->SetNumericValue("max_cpu_time", 10.0);
-	app->Options()->SetIntegerValue("print_level", 0);
+    app->Options()->SetNumericValue("tol", IPOPT_OPTIMIZATION_TOLERANCE);
+	app->Options()->SetNumericValue("max_cpu_time", IPOPT_MAX_CPU_TIME);
+	app->Options()->SetIntegerValue("print_level", IPOPT_PRINT_LEVEL);
     app->Options()->SetStringValue("mu_strategy", "adaptive");
-    app->Options()->SetStringValue("linear_solver", "ma27");
+    app->Options()->SetStringValue("linear_solver", IPOPT_LINEAR_SOLVER);
 	app->Options()->SetStringValue("hessian_approximation", "limited-memory");
     // app->Options()->SetStringValue("output_file", "ipopt.out");
     // app->Options()->SetStringValue("derivative_test", "first-order");
-    // app->Options()->SetNumericValue("derivative_test_perturbation", 1e-8);
+    // app->Options()->SetNumericValue("derivative_test_perturbation", 1e-7);
     // app->Options()->SetNumericValue("derivative_test_tol", 1e-6);
 
     // Initialize the IpoptApplication and process the options

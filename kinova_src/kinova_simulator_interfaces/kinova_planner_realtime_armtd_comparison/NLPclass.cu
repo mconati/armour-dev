@@ -3,6 +3,17 @@
 
 #include "NLPclass.h"
 
+double wrap_to_pi(const double angle) {
+    double wrapped_angle = angle;
+    while (wrapped_angle < -M_PI) {
+        wrapped_angle += 2*M_PI;
+    }
+    while (wrapped_angle > M_PI) {
+        wrapped_angle -= 2*M_PI;
+    }
+    return wrapped_angle;
+}
+
 // constructor
 armtd_NLP::armtd_NLP()
 {
@@ -185,10 +196,21 @@ bool armtd_NLP::eval_f(
     }
 
     // obj_value = sum((q_plan - q_des).^2);
-    obj_value = 0; 
+    double q_plan[NUM_FACTORS];
     for(Index i = 0; i < n; i++){
-        obj_value += pow(desired_trajectory->q0[i] + desired_trajectory->qd0[i] * 0.5 + desired_trajectory->k_range[i] * x[i] * 0.125 - q_des[i], 2);
+        q_plan[i] = desired_trajectory->q0[i] + desired_trajectory->qd0[i] * 0.5 + desired_trajectory->k_range[i] * x[i] * 0.125;
     }
+
+    // kinova has 4 infinite rotation joints
+    obj_value = pow(wrap_to_pi(q_des[0] - q_plan[0]), 2) +
+                pow(wrap_to_pi(q_des[2] - q_plan[2]), 2) + 
+                pow(wrap_to_pi(q_des[4] - q_plan[4]), 2) + 
+                pow(wrap_to_pi(q_des[6] - q_plan[6]), 2) + 
+                pow(q_des[1] - q_plan[1], 2) + 
+                pow(q_des[3] - q_plan[3], 2) + 
+                pow(q_des[5] - q_plan[5], 2);
+
+    obj_value *= COST_FUNCTION_OPTIMALITY_SCALE;
 
     return true;
 }
@@ -208,7 +230,17 @@ bool armtd_NLP::eval_grad_f(
     }
 
     for(Index i = 0; i < n; i++){
-        grad_f[i] = 2 * (desired_trajectory->q0[i] + desired_trajectory->qd0[i] * 0.5 + desired_trajectory->k_range[i] * x[i] * 0.125 - q_des[i]) * desired_trajectory->k_range[i] * 0.125;
+        double q_plan = desired_trajectory->q0[i] + desired_trajectory->qd0[i] * 0.5 + desired_trajectory->k_range[i] * x[i] * 0.125;
+        double dk_q_plan = desired_trajectory->k_range[i] * 0.125;
+
+        // kinova has 4 infinite rotation joints
+        if (i % 2 == 0) {
+            grad_f[i] = (2 * wrap_to_pi(q_plan - q_des[i]) * dk_q_plan);
+        }
+        else {
+            grad_f[i] = (2 * (q_plan - q_des[i]) * dk_q_plan);
+        }
+        grad_f[i] *= COST_FUNCTION_OPTIMALITY_SCALE;
     }
 
     return true;
@@ -233,7 +265,7 @@ bool armtd_NLP::eval_g(
     }
 
     Index i;
-    #pragma omp parallel for private(i) schedule(static, NUM_TIME_STEPS * NUM_FACTORS / NUM_THREADS)
+    #pragma omp parallel for private(i) schedule(dynamic)
     for(i = 0; i < NUM_TIME_STEPS * NUM_FACTORS; i++) {
         checkJointsPosition[i * 3    ] = getCenter(joint_position[i * 3    ].slice(x));
         checkJointsPosition[i * 3 + 1] = getCenter(joint_position[i * 3 + 1].slice(x));
@@ -284,7 +316,7 @@ bool armtd_NLP::eval_jac_g(
     }
     else {
         Index i;
-        #pragma omp parallel for private(i) schedule(static, NUM_TIME_STEPS * NUM_FACTORS / NUM_THREADS)
+        #pragma omp parallel for private(i) schedule(dynamic)
         for(i = 0; i < NUM_TIME_STEPS * NUM_FACTORS; i++) {
             checkJointsPosition[i * 3    ] = getCenter(joint_position[i * 3    ].slice(x));
             checkJointsPosition[i * 3 + 1] = getCenter(joint_position[i * 3 + 1].slice(x));

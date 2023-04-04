@@ -138,7 +138,8 @@ classdef world < handle
         % Checks if the agent's center of mass is within W.goal_radius of
         % W.goal in the 2-norm.
             z = agent_info.position ;
-            dz = z - repmat(W.goal,1,size(z,2)) ;
+%             dz = z - repmat(W.goal,1,size(z,2)) ;
+            dz = angdiff(z, repmat(W.goal,1,size(z,2))) ;
             out = min(vecnorm(dz,2)) <= W.goal_radius ;
         end
         
