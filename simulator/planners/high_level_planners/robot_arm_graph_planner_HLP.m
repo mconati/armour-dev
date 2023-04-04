@@ -32,7 +32,9 @@ classdef robot_arm_graph_planner_HLP < high_level_planner
         graph
         graph_waypoints
         current_graph_waypoint_index = 0;
+        current_waypoint_patch_data = [];
 
+        nearly_reach_goal = false;
     end
     methods
         %%  constructor
@@ -52,7 +54,7 @@ classdef robot_arm_graph_planner_HLP < high_level_planner
         end
         
         %% get waypoint
-        function waypoint = get_waypoint(HLP,agent_info,~,lookahead_distance)
+        function waypoint = get_waypoint(HLP,agent_info,world_info,lookahead_distance)
 
             q_cur = agent_info.state(HLP.arm_joint_state_indices, end);
 
@@ -62,49 +64,58 @@ classdef robot_arm_graph_planner_HLP < high_level_planner
 %                 graph_waypoint = HLP.graph_waypoints(:,1);
                 HLP.current_graph_waypoint_index = 1;
 
+                % assign goal using graph waypoints
+                new_goal = HLP.graph_waypoints(:,HLP.current_graph_waypoint_index);
+
                 % call Straight Line Planner function to get waypoint in
-                % direction of graph waypoint
-                waypoint = get_SLP_to_waypoint(HLP,agent_info,lookahead_distance);
-
-                % update current waypoint (done in the SLP function?)
-%                 HLP.current_waypoint = waypoint;
-%                 HLP.current_waypoint_index = 1;
-
+                % direction of graph waypoint goal
+                waypoint = get_SLP_to_waypoint(HLP,new_goal,agent_info,lookahead_distance);
             else
 
                 % check how close to current waypoint
-                cur_dist = norm(q_cur-HLP.current_waypoint);
+                cur_dist = norm(angdiff(q_cur, HLP.graph_waypoints(:,HLP.current_graph_waypoint_index)));
 
-                % if too far away, return SLP waypoint based on current
-                % graph waypoint
-                if cur_dist > lookahead_distance
-                    waypoint = get_SLP_to_waypoint(HLP,agent_info,lookahead_distance);
+                fprintf('        HLP: Current distance to waypoint: %f\n', cur_dist);
 
+                % decide waypoint based on distance
+                if ~HLP.nearly_reach_goal && cur_dist > lookahead_distance
+                    % if too far away, return SLP waypoint based on current
+                    % graph waypoint
+                    new_goal = HLP.graph_waypoints(:,HLP.current_graph_waypoint_index);
+                    waypoint = get_SLP_to_waypoint(HLP,new_goal,agent_info,lookahead_distance);
                 else % choose next waypoint
-                    if HLP.current_graph_waypoint_index == length(HLP.graph_waypoints) % (:,end) % if already at last waypoint, return goal
+                    if HLP.current_graph_waypoint_index == size(HLP.graph_waypoints,2) % (:,end) % if already at last waypoint, return goal
+%                         waypoint = get_SLP_to_waypoint(HLP,HLP.goal,agent_info,lookahead_distance);
                         waypoint = HLP.goal;
                         HLP.current_waypoint_index = length(HLP.waypoints);
+                        HLP.nearly_reach_goal = true;
                     else % return the next waypoint
                         HLP.current_graph_waypoint_index = HLP.current_graph_waypoint_index + 1;
-                        waypoint = get_SLP_to_waypoint(HLP,agent_info,lookahead_distance);
+                        new_goal = HLP.graph_waypoints(:,HLP.current_graph_waypoint_index);
+                        waypoint = get_SLP_to_waypoint(HLP,new_goal,agent_info,lookahead_distance); % doesn't actually return anything?
 %                         HLP.current_waypoint = waypoint;
                     end
                 end
             end
+
+            fprintf('        HLP: Current waypoint index: %d out of %d\n', HLP.current_graph_waypoint_index, size(HLP.graph_waypoints,2));
+
+%             HLP.current_waypoint_patch_data = agent_info.get_collision_check_volume(waypoint) ;
+            HLP.current_waypoint_patch_data = agent_info.get_collision_check_volume(HLP.graph_waypoints(:,HLP.current_graph_waypoint_index)) ;
         end
 
-        function waypoint = get_SLP_to_waypoint(HLP,agent_info,lookahead_distance)
-            if nargin < 3
+        function waypoint = get_SLP_to_waypoint(HLP,goal,agent_info,lookahead_distance)
+            if nargin < 4
                 lookahead_distance = HLP.default_lookahead_distance;
             end
     
-            g = HLP.graph_waypoints(:,HLP.current_graph_waypoint_index);
+            g = goal; % HLP.graph_waypoints(:,HLP.current_graph_waypoint_index);
             z = agent_info.state(HLP.arm_joint_state_indices, end);
-            dir_des = g - z;
+            dir_des = angdiff(z, g);
             dir_des = dir_des./norm(dir_des);
             
             % adjust lookahead distance to not overshoot goal
-            dist_to_goal = norm(g - z);
+            dist_to_goal = norm(angdiff(z, g));
             if lookahead_distance > dist_to_goal
                 lookahead_distance = dist_to_goal;
             end

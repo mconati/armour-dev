@@ -11,7 +11,7 @@
 % Edited: 10 November 2022 clean up
 
 initialize_script_path = matlab.desktop.editor.getActiveFilename;
-cd(initialize_script_path(1:end-23));
+cd(initialize_script_path(1:end-29));
 
 close all; clear; clc;
 
@@ -51,7 +51,7 @@ links_with_uncertainty = {}; % if add_uncertainty_to = 'link', specify links her
 uncertain_mass_range = [0.97, 1.03];
 
 agent_move_mode = 'integrator' ; % pick 'direct' or 'integrator'
-use_CAD_flag = true;
+use_CAD_flag = false;
 add_measurement_noise_ = false;
 measurement_noise_size_ = 0;
 
@@ -74,12 +74,13 @@ plot_while_running = false ;
 
 % simulation
 max_sim_time = 86400 ; % 24 hours = 86400 sec; 48 hours = sec
-max_sim_iter = 2000 ;
-stop_threshold = 6 ; % number of failed iterations before exiting
+max_sim_iter = 1000 ;
+stop_threshold = 3 ; % number of failed iterations before exiting
 
 % file handling
 save_file_header = 'trial_' ;
-file_location = '../results/rtd-force/dur2s_largeStateBuffer_10Obs_03082023' ;
+% file_location = '../results/rtd-force/dur2s_largeStateBuffer_10Obs_03082023_graph' ;
+file_location = '../results/rtd-force/dur2s_largeStateBuffer_10Obs_03082023_graph_armour' ;
 if ~exist(file_location, 'dir')
     mkdir(file_location);
 end
@@ -167,12 +168,8 @@ for idx = 1:length(world_file_list)
                        'lookahead_distance',lookahead_distance, ...
                        'plot_HLP_flag', true) ; % _wrapper
 
-    if if_use_RRT
-        P.HLP = arm_end_effector_RRT_star_HLP('plot_waypoint_flag',plot_waypoint_flag,...
-                                              'plot_waypoint_arm_flag',plot_waypoint_arm_flag,...
-                                              'grow_tree_mode',HLP_grow_tree_mode,...
-                                              'buffer',0.1) ;
-    end
+    P.HLP = kinova_samplebased_HLP();
+    P.HLP.generatePath(W.obstacles, W.start, W.goal);
     
     % set up world using arm
     I = A.get_agent_info ;
@@ -192,7 +189,7 @@ for idx = 1:length(world_file_list)
                         'max_sim_iterations',max_sim_iter,...
                         'stop_sim_when_ultimate_bound_exceeded', use_robust_input) ; 
     
-    % %% plotting
+    %% plotting
     if plot_while_running
         figure(1) ; clf ; axis equal ; xlim([-1 1]); ylim([-1 1]); zlim([0 2]); grid on; hold on ;
 

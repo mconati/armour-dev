@@ -2,15 +2,15 @@
 #include "BufferPath.h"
 
 const std::string inputfilename1 = pathname + "obstacles.csv";
-const std::string inputfilename2 = pathname + "joint_positions.csv";
-const std::string inputfilename3 = pathname + "adj_matrix_milnodes_modwrap_mult3.csv";
+const std::string inputfilename2 = pathname + "joint_positions_uniform.csv";
+const std::string inputfilename3 = pathname + "adj_matrix_uniform_mult5.csv";
 const std::string outputfilename1 = pathname + "node_feasibility.csv";
 const std::string outputfilename2 = pathname + "link_c.csv";
 const std::string outputfilename3 = pathname + "collision_free_adj_matrix.csv";
 
-#define NUM_EDGES 1292962
-#define COLLISION_THRESHOLD -0.05
-#define EDGE_THRESHOLD 100
+#define NUM_EDGES 112826403
+#define COLLISION_THRESHOLD -0.075
+#define EDGE_THRESHOLD 0.1154*4
 
 int main() {
 /*
@@ -83,7 +83,7 @@ Section I:
             O.initializeHyperPlane(link_independent_generators);
         }
         catch (int errorCode) {
-            WARNING_PRINT("        CUDA & C++: Error initializing collision checking hyperplanes! Check previous error message!");
+            WARNING_PRINT("        CUDA Collision checker: Error initializing collision checking hyperplanes! Check previous error message!");
             return -1;
         }
 
@@ -96,7 +96,7 @@ Section I:
             O.linkFRSConstraints(link_sliced_center, link_c);
         }
         catch (int errorCode) {
-            WARNING_PRINT("        CUDA & C++: Error peforming collision checking! Check previous error message!");
+            WARNING_PRINT("        CUDA Collision checker: Error peforming collision checking! Check previous error message!");
             return -1;
         }
         
@@ -127,7 +127,9 @@ Section I:
 
     auto stop1 = std::chrono::high_resolution_clock::now();
     auto duration1 = std::chrono::duration_cast<std::chrono::milliseconds>(stop1 - start1);
-    cout << "Time taken by peforming collision checking: " << duration1.count() << " milliseconds" << endl;
+    cout << "        CUDA Collision checker: Time taken by peforming collision checking: " << duration1.count() << " milliseconds" << endl;
+
+    auto start2 = std::chrono::high_resolution_clock::now();
 
     std::ifstream inputstream3(inputfilename3);
     std::ofstream outputstream3(outputfilename3);
@@ -141,6 +143,10 @@ Section I:
             outputstream3 << node_a << ' ' << node_b << ' ' << edge_distance << '\n';
         }
     }
+
+    auto stop2 = std::chrono::high_resolution_clock::now();
+    auto duration2 = std::chrono::duration_cast<std::chrono::milliseconds>(stop2 - start2);
+    cout << "        CUDA Collision checker: Time taken by exporting all edges: " << duration2.count() << " milliseconds" << endl;
 
     inputstream2.close();
     inputstream3.close();

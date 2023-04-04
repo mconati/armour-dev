@@ -24,8 +24,8 @@ fprintf("Successfully compiled mex robust controller\n\n");
 
 cd ../../
 
-%% Initialize real-time armour planner
-fprintf("\nStart compiling ARMOUR\n\n");
+%% Initialize real-time force-constraint armour planner
+fprintf("\nStart compiling Force-constraint ARMOUR\n\n");
 
 cd kinova_simulator_interfaces/kinova_planner_realtime
 
@@ -35,7 +35,28 @@ fprintf(fid, '#include <string>\n');
 fprintf(fid, 'const std::string pathname = "%s/buffer/";', pwd);
 fclose(fid);
 
-terminal_output = system('./compile.sh');
+terminal_output = system('env -i bash -i -c "./compile.sh"');
+
+if terminal_output ~= 0
+    error('Error when compiling Force-constraint ARMOUR real time planner code!');
+else
+    fprintf("Successfully compiled Force-constraint ARMOUR\n\n");
+end
+
+cd ../../
+
+%% Initialize real-time armour planner
+fprintf("\nStart compiling ARMOUR\n\n");
+
+cd kinova_simulator_interfaces/kinova_planner_realtime_original
+
+armour_buffer_path = [pwd, '/BufferPath.h'];
+fid = fopen(armour_buffer_path, 'w');
+fprintf(fid, '#include <string>\n');
+fprintf(fid, 'const std::string pathname = "%s/buffer/";', pwd);
+fclose(fid);
+
+terminal_output = system('env -i bash -i -c "./compile.sh"');
 
 if terminal_output ~= 0
     error('Error when compiling ARMOUR real time planner code!');
@@ -56,7 +77,7 @@ fprintf(fid, '#include <string>\n');
 fprintf(fid, 'const std::string pathname = "%s/";', pwd);
 fclose(fid);
 
-terminal_output = system('./compile_collision_checker.sh');
+terminal_output = system('env -i bash -i -c "./compile_collision_checker.sh"');
 
 if terminal_output ~= 0
     error('Error when compiling ARMTD real time planner code!');
