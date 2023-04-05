@@ -287,7 +287,7 @@ bool armtd_NLP::eval_g(
     Index i;
 
     if (TURN_OFF_INPUT_CONSTRAINTS) {
-        #pragma omp parallel for shared(kinematics_dynamics_result, x, g, link_sliced_center) private(i) schedule(dynamic)
+        #pragma omp parallel for shared(kinematics_dynamics_result, x, link_sliced_center) private(i) schedule(dynamic)
         for(i = 0; i < NUM_TIME_STEPS; i++) {
             for (int l = 0; l < NUM_JOINTS; l++) {
                 MatrixXInt res = kinematics_dynamics_result->links(l, i).slice(x);
@@ -359,7 +359,7 @@ bool armtd_NLP::eval_jac_g(
         Index i;
 
         if (TURN_OFF_INPUT_CONSTRAINTS) {
-            #pragma omp parallel for shared(kinematics_dynamics_result, x, values, link_sliced_center, dk_link_sliced_center) private(i) schedule(dynamic)
+            #pragma omp parallel for shared(kinematics_dynamics_result, x, link_sliced_center, dk_link_sliced_center) private(i) schedule(dynamic)
             for(i = 0; i < NUM_TIME_STEPS; i++) {
                 for (int l = 0; l < NUM_JOINTS; l++) {
                     link_sliced_center[i * NUM_JOINTS + l] = getCenter(kinematics_dynamics_result->links(l, i).slice(x));

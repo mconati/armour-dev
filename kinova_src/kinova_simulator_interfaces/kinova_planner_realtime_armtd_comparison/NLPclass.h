@@ -10,7 +10,7 @@ using namespace Ipopt;
 
 class armtd_NLP: public TNLP
 {
-public:
+public: 
     /** Default constructor */
     armtd_NLP();
 
@@ -19,10 +19,10 @@ public:
 
     // [set_parameters]
     bool set_parameters(
-        TYPE* q_des_input,
-        ConstantAccelerationCurve* desired_trajectory_input,
-        PZsparse* joint_position_input,
-        Obstacles* Obstacle_input
+        const double* q_des_input,
+        const ConstantAccelerationCurve* desired_trajectory_input,
+        KinematicsDynamics* kinematics_dynamics_result_input,
+        Obstacles* obstacles_input
     );
 
     /**@name Overloaded from TNLP */
@@ -133,7 +133,7 @@ public:
     );
     //@}
 
-    TYPE solution[NUM_FACTORS];
+    double solution[NUM_FACTORS];
 
     bool ifFeasible = true;
 
@@ -143,8 +143,8 @@ public:
 
     bool feasible = false;
 
-    TYPE* checkJointsPosition = nullptr;
-    TYPE* dk_checkJointsPosition = nullptr;
+    Eigen::Vector3d link_sliced_center[NUM_TIME_STEPS * NUM_JOINTS];
+    Eigen::Vector3d dk_link_sliced_center[NUM_TIME_STEPS * NUM_JOINTS * NUM_FACTORS];
 
 private:
     /**@name Methods to block default compiler methods.
@@ -166,11 +166,11 @@ private:
        const armtd_NLP&
     );
 
-    TYPE* q_des = nullptr;
+    const double* q_des;
 
-    ConstantAccelerationCurve* desired_trajectory = nullptr;
+    const ConstantAccelerationCurve* desired_trajectory = nullptr;
 
-    PZsparse* joint_position = nullptr;
+    KinematicsDynamics* kinematics_dynamics_result = nullptr;
 
     Obstacles* obstacles = nullptr;
 

@@ -136,7 +136,7 @@ classdef uarmtd_planner < robot_arm_generic_planner
                 toc(planning_time);
             else
                 if strcmp(P.traj_type, 'bernstein')
-                    P.jrs_info.n_t = 128;
+                    P.jrs_info.n_t = 96;
                     P.jrs_info.n_q = 7;
                     P.jrs_info.n_k = 7;
                     P.jrs_info.c_k_bernstein = zeros(7,1);
@@ -144,8 +144,8 @@ classdef uarmtd_planner < robot_arm_generic_planner
                     % Make sure this is consistent with the k_range in
                     % kinova_src/kinova_simulator_interfaces/kinova_planner_realtime/Parameters.h 
                     % !!!!!!
-%                     P.jrs_info.g_k_bernstein = [pi/24; pi/24; pi/24; pi/24; pi/24; pi/24; pi/24];
-                    P.jrs_info.g_k_bernstein = [pi/48; pi/48; pi/48; pi/48; pi/48; pi/48; pi/48];
+                    P.jrs_info.g_k_bernstein = [pi/24; pi/24; pi/24; pi/24; pi/24; pi/24; pi/24];
+%                     P.jrs_info.g_k_bernstein = [pi/48; pi/48; pi/48; pi/48; pi/48; pi/48; pi/48];
     
                     q_des = P.HLP.get_waypoint(agent_info,world_info,P.lookahead_distance) ;
                     if isempty(q_des)
@@ -214,13 +214,14 @@ classdef uarmtd_planner < robot_arm_generic_planner
                         control_input_radius = readmatrix('armour_control_input_radius.out', 'FileType', 'text');
                         constraints_value = readmatrix('armour_constraints.out', 'FileType', 'text');
 
-                        link_frs_vertices = cell(7,1);
-                        for tid = [1:10:128, 128]
-                            for j = 1:7
+                        record_tids = [1:10:P.jrs_info.n_t, P.jrs_info.n_t];
+                        link_frs_vertices = cell(7,length(record_tids));
+                        for tid = record_tids
+                            for j = 1:agent_info.n_links_and_joints
                                 c = link_frs_center((tid-1)*7+j, :)';
                                 g = link_frs_generators( ((tid-1)*7+j-1)*3+1 : ((tid-1)*7+j)*3, :);
                                 Z = zonotope(c, g);
-                                link_frs_vertices{j} = [link_frs_vertices{j}; vertices(Z)'];
+                                link_frs_vertices{j,tid} = [link_frs_vertices{j}; vertices(Z)'];
                             end
                         end
                     else
@@ -249,7 +250,7 @@ classdef uarmtd_planner < robot_arm_generic_planner
                         JRS_filename{i} = filename;
                     end
     
-                    cuda_input_file = fopen([P.kinova_test_folder_path, '/kinova_simulator_interfaces/kinova_planner_realtime_armtd_comparison/buffer/armtd_main.in'], 'w');
+                    cuda_input_file = fopen([P.kinova_test_folder_path, '/kinova_simulator_interfaces/kinova_planner_realtime_armtd_comparison/buffer/armtd.in'], 'w');
                     
                     % q_0
                     for ind = 1:length(q_0)
@@ -269,40 +270,38 @@ classdef uarmtd_planner < robot_arm_generic_planner
                     end
                     fprintf(cuda_input_file, '\n');
                     
-                    k_range = zeros(7,1);
-                    
-                    for ind = 1:7
+                    for ind = 1:P.jrs_info.n_k
                         data = load(JRS_filename{ind});
                     
                         % cos(q)
-                        for i = 1:100
+                        for i = 1:P.jrs_info.n_t
                             c = data.JRS{i}.Z(1,1);
                             fprintf(cuda_input_file, '%.10f ', c);
                         end
                         fprintf(cuda_input_file, '\n');
-                        for i = 1:100
+                        for i = 1:P.jrs_info.n_t
                             g = data.JRS{i}.Z(1,2);
                             fprintf(cuda_input_file, '%.10f ', g);
                         end
                         fprintf(cuda_input_file, '\n');
-                        for i = 1:100
+                        for i = 1:P.jrs_info.n_t
                             r = sum(abs(data.JRS{i}.Z(1,3:end)), 2);
                             fprintf(cuda_input_file, '%.10f ', r);
                         end
                         fprintf(cuda_input_file, '\n');
                         
                         % sin(q)
-                        for i = 1:100
+                        for i = 1:P.jrs_info.n_t
                             c = data.JRS{i}.Z(2,1);
                             fprintf(cuda_input_file, '%.10f ', c);
                         end
                         fprintf(cuda_input_file, '\n');
-                        for i = 1:100
+                        for i = 1:P.jrs_info.n_t
                             g = data.JRS{i}.Z(2,2);
                             fprintf(cuda_input_file, '%.10f ', g);
                         end
                         fprintf(cuda_input_file, '\n');
-                        for i = 1:100
+                        for i = 1:P.jrs_info.n_t
                             r = sum(abs(data.JRS{i}.Z(2,3:end)), 2);
                             fprintf(cuda_input_file, '%.10f ', r);
                         end
@@ -328,7 +327,7 @@ classdef uarmtd_planner < robot_arm_generic_planner
                     terminal_output = system('./../kinova_simulator_interfaces/kinova_planner_realtime_armtd_comparison/armtd_main');
     
                     if terminal_output == 0
-                        data = readmatrix('armtd_main.out', 'FileType', 'text');
+                        data = readmatrix('armtd.out', 'FileType', 'text');
                         k_opt = data(1:end-1);
                         planning_time = data(end) / 1000.0; % original data is milliseconds
     
@@ -348,31 +347,23 @@ classdef uarmtd_planner < robot_arm_generic_planner
     
                     if terminal_output == 0
                         % read FRS information if needed
-                        link_frs_center = readmatrix('armtd_main_joint_position_center.out', 'FileType', 'text');
-                        joint_frs_radius = readmatrix('armtd_main_joint_position_radius.out', 'FileType', 'text');
-                        constraints_value = readmatrix('armtd_main_constraints.out', 'FileType', 'text');
+                        link_frs_center = readmatrix('armtd_joint_position_center.out', 'FileType', 'text');
+                        link_frs_generators = readmatrix('armtd_joint_position_radius.out', 'FileType', 'text');
+                        constraints_value = readmatrix('armtd_constraints.out', 'FileType', 'text');
 
-                        link_radius = [[0.070, 0.070, 0.070] 
-									   [0.070, 0.070, 0.070] 
-									   [0.070, 0.070, 0.070] 
-									   [0.070, 0.070, 0.070] 
-									   [0.070, 0.070, 0.070] 
-									   [0.057, 0.057, 0.057] 
-									   [0.100, 0.100, 0.100]];
-                        
-                        link_frs_vertices = cell(6,1);
-                        for tid = [1:10:100,100]
-                            for j = 2:7
-                                c1 = link_frs_center((tid-1)*7+(j-1), :)';
-                                c2 = link_frs_center((tid-1)*7+j, :)';
-                                g = joint_frs_radius((tid-1)*7+j, :);
-                                Z = zonotope(0.5 * (c1 + c2), [0.5 * (c2 - c1), diag(g + link_radius(j))]);
-                                link_frs_vertices{j-1} = [link_frs_vertices{j-1}; vertices(Z)'];
+                        record_tids = [1:10:P.jrs_info.n_t, P.jrs_info.n_t];
+                        link_frs_vertices = cell(agent_info.n_links_and_joints,length(record_tids));
+                        for i = 1:length(record_tids)
+                            tid = record_tids(i);
+                            for j = 1:agent_info.n_links_and_joints
+                                c = link_frs_center((tid-1)*agent_info.n_links_and_joints+j, :)';
+                                g = link_frs_generators( ((tid-1)*agent_info.n_links_and_joints+j-1)*3+1 : ((tid-1)*agent_info.n_links_and_joints+j)*3, :);
+                                Z = zonotope(c, g);
+                                link_frs_vertices{j,i} = vertices(Z)';
                             end
                         end
                     else
                         k_opt = nan;
-                        link_frs_vertices = [];
                     end
                 else
                     error('Unrecognized trajectory type!');
@@ -406,7 +397,6 @@ classdef uarmtd_planner < robot_arm_generic_planner
                     P.info.FO_zono = [P.info.FO_zono, {FO_zono}];
                     P.info.sliced_FO_zono = [P.info.sliced_FO_zono, {sliced_FO_zono}];
                 else
-%                     P.info.sliced_FO_zono = [P.info.sliced_FO_zono, {[link_frs_center, link_frs_generators]}];
                     P.info.sliced_FO_zono = [P.info.sliced_FO_zono, {link_frs_vertices}]; % disable recording for now
                 end
             end

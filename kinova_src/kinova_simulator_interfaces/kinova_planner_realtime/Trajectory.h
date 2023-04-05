@@ -55,10 +55,7 @@ public:
 
     double ds = 0;
 
-    // PZsparse cos_q_des[NUM_TIME_STEPS * NUM_FACTORS];
-    // PZsparse sin_q_des[NUM_TIME_STEPS * NUM_FACTORS];
-
-    // // rotation matrix (and its transpose) of each joint
+    // rotation matrix (and its transpose) of each joint
     PZsparseArray R;
     PZsparseArray R_t;
 

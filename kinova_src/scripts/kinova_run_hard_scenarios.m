@@ -67,7 +67,9 @@ stop_threshold = 4 ; % number of failed iterations before exiting
 
 % file handling
 save_file_header = 'trial_' ;
-file_location = '../results/hard/' ;
+% file_location = '../results/hard/' ;
+file_location = '../results/hard_24pi/' ;
+% file_location = '../results/hard_turnoffinputconstraints/' ;
 if ~exist(file_location, 'dir')
     mkdir(file_location);
 end

@@ -10,9 +10,13 @@ clear; clc;
 use_robust_input = true;
 
 save_file_header = 'trial_' ;
-file_location = '../results/random' ;
-file_location = '../results/random_turnoffinputconstraints' ;
+% file_location = '../results/random' ;
+file_location = '../results/random_24pi' ;
+% file_location = '../results/random_armtd' ;
+% file_location = '../results/random_turnoffinputconstraints' ;
+% file_location = '../results/random_turnoffinputconstraints_24pi' ;
 % file_location = '../results/hard' ;
+% file_location = '../results/hard_turnoffinputconstraints' ;
 addpath(file_location);
 
 summary_files = dir([file_location, '/trial_*']);

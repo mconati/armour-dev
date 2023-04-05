@@ -14,8 +14,6 @@ KinematicsDynamics::KinematicsDynamics(BezierCurve* traj_input) {
     I_uncertain_arr = PZsparseArray(NUM_JOINTS, 1);
     u_nom = PZsparseArray(NUM_FACTORS, NUM_TIME_STEPS);
     u_nom_int = PZsparseArray(NUM_FACTORS, NUM_TIME_STEPS);
-    r = PZsparseArray(NUM_FACTORS, 1);
-    Mr = PZsparseArray(NUM_FACTORS, NUM_TIME_STEPS);
 
     // initialize robot properties
     for (int i = 0; i < NUM_JOINTS; i++) {
@@ -40,10 +38,6 @@ KinematicsDynamics::KinematicsDynamics(BezierCurve* traj_input) {
         }
         I_nominal_arr(i) = PZsparse(inertia_matrix);
         I_uncertain_arr(i) = PZsparse(inertia_matrix, inertia_uncertainty);
-
-        if (i < NUM_FACTORS) {
-            r(i) = PZsparse(0, Interval(-eps, eps));
-        }
     }
 
     trans_matrix(NUM_JOINTS, 0) = Eigen::MatrixXd::Zero(3, 1);

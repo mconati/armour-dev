@@ -16,47 +16,44 @@
 //
 class ConstantAccelerationCurve{
 public:
-    TYPE* q0 = nullptr;
-    TYPE* qd0 = nullptr;
+    double* q0 = nullptr;
+    double* qd0 = nullptr;
 
-    TYPE dt;
+    double dt;
 
-    TYPE* c_cos_q_des = nullptr; // center of zonotope
-    TYPE* g_cos_q_des = nullptr; // k-dependent generator of zonotope
-    TYPE* r_cos_q_des = nullptr; // radius of zonotope
+    double* c_cos_q_des = nullptr; // center of zonotope
+    double* g_cos_q_des = nullptr; // k-dependent generator of zonotope
+    double* r_cos_q_des = nullptr; // radius of zonotope
 
-    TYPE* c_sin_q_des = nullptr; // center of zonotope
-    TYPE* g_sin_q_des = nullptr; // k-dependent generator of zonotope
-    TYPE* r_sin_q_des = nullptr; // radius of zonotope
+    double* c_sin_q_des = nullptr; // center of zonotope
+    double* g_sin_q_des = nullptr; // k-dependent generator of zonotope
+    double* r_sin_q_des = nullptr; // radius of zonotope
 
-    PZsparse cos_q_des[NUM_TIME_STEPS * NUM_FACTORS];
-    PZsparse sin_q_des[NUM_TIME_STEPS * NUM_FACTORS];
+    // PZsparse cos_q_des[NUM_TIME_STEPS * NUM_FACTORS];
+    // PZsparse sin_q_des[NUM_TIME_STEPS * NUM_FACTORS];
 
-    TYPE* k_range = nullptr;
+    PZsparseArray R;
+    PZsparseArray R_t;
+
+    double* k_range = nullptr;
 
     ConstantAccelerationCurve() {};
 
-    ConstantAccelerationCurve(TYPE* q0_inp, TYPE* qd0_inp, 
-                              TYPE* c_cos_q_des_inp, TYPE* g_cos_q_des_inp, TYPE* r_cos_q_des_inp,
-                              TYPE* c_sin_q_des_inp, TYPE* g_sin_q_des_inp, TYPE* r_sin_q_des_inp,
-                              TYPE* k_range_inp);
+    ConstantAccelerationCurve(double* q0_inp, double* qd0_inp, 
+                              double* c_cos_q_des_inp, double* g_cos_q_des_inp, double* r_cos_q_des_inp,
+                              double* c_sin_q_des_inp, double* g_sin_q_des_inp, double* r_sin_q_des_inp,
+                              double* k_range_inp);
 
     ~ConstantAccelerationCurve() {};
 
     // convert to polynomial zonotope using 1st/2nd order Taylor expansion
     void makePolyZono(int t_ind);
 
-    // return the min and max of the joint position throughout the whole desired trajectory
-    void returnJointPositionExtremum(TYPE* extremum, const TYPE* k);
+    // return the min and max of the joint position and velocity throughout the whole desired trajectory
+    void returnJointStateExtremum(double* extremum, const double* k) const;
 
-    // return the gradient of min and max of the joint position throughout the whole desired trajectory
-    void returnJointPositionExtremumGradient(TYPE* extremumGradient, const TYPE* k);
-
-    // return the min and max of the joint velocity throughout the whole desired trajectory
-    void returnJointVelocityExtremum(TYPE* extremum, const TYPE* k);
-
-    // return the gradient of min and max of the joint velocity throughout the whole desired trajectory
-    void returnJointVelocityExtremumGradient(TYPE* extremumGradient, const TYPE* k);
+    // return the graident of the min and max of the joint position and velocity throughout the whole desired trajectory
+    void returnJointStateExtremumGradient(double* extremumGradient, const double* k) const;
 };
 
 #endif

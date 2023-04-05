@@ -17,33 +17,29 @@ double wrap_to_pi(const double angle) {
 // constructor
 armtd_NLP::armtd_NLP()
 {
-    checkJointsPosition = new TYPE[NUM_TIME_STEPS * NUM_FACTORS * 3];
-    dk_checkJointsPosition = new TYPE[NUM_TIME_STEPS * NUM_FACTORS * 3 * NUM_FACTORS];
 }
 
 
 // destructor
 armtd_NLP::~armtd_NLP()
 {
-    delete[] checkJointsPosition;
-    delete[] dk_checkJointsPosition;
     delete[] g_copy;
 }
 
 
 bool armtd_NLP::set_parameters(
-    TYPE* q_des_input,
-    ConstantAccelerationCurve* desired_trajectory_input,
-    PZsparse* joint_position_input,
+    const double* q_des_input,
+    const ConstantAccelerationCurve* desired_trajectory_input,
+    KinematicsDynamics* kinematics_dynamics_result_input,
     Obstacles* obstacles_input
  ) 
  {
     q_des = q_des_input;
     desired_trajectory = desired_trajectory_input;
-    joint_position = joint_position_input;
+    kinematics_dynamics_result = kinematics_dynamics_result_input;
     obstacles = obstacles_input;
 
-    constraint_number = (NUM_FACTORS - 1) * NUM_TIME_STEPS * obstacles->num_obstacles + 
+    constraint_number = NUM_JOINTS * NUM_TIME_STEPS * obstacles->num_obstacles + 
                         NUM_FACTORS * 4;
 
     g_copy = new Number[constraint_number];
@@ -107,11 +103,11 @@ bool armtd_NLP::get_bounds_info(
 
     // collision avoidance constraints
     Index offset = 0;
-    for( Index i = offset; i < offset + (NUM_FACTORS - 1) * NUM_TIME_STEPS * obstacles->num_obstacles; i++ ) {
+    for( Index i = offset; i < offset + NUM_JOINTS * NUM_TIME_STEPS * obstacles->num_obstacles; i++ ) {
         g_l[i] = -1e19;
         g_u[i] = 0;
     }
-    offset += (NUM_FACTORS - 1) * NUM_TIME_STEPS * obstacles->num_obstacles;
+    offset += NUM_JOINTS * NUM_TIME_STEPS * obstacles->num_obstacles;
 
     // state limit constraints
     //     minimum joint position
@@ -172,10 +168,10 @@ bool armtd_NLP::get_starting_point(
 
     for( Index i = 0; i < n; i++ ) {
         // initialize to zero
-        // x[i] = 0.0;
+        x[i] = 0.0;
 
         // try to avoid local minimum
-        x[i] = min(max((q_des[i] - desired_trajectory->q0[i]) / desired_trajectory->k_range[i], -0.5), 0.5);
+        // x[i] = min(max((q_des[i] - desired_trajectory->q0[i]) / desired_trajectory->k_range[i], -0.5), 0.5);
     }
 
     return true;
@@ -264,20 +260,20 @@ bool armtd_NLP::eval_g(
         WARNING_PRINT("*** Error wrong value of m in eval_g!");
     }
 
-    Index i;
-    #pragma omp parallel for private(i) schedule(dynamic)
-    for(i = 0; i < NUM_TIME_STEPS * NUM_FACTORS; i++) {
-        checkJointsPosition[i * 3    ] = getCenter(joint_position[i * 3    ].slice(x));
-        checkJointsPosition[i * 3 + 1] = getCenter(joint_position[i * 3 + 1].slice(x));
-        checkJointsPosition[i * 3 + 2] = getCenter(joint_position[i * 3 + 2].slice(x));
+    Index i = 0;
+
+    #pragma omp parallel for shared(kinematics_dynamics_result, x, link_sliced_center) private(i) schedule(dynamic)
+    for(i = 0; i < NUM_TIME_STEPS; i++) {
+        for (int l = 0; l < NUM_JOINTS; l++) {
+            MatrixXInt res = kinematics_dynamics_result->links(l, i).slice(x);
+            link_sliced_center[i * NUM_JOINTS + l] = getCenter(res);
+        }
     }
 
-    // Part 3. check collision between joint position reachable set and obstacles (in gpu)
-    obstacles->linkFRSConstraints(checkJointsPosition, nullptr, g, nullptr);
+    obstacles->linkFRSConstraints(link_sliced_center, nullptr, g, nullptr);
 
     // Part 4. (position & velocity) state limit constraints
-    desired_trajectory->returnJointPositionExtremum(g + (NUM_FACTORS - 1) * NUM_TIME_STEPS * obstacles->num_obstacles, x);
-    desired_trajectory->returnJointVelocityExtremum(g + (NUM_FACTORS - 1) * NUM_TIME_STEPS * obstacles->num_obstacles + NUM_FACTORS * 2, x);
+    desired_trajectory->returnJointStateExtremum(g + NUM_JOINTS * NUM_TIME_STEPS * obstacles->num_obstacles, x);
 
     return true;
 }
@@ -315,23 +311,20 @@ bool armtd_NLP::eval_jac_g(
         }
     }
     else {
-        Index i;
-        #pragma omp parallel for private(i) schedule(dynamic)
-        for(i = 0; i < NUM_TIME_STEPS * NUM_FACTORS; i++) {
-            checkJointsPosition[i * 3    ] = getCenter(joint_position[i * 3    ].slice(x));
-            checkJointsPosition[i * 3 + 1] = getCenter(joint_position[i * 3 + 1].slice(x));
-            checkJointsPosition[i * 3 + 2] = getCenter(joint_position[i * 3 + 2].slice(x));
-            joint_position[i * 3    ].slice(dk_checkJointsPosition + (i * 3    ) * NUM_FACTORS, x);
-            joint_position[i * 3 + 1].slice(dk_checkJointsPosition + (i * 3 + 1) * NUM_FACTORS, x);
-            joint_position[i * 3 + 2].slice(dk_checkJointsPosition + (i * 3 + 2) * NUM_FACTORS, x);
+        Index i = 0;
+
+        #pragma omp parallel for shared(kinematics_dynamics_result, x, link_sliced_center, dk_link_sliced_center) private(i) schedule(dynamic)
+        for(i = 0; i < NUM_TIME_STEPS; i++) {
+            for (int l = 0; l < NUM_JOINTS; l++) {
+                link_sliced_center[i * NUM_JOINTS + l] = getCenter(kinematics_dynamics_result->links(l, i).slice(x));
+                kinematics_dynamics_result->links(l, i).slice(dk_link_sliced_center + (i * NUM_JOINTS + l) * NUM_FACTORS, x);
+            }
         }
 
-        // Part 3. check collision between joint position reachable set and obstacles (in gpu)
-        obstacles->linkFRSConstraints(checkJointsPosition, dk_checkJointsPosition, nullptr, values);
+        obstacles->linkFRSConstraints(link_sliced_center, dk_link_sliced_center, nullptr, values);
 
         // Part 4. (position & velocity) state limit constraints
-        desired_trajectory->returnJointPositionExtremumGradient(values + ((NUM_FACTORS - 1) * NUM_TIME_STEPS * obstacles->num_obstacles) * NUM_FACTORS, x);
-        desired_trajectory->returnJointVelocityExtremumGradient(values + ((NUM_FACTORS - 1) * NUM_TIME_STEPS * obstacles->num_obstacles + NUM_FACTORS * 2) * NUM_FACTORS, x);
+        desired_trajectory->returnJointStateExtremumGradient(values + NUM_JOINTS * NUM_TIME_STEPS * obstacles->num_obstacles * NUM_FACTORS, x);
     }
 
     return true;
@@ -380,11 +373,13 @@ void armtd_NLP::finalize_solution(
 
     // store the solution
     for( Index i = 0; i < n; i++ ) {
-        solution[i] = (TYPE)x[i];
+        solution[i] = (double)x[i];
     }
 
+    cout << "        CUDA & C++: Ipopt: final cost function value: " << obj_value / COST_FUNCTION_OPTIMALITY_SCALE << endl;
+
     // check constraint violation manually for Maximum_CpuTime_Exceeded case
-    eval_g(n, x, true, m, g_copy);
+    memcpy(g_copy, g, m * sizeof(Number));
 
     feasible = true;
 
@@ -402,7 +397,7 @@ void armtd_NLP::finalize_solution(
             }
         }
     }
-    offset += (NUM_FACTORS - 1) * NUM_TIME_STEPS * obstacles->num_obstacles;
+    offset += NUM_JOINTS * NUM_TIME_STEPS * obstacles->num_obstacles;
 
     // state limit constraints
     //     minimum joint position

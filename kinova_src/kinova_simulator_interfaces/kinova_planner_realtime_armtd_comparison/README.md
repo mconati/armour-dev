@@ -1,4 +1,4 @@
-# ARMTD Online Planning Implementation In C++ & CUDA (CURRENTLY BROKEN)
+# ARMOUR Online Planning Implementation In C++ & CUDA
 
 ## Prerequisites
 * [CUDA](https://developer.nvidia.com/cuda-downloads)

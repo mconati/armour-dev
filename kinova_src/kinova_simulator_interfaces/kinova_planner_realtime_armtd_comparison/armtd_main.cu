@@ -1,11 +1,11 @@
 #include "NLPclass.h"
 #include "BufferPath.h"
 
-const std::string inputfilename = pathname + "armtd_main.in";
-const std::string outputfilename1 = pathname + "armtd_main.out";
-const std::string outputfilename2 = pathname + "armtd_main_joint_position_center.out";
-const std::string outputfilename3 = pathname + "armtd_main_joint_position_radius.out";
-const std::string outputfilename4 = pathname + "armtd_main_constraints.out";
+const std::string inputfilename = pathname + "armtd.in";
+const std::string outputfilename1 = pathname + "armtd.out";
+const std::string outputfilename2 = pathname + "armtd_joint_position_center.out";
+const std::string outputfilename3 = pathname + "armtd_joint_position_radius.out";
+const std::string outputfilename4 = pathname + "armtd_constraints.out";
 
 int main() {
 /*
@@ -14,13 +14,13 @@ Section I:
     There is no check and warning, so be careful!
 */
     // Here is an example of required input
-    // TYPE q0[NUM_FACTORS] = {0.6543, -0.0876, -0.4837, -1.2278, -1.5735, -1.0720, 0};
-    // TYPE qd0[NUM_FACTORS] = {0, 0, 0, 0, 0, 0, 0};
-    // TYPE qdd0[NUM_FACTORS] = {0, 0, 0, 0, 0, 0, 0};
-    // TYPE q_des[NUM_FACTORS] = {0.6831, 0.009488, -0.2471, -0.9777, -1.414, -0.9958, 0};
+    // double q0[NUM_FACTORS] = {0.6543, -0.0876, -0.4837, -1.2278, -1.5735, -1.0720, 0};
+    // double qd0[NUM_FACTORS] = {0, 0, 0, 0, 0, 0, 0};
+    // double qdd0[NUM_FACTORS] = {0, 0, 0, 0, 0, 0, 0};
+    // double q_des[NUM_FACTORS] = {0.6831, 0.009488, -0.2471, -0.9777, -1.414, -0.9958, 0};
 
     // const int num_obstacles = 10;
-    // const TYPE obstacles[num_obstacles * (MAX_OBSTACLE_GENERATOR_NUM + 1) * 3] = {-0.28239,  -0.33281, 0.88069, 0.069825, 0, 0, 0,  0.09508, 0, 0, 0, 0.016624,
+    // const double obstacles[num_obstacles * (MAX_OBSTACLE_GENERATOR_NUM + 1) * 3] = {-0.28239,  -0.33281, 0.88069, 0.069825, 0, 0, 0,  0.09508, 0, 0, 0, 0.016624,
     //                                                                             -0.19033,  0.035391,  1.3032,  0.11024, 0, 0, 0, 0.025188, 0, 0, 0, 0.014342,
     //                                                                             0.67593, -0.085841, 0.43572,  0.17408, 0, 0, 0,  0.07951, 0, 0, 0,  0.18012,
     //                                                                             0.75382,   0.51895,  0.4731, 0.030969, 0, 0, 0,  0.22312, 0, 0, 0,  0.22981,
@@ -34,22 +34,22 @@ Section I:
     // declare this first and make sure we always have a new output
     std::ofstream outputstream1(outputfilename1);
 
-    TYPE q0[NUM_FACTORS] = {0.0};
-    TYPE qd0[NUM_FACTORS] = {0.0};
-    TYPE q_des[NUM_FACTORS] = {0.0};
+    double q0[NUM_FACTORS] = {0.0};
+    double qd0[NUM_FACTORS] = {0.0};
+    double q_des[NUM_FACTORS] = {0.0};
 
-    TYPE c_cos_q_des[NUM_FACTORS * NUM_TIME_STEPS];
-    TYPE g_cos_q_des[NUM_FACTORS * NUM_TIME_STEPS];
-    TYPE r_cos_q_des[NUM_FACTORS * NUM_TIME_STEPS];
+    double c_cos_q_des[NUM_FACTORS * NUM_TIME_STEPS];
+    double g_cos_q_des[NUM_FACTORS * NUM_TIME_STEPS];
+    double r_cos_q_des[NUM_FACTORS * NUM_TIME_STEPS];
 
-    TYPE c_sin_q_des[NUM_FACTORS * NUM_TIME_STEPS];
-    TYPE g_sin_q_des[NUM_FACTORS * NUM_TIME_STEPS];
-    TYPE r_sin_q_des[NUM_FACTORS * NUM_TIME_STEPS];
+    double c_sin_q_des[NUM_FACTORS * NUM_TIME_STEPS];
+    double g_sin_q_des[NUM_FACTORS * NUM_TIME_STEPS];
+    double r_sin_q_des[NUM_FACTORS * NUM_TIME_STEPS];
 
-    TYPE k_range[NUM_FACTORS];
+    double k_range[NUM_FACTORS];
 
     int num_obstacles = 0;
-    TYPE obstacles[MAX_OBSTACLE_NUM * (MAX_OBSTACLE_GENERATOR_NUM + 1) * 3] = {0.0};
+    double obstacles[MAX_OBSTACLE_NUM * (MAX_OBSTACLE_GENERATOR_NUM + 1) * 3] = {0.0};
 
     std::ifstream inputstream(inputfilename);
     if (!inputstream.is_open()) {
@@ -105,10 +105,10 @@ Section I:
      
 /*
 Section II:
-    Initialize all polynomial zonotopes, including forward kinematics and torques
+    Initialize all polynomial zonotopes
 */
     PZsparse p[NUM_TIME_STEPS * NUM_FACTORS * 3];
-    TYPE jointPositionRadius[NUM_TIME_STEPS * NUM_FACTORS * 3] = {0.0};
+    double jointPositionRadius[NUM_TIME_STEPS * NUM_FACTORS * 3] = {0.0};
 
     ConstantAccelerationCurve traj(q0, qd0, 
                                    c_cos_q_des, g_cos_q_des, r_cos_q_des,
@@ -117,6 +117,9 @@ Section II:
 
     Obstacles O(obstacles, num_obstacles);  
 
+    KinematicsDynamics kd(&traj);
+    Eigen::Matrix<double, 3, 3 + 3> link_independent_generators[NUM_TIME_STEPS * NUM_JOINTS];
+
     // do not count time for memory allocation
     auto start1 = std::chrono::high_resolution_clock::now();                                                         
 
@@ -124,36 +127,45 @@ Section II:
 
     int openmp_t_ind; // loop index
 
-    #pragma omp parallel for shared(traj) private(openmp_t_ind) schedule(dynamic)
-    for(openmp_t_ind = 0; openmp_t_ind < NUM_TIME_STEPS; openmp_t_ind++) {
-        // Part 1: convert parameterized Bezier curve desired trajectory to PZsparse
-        traj.makePolyZono(openmp_t_ind);
-
-        // Part 2: compute forward kinematics reachable sets
-        KinematicsDynamics kd(traj.cos_q_des + openmp_t_ind * NUM_FACTORS, traj.sin_q_des + openmp_t_ind * NUM_FACTORS);
-
-        kd.fk(p + openmp_t_ind * NUM_FACTORS * 3);
-
-        for (int i = 0; i < NUM_FACTORS; i++) {
-            p[(openmp_t_ind * NUM_FACTORS + i) * 3    ].reduce();
-            p[(openmp_t_ind * NUM_FACTORS + i) * 3 + 1].reduce();
-            p[(openmp_t_ind * NUM_FACTORS + i) * 3 + 2].reduce();
-
-            jointPositionRadius[(openmp_t_ind * NUM_FACTORS + i) * 3    ] = getRadius(p[(openmp_t_ind * NUM_FACTORS + i) * 3    ].independent);
-            jointPositionRadius[(openmp_t_ind * NUM_FACTORS + i) * 3 + 1] = getRadius(p[(openmp_t_ind * NUM_FACTORS + i) * 3 + 1].independent);
-            jointPositionRadius[(openmp_t_ind * NUM_FACTORS + i) * 3 + 2] = getRadius(p[(openmp_t_ind * NUM_FACTORS + i) * 3 + 2].independent);
+    try {
+        #pragma omp parallel for shared(traj) private(openmp_t_ind) schedule(dynamic, 1)
+        for(openmp_t_ind = 0; openmp_t_ind < NUM_TIME_STEPS; openmp_t_ind++) {
+            traj.makePolyZono(openmp_t_ind);
         }
     }
+    catch (int errorCode) {
+        WARNING_PRINT("        CUDA & C++: Error creating JRS! Check previous error message!");
+        return -1;
+    }
 
-    O.initializeHyperPlane(jointPositionRadius);
+    try {
+        #pragma omp parallel for shared(kd, link_independent_generators) private(openmp_t_ind) schedule(dynamic)
+        for(openmp_t_ind = 0; openmp_t_ind < NUM_TIME_STEPS; openmp_t_ind++) {
+            // compute link PZs through forward kinematics
+            kd.fk(openmp_t_ind);
+
+            // reduce non-only-k-dependent generators so that slice takes less time
+            for (int i = 0; i < NUM_JOINTS; i++) {
+                link_independent_generators[openmp_t_ind * NUM_JOINTS + i] = kd.links(i, openmp_t_ind).reduce_link_PZ();
+            }
+        }
+    }
+    catch (int errorCode) {
+        WARNING_PRINT("        CUDA & C++: Error computing link PZs and nominal torque PZs! Check previous error message!");
+        return -1;
+    }
+
+    try {
+        O.initializeHyperPlane(link_independent_generators);
+    }
+    catch (int errorCode) {
+        WARNING_PRINT("        CUDA & C++: Error initializing collision checking hyperplanes! Check previous error message!");
+        return -1;
+    }
 
     auto stop1 = std::chrono::high_resolution_clock::now();
     auto duration1 = std::chrono::duration_cast<std::chrono::milliseconds>(stop1 - start1);
     cout << "        CUDA & C++: Time taken by generating trajectory & forward kinematics: " << duration1.count() << " milliseconds" << endl;
-
-    // for (int j = 0; j < 3; j++) {
-    //     p[((NUM_TIME_STEPS - 1) * NUM_FACTORS + 1) * 3 + j].print();
-    // }
 
 /*
 Section III:
@@ -162,7 +174,7 @@ Section III:
     auto start2 = std::chrono::high_resolution_clock::now();
 
     SmartPtr<armtd_NLP> mynlp = new armtd_NLP();
-	mynlp->set_parameters(q_des, &traj, p, &O);
+	mynlp->set_parameters(q_des, &traj, &kd, &O);
 
     SmartPtr<IpoptApplication> app = IpoptApplicationFactory();
 
@@ -223,21 +235,27 @@ Section IV:
     // output FRS and other information, you can comment them if they are unnecessary
     std::ofstream outputstream2(outputfilename2);
     outputstream2 << std::setprecision(10);
-    for (int i = 0; i < NUM_TIME_STEPS * NUM_FACTORS; i++) {
-        for (int j = 0; j < 3; j++) {
-            outputstream2 << mynlp->checkJointsPosition[i * 3 + j] << ' ';
+    for (int i = 0; i < NUM_TIME_STEPS; i++) {
+        for (int j = 0; j < NUM_JOINTS; j++) {
+            for (int l = 0; l < 3; l++) {
+                outputstream2 << mynlp->link_sliced_center[i * NUM_JOINTS + j](l) << ' ';
+            }
+            outputstream2 << '\n';
         }
-        outputstream2 << '\n';
     }
     outputstream2.close();
 
     std::ofstream outputstream3(outputfilename3);
-    outputstream3 << std::setprecision(6);
-    for (int i = 0; i < NUM_TIME_STEPS * NUM_FACTORS; i++) {
-        for (int j = 0; j < 3; j++) {
-            outputstream3 << jointPositionRadius[i * 3 + j] << ' ';
+    outputstream3 << std::setprecision(10);
+    for (int i = 0; i < NUM_TIME_STEPS; i++) {
+        for (int j = 0; j < NUM_JOINTS; j++) {
+            for (int k = 0; k < 3; k++) {
+                for (int l = 0; l < 3 + 3; l++) {
+                    outputstream3 << link_independent_generators[i * NUM_JOINTS + j](k, l) << ' ';
+                }
+                outputstream3 << '\n';
+            }
         }
-        outputstream3 << '\n';
     }
     outputstream3.close();
 

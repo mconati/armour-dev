@@ -7,8 +7,6 @@ class KinematicsDynamics {
 public:
 	BezierCurve* traj = nullptr;
 
-	int tryy = 123;
-
 	Eigen::Array<Eigen::MatrixXd, NUM_JOINTS + 1, 1> trans_matrix;
 	Eigen::Array<Eigen::MatrixXd, NUM_JOINTS, 1> com_matrix;
 
@@ -25,10 +23,6 @@ public:
 	// nominal torque PZs
     PZsparseArray u_nom;
     PZsparseArray u_nom_int;
-
-	// other PZs
-    PZsparseArray r;
-    PZsparseArray Mr;
 
 	KinematicsDynamics() {}
 

@@ -1,7 +1,8 @@
 #ifndef HEADER_H
 #define HEADER_H
 
-#include "cuda_runtime.h"
+#include <cuda_runtime.h>
+#include <cuda_runtime_api.h>
 #include "device_launch_parameters.h"
 #include <cstdio>
 #include <omp.h>
@@ -14,41 +15,42 @@
 #include <fstream>
 #include <cstring>
 #include <boost/numeric/interval.hpp>
+#include <eigen3/Eigen/Dense>
+#include <eigen3/Eigen/Geometry>
 #include <cassert>
 #include <vector>
 #include <cstdint>
 
-// If use double precision floating number
-// single precision floating number is not supported since Ipopt supports double precision by default
-// Just make the following option true
-#define IF_USE_DOUBLE true
-
-#if IF_USE_DOUBLE == true
-	#define TYPE double
-	#define TYPE_MAX DBL_MAX
-	#define TYPE_MIN DBL_MIN
-	#define POW pow
-#else
-	#define TYPE float
-	#define TYPE_MAX FLT_MAX
-	#define TYPE_MIN FLT_MIN
-	#define POW powf
-#endif
-
 #define WARNING_PRINT printf
-#define PRINT printf
 
+// intervals
 namespace bn = boost::numeric;
 namespace bi = bn::interval_lib;
 
 using Interval = bn::interval<
-        TYPE, 
+        double, 
         bi::policies<
-            bi::save_state<bi::rounded_transc_std<TYPE> >,
-            bi::checking_base<TYPE>
+            bi::save_state<bi::rounded_transc_std<double> >,
+            bi::checking_base<double>
         > 
     >;
 
+// interval matrices
+namespace Eigen {
+    namespace internal {
+        template<typename X, typename S, typename P>
+        struct is_convertible<X, bn::interval<S,P> > {
+            enum { value = is_convertible<X,S>::value };
+        };
+
+        template<typename S, typename P1, typename P2>
+        struct is_convertible<bn::interval<S,P1>, bn::interval<S,P2> > {
+            enum { value = true };
+        };
+    }
+}
+
+typedef Eigen::Matrix<Interval, Eigen::Dynamic, Eigen::Dynamic> MatrixXInt;
 
 using std::vector;
 using std::cout;
