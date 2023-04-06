@@ -15,13 +15,13 @@
 
 // Parameters for Trajectories.h:
     // Duration of the Bezier Curve
-    #define DURATION 1.75
+    #define DURATION 1.5
 
     // number of time steps (This should be an EVEN number!!!)
     #define NUM_TIME_STEPS 60
 
     // range of parameters (size of generators in PZ).
-    const double k_range[NUM_FACTORS] = { M_PI / 60, M_PI / 60, M_PI / 60, M_PI / 60, M_PI / 60, M_PI / 60, M_PI / 60 }; // (radian)
+    const double k_range[NUM_FACTORS] = { M_PI / 24, M_PI / 24, M_PI / 60, M_PI / 60, M_PI / 60, M_PI / 60, M_PI / 60 }; // (radian)
 
 // Parameters for CollisionChecking.h:
     // maximum number of obstacles (used for memory pre-allocation)

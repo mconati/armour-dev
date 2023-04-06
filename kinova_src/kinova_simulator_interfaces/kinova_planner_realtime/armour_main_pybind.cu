@@ -105,7 +105,7 @@ class pzsparse {
                 q0[i] = q0_(i);
                 qd0[i] = qd0_(i);
                 qdd0[i] = qdd0_(i);
-                cout << q0[i] << ' ' << qd0[i] << ' ' << qdd0[i] << endl;
+                // cout << q0[i] << ' ' << qd0[i] << ' ' << qdd0[i] << endl;
             }
         }
 
@@ -450,7 +450,7 @@ class pzsparse {
 
         // the pybind is initialized in bulletPlanner.py with the initialization of a armour planner
 
-         int graphCollisionCheck() {
+         py::array_t<double> graphCollisionCheck(Eigen::MatrixXd old_adj_matrix, Eigen::MatrixXd joint_positions) {
             /*
             Eigen::Ref<Eigen::MatrixXd>
 
@@ -458,8 +458,8 @@ class pzsparse {
             matrix is returned.
 
             TODO: 
-            - ensure that the output adjacency matrix is checked. an adjacency matrix with only zeros is returned if an error is thrown.
-            - replace reading the old adjacency matrix from a file to taking in the adjacency matrix from python
+            - replace reading the old adjacency matrix from a file to taking in the adjacency matrix from python. can pass from csr_matrix?
+            - can potentially return directly to csr_matrix? and also pass in from csr_matrix?
             */
 
             std::string output_message = "In C++ graphCollisionCheck";
@@ -499,8 +499,8 @@ class pzsparse {
             // Hard Coded Files (need to be replaced if graph changes)
             const std::string inputfilename2 = pathname_collision + "joint_positions_uniform.csv";
             const std::string inputfilename3 = pathname_collision + "adj_matrix_uniform_mult5.csv";
-            const std::string outputfilename1 = pathname_collision + "node_feasibility.csv";
-            const std::string outputfilename2 = pathname_collision + "link_c.csv";
+            // const std::string outputfilename1 = pathname_collision + "node_feasibility.csv";
+            // const std::string outputfilename2 = pathname_collision + "link_c.csv";
             const std::string outputfilename3 = pathname_collision + "collision_free_adj_matrix.csv";
 
             // O.initialize(obstacles, num_obstacles); // done above
@@ -509,9 +509,10 @@ class pzsparse {
             Eigen::Matrix<double, 3, LINK_FRS_GENERATOR_NUM> link_independent_generators[NUM_NODES_AT_ONE_TIME * NUM_JOINTS];
             double* link_c = new double[NUM_JOINTS * NUM_NODES_AT_ONE_TIME * num_obstacles];
             bool* node_feasibilities = new bool[NUM_NODES];
-            std::ifstream inputstream2(inputfilename2);
-            std::ofstream outputstream1(outputfilename1);
-            std::ofstream outputstream2(outputfilename2);
+            // std::ifstream inputstream2(inputfilename2);
+            // std::ofstream outputstream1(outputfilename1);
+            // std::ofstream outputstream2(outputfilename2);
+
 
             // pre-allocate new adjacency matrix
 
@@ -520,23 +521,71 @@ class pzsparse {
 
             // Eigen::MatrixXd new_adj_matrix = Eigen::MatrixXd::Zero(NUM_EDGES,3);
 
-            // auto new_adj_matrix = py::array_t<double>(NUM_EDGES,3);
-            // double *new_adj_matrix_ptr = static_cast<double *>(new_adj_matrix.request().ptr);
+            auto new_adj_matrix = py::array_t<double>(NUM_EDGES*3);
+            double *new_adj_matrix_ptr = static_cast<double *>(new_adj_matrix.request().ptr);
+
 
             auto start1 = std::chrono::high_resolution_clock::now();
 
+            int joint_positions_node_spacing = 9;
+            int jpns = joint_positions_node_spacing;
             // reading joint positions
             for (int k = 0; k < NUM_NODES / NUM_NODES_AT_ONE_TIME; k++) {
+                // int offset1 = k*NUM_NODES_AT_ONE_TIME-2*k;
+                int set_offset = k*NUM_NODES_AT_ONE_TIME;
                 for (int i = 0; i < NUM_NODES_AT_ONE_TIME; i++) {
                     Eigen::Vector3d pos1;
-                    inputstream2 >> pos1(0) >> pos1(1) >> pos1(2);
+                    // inputstream2 >> pos1(0) >> pos1(1) >> pos1(2);
+                    // extract the base joint position (every 8th in joint positions?)
+                    // pos1(0) = joint_positions(i*jpns+offset1,0);
+                    // pos1(1) = joint_positions(i*jpns+offset1,1);
+                    // pos1(2) = joint_positions(i*jpns+offset1,2);
+                    int first_row = (i+set_offset)*jpns;
+                    pos1(0) = joint_positions(first_row,0);
+                    pos1(1) = joint_positions(first_row,1);
+                    pos1(2) = joint_positions(first_row,2);
                     Eigen::Vector3d pos2;
                     for (int j = 0; j < NUM_JOINTS; j++) {
-                        inputstream2 >> pos2(0) >> pos2(1) >> pos2(2);
+                        // inputstream2 >> pos2(0) >> pos2(1) >> pos2(2);
+                        // pos2(0) = joint_positions(i*jpns+j+offset1,0);
+                        // pos2(1) = joint_positions(i*jpns+j+offset1,1);
+                        // pos2(2) = joint_positions(i*jpns+j+offset1,2);
+                        int curr_row = first_row+j+1;
+                        pos2(0) = joint_positions(curr_row,0);
+                        pos2(1) = joint_positions(curr_row,1);
+                        pos2(2) = joint_positions(curr_row,2);
 
+                        // if (k == 0){
+                        //     if (i == 0){
+                        //         std::cout << pos1(0) << ' ' << pos1(1) << ' ' << pos1(2) << std::endl;
+                        //         std::cout << pos2(0) << ' ' << pos2(1) << ' ' << pos2(2) << std::endl;
+                        //         std::cout << first_row << ' ' << curr_row << std::endl;
+                        //         std::cout << std::endl;
+                        //     }
+                        // }
+                        // if (k == 1){
+                        //     if (i == 0){
+                        //         std::cout << pos1(0) << ' ' << pos1(1) << ' ' << pos1(2) << std::endl;
+                        //         std::cout << pos2(0) << ' ' << pos2(1) << ' ' << pos2(2) << std::endl;
+                        //         std::cout << first_row << ' ' << curr_row << std::endl;
+                        //         std::cout << std::endl;
+                        //     }
+                        // }
+                        // if (k == 2){
+                        //     if (i == 0){
+                        //         std::cout << pos1(0) << ' ' << pos1(1) << ' ' << pos1(2) << std::endl;
+                        //         std::cout << pos2(0) << ' ' << pos2(1) << ' ' << pos2(2) << std::endl;
+                        //         std::cout << first_row << ' ' << curr_row << std::endl;
+                        //         std::cout << std::endl;
+                        //     }
+                        // }
+                        
+                        // form the link zonotope
                         link_sliced_center[i * NUM_JOINTS + j] = 0.5 * (pos1 + pos2);
                         link_independent_generators[i * NUM_JOINTS + j] = 0.5 * (pos1 - pos2);
-
+                        // TODO : ask Bohao why these indices are different than below loop
+                        
+                        // update previous position
                         pos1 = pos2;
                     }
                 }
@@ -549,7 +598,7 @@ class pzsparse {
                 }
                 catch (int errorCode) {
                     WARNING_PRINT("        CUDA & C++: Error initializing collision checking hyperplanes! Check previous error message!");
-                    return -1; // new_adj_matrix;
+                    return new_adj_matrix; // -1; // 
                 }
 
                 /*
@@ -562,19 +611,19 @@ class pzsparse {
                 }
                 catch (int errorCode) {std::
                     WARNING_PRINT("        CUDA & C++: Error peforming collision checking! Check previous error message!");
-                    return -1; // new_adj_matrix;
+                    return new_adj_matrix; // -1; // 
                 }
 
                 /*
                 Section IV:
                     Prepare output
                 */
-                for (int i = 0; i < NUM_NODES_AT_ONE_TIME * num_obstacles; i++) {
-                    for (int j = 0; j < NUM_JOINTS; j++) {
-                        outputstream2 << link_c[j * NUM_NODES_AT_ONE_TIME * num_obstacles + i] << ' ';
-                    }
-                    outputstream2 << '\n';
-                }
+                // for (int i = 0; i < NUM_NODES_AT_ONE_TIME * num_obstacles; i++) {
+                //     for (int j = 0; j < NUM_JOINTS; j++) {
+                //         outputstream2 << link_c[j * NUM_NODES_AT_ONE_TIME * num_obstacles + i] << ' ';
+                //     }
+                //     outputstream2 << '\n';
+                // }
                 for (int i = 0; i < NUM_NODES_AT_ONE_TIME; i++) {
                     bool node_feasibility = true;
                     for (int j = 0; j < NUM_JOINTS; j++) {
@@ -585,7 +634,7 @@ class pzsparse {
                             }
                         }
                     }
-                    outputstream1 << node_feasibility << endl;
+                    // outputstream1 << node_feasibility << endl;
                     node_feasibilities[k * NUM_NODES_AT_ONE_TIME + i] = node_feasibility;
                 }
             }
@@ -595,64 +644,72 @@ class pzsparse {
             cout << "Time taken by peforming collision checking: " << duration1.count() << " milliseconds" << endl;
 
             // building adjacency matrix
-            std::ifstream inputstream3(inputfilename3);
-            std::ofstream outputstream3(outputfilename3);
+            // std::ifstream inputstream3(inputfilename3);
+            // std::ofstream outputstream3(outputfilename3);
 
-
-            if (!node_feasibilities[0]) {
-                // checking 1st node for feasibility as start in hardware
-                std::string output1 = "Start Node is infeasible";
-                std::cout << std::endl << output1 << std::endl;
-            }
-            if (!node_feasibilities[1]) {
-                // checking 2nd node for feasibility as goal in hardware
-                std::string output2 = "Goal Node is infeasible";
-                std::cout << std::endl << output2 << std::endl;
-            }
-            if (!node_feasibilities[13]) {
-                // checking 20th node for feasibility as goal in hardware
-                std::string output3 = "New Goal Node is infeasible";
-                std::cout << std::endl << output3 << std::endl;
-            }
+            // for checking if specific nodes are feasible
+            // if (!node_feasibilities[0]) {
+            //     // checking 1st node for feasibility as start in hardware
+            //     std::string output1 = "Start Node is infeasible";
+            //     std::cout << std::endl << output1 << std::endl;
+            // }
+            // if (!node_feasibilities[1]) {
+            //     // checking 2nd node for feasibility as goal in hardware
+            //     std::string output2 = "Goal Node is infeasible";
+            //     std::cout << std::endl << output2 << std::endl;
+            // }
+            // if (!node_feasibilities[13]) {
+            //     // checking 20th node for feasibility as goal in hardware
+            //     std::string output3 = "New Goal Node is infeasible";
+            //     std::cout << std::endl << output3 << std::endl;
+            // }
             
+            auto start2 = std::chrono::high_resolution_clock::now();
 
             // build the new adjacency matrix
             for (int i = 0; i < NUM_EDGES; i++) {
-                int node_a = 0, node_b = 0; //was int
-                double edge_distance = 0.0;
-                inputstream3 >> node_a >> node_b >> edge_distance; // TODO replace this when passing in old adjacency matrix
+                int node_a = old_adj_matrix(i,0);
+                int node_b = old_adj_matrix(i,1);
+                double edge_distance = old_adj_matrix(i,2);
+                // inputstream3 >> node_a >> node_b >> edge_distance; // TODO replace this when passing in old adjacency matrix
 
                 if (node_feasibilities[node_a] && node_feasibilities[node_b] && edge_distance < EDGE_THRESHOLD) {
                     // new_adj_nodes[i,0] = node_a;
                     // new_adj_nodes[i,1] = node_b;
                     // new_edge_distance[i,0] = edge_distance;
 
-                    // new_adj_matrix(i,0) = (float)node_a;
-                    // new_adj_matrix(i,1) = (float)node_b; // trying to cast
+                    // std::cout << node_a << ' ' << node_b << ' ' << edge_distance << std::endl;
+                    // std::cout << static_cast<float>(node_a) << ' ' << static_cast<float>(node_b) << ' ' << edge_distance << std::endl << std::endl;
+
+                    // new_adj_matrix(i,0) = static_cast<float>(node_a);
+                    // new_adj_matrix(i,1) = static_cast<float>(node_b); // trying to cast
                     // new_adj_matrix(i,2) = edge_distance;
 
-                    // new_adj_matrix_ptr[i,0] = static_cast<float>node_a;
-                    // new_adj_matrix_ptr[i,1] = static_cast<float>node_b; // trying to cast
-                    // new_adj_matrix_ptr[i,2] = edge_distance;
+                    new_adj_matrix_ptr[3*i] = float(node_a);
+                    new_adj_matrix_ptr[3*i+1] = float(node_b); // trying to cast // _ptr
+                    new_adj_matrix_ptr[3*i+2] = edge_distance;
 
                     // std::string output2 = "Feasible Node";
                     // std::cout << output2 << std::endl;
 
-                    outputstream3 << node_a << ' ' << node_b << ' ' << edge_distance << '\n';
+                    // outputstream3 << node_a << ' ' << node_b << ' ' << edge_distance << '\n';
                 }
             }
+            // could potentially parallelize the building of the adjacency matrix if not outputting to file?
 
+            auto stop2 = std::chrono::high_resolution_clock::now();
+            auto duration2 = std::chrono::duration_cast<std::chrono::milliseconds>(stop2 - start2);
+            cout << "Time taken by building new adjacency matrix: " << duration2.count() << " milliseconds" << endl;
 
-
-            inputstream2.close();
-            inputstream3.close();
-            outputstream1.close();
-            outputstream2.close();
-            outputstream3.close();
+            // inputstream2.close();
+            // inputstream3.close();
+            // outputstream1.close();
+            // outputstream2.close();
+            // outputstream3.close();
             delete[] link_c;
             delete[] node_feasibilities;
 
-            return 0; // new_adj_matrix;
+            return new_adj_matrix; // 0; // 
 
         }
 
@@ -681,6 +738,6 @@ PYBIND11_MODULE(armour_main_pybind, m) {
         .def("getDesTraj", &pzsparse::getDesTraj)
         .def("setDataDir", &pzsparse::set_datadir)
         .def("getDataDir", &pzsparse::get_datadir)
-        .def("graphCollisionCheck", &pzsparse::graphCollisionCheck);
+        .def("graphCollisionCheck", &pzsparse::graphCollisionCheck, py::return_value_policy::copy); // reference_internal
         // .def("free", &pzsparse::free);
 }
