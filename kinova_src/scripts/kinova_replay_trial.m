@@ -1,8 +1,8 @@
 %% user parameters
 close all; clear; clc;
 
-file_location = '../results/random_armtd/' ;
-scene_idx = 44;
+file_location = '../results/hard_SL/' ;
+scene_idx = 2;
 
 verbosity = 0 ;
 dimension = 3 ;

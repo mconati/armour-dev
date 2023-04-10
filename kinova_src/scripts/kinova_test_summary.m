@@ -16,6 +16,9 @@ file_location = '../results/random_24pi' ;
 % file_location = '../results/random_turnoffinputconstraints' ;
 % file_location = '../results/random_turnoffinputconstraints_24pi' ;
 % file_location = '../results/hard' ;
+% file_location = '../results/hard_SL' ;
+% file_location = '../results/hard_armtd' ;
+% file_location = '../results/hard_armtd_SL' ;
 % file_location = '../results/hard_turnoffinputconstraints' ;
 addpath(file_location);
 

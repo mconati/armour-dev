@@ -26,7 +26,7 @@ dimension = 3 ;
 verbosity = 10;
 
 %%% for planner
-traj_type = 'bernstein'; % pick 'orig' or 'bernstein'
+traj_type = 'orig'; % pick 'orig' or 'bernstein'
 allow_replan_errors = true ;
 first_iter_pause_flag = false;
 use_q_plan_for_cost = false; % otherwise use q_stop (q at final time)
@@ -66,9 +66,9 @@ stop_threshold = 4 ; % number of failed iterations before exiting
 
 % file handling
 save_file_header = 'trial_' ;
-file_location = '../results/random_24pi/' ;
+% file_location = '../results/random_24pi/' ;
 % file_location = '../results/random_turnoffinputconstraints/' ;
-% file_location = '../results/random_armtd/' ;
+file_location = '../results/random_armtd/' ;
 if ~exist(file_location, 'dir')
     mkdir(file_location);
 end
@@ -98,7 +98,7 @@ use_cuda_flag = true;
 
 %% automated from here
 % run loop
-for idx = 12:length(world_file_list)
+for idx = 1:length(world_file_list)
     clc; 
     fprintf("THIS IS WORLD %d\n\n", idx);
 

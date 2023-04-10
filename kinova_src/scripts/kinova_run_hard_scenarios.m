@@ -50,7 +50,7 @@ use_true_params_for_robust = false;
 if_use_mex_controller = true;
 
 %%% for HLP
-if_use_RRT = true;
+if_use_RRT = false;
 HLP_grow_tree_mode = 'keep' ; % pick 'new' or 'keep'
 plot_HLP_flag = true ;
 plot_waypoint_flag = true ;
@@ -68,7 +68,9 @@ stop_threshold = 4 ; % number of failed iterations before exiting
 % file handling
 save_file_header = 'trial_' ;
 % file_location = '../results/hard/' ;
-file_location = '../results/hard_24pi/' ;
+file_location = '../results/hard_SL/' ;
+% file_location = '../results/hard_armtd_SL/' ;
+% file_location = '../results/hard_24pi/' ;
 % file_location = '../results/hard_turnoffinputconstraints/' ;
 if ~exist(file_location, 'dir')
     mkdir(file_location);
@@ -189,5 +191,5 @@ for idx = 1:7
     
     % save summary
     filename = [file_location,'/',save_file_header,num2str(idx),'.mat'] ;
-    save(filename, 'summary') ;
+    save(filename, 'summary', 'A', 'P', 'W') ;
 end

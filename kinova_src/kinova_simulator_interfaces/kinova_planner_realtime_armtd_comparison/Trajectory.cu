@@ -40,7 +40,7 @@ void ConstantAccelerationCurve::makePolyZono(int t_ind) {
         cos_q_des_coeff[0] = cos_q0 * g_cos_q_des[i * NUM_TIME_STEPS + t_ind] - sin_q0 * g_sin_q_des[i * NUM_TIME_STEPS + t_ind];
         cos_q_des_coeff[1] = fabs(cos_q0) * r_cos_q_des[i * NUM_TIME_STEPS + t_ind] + fabs(sin_q0) * r_sin_q_des[i * NUM_TIME_STEPS + t_ind];
 
-        cos_q_des_coeff[1] *= 2.5;
+        cos_q_des_coeff[1] *= 5.0;
 
         uint64_t cos_q_des_degree[2][NUM_FACTORS * 6] = {0};
         cos_q_des_degree[0][i] = 1; // k
@@ -53,7 +53,7 @@ void ConstantAccelerationCurve::makePolyZono(int t_ind) {
         sin_q_des_coeff[0] = cos_q0 * g_sin_q_des[i * NUM_TIME_STEPS + t_ind] + sin_q0 * g_cos_q_des[i * NUM_TIME_STEPS + t_ind];
         sin_q_des_coeff[1] = fabs(cos_q0) * r_sin_q_des[i * NUM_TIME_STEPS + t_ind] + fabs(sin_q0) * r_cos_q_des[i * NUM_TIME_STEPS + t_ind];
 
-        sin_q_des_coeff[1] *= 2.5;
+        sin_q_des_coeff[1] *= 5.0;
 
         uint64_t sin_q_des_degree[2][NUM_FACTORS * 6] = {0};
         sin_q_des_degree[0][i] = 1; // k
