@@ -14,6 +14,7 @@ classdef uarmtd_robust_CBF_LLC < robot_arm_LLC
         ultimate_bound_position;
         ultimate_bound_velocity;
         if_use_mex_controller = false;
+        saturate_input = false;
     end
     
     methods
@@ -170,6 +171,10 @@ classdef uarmtd_robust_CBF_LLC < robot_arm_LLC
                         true_V = V;
                     end
                 end
+            end
+
+            if LLC.saturate_input
+                u = min(max(u, A.joint_input_limits(1,:)'), A.joint_input_limits(2,:)');
             end
         end
         
