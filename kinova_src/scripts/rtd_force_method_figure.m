@@ -473,7 +473,83 @@ end
 
 %% Plotting Animation of Friction Cone in 3D
 
+plot_idx = plot_idx + 1;
+fig1 = figure(plot_idx); 
+clf; hold on;
+title('Friction Cone 3D Plot')
 
+for i = 1:1:length(t_traj)
+
+    % plot the overapproximation
+    f_int_convHull = convHull(f_int{i});
+    f_int_zono = zonotope(f_int_convHull);
+    f_int_reduce = reduce(f_int_zono,'girard',1);
+%     fc1 = plot(f_int_reduce, [1,2,3]); %,[1,2,3],'Splits',1); %,'Filled',true);
+%     fc1.LineWidth = 0.1;
+%     fc1.FaceColor = slice_color;
+%     fc1.FaceAlpha = 0.3;
+%     fc1.EdgeAlpha = 0.3;
+
+    % TODO: can plot the force PZ by getting the inf, sup for each and using fill3? or patch?
+    V = vertices(f_int_reduce)';
+    [V_convhull, V_slc] = convhull(V(:,1),V(:,2),V(:,3));
+%     trisurf(V_convhull,V(:,1),V(:,2),V(:,3),'FaceColor',unsliced_color,'FaceAlpha',0.03,'EdgeAlpha',0.1)
+
+    % plot the sliced overapproximation
+    % TODO: plot the sliced overapproximation
+    f_sliced_2 = getSubset(f_int{i},f_int{i}.id,kvec(f_int{i}.id));
+    f_int_convHull = convHull(f_sliced_2);
+    f_int_zono = zonotope(f_int_convHull);
+    f_int_reduce = reduce(f_int_zono,'girard',1);
+    V = vertices(f_int_reduce)';
+    [V_convhull, V_slc] = convhull(V(:,1),V(:,2),V(:,3));
+    trisurf(V_convhull,V(:,1),V(:,2),V(:,3),'FaceColor',slice_color,'FaceAlpha',0.3,'EdgeAlpha',0.0)
+
+    % plot the nominal value
+%     plot3(f_nom(1,i),f_nom(2,i),f_nom(3,i),'xk')
+end
+
+
+fric_cone_filename = 'Friction_Cone_Animation_v1.gif';
+
+for i = 1:length(t_steps)
+
+    % plot the friction cone
+    r = linspace(0,1,10);
+    theta = linspace(0,2*pi,50);
+    [RR,Theta] = meshgrid(r,theta);
+    X = RR.*cos(Theta);
+    Y = RR.*sin(Theta);
+    Z = 1./u_s.*RR;
+    h1 = surf(X,Y,Z,'EdgeColor','none','FaceColor','r','FaceAlpha','0.05');
+    
+    % plotting of the friction cone at the z-level
+    theta_friction = linspace(0,2*pi,100);
+    r_friction = f_nom(3,i)*u_s;
+    plot3(r_friction*cos(theta_friction),r_friction*sin(theta_friction),f_nom(3,i)*ones(1,length(theta_friction)),'-r')
+
+    % plotting continuous force trajectory
+    % time
+    t_cont = linspace((i-1)/40,i/40); % 1/40 for a single iteration
+    % desired trajectory
+    for j = 1:length(t_cont)
+        [q_cont_des(:,j), qd_cont_des(:,j), qdd_cont_des(:,j)] = desired_trajectory(P, q_0, qd_0, qdd_0, t_cont(j), kvec);
+        % rnea
+        [u_temp f_temp n_temp] = rnea(q_cont_des(:,j), qd_cont_des(:,j), qd_cont_des(:,j), qdd_cont_des(:,j), true, params.nominal);
+    %     tau_int{i} = tau_temp{10,1};
+        f_cont(:,j) = f_temp(:,10);
+        n_cont(:,j) = n_temp(:,10);
+    end
+    plot3(f_cont(1,:),f_cont(2,:),f_cont(3,:),'-k', 'LineWidth', 3)
+
+    % plot formatting
+    xlabel('x-axis Tangential Force (N)')
+    ylabel('y-axis Tangential Force (N)')
+    zlabel('z-axis Normal Force (N)')
+    grid on
+    axis('square')
+    make_animation( fig1,i,fric_cone_filename )
+end
 
 %% Plotting ZMP Diagram
 

@@ -17,7 +17,7 @@
         <mesh filename="meshes/base_link.obj"/>
       </geometry>
       <material name="">
-        <color rgba="0.75294 0.75294 0.75294 1"/>
+        <color rgba="1 1 1 0"/>
       </material>
     </visual>
     <collision>
@@ -40,7 +40,7 @@
         <mesh filename="meshes/shoulder_link.obj"/>
       </geometry>
       <material name="">
-        <color rgba="0.75294 0.75294 0.75294 1"/>
+        <color rgba="1 1 1 0"/>
       </material>
     </visual>
     <collision>
@@ -71,7 +71,7 @@
         <mesh filename="meshes/half_arm_1_link.obj"/>
       </geometry>
       <material name="">
-        <color rgba="0.75294 0.75294 0.75294 1"/>
+        <color rgba="1 1 1 0"/>
       </material>
     </visual>
     <collision>
@@ -102,7 +102,7 @@
         <mesh filename="meshes/half_arm_2_link.obj"/>
       </geometry>
       <material name="">
-        <color rgba="0.75294 0.75294 0.75294 1"/>
+        <color rgba="1 1 1 0"/>
       </material>
     </visual>
     <collision>
@@ -133,7 +133,7 @@
         <mesh filename="meshes/forearm_link.obj"/>
       </geometry>
       <material name="">
-        <color rgba="0.75294 0.75294 0.75294 1"/>
+        <color rgba="1 1 1 0"/>
       </material>
     </visual>
     <collision>
@@ -164,7 +164,7 @@
         <mesh filename="meshes/spherical_wrist_1_link.obj"/>
       </geometry>
       <material name="">
-        <color rgba="0.75294 0.75294 0.75294 1"/>
+        <color rgba="1 1 1 0"/>
       </material>
     </visual>
     <collision>
@@ -195,7 +195,7 @@
         <mesh filename="meshes/spherical_wrist_2_link.obj"/>
       </geometry>
       <material name="">
-        <color rgba="0.75294 0.75294 0.75294 1"/>
+        <color rgba="1 1 1 0"/>
       </material>
     </visual>
     <collision>
@@ -227,7 +227,7 @@
         <mesh filename="meshes/bracelet_with_vision_link.obj"/>
       </geometry>
       <material name="">
-        <color rgba="0.75294 0.75294 0.75294 1"/>
+        <color rgba="1 1 1 0"/>
       </material>
     </visual>
     <collision>
@@ -271,7 +271,7 @@
         <mesh filename="meshes/base_of_gripper.obj"/>
       </geometry>
       <material name="">
-        <color rgba="0.89804 0.91765 0.92941 0.25"/>
+        <color rgba="0 0 0 0"/>
       </material>
     </visual>
     <collision>
@@ -302,7 +302,7 @@
         <mesh filename="meshes/circ_tray_hardware_shift_scale_v4.obj" /> <!-- need to be updated -->
       </geometry>
       <material name="">
-      <color rgba="1 1 1 1" />
+      <color rgba="0.3059 0.2078 0.1412 1" />
       </material>
     </visual>
     <collision>
@@ -333,7 +333,7 @@
           <!-- scale="0.001 0.001 0.001" -->
       </geometry>
       <material name="">
-        <color rgba="1 1 1 1" />
+        <color rgba="1 1 1 0" />
       </material>
     </visual>
     <collision>
