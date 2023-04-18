@@ -27,7 +27,7 @@ traj_type = 'bernstein'; % pick 'orig' (ARMTD) or 'bernstein' (ARMOUR)
 use_cuda_flag = false;
 
 %%% for agent
-agent_urdf = 'Kinova_Grasp_URDF.urdf';
+agent_urdf = 'Kinova_Grasp_w_Tray.urdf';
 
 add_uncertainty_to = 'all'; % choose 'all', 'link', or 'none'
 links_with_uncertainty = {}; % if add_uncertainty_to = 'link', specify links here.
@@ -112,6 +112,9 @@ joint_input_limits = [-56.7, -56.7, -56.7, -56.7, -29.4, -29.4, -29.4;
                        56.7,  56.7,  56.7,  56.7,  29.4,  29.4,  29.4]; % matlab doesn't import these from urdf so hard code into class
 transmision_inertia = [8.02999999999999936 11.99620246153036440 9.00254278617515169 11.58064393167063599 8.46650409179141228 8.85370693737424297 8.85873036646853151]; % matlab doesn't import these from urdf so hard code into class
 M_min_eigenvalue = 8.29938; % matlab doesn't import these from urdf so hard code into class
+
+figure(101)
+show(robot)
 
 %% automated from here
 if plot_while_running
