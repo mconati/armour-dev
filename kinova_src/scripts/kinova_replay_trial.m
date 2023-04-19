@@ -3,7 +3,7 @@ clear;
 % close(2,3)
 
 % filename = 'trial_scene_059_.mat';
-filename = ['trial_scene_010_008.csv.mat'];
+filename = ['trial_scene_010_034.csv.mat'];
 
 verbosity = 0 ;
 dimension = 3 ;
