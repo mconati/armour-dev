@@ -96,13 +96,18 @@ time_to_slice = 6;
 
 %% compute trajectories
 % initial conditions
-q_0 = [0;-pi/4;0;-pi/2;0;pi/4;0];
-qd_0= [-pi/3;-pi/12;0;0;0;0;0];
-qdd_0 = [pi/3;-pi/6;0;0;0;0;-pi/24];
+% old figure
+% q_0 = [0;-pi/4;0;-pi/2;0;pi/4;0];
+% qd_0= [-pi/3;-pi/12;0;0;0;0;0];
+% qdd_0 = [pi/3;-pi/6;0;0;0;0;-pi/24];
+% new figure
+q_0 = [pi/4;-pi/4;0;-pi/2;0;pi/4;0];
+qd_0= [0;pi/30;0;0;0;0;0];
+qdd_0 = [0;pi/30;0;0;0;0;0];
 
 % clf(101)
-% figure(101)
-% show(robot,q_0)
+figure(101)
+show(robot,q_0)
 
 % create pz trajectories
 joint_axes = [zeros(2, length(q_0)); ones(1, length(q_0))]; % Question: what is this?
@@ -115,7 +120,10 @@ add_ultimate_bound = true;
 %%
 
 % trajectory parameter
-kvec = [0.6; -0.8; 0.5; -0.2; -0.4; 0.35; 0.34];
+% old figure
+% kvec = [0.6; -0.8; 0.5; -0.2; -0.4; 0.35; 0.34];
+% new figure
+kvec = [0; 0.5; 0.0; 0.5; 0.0; 0.5; 0];
 % kvec = [-1;-1;-1;-1;-1;-1;-1];
 % kvec = [1;1;1;1;1;1;1];
 
@@ -194,7 +202,7 @@ end
 
 %% Calculating the PZ Force Constraints
 
-for i = 1:length(t_traj)
+for i = 1:floor(length(t_traj)/2)
 
     % separation constraint
     sep_PZ{1,i} = -1*f_int{1,i};
@@ -242,7 +250,7 @@ sep_nom = -1*f_nom(3,:);
 slip_nom = sqrt(f_nom(1,:).^2+f_nom(2,:).^2) - u_s.*abs(f_nom(3,:));
 slip2_nom = f_nom(1,:).^2+f_nom(2,:).^2 - u_s^2.*f_nom(3,:).^2;
 
-for i = 1:length(t_steps)
+for i = 1:floor(length(t_steps)/2)
     % tipping constraint the normal way
     ZMP_top = cross([0;0;1],n_nom(:,i)); % normal vector should come first
     ZMP_bottom = dot([0;0;1],f_nom(:,i));
@@ -267,7 +275,7 @@ if plot_force_trajectory
     figure(plot_idx); clf; hold on;
     title('Contact Joint z-Axis Force')
 
-    for i = 1:length(t_traj)
+    for i = 1:floor(length(t_traj)/2)
         % plot the polynomial overapproximation
         % calculate the inf/sup
         if f_int{1,i}.G
@@ -296,7 +304,7 @@ if plot_force_trajectory
 %     figure(plot_idx); clf; hold on;
 %     title('Force Plot: Last Joint')
 
-    for i = 1:length(t_traj)
+    for i = 1:floor(length(t_traj)/2)
         f_sliced{1,i} = getSubset(f_int{1,i}, f_int{1,i}.id, kvec(f_int{1,i}.id));
         if f_sliced{1,i}.G
             poly_inf = f_sliced{1,i}.c(force) - sum(abs(f_sliced{1,i}.G(force,:))) - sum(abs(f_sliced{1,i}.Grest(force,:)));
@@ -353,7 +361,7 @@ set(fp_bound,'Color','r') % ,'EdgeAlpha',0.3)
 % end
 
 % plot the unsliced force overapproximation
-for i = 1:length(t_traj)
+for i = 1:floor(length(t_traj)/2)
     fp1 = plot(f_int{i},[1,2],'Filled',true,'FaceColor',unsliced_color);
     fp1.LineWidth = 0.1;
     fp1.FaceColor = unsliced_color;
@@ -367,7 +375,7 @@ end
 % title('Friction Cone Sliced Plot')
 
 % plot sliced force overapproximation
-for i = 1:length(t_traj)
+for i = 1:floor(length(t_traj)/2)
     % slice
     f_sliced{i} = getSubset(f_int{i},f_int{i}.id,kvec(f_int{i}.id));
     % plot
@@ -379,177 +387,179 @@ for i = 1:length(t_traj)
 end
 
 % plotting the nominal values
-% for i = 1:length(t_steps)
-plot(f_nom(1,:),f_nom(2,:),'-k')
+% for i = 1:floor(length(t_steps)/2)
+num = floor(length(t_steps)/2);
+plot(f_nom(1,1:num),f_nom(2,1:num),'-k')
 % end
 
 xlabel('x-axis Force (N)')
 ylabel('y-axis Force (N)')
 set(gca,'FontSize',fontsize)
 axis square
+axis equal
 
 %% Plotting Friction Cone and Force PZ in 3D
 
-plot_idx = plot_idx + 1;
-figure(plot_idx); clf; hold on;
-title('Friction Cone 3D Plot')
-
-% calculating continuous force trajectory
-% time
-t_cont = linspace(0,1/40); % 1/40 for a single iteration
-% desired trajectory
-for i = 1:length(t_cont)
-    [q_cont_des(:,i), qd_cont_des(:,i), qdd_cont_des(:,i)] = desired_trajectory(P, q_0, qd_0, qdd_0, t_cont(i), kvec);
-    % rnea
-    [u_temp f_temp n_temp] = rnea(q_cont_des(:,i), qd_cont_des(:,i), qd_cont_des(:,i), qdd_cont_des(:,i), true, params.nominal);
-%     tau_int{i} = tau_temp{10,1};
-    f_cont(:,i) = f_temp(:,10);
-    n_cont(:,i) = n_temp(:,10);
-end
-
-% plot the nominal trajectory
-plot3(f_cont(1,:),f_cont(2,:),f_cont(3,:),'-k', 'LineWidth', 3)
-
-for i = 1:1:length(t_traj)
-
-    % plot the overapproximation
-    f_int_convHull = convHull(f_int{i});
-    f_int_zono = zonotope(f_int_convHull);
-    f_int_reduce = reduce(f_int_zono,'girard',1);
-%     fc1 = plot(f_int_reduce, [1,2,3]); %,[1,2,3],'Splits',1); %,'Filled',true);
-%     fc1.LineWidth = 0.1;
-%     fc1.FaceColor = slice_color;
-%     fc1.FaceAlpha = 0.3;
-%     fc1.EdgeAlpha = 0.3;
-
-    % TODO: can plot the force PZ by getting the inf, sup for each and using fill3? or patch?
-    V = vertices(f_int_reduce)';
-    [V_convhull, V_slc] = convhull(V(:,1),V(:,2),V(:,3));
-%     trisurf(V_convhull,V(:,1),V(:,2),V(:,3),'FaceColor',unsliced_color,'FaceAlpha',0.03,'EdgeAlpha',0.1)
-
-    % plot the sliced overapproximation
-    % TODO: plot the sliced overapproximation
-    f_sliced_2 = getSubset(f_int{i},f_int{i}.id,kvec(f_int{i}.id));
-    f_int_convHull = convHull(f_sliced_2);
-    f_int_zono = zonotope(f_int_convHull);
-    f_int_reduce = reduce(f_int_zono,'girard',1);
-    V = vertices(f_int_reduce)';
-    [V_convhull, V_slc] = convhull(V(:,1),V(:,2),V(:,3));
-    trisurf(V_convhull,V(:,1),V(:,2),V(:,3),'FaceColor',slice_color,'FaceAlpha',0.3,'EdgeAlpha',0.0)
-
-    % plot the nominal value
-%     plot3(f_nom(1,i),f_nom(2,i),f_nom(3,i),'xk')
-end
-
-% plot the friction cone
-r = linspace(0,1,10);
-theta = linspace(0,2*pi,50);
-[RR,Theta] = meshgrid(r,theta);
-X = RR.*cos(Theta);
-Y = RR.*sin(Theta);
-Z = 1./u_s.*RR;
-h1 = surf(X,Y,Z,'EdgeColor','none','FaceColor','r','FaceAlpha','0.05');
-xlabel('x-axis Tangential Force (N)')
-ylabel('y-axis Tangential Force (N)')
-zlabel('z-axis Normal Force (N)')
-axis('square')
-grid on
-% view(0,0)
-
-% plotting the friction cone slices
-for i = 1:length(t_steps)
-    % need to add plotting of the friction cone at the z-level
-    theta_friction = linspace(0,2*pi,100);
-    r_friction = f_nom(3,i)*u_s;
-    plot3(r_friction*cos(theta_friction),r_friction*sin(theta_friction),f_nom(3,i)*ones(1,length(theta_friction)),'-r')
-
-    axis('square')
-    xlabel('x-axis Force (N)')
-    ylabel('y-axis Force (N)')
-
-end
-
-% plot full red rings at proper z-slices of the friction cone
+% plot_idx = plot_idx + 1;
+% figure(plot_idx); clf; hold on;
+% title('Friction Cone 3D Plot')
+% 
+% % calculating continuous force trajectory
+% % time
+% t_cont = linspace(0,1/40); % 1/40 for a single iteration
+% % desired trajectory
+% for i = 1:length(t_cont)
+%     [q_cont_des(:,i), qd_cont_des(:,i), qdd_cont_des(:,i)] = desired_trajectory(P, q_0, qd_0, qdd_0, t_cont(i), kvec);
+%     % rnea
+%     [u_temp f_temp n_temp] = rnea(q_cont_des(:,i), qd_cont_des(:,i), qd_cont_des(:,i), qdd_cont_des(:,i), true, params.nominal);
+% %     tau_int{i} = tau_temp{10,1};
+%     f_cont(:,i) = f_temp(:,10);
+%     n_cont(:,i) = n_temp(:,10);
+% end
+% 
+% % plot the nominal trajectory
+% plot3(f_cont(1,:),f_cont(2,:),f_cont(3,:),'-k', 'LineWidth', 3)
+% 
+% for i = 1:1:length(t_traj)
+% 
+%     % plot the overapproximation
+%     f_int_convHull = convHull(f_int{i});
+%     f_int_zono = zonotope(f_int_convHull);
+%     f_int_reduce = reduce(f_int_zono,'girard',1);
+% %     fc1 = plot(f_int_reduce, [1,2,3]); %,[1,2,3],'Splits',1); %,'Filled',true);
+% %     fc1.LineWidth = 0.1;
+% %     fc1.FaceColor = slice_color;
+% %     fc1.FaceAlpha = 0.3;
+% %     fc1.EdgeAlpha = 0.3;
+% 
+%     % TODO: can plot the force PZ by getting the inf, sup for each and using fill3? or patch?
+%     V = vertices(f_int_reduce)';
+%     [V_convhull, V_slc] = convhull(V(:,1),V(:,2),V(:,3));
+% %     trisurf(V_convhull,V(:,1),V(:,2),V(:,3),'FaceColor',unsliced_color,'FaceAlpha',0.03,'EdgeAlpha',0.1)
+% 
+%     % plot the sliced overapproximation
+%     % TODO: plot the sliced overapproximation
+%     f_sliced_2 = getSubset(f_int{i},f_int{i}.id,kvec(f_int{i}.id));
+%     f_int_convHull = convHull(f_sliced_2);
+%     f_int_zono = zonotope(f_int_convHull);
+%     f_int_reduce = reduce(f_int_zono,'girard',1);
+%     V = vertices(f_int_reduce)';
+%     [V_convhull, V_slc] = convhull(V(:,1),V(:,2),V(:,3));
+%     trisurf(V_convhull,V(:,1),V(:,2),V(:,3),'FaceColor',slice_color,'FaceAlpha',0.3,'EdgeAlpha',0.0)
+% 
+%     % plot the nominal value
+% %     plot3(f_nom(1,i),f_nom(2,i),f_nom(3,i),'xk')
+% end
+% 
+% % plot the friction cone
+% r = linspace(0,1,10);
+% theta = linspace(0,2*pi,50);
+% [RR,Theta] = meshgrid(r,theta);
+% X = RR.*cos(Theta);
+% Y = RR.*sin(Theta);
+% Z = 1./u_s.*RR;
+% h1 = surf(X,Y,Z,'EdgeColor','none','FaceColor','r','FaceAlpha','0.05');
+% xlabel('x-axis Tangential Force (N)')
+% ylabel('y-axis Tangential Force (N)')
+% zlabel('z-axis Normal Force (N)')
+% axis('square')
+% grid on
+% % view(0,0)
+% 
+% % plotting the friction cone slices
+% for i = 1:length(t_steps)
+%     % need to add plotting of the friction cone at the z-level
+%     theta_friction = linspace(0,2*pi,100);
+%     r_friction = f_nom(3,i)*u_s;
+%     plot3(r_friction*cos(theta_friction),r_friction*sin(theta_friction),f_nom(3,i)*ones(1,length(theta_friction)),'-r')
+% 
+%     axis('square')
+%     xlabel('x-axis Force (N)')
+%     ylabel('y-axis Force (N)')
+% 
+% end
+% 
+% % plot full red rings at proper z-slices of the friction cone
 
 %% Plotting Animation of Friction Cone in 3D
 
-plot_idx = plot_idx + 1;
-fig1 = figure(plot_idx); 
-clf; hold on;
-title('Friction Cone 3D Plot')
-
-for i = 1:1:length(t_traj)
-
-    % plot the overapproximation
-    f_int_convHull = convHull(f_int{i});
-    f_int_zono = zonotope(f_int_convHull);
-    f_int_reduce = reduce(f_int_zono,'girard',1);
-%     fc1 = plot(f_int_reduce, [1,2,3]); %,[1,2,3],'Splits',1); %,'Filled',true);
-%     fc1.LineWidth = 0.1;
-%     fc1.FaceColor = slice_color;
-%     fc1.FaceAlpha = 0.3;
-%     fc1.EdgeAlpha = 0.3;
-
-    % TODO: can plot the force PZ by getting the inf, sup for each and using fill3? or patch?
-    V = vertices(f_int_reduce)';
-    [V_convhull, V_slc] = convhull(V(:,1),V(:,2),V(:,3));
-%     trisurf(V_convhull,V(:,1),V(:,2),V(:,3),'FaceColor',unsliced_color,'FaceAlpha',0.03,'EdgeAlpha',0.1)
-
-    % plot the sliced overapproximation
-    % TODO: plot the sliced overapproximation
-    f_sliced_2 = getSubset(f_int{i},f_int{i}.id,kvec(f_int{i}.id));
-    f_int_convHull = convHull(f_sliced_2);
-    f_int_zono = zonotope(f_int_convHull);
-    f_int_reduce = reduce(f_int_zono,'girard',1);
-    V = vertices(f_int_reduce)';
-    [V_convhull, V_slc] = convhull(V(:,1),V(:,2),V(:,3));
-    trisurf(V_convhull,V(:,1),V(:,2),V(:,3),'FaceColor',slice_color,'FaceAlpha',0.3,'EdgeAlpha',0.0)
-
-    % plot the nominal value
-%     plot3(f_nom(1,i),f_nom(2,i),f_nom(3,i),'xk')
-end
-
-
-fric_cone_filename = 'Friction_Cone_Animation_v1.gif';
-
-for i = 1:length(t_steps)
-
-    % plot the friction cone
-    r = linspace(0,1,10);
-    theta = linspace(0,2*pi,50);
-    [RR,Theta] = meshgrid(r,theta);
-    X = RR.*cos(Theta);
-    Y = RR.*sin(Theta);
-    Z = 1./u_s.*RR;
-    h1 = surf(X,Y,Z,'EdgeColor','none','FaceColor','r','FaceAlpha','0.05');
-    
-    % plotting of the friction cone at the z-level
-    theta_friction = linspace(0,2*pi,100);
-    r_friction = f_nom(3,i)*u_s;
-    plot3(r_friction*cos(theta_friction),r_friction*sin(theta_friction),f_nom(3,i)*ones(1,length(theta_friction)),'-r')
-
-    % plotting continuous force trajectory
-    % time
-    t_cont = linspace((i-1)/40,i/40); % 1/40 for a single iteration
-    % desired trajectory
-    for j = 1:length(t_cont)
-        [q_cont_des(:,j), qd_cont_des(:,j), qdd_cont_des(:,j)] = desired_trajectory(P, q_0, qd_0, qdd_0, t_cont(j), kvec);
-        % rnea
-        [u_temp f_temp n_temp] = rnea(q_cont_des(:,j), qd_cont_des(:,j), qd_cont_des(:,j), qdd_cont_des(:,j), true, params.nominal);
-    %     tau_int{i} = tau_temp{10,1};
-        f_cont(:,j) = f_temp(:,10);
-        n_cont(:,j) = n_temp(:,10);
-    end
-    plot3(f_cont(1,:),f_cont(2,:),f_cont(3,:),'-k', 'LineWidth', 3)
-
-    % plot formatting
-    xlabel('x-axis Tangential Force (N)')
-    ylabel('y-axis Tangential Force (N)')
-    zlabel('z-axis Normal Force (N)')
-    grid on
-    axis('square')
-    make_animation( fig1,i,fric_cone_filename )
-end
+% plot_idx = plot_idx + 1;
+% fig1 = figure(plot_idx); 
+% clf; hold on;
+% title('Friction Cone 3D Plot')
+% 
+% for i = 1:1:length(t_traj)
+% 
+%     % plot the overapproximation
+%     f_int_convHull = convHull(f_int{i});
+%     f_int_zono = zonotope(f_int_convHull);
+%     f_int_reduce = reduce(f_int_zono,'girard',1);
+% %     fc1 = plot(f_int_reduce, [1,2,3]); %,[1,2,3],'Splits',1); %,'Filled',true);
+% %     fc1.LineWidth = 0.1;
+% %     fc1.FaceColor = slice_color;
+% %     fc1.FaceAlpha = 0.3;
+% %     fc1.EdgeAlpha = 0.3;
+% 
+%     % TODO: can plot the force PZ by getting the inf, sup for each and using fill3? or patch?
+%     V = vertices(f_int_reduce)';
+%     [V_convhull, V_slc] = convhull(V(:,1),V(:,2),V(:,3));
+% %     trisurf(V_convhull,V(:,1),V(:,2),V(:,3),'FaceColor',unsliced_color,'FaceAlpha',0.03,'EdgeAlpha',0.1)
+% 
+%     % plot the sliced overapproximation
+%     % TODO: plot the sliced overapproximation
+%     f_sliced_2 = getSubset(f_int{i},f_int{i}.id,kvec(f_int{i}.id));
+%     f_int_convHull = convHull(f_sliced_2);
+%     f_int_zono = zonotope(f_int_convHull);
+%     f_int_reduce = reduce(f_int_zono,'girard',1);
+%     V = vertices(f_int_reduce)';
+%     [V_convhull, V_slc] = convhull(V(:,1),V(:,2),V(:,3));
+%     trisurf(V_convhull,V(:,1),V(:,2),V(:,3),'FaceColor',slice_color,'FaceAlpha',0.3,'EdgeAlpha',0.0)
+% 
+%     % plot the nominal value
+% %     plot3(f_nom(1,i),f_nom(2,i),f_nom(3,i),'xk')
+% end
+% 
+% 
+% fric_cone_filename = 'Friction_Cone_Animation_v1.gif';
+% 
+% for i = 1:length(t_steps)
+% 
+%     % plot the friction cone
+%     r = linspace(0,1,10);
+%     theta = linspace(0,2*pi,50);
+%     [RR,Theta] = meshgrid(r,theta);
+%     X = RR.*cos(Theta);
+%     Y = RR.*sin(Theta);
+%     Z = 1./u_s.*RR;
+%     h1 = surf(X,Y,Z,'EdgeColor','none','FaceColor','r','FaceAlpha','0.05');
+%     
+%     % plotting of the friction cone at the z-level
+%     theta_friction = linspace(0,2*pi,100);
+%     r_friction = f_nom(3,i)*u_s;
+%     plot3(r_friction*cos(theta_friction),r_friction*sin(theta_friction),f_nom(3,i)*ones(1,length(theta_friction)),'-r')
+% 
+%     % plotting continuous force trajectory
+%     % time
+%     t_cont = linspace((i-1)/40,i/40); % 1/40 for a single iteration
+%     % desired trajectory
+%     for j = 1:length(t_cont)
+%         [q_cont_des(:,j), qd_cont_des(:,j), qdd_cont_des(:,j)] = desired_trajectory(P, q_0, qd_0, qdd_0, t_cont(j), kvec);
+%         % rnea
+%         [u_temp f_temp n_temp] = rnea(q_cont_des(:,j), qd_cont_des(:,j), qd_cont_des(:,j), qdd_cont_des(:,j), true, params.nominal);
+%     %     tau_int{i} = tau_temp{10,1};
+%         f_cont(:,j) = f_temp(:,10);
+%         n_cont(:,j) = n_temp(:,10);
+%     end
+%     plot3(f_cont(1,:),f_cont(2,:),f_cont(3,:),'-k', 'LineWidth', 3)
+% 
+%     % plot formatting
+%     xlabel('x-axis Tangential Force (N)')
+%     ylabel('y-axis Tangential Force (N)')
+%     zlabel('z-axis Normal Force (N)')
+%     grid on
+%     axis('square')
+%     make_animation( fig1,i,fric_cone_filename )
+% end
 
 %% Plotting ZMP Diagram
 
@@ -562,7 +572,7 @@ title('Zero Moment Point')
 factor = 100;
 
 % plot ZMP PZ overapproximation
-for i = 1:length(ZMP_PZ)
+for i = 1:floor(length(ZMP_PZ)/2)
     s1 = plot(ZMP_PZ{i}*factor,[1,2],'Filled',true);
     s1.FaceColor = unsliced_color;
     s1.EdgeColor = unsliced_color;
@@ -591,7 +601,7 @@ tipplot2 = plot(ZMP(1,:).*factor,ZMP(2,:).*factor,'-k');
 % title('ZMP Sliced Plot')
 
 % plot ZMP PZ overapproximation
-for i = 1:length(ZMP_PZ_sliced)
+for i = 1:floor(length(ZMP_PZ_sliced)/2)
     s2 = plot(ZMP_PZ_sliced{i}*factor,[1,2],'Filled',true);
     s2.LineWidth = 0.1;
     s2.FaceColor = slice_color;
@@ -634,7 +644,7 @@ if plot_trajectory_1
         figure(plot_idx); clf; hold on;
 
         % plot pz trajectories
-        for i = 1:length(t_traj)
+        for i = 1:floor(length(t_traj)/2)
             % plot error polynomial zonotope interval
 %             poly_inf = Q_e{i, 1}{j, 1}.c - sum(abs(Q_e{i, 1}{j, 1}.G)) - sum(abs(Q_e{i, 1}{j, 1}.Grest));
 %             poly_sup = Q_e{i, 1}{j, 1}.c + sum(abs(Q_e{i, 1}{j, 1}.G)) + sum(abs(Q_e{i, 1}{j, 1}.Grest));
