@@ -1,9 +1,9 @@
 %% user parameters
 clear;
-% close(2,3)
+close(2,3)
 
 % filename = 'trial_scene_059_.mat';
-filename = ['trial_scene_010_008.csv.mat'];
+filename = ['trial_scene_010_020.csv.mat'];
 
 verbosity = 0 ;
 dimension = 3 ;
@@ -23,7 +23,7 @@ start = summary.start ;
 goal = summary.goal ;
 
 % agent just for visualizing, parameters may differ
-agent_urdf = 'Kinova_Grasp_URDF.urdf';
+agent_urdf = 'Kinova_Grasp_w_Tray_Gripper.urdf';
 robot = importrobot(agent_urdf);
 robot.DataFormat = 'col';
 robot.Gravity = [0 0 -9.81];
@@ -45,7 +45,23 @@ goal_radius = pi/30;
 % fill in agent state
 A.time = agent_info.time ;
 A.state = agent_info.state ;
+A.use_CAD_flag = true;
+n_links_and_joints = params.nominal.num_joints;
+n_states = 2*params.nominal.num_q;
+q_index = params.nominal.q_index;
 
+joint_state_indices = 1:2:n_states ;
+joint_speed_indices = 2:2:n_states ;
+joint_types = params.nominal.joint_types';
+joint_axes = params.nominal.joint_axes;
+
+link_shapes = repmat({'cuboid'}, 1, n_links_and_joints);
+[link_poly_zonotopes, link_sizes, temp_link_CAD_data] = create_pz_bounding_boxes(robot);
+A.load_CAD_arm_patch_data(temp_link_CAD_data)
+A.link_plot_edge_color = [0 0 1] ;
+A.link_plot_edge_opacity = 0 ;
+A.link_plot_face_color = [0.8 0.8 1] ;
+A.link_plot_face_opacity = 1 ;
 % set up world using arm
 W.setup(agent_info)
 clear_plot_data(W);
