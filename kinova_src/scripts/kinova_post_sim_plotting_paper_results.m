@@ -5,9 +5,9 @@
 
 %% Loading Data
 
-% clear all; close all; clc;
+clear all; close all; clc;
 
-load('trial_scene_010_003.csv.mat')
+load('trial_scene_010_005.csv.mat')
 
 %% Plotting flags
 
@@ -694,7 +694,7 @@ if plot_friction_cone
     zlim([0 6])
     
 end
-
+%% 
 if plot_friction_cone_2D
 
     figure(22)
