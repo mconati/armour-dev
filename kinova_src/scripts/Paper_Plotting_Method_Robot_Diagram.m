@@ -33,7 +33,7 @@ surf_rad = 0.05; % meter
 
 % compute trajectories
 % initial conditions
-q_0 = [pi/4;-pi/4;0;-pi/2;0;pi/4;0];
+q_0 = [0;-pi/4;0;-pi/2;0;pi/4;0];
 qd_0= [-pi/2;pi/30;0;0;0;0;0];
 qdd_0 = [0;pi/30;0;0;0;0;0];
 
@@ -96,38 +96,53 @@ end
 
 %% Plotting Poses
 
+close all;
 figure(202)
 
+rbtpatches = [];
 % plot robot in start pose
 ax1 = show(robot,q_des(:,1),'Frames','off',PreservePlot=false,FastUpdate=true);
-% find patch to adjust transparency
-mesh_name = 'object_link';
-rbtpatches=findobj(ax1.Children,'Type','patch','-regexp','DisplayName',mesh_name);
-set(rbtpatches,'FaceAlpha',0.6);
-% set(rbtpatches,'FaceColor',[1 0 0]);
-hold on
-
+% find patches of first robot to keep non-transparent
 mesh_names = robot.BodyNames;
-
-% plot other poses
-for i = 2:5:floor(length(q_des))/2
-    fprintf("Press to go to next... \n")
-%     pause()
-    ax{i} = show(robot_poses{i},q_des(:,i),'Frames','off',PreservePlot=false,FastUpdate=true);
-    for j = 1:length(robot.BodyNames)
-        rbtpatches=findobj(ax{i}.Children,'Type','patch','-regexp','DisplayName',mesh_names{j});
-        set(rbtpatches,'FaceAlpha',0.3);
+for i = 1:length(mesh_names)
+    rbtpatches = [rbtpatches findobj(ax1.Children,'Type','patch','-regexp','DisplayName',mesh_names{i})];
+    for j = 1:size(rbtpatches,2)
+        set(rbtpatches(:,j),'FaceAlpha',1);
     end
 end
+hold on
+
+% select time instances to plot
+idx_to_plot = [7 10 15 21];
+
+% plot transparent poses
+for i = 1:length(idx_to_plot)
+    % plot pose
+    ax{idx_to_plot(i)} = show(robot_poses{idx_to_plot(i)},q_des(:,idx_to_plot(i)),'Frames','off',PreservePlot=false,FastUpdate=true);
+
+    for j = 1:length(mesh_names)
+        rbtpatchesnew=findobj(ax{idx_to_plot(i)}.Children,'Type','patch','-regexp','DisplayName',mesh_names{j});
+        copyrbtpatches=rbtpatchesnew(~ismember(rbtpatchesnew,rbtpatches));
+        if i == length(idx_to_plot)
+            set(copyrbtpatches,'FaceAlpha',0.5);
+            set(copyrbtpatches,'FaceColor',[144 238 144]./255)
+        else
+            set(copyrbtpatches,'FaceAlpha',0.3);
+        end
+        rbtpatches = [rbtpatches copyrbtpatches]; % rbtpatchesnew(2*i:end,1)];
+    end
+    
+end
+
 
 % plot formatting
-view(-90,20)
+view(-110,15)
 xlim([-1.5 0.15])
-ylim([-1.5 1.5])
+ylim([-0.75 0.75])
 zlim([0 1])
 grid off
 material dull
-lightangle(0,20)
+% lightangle(0,20)
 
 %% Helper Functions
 

@@ -102,7 +102,7 @@ time_to_slice = 6;
 % qdd_0 = [pi/3;-pi/6;0;0;0;0;-pi/24];
 % new figure
 q_0 = [pi/4;-pi/4;0;-pi/2;0;pi/4;0];
-qd_0= [0;pi/30;0;0;0;0;0];
+qd_0= [-pi/3;pi/30;0;0;0;0;0];
 qdd_0 = [0;pi/30;0;0;0;0;0];
 
 % clf(101)
@@ -117,7 +117,7 @@ add_ultimate_bound = true;
 
 [Q_des, Qd_des, Qdd_des, Q, Qd, Qd_a, Qdd_a, R_des, R_t_des, R, R_t, T, E_p, jrs_info] = create_jrs_online_modified(q_0,qd_0,qdd_0, joint_axes, taylor_degree, traj_type, add_ultimate_bound, LLC_info);
 
-%%
+%% Trajectory Parameter
 
 % trajectory parameter
 % old figure
@@ -127,9 +127,14 @@ kvec = [0.001; 0.5; 0.001; 0.5; 0.001; 0.5; 0.001];
 % kvec = [-1;-1;-1;-1;-1;-1;-1];
 % kvec = [1;1;1;1;1;1;1];
 
+%%
+
 % planning info
 t_traj = 0:jrs_info.dt:jrs_info.t_f;
 t_traj(end) = [];
+
+% how much of the trajectory to plot
+time_index = floor(length(t_traj)/2);
 
 id_tmp = jrs_info.id;
 id_names_tmp = jrs_info.id_names;
@@ -270,12 +275,12 @@ if plot_force_trajectory
     % choose which force to plot (1=x-axis,
     force = 3; 
 
-    % plotting the unsliced force trajectory
     plot_idx = plot_idx + 1;
     figure(plot_idx); clf; hold on;
     title('Contact Joint z-Axis Force')
 
-    for i = 1:floor(length(t_traj)/2)
+    % plot unsliced force overapproximation
+    for i = 1:time_index
         % plot the polynomial overapproximation
         % calculate the inf/sup
         if f_int{1,i}.G
@@ -293,18 +298,8 @@ if plot_force_trajectory
 
     end
 
-    % plot the nominal values
-    plot(t_steps, f_nom(force,:),'-k')
-
-    % formatting for plot
-    ylim([0 2.25])
-
-    % plotting the sliced force trajectory
-%     plot_idx = plot_idx + 1;
-%     figure(plot_idx); clf; hold on;
-%     title('Force Plot: Last Joint')
-
-    for i = 1:floor(length(t_traj)/2)
+    % plot sliced force overapproximation
+    for i = 1:time_index
         f_sliced{1,i} = getSubset(f_int{1,i}, f_int{1,i}.id, kvec(f_int{1,i}.id));
         if f_sliced{1,i}.G
             poly_inf = f_sliced{1,i}.c(force) - sum(abs(f_sliced{1,i}.G(force,:))) - sum(abs(f_sliced{1,i}.Grest(force,:)));
@@ -319,14 +314,14 @@ if plot_force_trajectory
         p1.FaceColor = slice_color;
         p1.FaceAlpha = face_alpha;
     end
+
     % plot the nominal values
-    plot(t_steps, f_nom(force,:),'-k')
+    plot(t_steps(1:time_index+1), f_nom(force,1:time_index+1),'-k')
 
     % formatting for plot
-    ylim([0 2.25])
+    ylim([0 2.5])
     xlabel('Time (s)')
     ylabel('Force (N)')
-
     set(gca,'FontSize',fontsize)
 
 end
@@ -339,8 +334,8 @@ figure(plot_idx); clf; hold on;
 title('Friction Cone')
 
 % plot the friction cone boundary
-max_fz = max(f_nom(3,:));
-min_fz = min(f_nom(3,:));
+max_fz = max(f_nom(3,1:time_index));
+min_fz = min(f_nom(3,1:time_index));
 [max_fz_x, max_fz_y] = circle(2*max_fz*u_s,0,0,0,2*pi,0.01);
 [min_fz_x, min_fz_y] = circle(2*min_fz*u_s,0,0,0,2*pi,0.01);
 plot(max_fz_x, max_fz_y,'-r')
@@ -349,49 +344,31 @@ fill([max_fz_x flip(min_fz_x)],[max_fz_y flip(min_fz_y)],'r','FaceAlpha',0.3)
 fp_bound = line([max_fz_x(end) min_fz_x(1)],[max_fz_y(end) min_fz_y(1)]);
 set(fp_bound,'Color','r') % ,'EdgeAlpha',0.3)
 
-% for i = 1:length(t_steps)
-% %     plot(f_nom(1,i),f_nom(2,i),'xk')
-%     % need to add plotting of the friction cone at the z-level
-%     theta_friction = linspace(0,2*pi,100);
-%     r_friction = f_nom(3,i)*u_s;
-%     plot(r_friction*cos(theta_friction),r_friction*sin(theta_friction),'-r')
-%     axis('square')
-%     xlabel('x-axis Force (N)')
-%     ylabel('y-axis Force (N)')
-% end
-
 % plot the unsliced force overapproximation
-for i = 1:floor(length(t_traj)/2)
-    fp1 = plot(f_int{i},[1,2],'Filled',true,'FaceColor',unsliced_color);
+for i = 1:time_index
+    fp1 = plot(f_int{i},[1,2],'FaceColor',unsliced_color);
     fp1.LineWidth = 0.1;
     fp1.FaceColor = unsliced_color;
     fp1.EdgeColor = unsliced_color;
     fp1.FaceAlpha = face_alpha_light;
 end
 
-% for separate 2D friction cone plots
-% plot_idx = plot_idx + 1;
-% figure(plot_idx); clf; hold on;
-% title('Friction Cone Sliced Plot')
-
 % plot sliced force overapproximation
-for i = 1:floor(length(t_traj)/2)
+for i = 1:time_index
     % slice
     f_sliced{i} = getSubset(f_int{i},f_int{i}.id,kvec(f_int{i}.id));
     % plot
-    fp2 = plot(interval(f_sliced{i}),[1,2],'Filled',true);
+    fp2 = plot(interval(f_sliced{i}),[1,2],'FaceColor',unsliced_color);
     fp2.LineWidth = 0.1;
     fp2.FaceColor = slice_color;
     fp2.EdgeColor = slice_color;
     fp2.FaceAlpha = face_alpha;
 end
 
-% plotting the nominal values
-% for i = 1:floor(length(t_steps)/2)
-num = floor(length(t_steps)/2);
-plot(f_nom(1,1:num),f_nom(2,1:num),'-k')
-% end
+% plotting the nominal force values
+plot(f_nom(1,1:time_index),f_nom(2,1:time_index),'-k')
 
+% plot formatting
 xlabel('x-axis Force (N)')
 ylabel('y-axis Force (N)')
 set(gca,'FontSize',fontsize)
@@ -571,14 +548,7 @@ figure(plot_idx); clf; hold on;
 title('Zero Moment Point')
 factor = 100;
 
-% plot ZMP PZ overapproximation
-for i = 1:floor(length(ZMP_PZ)/2)
-    s1 = plot(ZMP_PZ{i}*factor,[1,2],'Filled',true);
-    s1.FaceColor = unsliced_color;
-    s1.EdgeColor = unsliced_color;
-    s1.FaceAlpha = face_alpha_light;
-end
-
+% plot constraint boundary
 r=surf_rad*factor;
 x=0;
 y=0;
@@ -592,16 +562,16 @@ axis('square')
 axis equal
 grid on
 
-tipplot2 = plot(ZMP(1,:).*factor,ZMP(2,:).*factor,'-k');
+% plot unsliced ZMP PZ overapproximation
+for i = 1:time_index
+    s1 = plot(ZMP_PZ{i}*factor,[1,2],'Filled',true);
+    s1.FaceColor = unsliced_color;
+    s1.EdgeColor = unsliced_color;
+    s1.FaceAlpha = face_alpha_light;
+end
 
-%%% plotting the sliced ZMP overapproximation %%%
-
-% plot_idx = plot_idx + 1;
-% figure(plot_idx); clf; hold on;
-% title('ZMP Sliced Plot')
-
-% plot ZMP PZ overapproximation
-for i = 1:floor(length(ZMP_PZ_sliced)/2)
+% plot sliced ZMP PZ overapproximation
+for i = 1:time_index
     s2 = plot(ZMP_PZ_sliced{i}*factor,[1,2],'Filled',true);
     s2.LineWidth = 0.1;
     s2.FaceColor = slice_color;
@@ -609,23 +579,8 @@ for i = 1:floor(length(ZMP_PZ_sliced)/2)
     s2.FaceAlpha = face_alpha;
 end
 
-
-r=surf_rad*factor;
-x=0;
-y=0;
-th = linspace(0,2*pi,500);
-xunit = r * cos(th) + x;
-yunit = r * sin(th) + y;
-tipplot1 = plot(xunit, yunit,'-r');
-xlabel('x position (cm)')
-ylabel('y position (cm)')
-axis('square')
-axis equal
-grid on
-set(gca,'FontSize',fontsize)
-
-tipplot2 = plot(ZMP(1,:).*factor,ZMP(2,:).*factor,'-k');
-
+% plot nominal ZMP point
+tipplot2 = plot(ZMP(1,1:time_index).*factor,ZMP(2,1:time_index).*factor,'-k');
 
 %% Plotting Separation Constraint
 

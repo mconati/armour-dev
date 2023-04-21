@@ -3,7 +3,7 @@ clear;
 close(2,3)
 
 % filename = 'trial_scene_059_.mat';
-filename = ['trial_scene_010_020.csv.mat'];
+filename = ['trial_scene_010_003.csv.mat'];
 
 verbosity = 0 ;
 dimension = 3 ;
@@ -23,7 +23,7 @@ start = summary.start ;
 goal = summary.goal ;
 
 % agent just for visualizing, parameters may differ
-agent_urdf = 'Kinova_Grasp_w_Tray_Gripper.urdf';
+agent_urdf = 'Kinova_Grasp_Cylinder_Edge.urdf';
 robot = importrobot(agent_urdf);
 robot.DataFormat = 'col';
 robot.Gravity = [0 0 -9.81];
@@ -82,6 +82,8 @@ end
 
 if plot_start_and_end_config_only
     plot_at_time(A, 0);
+    grid off
+    axis off
     disp('Press a key to plot final config.');
     pause();
     plot(A) ;
