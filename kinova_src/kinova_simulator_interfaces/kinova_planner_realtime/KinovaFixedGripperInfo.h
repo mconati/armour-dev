@@ -39,8 +39,10 @@ const double rots[NUM_JOINTS * 3] = { M_PI,       0, 0,
 									M_PI * 0.5, M_PI * 0.5, 0 };
 
 // link mass
-const double mass[NUM_JOINTS] = { 1.3773, 1.1636, 1.1636, 0.9302, 0.6781, 0.6781, 1.15225, 0.1715 }; // the end effector is a 0.1715 kg cube
-const double mass_uncertainty = 0.03;
+// const double mass[NUM_JOINTS] = { 1.3773, 1.1636, 1.1636, 0.9302, 0.6781, 0.6781, 1.15225, 0.1715 }; // system w/ 3D printed tray, the end effector is a 0.1715 kg cube
+const double mass[NUM_JOINTS] = { 1.3773, 1.1636, 1.1636, 0.9302, 0.6781, 0.6781, 1.4503, 0.1715 }; // system w/ circular tray, the end effector is a 0.1715 kg cube
+// const double mass_uncertainty = 0.02;
+const double mass_uncertainty[NUM_JOINTS] = {0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.05};
 
 // link center of mass
 const double com[NUM_JOINTS * 3] = {-0.000023, -0.010364,  -0.07336,
@@ -62,7 +64,8 @@ const double inertia[NUM_JOINTS * 9] = {  0.00457, 0.000001, 0.000002, 0.000001,
 										0.001641, 0, 0, 0, 0.00041, -0.000278, 0, -0.000278, 0.001641,
 										0.00397368, -3.1457e-7, -6.03666e-7, -3.1457e-7, 0.00310542, -0.000378758, -6.03666e-7, -0.000378758, 0.00167837,
 										0.00007385, 0, 0, 0, 0.00007385, 0, 0, 0, 0.00007385 };
-const double inertia_uncertainty = 0.03;
+// const double inertia_uncertainty = 0.02;
+const double inertia_uncertainty[NUM_JOINTS] = { 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.05}; // uncertainty value affects all inertia properties for respective link (can set individually with 7x9 array)
 
 // joint friction
 const double friction[NUM_JOINTS] = {0.5217383101288284, 0.5769579059927288, 0.4213397946418778, 0.4945515376566732, 0.1611070502661354, 0.1333491185514130, 0.1434440181717370};
@@ -109,7 +112,7 @@ const double link_zonotope_generators[NUM_JOINTS][3] = {{ 0.046358, 0.047354, 0.
 
 // ultimate bound
 const double alpha = 10.0; // 1.0
-const double V_m = 1e-4;
+const double V_m = 1.5e-2;
 const double M_max = 21.90042595;
 const double M_min = 8.2998203638;
 const double eps = sqrt(2 * V_m / M_min);

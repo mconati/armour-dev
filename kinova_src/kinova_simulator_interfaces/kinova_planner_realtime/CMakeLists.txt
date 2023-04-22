@@ -28,6 +28,7 @@ add_subdirectory(pybind11)
 cuda_add_library(armour_main_pybind SHARED
   armour_main_pybind.cu
   NLPclass.cu
+  # NLPclassARMOUR.cu
   # NLPclass_freeinput.cu
   CollisionChecking.cu
   FastCollisionChecking.cu
