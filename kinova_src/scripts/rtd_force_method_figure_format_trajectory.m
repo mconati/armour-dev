@@ -1,4 +1,4 @@
-figure(70)
+figure(19)
 
 title('Joint Trajectory')
 xlabel('Time (s)')
