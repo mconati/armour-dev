@@ -82,10 +82,6 @@ end
 
 %% Get PZ Wrench Info
 
-fig_num = fig_num + 1;
-figure(fig_num)
-hold on
-
 force_vertices = [];
 for i = 1 % :length(sim_result.P.info.wrench_radii)
 
@@ -99,7 +95,47 @@ for i = 1 % :length(sim_result.P.info.wrench_radii)
 
 end
 
+% getting upper and lower bounds for patch plotting
+force_lower = force_center - force_radii;
+force_upper = force_center + force_radii;
+
+%% Plotting Friction Cone Diagram
+
+fig_num = fig_num + 1;
+figure(fig_num)
+hold on
+
+time_index = 128;
+
+% plotting friction cone boundary
+max_fz = max(force(3,1:time_index));
+min_fz = min(force(3,1:time_index));
+[max_fz_x, max_fz_y] = circle(2*max_fz*W.u_s,0,0,0,2*pi,0.01);
+[min_fz_x, min_fz_y] = circle(2*min_fz*W.u_s,0,0,0,2*pi,0.01);
+plot(max_fz_x, max_fz_y,'-r')
+plot(min_fz_x, min_fz_y,'-r')
+fill([max_fz_x flip(min_fz_x)],[max_fz_y flip(min_fz_y)],'r','FaceAlpha',0.3)
+fp_bound = line([max_fz_x(end) min_fz_x(1)],[max_fz_y(end) min_fz_y(1)]);
+set(fp_bound,'Color','r') % ,'EdgeAlpha',0.3)
+
+% plotting sliced overapproximation
+for i = 1:size(force_center,1)
+
+    patch([force_lower(i,1),force_upper(i,1),force_upper(i,1),force_lower(i,1)],[force_lower(i,2),force_lower(i,2),force_upper(i,2),force_upper(i,2)],slice_color,'FaceAlpha',face_alpha_light,'EdgeAlpha',0)
+
+end
+
+% plotting nominal values
+plot(force(1,1:time_index),force(2,1:time_index),'-k')
+
+% plot formatting
+
+
 %% Plotting Friction Diagram
+
+fig_num = fig_num + 1;
+figure(fig_num)
+hold on
 
 for j = 1:length(wrench)
 
@@ -107,27 +143,24 @@ for j = 1:length(wrench)
     force_zono = zonotope(force_center(j,:)',eye(3).*force_radii(j,:)');
 
     % get vertices of zonotopes
-%     force_vertices = [force_vertices; vertices(force_zono)'];
+    force_vertices = [force_vertices; vertices(force_zono)'];
 
-    % plot zonotope
-    fz = plot(force_zono,[1,2],'Filled',true,'FaceAlpha',0.01);
-%     fz =surf()
-    fz.FaceColor = slice_color;
-    fz.EdgeColor = slice_color;
-    fz.FaceAlpha = face_alpha_light;
-
-%         if j > 1
-%             force_hull = convHull(force_zono,force_hull);
-%         else
-%             force_hull = convHull(force_zono,force_zono);
-%         end
-%         force_hull = reduce(force_hull,'girard',4);
+    % plot individual zonotopes
+%     fz = plot(force_zono,[1,2],'Filled',true,'FaceAlpha',0.01);
+%     %     fz =surf()
+%     fz.FaceColor = slice_color;
+%     fz.EdgeColor = slice_color;
+%     fz.FaceAlpha = face_alpha_light;
 
 end
-%     plot(force_hull,[1,2],'Filled',true,'FaceAlpha',0.01)
+
+% get convex hull of vertices
+[K_slc, v_slc] = convhull(force_vertices(:,1),force_vertices(:,2),force_vertices(:,3));
+
+%% plot convex hull of each time step for one planning iteration
+trisurf(K_slc, force_vertices(:,1),force_vertices(:,2),force_vertices(:,3))
 
 
-    
 %% setup robot
 
 % robot_name = 'Kinova_Grasp_URDF.urdf';
