@@ -7,8 +7,8 @@ from matplotlib import pyplot as plt
 from matplotlib.animation import FuncAnimation
 from scipy.io import savemat
 
-data_path: str = r'C:\Users\roahmlab\Downloads\ARMOUR_Added_Mass_02_15_2023_v1_Reduced.csv'
-skip_n = 100
+data_path: str = 'HardwareVideoROSData_04222023.csv'
+skip_n = 300
 ft_size = 15
 start_frame = 10
 if __name__ == "__main__":
@@ -47,15 +47,15 @@ if __name__ == "__main__":
     ax[1].set_title("Velocity Tracking Error", fontsize=ft_size + 5)
     ln: list = [ax[0].plot([], [])[0] for i in range(7)]
     ln.extend([ax[1].plot([], [])[0] for i in range(7)])
-    ax[0].plot([0, max(time)], [0.005, 0.005], "k--")
-    ax[0].plot([0, max(time)], [-0.005, -0.005], "k--")
-    ax[1].plot([0, max(time)], [0.2, 0.2], "k--")
-    ax[1].plot([0, max(time)], [-0.2, -0.2], "k--")
+    ax[0].plot([0, max(time)], [0.0132, 0.0132], "k--")
+    ax[0].plot([0, max(time)], [-0.0132, -0.0132], "k--")
+    ax[1].plot([0, max(time)], [0.132, 0.132], "k--")
+    ax[1].plot([0, max(time)], [-0.132, -0.132], "k--")
     legends = [f"joint {i+1}" for i in range(7)]
     legends.append("ultimate bound")
 
     # save to matlab
-    savemat("data.mat", {"t": time, "e": e, "ed": ed})
+    # savemat("data.mat", {"t": time, "e": e, "ed": ed})
 
     # ax[0].legend(legends, fontsize=18)
 
@@ -64,9 +64,9 @@ if __name__ == "__main__":
 
     def init():
         ax[0].set_xlim(0, max(time))
-        ax[0].set_ylim(-0.006, 0.006)
+        ax[0].set_ylim(-0.014, 0.014)
         ax[1].set_xlim(0, max(time))
-        ax[1].set_ylim(-0.25, 0.25)
+        ax[1].set_ylim(-0.14, 0.14)
         return ln
 
     def update(frame):
@@ -84,5 +84,5 @@ if __name__ == "__main__":
                         blit=True,
                         interval=100)
 
-    plt.show()
-    # ani.save("test.mp4", dpi=300)
+    # plt.show()
+    ani.save("HardwareVideo_TrackingError_04222023.mp4", dpi=300)
