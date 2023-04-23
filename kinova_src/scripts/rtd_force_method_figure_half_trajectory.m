@@ -1,4 +1,4 @@
-clear; 
+clear all; 
 close all; 
 clc;
 
@@ -346,7 +346,7 @@ set(fp_bound,'Color','r') % ,'EdgeAlpha',0.3)
 
 % plot the unsliced force overapproximation
 for i = 1:time_index
-    fp1 = plot(f_int{i},[1,2],'FaceColor',unsliced_color);
+    fp1 = plot(f_int{i},[1,2],'Filled',true,'FaceColor',unsliced_color);
     fp1.LineWidth = 0.1;
     fp1.FaceColor = unsliced_color;
     fp1.EdgeColor = unsliced_color;
@@ -358,7 +358,7 @@ for i = 1:time_index
     % slice
     f_sliced{i} = getSubset(f_int{i},f_int{i}.id,kvec(f_int{i}.id));
     % plot
-    fp2 = plot(interval(f_sliced{i}),[1,2],'FaceColor',unsliced_color);
+    fp2 = plot(interval(f_sliced{i}),[1,2],'Filled',true,'FaceColor',slice_color);
     fp2.LineWidth = 0.1;
     fp2.FaceColor = slice_color;
     fp2.EdgeColor = slice_color;
@@ -366,7 +366,7 @@ for i = 1:time_index
 end
 
 % plotting the nominal force values
-plot(f_nom(1,1:time_index),f_nom(2,1:time_index),'-k')
+plot(f_nom(1,1:time_index+1),f_nom(2,1:time_index+1),'-k')
 
 % plot formatting
 xlabel('x-axis Force (N)')
@@ -580,7 +580,7 @@ for i = 1:time_index
 end
 
 % plot nominal ZMP point
-tipplot2 = plot(ZMP(1,1:time_index).*factor,ZMP(2,1:time_index).*factor,'-k');
+tipplot2 = plot(ZMP(1,1:time_index+1).*factor,ZMP(2,1:time_index+1).*factor,'-k');
 
 %% Plotting Separation Constraint
 
@@ -665,7 +665,7 @@ if plot_trajectory_1
         end
         
         % plot scalar trajectories
-        plot(t_steps, rad2deg(q_des(j,:)), '-k');
+        plot(t_steps(1:time_index+1), rad2deg(q_des(j,1:time_index+1)), '-k');
 %         plot(t_steps, q_max(j,:), '--r');
 %         plot(t_steps, q_min(j,:), '--r');
 
