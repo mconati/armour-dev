@@ -219,8 +219,10 @@ q_des = P.HLP.waypoints(:,plan_index);
 
 % organize input to cuda program
 P.vdisp('Calling CUDA & C++ Program!',3);
-P.kinova_test_folder_path = 'C:\Users\roahmlab\Documents\GitHub\armour-dev\kinova_src';
-cuda_input_file = fopen([P.kinova_test_folder_path, '\kinova_simulator_interfaces\kinova_planner_realtime\buffer\armour.in'], 'w');  
+% P.kinova_test_folder_path = 'C:\Users\roahmlab\Documents\GitHub\armour-dev\kinova_src';
+P.kinova_test_folder_path = '/home/baiyuew/ROAHM/armour-dev/kinova_src';
+% cuda_input_file = fopen([P.kinova_test_folder_path, '\kinova_simulator_interfaces\kinova_planner_realtime\buffer\armour.in'], 'w');  
+cuda_input_file = fopen([P.kinova_test_folder_path, '/kinova_simulator_interfaces/kinova_planner_realtime/buffer/armour.in'], 'w');  
 
 for ind = 1:length(q_0)
     fprintf(cuda_input_file, '%.10f ', q_0(ind));
@@ -251,7 +253,7 @@ fclose(cuda_input_file);
 
 % call cuda program in terminal
 % you have to be in the proper path!
-terminal_output = system('../kinova_simulator_interfaces/kinova_planner_realtime/rtd_force_main_v2'); % rtd-force path 'env -i bash -i -c "" '
+terminal_output = system('env -i bash -i -c "../kinova_simulator_interfaces/kinova_planner_realtime/rtd_force_main_v2" '); % rtd-force path
 %                     terminal_output = system('env -i bash -i -c "./../kinova_simulator_interfaces/kinova_planner_realtime_original/armour_main"'); % armour path
 
 if terminal_output == 0
@@ -302,37 +304,8 @@ else
     k_opt = nan;
 end
 
-%% Calculate JRS
-
-q_0 = A.state(A.joint_state_indices,traj_index);
-qd_0 = A.state(A.joint_speed_indices,traj_index);
-qdd_0 = A.reference_acceleration(:,traj_index);
-
-joint_axes = A.joint_axes;
-taylor_degree = P.taylor_degree;
-add_ultimate_bound = true;
-LLC_info = A.LLC;
-traj_type = P.traj_type;
-
-% calculate forward reachable set
-[Q_des, Qd_des, Qdd_des, Q, Qd, Qd_a, Qdd_a, R_des, R_t_des, R, R_t, jrs_info] = create_jrs_online(q_0,qd_0,qdd_0, joint_axes, taylor_degree, traj_type, add_ultimate_bound, LLC_info);
-
-%% Calculate Desired Trajectory
-
-kvec = P.info.k_opt{plan_index};
-
-for i = 1:length(t_traj)
-    [q_des(:,i), qd_des(:,i), qdd_des(:,i)] = desired_trajectory(P, q_0, qd_0, qdd_0, t_traj(i), kvec);
-end
-
-%% Calculate Unsliced Overapproximations
-
-for i = 1:jrs_info.n_t
-    [tau_temp, f_temp, n_temp] = poly_zonotope_rnea(R{i}, R_t{i}, Qd{i}, Qd_a{i}, Qdd_a{i}, true, A.params.pz_interval);
-%     tau_int{i} = tau_temp{10,1};
-    force_PZ_unsliced{i} = f_temp{10,1};
-    moment_PZ_unsliced{i} = n_temp{10,1};
-end
+% parse the unsliced PZ output
+[force_PZ_unsliced,moment_PZ_unsliced] = parse_unsliced_PZs_func();
 
 %% Get PZ Wrench Info
 
@@ -359,8 +332,17 @@ force_upper = force_center + force_radii;
 for i = 1:time_index
 %     force_int{i} = polyZonotope_ROAHM(force_PZ_unsliced{i}.Z(:,1),force_PZ_unsliced{i}.Z(:,2:4));
 %     moment_zono = polyZonotope_ROAHM(moment_PZ_unsliced{i}.Z(:,1),moment_PZ_unsliced{i}.Z(:,2:4));
+    if size(moment_PZ_unsliced{i}.Z,2) == 2
+        % add two columns of zeros
+        moment_zono = polyZonotope_ROAHM(moment_PZ_unsliced{i}.Z(:,1),[moment_PZ_unsliced{i}.Z(:,2), zeros(3,2)],[]);
+    elseif size(moment_PZ_unsliced{i}.Z,2) == 3
+        % add one column of zeros
+        moment_zono = polyZonotope_ROAHM(moment_PZ_unsliced{i}.Z(:,1),[moment_PZ_unsliced{i}.Z(:,2), moment_PZ_unsliced{i}.Z(:,3), zeros(3,1)],[]);
+    else
+        moment_zono = polyZonotope_ROAHM(moment_PZ_unsliced{i}.Z(:,1),moment_PZ_unsliced{i}.Z(:,2:end),[]);
+    end
     % calculating the PZ form of the constraints
-    ZMP_PZ_top = cross([0;0;1],moment_PZ_unsliced{i});
+    ZMP_PZ_top = cross([0;0;1],moment_zono);
     ZMP_PZ_bottom = interval(force_PZ_unsliced{i}); % *[0,0,1]; % modified
 %     ZMP_PZ_bottom = interval(ZMP_PZ_bottom);
     ZMP_PZ_bottom_inf = ZMP_PZ_bottom.inf(3);
@@ -456,7 +438,7 @@ for i = 1:skip_num:time_index
 end
 
 % plotting sliced overapproximation
-for i = 1:skip_num:size(force_center,1)
+for i = 1:skip_num:time_index
 
     patch([force_lower(i,1),force_upper(i,1),force_upper(i,1),force_lower(i,1)],[force_lower(i,2),force_lower(i,2),force_upper(i,2),force_upper(i,2)],slice_color,'FaceAlpha',face_alpha_light,'EdgeAlpha',edge_alpha,'EdgeColor',slice_color)
 

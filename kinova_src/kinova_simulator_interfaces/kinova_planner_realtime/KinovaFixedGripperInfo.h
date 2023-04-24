@@ -40,7 +40,7 @@ const double rots[NUM_JOINTS * 3] = { M_PI,       0, 0,
 
 // link mass
 const double mass[NUM_JOINTS] = { 1.3773, 1.1636, 1.1636, 0.9302, 0.6781, 0.6781, 1.15225, 0.1715 }; // the end effector is a 0.1715 kg cube
-const double mass_uncertainty = 0.03;
+const double mass_uncertainty[NUM_JOINTS] = {0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03};
 
 // link center of mass
 const double com[NUM_JOINTS * 3] = {-0.000023, -0.010364,  -0.07336,
@@ -62,15 +62,15 @@ const double inertia[NUM_JOINTS * 9] = {  0.00457, 0.000001, 0.000002, 0.000001,
 										0.001641, 0, 0, 0, 0.00041, -0.000278, 0, -0.000278, 0.001641,
 										0.00397368, -3.1457e-7, -6.03666e-7, -3.1457e-7, 0.00310542, -0.000378758, -6.03666e-7, -0.000378758, 0.00167837,
 										0.00007385, 0, 0, 0, 0.00007385, 0, 0, 0, 0.00007385 };
-const double inertia_uncertainty = 0.03;
+const double inertia_uncertainty[NUM_JOINTS] = { 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.3};
 
 // joint friction
-// const double friction[NUM_JOINTS] = {0.5217383101288284, 0.5769579059927288, 0.4213397946418778, 0.4945515376566732, 0.1611070502661354, 0.1333491185514130, 0.1434440181717370};
-const double friction[NUM_JOINTS] = {0.0}; // disable friction in Matlab simulation for now
+const double friction[NUM_JOINTS] = {0.5217383101288284, 0.5769579059927288, 0.4213397946418778, 0.4945515376566732, 0.1611070502661354, 0.1333491185514130, 0.1434440181717370};
+// const double friction[NUM_JOINTS] = {0.0}; // disable friction in Matlab simulation for now
 
 // joint damping
-// const double damping[NUM_JOINTS] = {10.5, 7.4064845817230722, 9.9727633408172860, 8.2667950822503915, 8.8572249026528151, 8.7110831569332845, 8.8881903638306934};
-const double damping[NUM_JOINTS] = {0.0}; // disable damping in Matlab simulation for now
+const double damping[NUM_JOINTS] = {10.5, 7.4064845817230722, 9.9727633408172860, 8.2667950822503915, 8.8572249026528151, 8.7110831569332845, 8.8881903638306934};
+// const double damping[NUM_JOINTS] = {0.0}; // disable damping in Matlab simulation for now
 
 // joint armature / motor transmission inertia
 const double armature[NUM_JOINTS] = {8.03, 11.9962024615303644, 9.0025427861751517, 11.5806439316706360, 8.4665040917914123, 8.8537069373742430, 8.8587303664685315};
@@ -108,7 +108,7 @@ const double link_zonotope_generators[NUM_JOINTS][3] = {{ 0.046358, 0.047354, 0.
 
 // ultimate bound
 const double alpha = 10.0; // 10.0
-const double V_m = 1e-4;
+const double V_m = 1e-2;
 const double M_max = 21.90042595;
 const double M_min = 8.2998203638;
 const double eps = sqrt(2 * V_m / M_min);
