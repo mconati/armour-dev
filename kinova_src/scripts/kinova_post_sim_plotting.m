@@ -7,7 +7,7 @@
 
 % clear all; close all; clc;
 
-load('trial_scene_003_.mat')
+load('trial_scene_010_003.csv.mat')
 
 %% Plotting flags
 

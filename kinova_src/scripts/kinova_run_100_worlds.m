@@ -74,8 +74,8 @@ plot_while_running = false ;
 
 % simulation
 max_sim_time = 86400 ; % 24 hours = 86400 sec; 48 hours = sec
-max_sim_iter = 3000 ;
-stop_threshold = 3 ; % number of failed iterations before exiting
+max_sim_iter = 2000 ;
+stop_threshold = 6 ; % number of failed iterations before exiting
 
 % file handling
 save_file_header = 'trial_' ;
@@ -114,8 +114,7 @@ if plot_while_running
 end
 
 tic
-% for idx = 1:length(world_file_list) % length(world_file_list)
-for idx = [20, 21, 46, 47, 78:83, 87, 89, 90:100]
+for idx = 1:length(world_file_list)
     clc; 
     fprintf("THIS IS WORLD %d\n\n", idx);
 
@@ -164,7 +163,9 @@ for idx = [20, 21, 46, 47, 78:83, 87, 89, 90:100]
                        'traj_type', traj_type, ...
                        'use_cuda', use_cuda_flag,...
                        'save_FO_zono_flag', save_FO_zono_flag,...
-                       'DURATION',DURATION) ; % _wrapper
+                       'DURATION',DURATION, ...
+                       'lookahead_distance',lookahead_distance, ...
+                       'plot_HLP_flag', true) ; % _wrapper
 
     if if_use_RRT
         P.HLP = arm_end_effector_RRT_star_HLP('plot_waypoint_flag',plot_waypoint_flag,...

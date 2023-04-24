@@ -96,9 +96,14 @@ time_to_slice = 6;
 
 %% compute trajectories
 % initial conditions
-q_0 = [0;-pi/4;0;-pi/2;0;pi/4;0];
-qd_0= [-pi/3;-pi/12;0;0;0;0;0];
-qdd_0 = [pi/3;-pi/6;0;0;0;0;-pi/24];
+% old figure
+% q_0 = [0;-pi/4;0;-pi/2;0;pi/4;0];
+% qd_0= [-pi/3;-pi/12;0;0;0;0;0];
+% qdd_0 = [pi/3;-pi/6;0;0;0;0;-pi/24];
+% new figure
+q_0 = [pi/4;-pi/4;0;-pi/2;0;pi/4;0];
+qd_0= [0;pi/30;0;0;0;0;0];
+qdd_0 = [0;pi/30;0;0;0;0;0];
 
 % clf(101)
 % figure(101)
@@ -115,7 +120,10 @@ add_ultimate_bound = true;
 %%
 
 % trajectory parameter
-kvec = [0.6; -0.8; 0.5; -0.2; -0.4; 0.35; 0.34];
+% old figure
+% kvec = [0.6; -0.8; 0.5; -0.2; -0.4; 0.35; 0.34];
+% new figure
+kvec = [0.001; 0.5; 0.001; 0.5; 0.001; 0.5; 0.001];
 % kvec = [-1;-1;-1;-1;-1;-1;-1];
 % kvec = [1;1;1;1;1;1;1];
 
@@ -194,7 +202,7 @@ end
 
 %% Calculating the PZ Force Constraints
 
-for i = 1:length(t_traj)
+for i = 1:floor(length(t_traj)/2)
 
     % separation constraint
     sep_PZ{1,i} = -1*f_int{1,i};
@@ -242,7 +250,7 @@ sep_nom = -1*f_nom(3,:);
 slip_nom = sqrt(f_nom(1,:).^2+f_nom(2,:).^2) - u_s.*abs(f_nom(3,:));
 slip2_nom = f_nom(1,:).^2+f_nom(2,:).^2 - u_s^2.*f_nom(3,:).^2;
 
-for i = 1:length(t_steps)
+for i = 1:floor(length(t_steps)/2)
     % tipping constraint the normal way
     ZMP_top = cross([0;0;1],n_nom(:,i)); % normal vector should come first
     ZMP_bottom = dot([0;0;1],f_nom(:,i));
@@ -267,7 +275,7 @@ if plot_force_trajectory
     figure(plot_idx); clf; hold on;
     title('Contact Joint z-Axis Force')
 
-    for i = 1:length(t_traj)
+    for i = 1:floor(length(t_traj)/2)
         % plot the polynomial overapproximation
         % calculate the inf/sup
         if f_int{1,i}.G
@@ -296,8 +304,7 @@ if plot_force_trajectory
 %     figure(plot_idx); clf; hold on;
 %     title('Force Plot: Last Joint')
 
-    for i = 1:length(t_traj)
-        %%%%% CHECK THE ID's are correct %%%%% - fixed
+    for i = 1:floor(length(t_traj)/2)
         f_sliced{1,i} = getSubset(f_int{1,i}, f_int{1,i}.id, kvec(f_int{1,i}.id));
         if f_sliced{1,i}.G
             poly_inf = f_sliced{1,i}.c(force) - sum(abs(f_sliced{1,i}.G(force,:))) - sum(abs(f_sliced{1,i}.Grest(force,:)));
@@ -331,73 +338,68 @@ figure(plot_idx); clf; hold on;
 % title('Friction Cone Unsliced Plot')
 title('Friction Cone')
 
-for i = 1:length(t_traj)
+% plot the friction cone boundary
+max_fz = max(f_nom(3,:));
+min_fz = min(f_nom(3,:));
+[max_fz_x, max_fz_y] = circle(2*max_fz*u_s,0,0,0,2*pi,0.01);
+[min_fz_x, min_fz_y] = circle(2*min_fz*u_s,0,0,0,2*pi,0.01);
+plot(max_fz_x, max_fz_y,'-r')
+plot(min_fz_x, min_fz_y,'-r')
+fill([max_fz_x flip(min_fz_x)],[max_fz_y flip(min_fz_y)],'r','FaceAlpha',0.3)
+fp_bound = line([max_fz_x(end) min_fz_x(1)],[max_fz_y(end) min_fz_y(1)]);
+set(fp_bound,'Color','r') % ,'EdgeAlpha',0.3)
 
-    % plot the overapproximation
+% for i = 1:length(t_steps)
+% %     plot(f_nom(1,i),f_nom(2,i),'xk')
+%     % need to add plotting of the friction cone at the z-level
+%     theta_friction = linspace(0,2*pi,100);
+%     r_friction = f_nom(3,i)*u_s;
+%     plot(r_friction*cos(theta_friction),r_friction*sin(theta_friction),'-r')
+%     axis('square')
+%     xlabel('x-axis Force (N)')
+%     ylabel('y-axis Force (N)')
+% end
+
+% plot the unsliced force overapproximation
+for i = 1:floor(length(t_traj)/2)
     fp1 = plot(f_int{i},[1,2],'Filled',true,'FaceColor',unsliced_color);
-%     fp1.EdgeColor = unsliced_color;
-
     fp1.LineWidth = 0.1;
     fp1.FaceColor = unsliced_color;
     fp1.EdgeColor = unsliced_color;
     fp1.FaceAlpha = face_alpha_light;
-
 end
 
-for i = 1:length(t_steps)
-
-    plot(f_nom(1,i),f_nom(2,i),'xk')
-    % need to add plotting of the friction cone at the z-level
-    theta_friction = linspace(0,2*pi,100);
-    r_friction = f_nom(3,i)*u_s;
-    plot(r_friction*cos(theta_friction),r_friction*sin(theta_friction),'-r')
-
-    axis('square')
-    xlabel('x-axis Force (N)')
-    ylabel('y-axis Force (N)')
-
-end
-
-% Plotting Sliced 2D Friction Cone
-
+% for separate 2D friction cone plots
 % plot_idx = plot_idx + 1;
 % figure(plot_idx); clf; hold on;
 % title('Friction Cone Sliced Plot')
 
-for i = 1:length(t_traj)
-
+% plot sliced force overapproximation
+for i = 1:floor(length(t_traj)/2)
+    % slice
     f_sliced{i} = getSubset(f_int{i},f_int{i}.id,kvec(f_int{i}.id));
-    % plot the overapproximation
+    % plot
     fp2 = plot(interval(f_sliced{i}),[1,2],'Filled',true);
-
     fp2.LineWidth = 0.1;
     fp2.FaceColor = slice_color;
     fp2.EdgeColor = slice_color;
     fp2.FaceAlpha = face_alpha;
-
 end
 
-for i = 1:length(t_steps)
+% plotting the nominal values
+% for i = 1:floor(length(t_steps)/2)
+num = floor(length(t_steps)/2);
+plot(f_nom(1,1:num),f_nom(2,1:num),'-k')
+% end
 
-    plot(f_nom(1,i),f_nom(2,i),'xk')
-    % need to add plotting of the friction cone at the z-level
-    theta_friction = linspace(0,2*pi,100);
-    r_friction = f_nom(3,i)*u_s;
-    plot(r_friction*cos(theta_friction),r_friction*sin(theta_friction),'-r')
-
-    axis('square')
-    xlabel('x-axis Force (N)')
-    ylabel('y-axis Force (N)')
-
-end
-
+xlabel('x-axis Force (N)')
+ylabel('y-axis Force (N)')
 set(gca,'FontSize',fontsize)
-
+axis square
+axis equal
 
 %% Plotting Friction Cone and Force PZ in 3D
 
-% clc;
-% 
 % plot_idx = plot_idx + 1;
 % figure(plot_idx); clf; hold on;
 % title('Friction Cone 3D Plot')
@@ -415,33 +417,47 @@ set(gca,'FontSize',fontsize)
 %     n_cont(:,i) = n_temp(:,10);
 % end
 % 
-% for i = 1:100:length(t_traj)
-% 
-%     % plot the overapproximation
-% %     f_int_reduced = reduce(f_int{i},'girard',3);
-% %     f_int_zono = zonotope(f_int{i});
-% %     f_int_zono_reduced = reduce(f_int_zono,'combastel',3);
-%     f_int_convHull = convHull(f_int{i});
-%     fc1 = plot(f_int_convHull, [1,2,3]); %,[1,2,3],'Splits',1); %,'Filled',true);
-%     fc1.LineWidth = 0.1;
-%     fc1.FaceColor = slice_color;
-%     fc1.FaceAlpha = 0.3;
-%     fc1.EdgeAlpha = 0.3;
-% 
-%     % plot the nominal value
-%     plot3(f_nom(1,i),f_nom(2,i),f_nom(3,i),'xk')
-% end
-% 
 % % plot the nominal trajectory
 % plot3(f_cont(1,:),f_cont(2,:),f_cont(3,:),'-k', 'LineWidth', 3)
 % 
+% for i = 1:1:length(t_traj)
+% 
+%     % plot the overapproximation
+%     f_int_convHull = convHull(f_int{i});
+%     f_int_zono = zonotope(f_int_convHull);
+%     f_int_reduce = reduce(f_int_zono,'girard',1);
+% %     fc1 = plot(f_int_reduce, [1,2,3]); %,[1,2,3],'Splits',1); %,'Filled',true);
+% %     fc1.LineWidth = 0.1;
+% %     fc1.FaceColor = slice_color;
+% %     fc1.FaceAlpha = 0.3;
+% %     fc1.EdgeAlpha = 0.3;
+% 
+%     % TODO: can plot the force PZ by getting the inf, sup for each and using fill3? or patch?
+%     V = vertices(f_int_reduce)';
+%     [V_convhull, V_slc] = convhull(V(:,1),V(:,2),V(:,3));
+% %     trisurf(V_convhull,V(:,1),V(:,2),V(:,3),'FaceColor',unsliced_color,'FaceAlpha',0.03,'EdgeAlpha',0.1)
+% 
+%     % plot the sliced overapproximation
+%     % TODO: plot the sliced overapproximation
+%     f_sliced_2 = getSubset(f_int{i},f_int{i}.id,kvec(f_int{i}.id));
+%     f_int_convHull = convHull(f_sliced_2);
+%     f_int_zono = zonotope(f_int_convHull);
+%     f_int_reduce = reduce(f_int_zono,'girard',1);
+%     V = vertices(f_int_reduce)';
+%     [V_convhull, V_slc] = convhull(V(:,1),V(:,2),V(:,3));
+%     trisurf(V_convhull,V(:,1),V(:,2),V(:,3),'FaceColor',slice_color,'FaceAlpha',0.3,'EdgeAlpha',0.0)
+% 
+%     % plot the nominal value
+% %     plot3(f_nom(1,i),f_nom(2,i),f_nom(3,i),'xk')
+% end
+% 
 % % plot the friction cone
-% r = linspace(0,4,10);
+% r = linspace(0,1,10);
 % theta = linspace(0,2*pi,50);
 % [RR,Theta] = meshgrid(r,theta);
 % X = RR.*cos(Theta);
 % Y = RR.*sin(Theta);
-% Z = u_s.*RR; % A.u_s.*R;
+% Z = 1./u_s.*RR;
 % h1 = surf(X,Y,Z,'EdgeColor','none','FaceColor','r','FaceAlpha','0.05');
 % xlabel('x-axis Tangential Force (N)')
 % ylabel('y-axis Tangential Force (N)')
@@ -451,7 +467,99 @@ set(gca,'FontSize',fontsize)
 % % view(0,0)
 % 
 % % plotting the friction cone slices
+% for i = 1:length(t_steps)
+%     % need to add plotting of the friction cone at the z-level
+%     theta_friction = linspace(0,2*pi,100);
+%     r_friction = f_nom(3,i)*u_s;
+%     plot3(r_friction*cos(theta_friction),r_friction*sin(theta_friction),f_nom(3,i)*ones(1,length(theta_friction)),'-r')
+% 
+%     axis('square')
+%     xlabel('x-axis Force (N)')
+%     ylabel('y-axis Force (N)')
+% 
+% end
+% 
 % % plot full red rings at proper z-slices of the friction cone
+
+%% Plotting Animation of Friction Cone in 3D
+
+% plot_idx = plot_idx + 1;
+% fig1 = figure(plot_idx); 
+% clf; hold on;
+% title('Friction Cone 3D Plot')
+% 
+% for i = 1:1:length(t_traj)
+% 
+%     % plot the overapproximation
+%     f_int_convHull = convHull(f_int{i});
+%     f_int_zono = zonotope(f_int_convHull);
+%     f_int_reduce = reduce(f_int_zono,'girard',1);
+% %     fc1 = plot(f_int_reduce, [1,2,3]); %,[1,2,3],'Splits',1); %,'Filled',true);
+% %     fc1.LineWidth = 0.1;
+% %     fc1.FaceColor = slice_color;
+% %     fc1.FaceAlpha = 0.3;
+% %     fc1.EdgeAlpha = 0.3;
+% 
+%     % TODO: can plot the force PZ by getting the inf, sup for each and using fill3? or patch?
+%     V = vertices(f_int_reduce)';
+%     [V_convhull, V_slc] = convhull(V(:,1),V(:,2),V(:,3));
+% %     trisurf(V_convhull,V(:,1),V(:,2),V(:,3),'FaceColor',unsliced_color,'FaceAlpha',0.03,'EdgeAlpha',0.1)
+% 
+%     % plot the sliced overapproximation
+%     % TODO: plot the sliced overapproximation
+%     f_sliced_2 = getSubset(f_int{i},f_int{i}.id,kvec(f_int{i}.id));
+%     f_int_convHull = convHull(f_sliced_2);
+%     f_int_zono = zonotope(f_int_convHull);
+%     f_int_reduce = reduce(f_int_zono,'girard',1);
+%     V = vertices(f_int_reduce)';
+%     [V_convhull, V_slc] = convhull(V(:,1),V(:,2),V(:,3));
+%     trisurf(V_convhull,V(:,1),V(:,2),V(:,3),'FaceColor',slice_color,'FaceAlpha',0.3,'EdgeAlpha',0.0)
+% 
+%     % plot the nominal value
+% %     plot3(f_nom(1,i),f_nom(2,i),f_nom(3,i),'xk')
+% end
+% 
+% 
+% fric_cone_filename = 'Friction_Cone_Animation_v1.gif';
+% 
+% for i = 1:length(t_steps)
+% 
+%     % plot the friction cone
+%     r = linspace(0,1,10);
+%     theta = linspace(0,2*pi,50);
+%     [RR,Theta] = meshgrid(r,theta);
+%     X = RR.*cos(Theta);
+%     Y = RR.*sin(Theta);
+%     Z = 1./u_s.*RR;
+%     h1 = surf(X,Y,Z,'EdgeColor','none','FaceColor','r','FaceAlpha','0.05');
+%     
+%     % plotting of the friction cone at the z-level
+%     theta_friction = linspace(0,2*pi,100);
+%     r_friction = f_nom(3,i)*u_s;
+%     plot3(r_friction*cos(theta_friction),r_friction*sin(theta_friction),f_nom(3,i)*ones(1,length(theta_friction)),'-r')
+% 
+%     % plotting continuous force trajectory
+%     % time
+%     t_cont = linspace((i-1)/40,i/40); % 1/40 for a single iteration
+%     % desired trajectory
+%     for j = 1:length(t_cont)
+%         [q_cont_des(:,j), qd_cont_des(:,j), qdd_cont_des(:,j)] = desired_trajectory(P, q_0, qd_0, qdd_0, t_cont(j), kvec);
+%         % rnea
+%         [u_temp f_temp n_temp] = rnea(q_cont_des(:,j), qd_cont_des(:,j), qd_cont_des(:,j), qdd_cont_des(:,j), true, params.nominal);
+%     %     tau_int{i} = tau_temp{10,1};
+%         f_cont(:,j) = f_temp(:,10);
+%         n_cont(:,j) = n_temp(:,10);
+%     end
+%     plot3(f_cont(1,:),f_cont(2,:),f_cont(3,:),'-k', 'LineWidth', 3)
+% 
+%     % plot formatting
+%     xlabel('x-axis Tangential Force (N)')
+%     ylabel('y-axis Tangential Force (N)')
+%     zlabel('z-axis Normal Force (N)')
+%     grid on
+%     axis('square')
+%     make_animation( fig1,i,fric_cone_filename )
+% end
 
 %% Plotting ZMP Diagram
 
@@ -460,30 +568,31 @@ set(gca,'FontSize',fontsize)
 plot_idx = plot_idx + 1;
 figure(plot_idx); clf; hold on;
 % title('ZMP Unsliced Plot')
-title('Zero Moment Point Plot')
+title('Zero Moment Point')
+factor = 100;
 
 % plot ZMP PZ overapproximation
-for i = 1:length(ZMP_PZ)
-    s1 = plot(ZMP_PZ{i},[1,2],'Filled',true);
+for i = 1:floor(length(ZMP_PZ)/2)
+    s1 = plot(ZMP_PZ{i}*factor,[1,2],'Filled',true);
     s1.FaceColor = unsliced_color;
     s1.EdgeColor = unsliced_color;
     s1.FaceAlpha = face_alpha_light;
 end
 
-r=surf_rad;
+r=surf_rad*factor;
 x=0;
 y=0;
 th = linspace(0,2*pi,500);
 xunit = r * cos(th) + x;
 yunit = r * sin(th) + y;
 tipplot1 = plot(xunit, yunit,'-r');
-xlabel('x_o position (m)')
-ylabel('y_o position (m)')
+xlabel('x_o position (cm)')
+ylabel('y_o position (cm)')
 axis('square')
 axis equal
 grid on
 
-tipplot2 = plot(ZMP(1,:),ZMP(2,:),'xk');
+tipplot2 = plot(ZMP(1,:).*factor,ZMP(2,:).*factor,'-k');
 
 %%% plotting the sliced ZMP overapproximation %%%
 
@@ -492,8 +601,8 @@ tipplot2 = plot(ZMP(1,:),ZMP(2,:),'xk');
 % title('ZMP Sliced Plot')
 
 % plot ZMP PZ overapproximation
-for i = 1:length(ZMP_PZ_sliced)
-    s2 = plot(ZMP_PZ_sliced{i},[1,2],'Filled',true);
+for i = 1:floor(length(ZMP_PZ_sliced)/2)
+    s2 = plot(ZMP_PZ_sliced{i}*factor,[1,2],'Filled',true);
     s2.LineWidth = 0.1;
     s2.FaceColor = slice_color;
     s2.EdgeColor = slice_color;
@@ -501,21 +610,21 @@ for i = 1:length(ZMP_PZ_sliced)
 end
 
 
-r=surf_rad;
+r=surf_rad*factor;
 x=0;
 y=0;
 th = linspace(0,2*pi,500);
 xunit = r * cos(th) + x;
 yunit = r * sin(th) + y;
 tipplot1 = plot(xunit, yunit,'-r');
-xlabel('x position (m)')
-ylabel('y position (m)')
+xlabel('x position (cm)')
+ylabel('y position (cm)')
 axis('square')
 axis equal
 grid on
 set(gca,'FontSize',fontsize)
 
-tipplot2 = plot(ZMP(1,:),ZMP(2,:),'xk');
+tipplot2 = plot(ZMP(1,:).*factor,ZMP(2,:).*factor,'-k');
 
 
 %% Plotting Separation Constraint
@@ -535,7 +644,7 @@ if plot_trajectory_1
         figure(plot_idx); clf; hold on;
 
         % plot pz trajectories
-        for i = 1:length(t_traj)
+        for i = 1:floor(length(t_traj)/2)
             % plot error polynomial zonotope interval
 %             poly_inf = Q_e{i, 1}{j, 1}.c - sum(abs(Q_e{i, 1}{j, 1}.G)) - sum(abs(Q_e{i, 1}{j, 1}.Grest));
 %             poly_sup = Q_e{i, 1}{j, 1}.c + sum(abs(Q_e{i, 1}{j, 1}.G)) + sum(abs(Q_e{i, 1}{j, 1}.Grest));
@@ -555,6 +664,9 @@ if plot_trajectory_1
             % plot unsliced (original + err) polynomial zonotope interval
             poly_inf = Q{i, 1}{j, 1}.c - sum(abs(Q{i, 1}{j, 1}.G)) - sum(abs(Q{i, 1}{j, 1}.Grest));
             poly_sup = Q{i, 1}{j, 1}.c + sum(abs(Q{i, 1}{j, 1}.G)) + sum(abs(Q{i, 1}{j, 1}.Grest));
+            % convert to deg
+            poly_inf = rad2deg(poly_inf);
+            poly_sup = rad2deg(poly_sup);
             p3 = patch([t_traj(i)+jrs_info.dt; t_traj(i)+jrs_info.dt; t_traj(i); t_traj(i)], [poly_sup; poly_inf; poly_inf; poly_sup],'b');
             p3.LineWidth = 0.1;
             p3.FaceColor = unsliced_color;
@@ -564,15 +676,18 @@ if plot_trajectory_1
             poly_slice = getSubset(Q{i, 1}{j, 1}, id_slice(j), kvec(j));
             poly_slice_inf = poly_slice.c - sum(abs(poly_slice.G)) - sum(abs(poly_slice.Grest));
             poly_slice_sup = poly_slice.c + sum(abs(poly_slice.G)) + sum(abs(poly_slice.Grest));
+            % convert to deg
+            poly_slice_inf = rad2deg(poly_slice_inf);
+            poly_slice_sup = rad2deg(poly_slice_sup);
             p4 = patch([t_traj(i)+jrs_info.dt; t_traj(i)+jrs_info.dt; t_traj(i); t_traj(i)], [poly_slice_sup; poly_slice_inf; poly_slice_inf; poly_slice_sup],'b');
             p4.LineWidth = 0.1;
             p4.FaceColor = slice_color;
             p4.FaceAlpha = face_alpha;
 
             % capture slice of time
-            if i ~= time_to_slice
-                p1.FaceAlpha = 0.2;
-            end
+%             if i ~= time_to_slice
+%                 p1.FaceAlpha = 0.2;
+%             end
 
         end
 
@@ -595,7 +710,7 @@ if plot_trajectory_1
         end
         
         % plot scalar trajectories
-        plot(t_steps, q_des(j,:), '-k');
+        plot(t_steps, rad2deg(q_des(j,:)), '-k');
 %         plot(t_steps, q_max(j,:), '--r');
 %         plot(t_steps, q_min(j,:), '--r');
 
@@ -1279,5 +1394,23 @@ function [q_des, qd_des, qdd_des] = desired_trajectory(P, q_0, q_dot_0, q_ddot_0
         end
     otherwise
         error('trajectory type not recognized');
+    end
+end
+
+function [xp,yp] = circle(d,x,y,ang_start,ang_end,step)
+    ang=ang_start:step:ang_end; 
+    xp=(d/2)*cos(ang);
+    yp=(d/2)*sin(ang);
+end
+
+function make_animation( h,index,filename )
+    drawnow
+    frame = getframe(h);
+    im = frame2im(frame);
+    [imind,cm] = rgb2ind(im,256);
+    if index == 1
+        imwrite(imind,cm,filename,'gif', 'Loopcount',inf,'DelayTime',0.001);
+    else
+        imwrite(imind,cm,filename,'gif','WriteMode','append','DelayTime',0.001);
     end
 end

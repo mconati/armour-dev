@@ -66,9 +66,9 @@ bernstein_final_range = pi/72*ones(n_q, 1);
 % bernstein_final_range = pi/24*ones(n_q, 1);
 % bernstein_final_range = [pi/24; pi/72; pi/24; pi/72; pi/72; pi/72; pi/72];
 
-t_f = 1;
-t_p = 0.5;
-dt = 0.01;
+t_f = 2;
+t_p = 1;
+dt = 0.02;
 n_t = t_f/dt;
 n_t_p = t_p/t_f*n_t; % last time step of "planning" phase before braking phase
 
