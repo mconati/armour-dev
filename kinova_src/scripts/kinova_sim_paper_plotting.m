@@ -1,7 +1,34 @@
 clear; 
 close all; 
 clc;
+
+%%
+
 fig_num = 1;
+fontsize = 16;
+time_index = 64;
+time_steps = 128;
+duration = 2;
+dt = duration/time_steps;
+t_traj = linspace(0,duration,time_steps);
+
+%% To Do
+
+% calculate sliced ZMP overapproximation
+
+% calculate unsliced overapproximations
+    % desired trajectory
+    % jrs?
+    % pzrnea
+
+% plot ZMP
+
+% plot separation
+
+% choose world to plot
+    % choose planning iteration to plot
+
+% format plots to be all in one subplot? have grey then?
 
 %% Load Simulation Result
 
@@ -99,13 +126,70 @@ end
 force_lower = force_center - force_radii;
 force_upper = force_center + force_radii;
 
+%% Plotting Separation
+
+% need the dt step size
+% should be duration = 2 seconds / num_time_steps = 128?
+
+% choose which force to plot (1=x-axis,
+
+fig_num = fig_num + 1;
+figure(fig_num); clf; hold on;
+title('Contact Joint z-Axis Force')
+
+% % plot unsliced force overapproximation
+% for i = 1:time_index
+%     % plot the polynomial overapproximation
+%     % calculate the inf/sup
+%     if f_int{1,i}.G
+%         poly_inf = f_int{1,i}.c(force) - sum(abs(f_int{1,i}.G(force,:))) - sum(abs(f_int{1,i}.Grest(force,:)));
+%         poly_sup = f_int{1,i}.c(force) + sum(abs(f_int{1,i}.G(force,:))) + sum(abs(f_int{1,i}.Grest(force,:)));
+%     else % the magnitude of Grest means that only those were tracked
+%         poly_inf = f_int{1,i}.c(force) - sum(abs(f_int{1,i}.Grest(force,:)));
+%         poly_sup = f_int{1,i}.c(force) + sum(abs(f_int{1,i}.Grest(force,:)));
+%     end
+%     p1 = patch([t_traj(i)+jrs_info.dt; t_traj(i)+jrs_info.dt; t_traj(i); t_traj(i)], [poly_sup; poly_inf; poly_inf; poly_sup],'b');
+% %         p1.EdgeColor = pz_err_color;
+%     p1.LineWidth = 0.1;
+%     p1.FaceColor = unsliced_color;
+%     p1.FaceAlpha = face_alpha;
+% 
+% end
+
+% plot sliced force overapproximation
+for i = 1:time_index
+%     f_sliced{1,i} = getSubset(f_int{1,i}, f_int{1,i}.id, kvec(f_int{1,i}.id));
+%     if f_sliced{1,i}.G
+%         poly_inf = f_sliced{1,i}.c(force) - sum(abs(f_sliced{1,i}.G(force,:))) - sum(abs(f_sliced{1,i}.Grest(force,:)));
+%         poly_sup = f_sliced{1,i}.c(force) + sum(abs(f_sliced{1,i}.G(force,:))) + sum(abs(f_sliced{1,i}.Grest(force,:)));
+%     else
+%         poly_inf = f_sliced{1,i}.c(force) - sum(abs(f_sliced{1,i}.Grest(force,:)));
+%         poly_sup = f_sliced{1,i}.c(force) + sum(abs(f_sliced{1,i}.Grest(force,:)));
+%     end
+    p1 = patch([t_traj(i)+dt; t_traj(i)+dt; t_traj(i); t_traj(i)], [force_upper(i,3); force_lower(i,3); force_lower(i,3); force_upper(i,3)],'b');
+%         p1.EdgeColor = pz_err_color;
+    p1.LineWidth = 0.1;
+    p1.FaceColor = slice_color;
+    p1.FaceAlpha = face_alpha;
+end
+
+% plot the nominal values
+plot(t_traj(1:time_index+1), force(3,1:time_index+1),'-k')
+
+% formatting for plot
+ylim([0 2.5])
+xlim([0 t_traj(time_index+1)])
+xlabel('Time (s)')
+ylabel('Force (N)')
+set(gca,'FontSize',fontsize)
+
+
+
 %% Plotting Friction Cone Diagram
 
 fig_num = fig_num + 1;
 figure(fig_num)
 hold on
-
-time_index = 128;
 
 % plotting friction cone boundary
 max_fz = max(force(3,1:time_index));
@@ -129,8 +213,13 @@ end
 plot(force(1,1:time_index),force(2,1:time_index),'-k')
 
 % plot formatting
+xlabel('x-axis Force (N)')
+ylabel('y-axis Force (N)')
+set(gca,'FontSize',fontsize)
+axis square
+axis equal
 
-
+%% Calculate Sliced ZMP Overapproximation 
 %% Plotting Friction Diagram
 
 fig_num = fig_num + 1;
