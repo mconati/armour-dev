@@ -67,13 +67,13 @@
                   <geom type="mesh" conaffinity="0" rgba="0.75294 0.75294 0.75294 1" mesh="spherical_wrist_2_link" name="w2_collision"/>
 
                   <body name="Bracelet_Gripper_Tray" pos="0 -0.10593 -0.00017505" euler="-1.5708 0 0">
-                    <inertial pos="0.000125583 -0.0117653 -0.0556341" mass="1.45643" fullinertia="0.00397368 -0.00000031457 -0.000000603666 -0.00000031457 0.00310542 -0.000378758 -0.000000603666 -0.000378758 0.00167837"/>
+                    <inertial pos="0.000099 -0.009277 -0.121720" mass="1.45643" fullinertia="0.0273262 4.7262e-8 -1.0167e-5 4.7262e-8 0.026442 5.1493e-4 -1.0167e-5 5.1493e-4 0.0016939"/>
                     <joint name="Actuator7" pos="0 0 0" axis="0 0 1" frictionloss="0.143444018171737" damping="8.888190363830693" armature="8.858730366468532"/>
                     <geom type="mesh" contype="0" conaffinity="0" group="1" rgba="1 1 1 1" name="b_visual" mesh="bracelet_with_vision_link" />
                     <geom type="mesh" conaffinity="0" rgba="0.75294 0.75294 0.75294 1" mesh="bracelet_with_vision_link" name="b_collision"/>
                     
-                    <body name="object" pos="0.00127 -0.0000217458 -0.286005" euler="1.5708 1.5708 0">
-                      <inertial pos="0 0 0.029" mass="0.592" diaginertia="0.00033005074 0.00033005074 0.00042925501"/>
+                    <body name="object" pos="0.002 0 -0.371" euler="1.5708 1.5708 0">
+                      <inertial pos="0 0 0.0291" mass="0.592" diaginertia="0.00033005074 0.00033005074 0.00042925501"/>
                     </body>
                   </body>
                 </body>

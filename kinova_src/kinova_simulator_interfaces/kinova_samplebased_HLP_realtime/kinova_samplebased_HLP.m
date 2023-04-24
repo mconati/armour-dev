@@ -8,7 +8,24 @@ classdef kinova_samplebased_HLP < robot_arm_graph_planner_HLP
         function HLP = kinova_samplebased_HLP(varargin)
             HLP@robot_arm_graph_planner_HLP(varargin{:}) ;
 %             HLP.sample_nodes = load('millionNodes.mat');
-            HLP.sample_nodes = load('../kinova_simulator_interfaces/kinova_samplebased_HLP_realtime/uniformNodes.mat');
+            
+            % Different sets of nodes
+            % Uniformly sampled nodes across workspace: uniformNodes.mat
+            % Composite set of nodes: QConfig_composite.txt
+            % Composite set of nodes for hardare: QConfig_composite_hardware_only.txt
+            sample_nodes = load('../kinova_simulator_interfaces/kinova_samplebased_HLP_realtime/QConfig_uniform_hardware_dense_rand_v2.txt');
+            sample_nodes(:,1) = wrapToPi(sample_nodes(:,1));
+            % check if proper structure HLP.sample_nodes.q_valid_list
+            if class(sample_nodes) == 'double'
+                HLP.sample_nodes.q_valid_list = sample_nodes;
+            else
+                HLP.sample_nodes = sample_nodes;
+            end
+            % code expects sample nodes to be 7 x n array (where n>7)
+            if size(HLP.sample_nodes.q_valid_list,2) < size(HLP.sample_nodes.q_valid_list,1)
+                HLP.sample_nodes.q_valid_list = HLP.sample_nodes.q_valid_list';
+            end
+
         end
 
         function HLP = generatePath(HLP, obstacles, start, goal)
@@ -31,6 +48,7 @@ classdef kinova_samplebased_HLP < robot_arm_graph_planner_HLP
                                        adj_matrix_sparse_data(:,3), ...
                                        size(HLP.sample_nodes.q_valid_list,2), size(HLP.sample_nodes.q_valid_list,2));
             G = graph(adj_matrix_sparse, 'lower');
+            % add configuration information to graph?
             
             [bins, binsize] = conncomp(G);
             [~, max_id] = max(binsize);

@@ -2,8 +2,8 @@
 #include "BufferPath.h"
 
 const std::string inputfilename1 = pathname + "obstacles.csv";
-const std::string inputfilename2 = pathname + "joint_positions_uniform.csv";
-const std::string inputfilename3 = pathname + "adj_matrix_uniform_mult5.csv";
+const std::string inputfilename2 = pathname + "joint_positions_uniform_hardware_dense_rand.csv"; // "joint_positions_uniform.csv"; // NOTE: comes from precompute joints positions matlab script
+const std::string inputfilename3 = pathname + "adj_matrix_uniform_hardware_dense_rand_range0p3.txt"; // adj_matrix_uniform_mult5.csv
 const std::string outputfilename1 = pathname + "node_feasibility.csv";
 const std::string outputfilename2 = pathname + "link_c.csv";
 const std::string outputfilename3 = pathname + "collision_free_adj_matrix.csv";
@@ -61,6 +61,7 @@ Section I:
 
     auto start1 = std::chrono::high_resolution_clock::now();
 
+    // reading joint positions
     for (int k = 0; k < NUM_NODES / NUM_NODES_AT_ONE_TIME; k++) {
         for (int i = 0; i < NUM_NODES_AT_ONE_TIME; i++) {
             Eigen::Vector3d pos1;
@@ -131,6 +132,7 @@ Section I:
 
     auto start2 = std::chrono::high_resolution_clock::now();
 
+    // building adjacency matrix
     std::ifstream inputstream3(inputfilename3);
     std::ofstream outputstream3(outputfilename3);
 

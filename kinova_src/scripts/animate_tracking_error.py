@@ -10,7 +10,7 @@ from scipy.io import savemat
 data_path: str = "~\Downloads\HardwareVideoROSData.csv"
 # number of measurements to skip
 skip_n = 100
-# not sure
+# font size
 ft_size = 15
 # not sure
 start_frame = 10
@@ -88,5 +88,5 @@ if __name__ == "__main__":
                         blit=True,
                         interval=100)
 
-    plt.show()
+    # plt.show()
     ani.save("HardwareVideoTrackingError.mp4", dpi=300)

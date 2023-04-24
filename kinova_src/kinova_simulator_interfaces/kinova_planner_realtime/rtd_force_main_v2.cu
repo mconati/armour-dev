@@ -105,7 +105,7 @@ Section II:
     BezierCurve traj(q0, qd0, qdd0);
 
     try {
-        #pragma omp parallel for shared(traj) private(openmp_t_ind) schedule(static, NUM_TIME_STEPS / NUM_THREADS)
+        #pragma omp parallel for shared(traj) private(openmp_t_ind) schedule(dynamic, 1)
         for(openmp_t_ind = 0; openmp_t_ind < NUM_TIME_STEPS; openmp_t_ind++) {
             traj.makePolyZono(openmp_t_ind);
         }
@@ -122,7 +122,7 @@ Section II:
     Eigen::Matrix<double, 3, 3 + 3> link_independent_generators[NUM_TIME_STEPS * NUM_JOINTS];
 
     try {
-        #pragma omp parallel for shared(kd, link_independent_generators) private(openmp_t_ind) schedule(static, NUM_TIME_STEPS / NUM_THREADS)
+        #pragma omp parallel for shared(kd, link_independent_generators) private(openmp_t_ind) schedule(dynamic)
         for(openmp_t_ind = 0; openmp_t_ind < NUM_TIME_STEPS; openmp_t_ind++) {
             // compute link PZs through forward kinematics
             kd.fk(openmp_t_ind);

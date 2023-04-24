@@ -7,7 +7,7 @@ close all; clear; clc;
 fig_num = 0;
 
 %% initialize robot
-robot = importrobot('Kinova_Grasp_URDF.urdf');
+robot = importrobot('Kinova_Grasp_w_Tray.urdf');
 robot.DataFormat = 'col';
 robot.Gravity = [0 0 -9.81];
 params = load_robot_params(robot, ...
@@ -28,30 +28,30 @@ link_poly_zonotopes = create_pz_bounding_boxes(robot);
 % choose random initial conditions and make sure they are aligned with
 % the first three rows in buffer/armour.in
 % basic start
-% q0 = [0.0000000000 -1.5707963268 0.0000000000 0.0000000000 0.0000000000 0.0000000000 0.0000000000 ]';
-% qd0 = [0.0000000000 -0.50000000000 0.0000000000 0.0000000000 0.0000000000 0.0000000000 0.0000000000 ]';
-% qdd0 = [0.0000000000 0.50000000000 0.0000000000 0.0000000000 0.0000000000 0.0000000000 0.0000000000 ]';
-% qdes = [0.1375736616 -1.5632979589 0.0905309714 -0.0751381965 -0.2789436459 0.2011416812 0.0943825628 ]';
+q0 = [0.0000000000 -1.5707963268 0.0000000000 0.0000000000 0.0000000000 0.0000000000 0.0000000000 ]';
+qd0 = [0.0000000000 -0.00000000000 0.0000000000 0.0000000000 0.0000000000 0.0000000000 0.0000000000 ]';
+qdd0 = [0.0000000000 0.00000000000 0.0000000000 0.0000000000 0.0000000000 0.0000000000 0.0000000000 ]';
+qdes = [0.0000000000 -1.5707963268 0.0000000000 0.0000000000 0.0000000000 0.0000000000 0.1000000000  ]';
 % random
-q0 = [1.8050949857 1.5523818073 -0.5593660299 0.1468763715 -0.5267268712 -0.2220512642 -2.0707212135  ]';
-qd0 = [0.0075302418 0.0092257990 -0.0049952047 -0.0036228836 -0.0040500586 -0.0016993588 -0.0063685653  ]';
-qdd0 = [0.0009060653 -0.0046286801 0.0211882473 -0.0066294695 0.0218570425 -0.0048845454 0.0208029198 ]';
-qdes = [-2.6499539903 0.8150094930 0.9830580739 -2.4237010208 -0.4592416536 0.5571133216 1.0683250709 ]';
+% q0 = [1.8050949857 1.5523818073 -0.5593660299 0.1468763715 -0.5267268712 -0.2220512642 -2.0707212135  ]';
+% qd0 = [0.0075302418 0.0092257990 -0.0049952047 -0.0036228836 -0.0040500586 -0.0016993588 -0.0063685653  ]';
+% qdd0 = [0.0009060653 -0.0046286801 0.0211882473 -0.0066294695 0.0218570425 -0.0048845454 0.0208029198 ]';
+% qdes = [-2.6499539903 0.8150094930 0.9830580739 -2.4237010208 -0.4592416536 0.5571133216 1.0683250709 ]';
 
 % choose a random k_range and make sure they are aligned with k_range in
 % Parameters.h
 % k_range = [pi/24, pi/24, pi/24, pi/24, pi/24, pi/24, pi/24]';
 % k_range = [pi/36, pi/36, pi/36, pi/36, pi/36, pi/36, pi/36]';
-k_range = [pi/24, pi/24, pi/24, pi/24, pi/24, pi/24, pi/24]' / 2;
+k_range = [pi/72, pi/72, pi/72, pi/72, pi/72, pi/72, pi/72]';
 
 
 % choose a random point to slice and make sure they are equal to variable
 % factors defined in PZ_test.cpp
 
-k = [0.5, 0.7, 0.7, 0.0, -0.8, -0.6, -0.7]' * 0;
+% k = [0.5, 0.7, 0.7, 0.0, -0.8, -0.6, -0.7]'; % * 0;
 % k = zeros(7,1);
 % k = ones(7,1);
-% k = -ones(7,1);
+k = -ones(7,1);
 % k=[0.999901, -0.898396, 0.973896, -0.454472, 0.999083, 0.940592, 0.974109]';
 
 % desired trajectory constraints
@@ -104,6 +104,8 @@ tip_ub_cuda = force_constraint_values(201:300,1);
 sep_lb_cuda = force_constraint_values(1:100,2);
 slip_lb_cuda = force_constraint_values(101:200,2);
 tip_lb_cuda = force_constraint_values(201:300,2);
+
+
 
 
 %% Calculating Nominal Values
@@ -202,46 +204,6 @@ sgtitle('Desired Acceleration Comparison')
 % interval.
 vel_check = qd_des_matlab(1,:)' ./ des_vel_center(:,1);
 accel_check = qdd_des_matlab(1,:)' ./ des_accel_center(:,1);
-
-%% Plotting Link Reach Sets
-
-tid = 50;
-
-% fig_num = fig_num + 1;
-% figure(fig_num); 
-% hold on; view(3); axis equal; axis on;
-
-% choose a random time inside this time interval
-t_lb = tspan(tid);
-t_ub = tspan(tid + 1);
-t = (t_ub - t_lb) * rand + t_lb;
-
-q_rand = get_desired_traj(beta, t, duration);
-
-fig_num = fig_num + 1;
-figure(fig_num);
-hold on;
-% plot robot
-A.plot_at_time(q_rand);
-view(3)
-axis('equal')
-xlim([-1.5 1.5])
-ylim([-1.5 1.5])
-zlim([0 1.5])
-grid on;
-
-% ! Ask Bohao about the number 10 vs 7 in the for loop below
-% plot link reachsets
-numBodies = 8;
-for j = 1:robot.NumBodies
-    c = link_reachset_center((tid-1)*numBodies+j, :)';
-    g = link_reachset_generators( ((tid-1)*numBodies+j-1)*3+1 : ((tid-1)*numBodies+j)*3, :);
-    Z = zonotope(c, g);
-    Z_v = vertices(Z)';
-    trisurf(convhulln(Z_v),Z_v(:,1),Z_v(:,2),Z_v(:,3),'FaceColor',[0,0,1],'FaceAlpha',0.1,'EdgeColor',[0,0,1],'EdgeAlpha',0.3);
-end
-% lighting flat
-% end
 
 %% Plotting Torque Reach Sets
 
@@ -347,6 +309,45 @@ end
 % 
 % end
 
+%% Plotting Link Reach Sets
+
+tid = 50;
+
+% fig_num = fig_num + 1;
+% figure(fig_num); 
+% hold on; view(3); axis equal; axis on;
+
+% choose a random time inside this time interval
+t_lb = tspan(tid);
+t_ub = tspan(tid + 1);
+t = (t_ub - t_lb) * rand + t_lb;
+
+q_rand = get_desired_traj(beta, t, duration);
+
+fig_num = fig_num + 1;
+figure(fig_num);
+hold on;
+% plot robot
+A.plot_at_time(q_rand);
+view(3)
+axis('equal')
+xlim([-1.5 1.5])
+ylim([-1.5 1.5])
+zlim([0 1.5])
+grid on;
+
+% ! Ask Bohao about the number 10 vs 7 in the for loop below
+% plot link reachsets
+numBodies = 8;
+for j = 1:robot.NumBodies
+    c = link_reachset_center((tid-1)*numBodies+j, :)';
+    g = link_reachset_generators( ((tid-1)*numBodies+j-1)*3+1 : ((tid-1)*numBodies+j)*3, :);
+    Z = zonotope(c, g);
+    Z_v = vertices(Z)';
+    trisurf(convhulln(Z_v),Z_v(:,1),Z_v(:,2),Z_v(:,3),'FaceColor',[0,0,1],'FaceAlpha',0.1,'EdgeColor',[0,0,1],'EdgeAlpha',0.3);
+end
+% lighting flat
+% end
 
 %% helper functions
 function [q, qd, qdd] = get_desired_traj(beta, t, duration)
