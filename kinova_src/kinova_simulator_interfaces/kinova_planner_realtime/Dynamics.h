@@ -7,8 +7,6 @@ class KinematicsDynamics {
 public:
 	BezierCurve* traj = nullptr;
 
-	int tryy = 123;
-
 	Eigen::Array<Eigen::MatrixXd, NUM_JOINTS + 1, 1> trans_matrix;
 	Eigen::Array<Eigen::MatrixXd, NUM_JOINTS, 1> com_matrix;
 
