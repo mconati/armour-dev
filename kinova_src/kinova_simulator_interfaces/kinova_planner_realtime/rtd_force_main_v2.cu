@@ -9,6 +9,8 @@ const std::string outputfilename4 = pathname + "armour_control_input_radius.out"
 const std::string outputfilename5 = pathname + "armour_constraints.out";
 const std::string outputfilename6 = pathname + "armour_wrench_values.out";
 const std::string outputfilename7 = pathname + "armour_force_constraint_radius.out";
+const std::string outputfilename8 = pathname + "unsliced_f_c_int.out";
+const std::string outputfilename9 = pathname + "unsliced_n_c_int.out";
 
 int main() {
 /*
@@ -375,6 +377,18 @@ Section IV:
         outputstream7 << '\n';
     }
     outputstream7.close();
+
+    std::ofstream outputstream8(outputfilename8);
+    outputstream8 << std::setprecision(10);
+    for (int i = 0; i < NUM_TIME_STEPS; i++) {
+        outputstream8 << kd.f_c_int(i);
+    }
+
+    std::ofstream outputstream9(outputfilename9);
+    outputstream9 << std::setprecision(10);
+    for (int i = 0; i < NUM_TIME_STEPS; i++) {
+        outputstream9 << kd.n_c_int(i);
+    }
 
     return 0;
 }

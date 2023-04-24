@@ -605,53 +605,69 @@ std::ostream& operator<<(std::ostream& os, PZsparse& a) {
     //     return;
     // }
 
-    os << a.center << " +...\n";
+    // os << a.center << " +...\n";
+
+    // for (auto it : a.polynomial) {
+    //     os << '(' << it.coeff << ')';
+        
+    //     a.convertHashToDegree(it.degree);
+        
+    //     os << " * k^(";
+    //     for (uint j = 0; j < NUM_FACTORS; j++) {
+    //         os << a.degreeArray[j];
+    //     }
+    //     os << ") ";
+
+    //     os << " * qde^(";
+    //     for (uint j = 0; j < NUM_FACTORS; j++) {
+    //         os << a.degreeArray[j + NUM_FACTORS * 1];
+    //     }
+    //     os << ") ";
+
+    //     os << " * qdae^(";
+    //     for (uint j = 0; j < NUM_FACTORS; j++) {
+    //         os << a.degreeArray[j + NUM_FACTORS * 2];
+    //     }
+    //     os << ") ";
+
+    //     os << " * qddae^(";
+    //     for (uint j = 0; j < NUM_FACTORS; j++) {
+    //         os << a.degreeArray[j + NUM_FACTORS * 3];
+    //     }
+    //     os << ") ";
+
+    //     os << " * cosqe^(";
+    //     for (uint j = 0; j < NUM_FACTORS; j++) {
+    //         os << a.degreeArray[j + NUM_FACTORS * 4];
+    //     }
+    //     os << ") ";
+
+    //     os << " * sinqe^(";
+    //     for (uint j = 0; j < NUM_FACTORS; j++) {
+    //         os << a.degreeArray[j + NUM_FACTORS * 5];
+    //     }
+    //     os << ") ";
+
+    //     os << " +...\n";
+    // }
+
+    // os << "[ " << -a.independent << ", " << a.independent << " ]\n\n";
+
+    assert(a.NCols == 1);
+
+    os << a.center.transpose() << '\n';
 
     for (auto it : a.polynomial) {
-        os << '(' << it.coeff << ')';
-        
-        a.convertHashToDegree(it.degree);
-        
-        os << " * k^(";
-        for (uint j = 0; j < NUM_FACTORS; j++) {
-            os << a.degreeArray[j];
-        }
-        os << ") ";
-
-        os << " * qde^(";
-        for (uint j = 0; j < NUM_FACTORS; j++) {
-            os << a.degreeArray[j + NUM_FACTORS * 1];
-        }
-        os << ") ";
-
-        os << " * qdae^(";
-        for (uint j = 0; j < NUM_FACTORS; j++) {
-            os << a.degreeArray[j + NUM_FACTORS * 2];
-        }
-        os << ") ";
-
-        os << " * qddae^(";
-        for (uint j = 0; j < NUM_FACTORS; j++) {
-            os << a.degreeArray[j + NUM_FACTORS * 3];
-        }
-        os << ") ";
-
-        os << " * cosqe^(";
-        for (uint j = 0; j < NUM_FACTORS; j++) {
-            os << a.degreeArray[j + NUM_FACTORS * 4];
-        }
-        os << ") ";
-
-        os << " * sinqe^(";
-        for (uint j = 0; j < NUM_FACTORS; j++) {
-            os << a.degreeArray[j + NUM_FACTORS * 5];
-        }
-        os << ") ";
-
-        os << " +...\n";
+        os << it.coeff.transpose() << '\n';
     }
 
-    os << "[ " << -a.independent << ", " << a.independent << " ]\n\n";
+    os << a.independent.transpose() << '\n';
+
+    // split different PZ apart
+    for (int i = 0; i < a.NRows; i++) {
+        os << 123456 << ' ';
+    }
+    os << '\n';
 
     return os;
 }
