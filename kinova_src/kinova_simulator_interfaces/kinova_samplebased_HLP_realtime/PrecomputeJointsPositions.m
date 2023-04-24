@@ -1,6 +1,8 @@
 clear; clc;
 
-load('uniformNodes.mat');
+sample_nodes = load('QConfig_composite_hardware_only.txt');
+sample_nodes(:,1) = wrapToPi(sample_nodes(:,1)+pi/2);
+q_valid_list = sample_nodes';
 
 robot = importrobot('Kinova_Grasp_URDF.urdf');
 robot.DataFormat = 'col';
@@ -19,4 +21,4 @@ for i = 1:NUM_NODES
 end
 
 %% write to csv file
-writematrix(joint_positions, 'joint_positions_uniform.csv', 'Delimiter', ' ');
+writematrix(joint_positions, 'joint_positions_composite_hardware_only.csv', 'Delimiter', ' ');

@@ -36,14 +36,14 @@ KinematicsDynamics::KinematicsDynamics(BezierCurve* traj_input) {
         Eigen::MatrixXd mass_matrix(1, 1);
         mass_matrix(0) = mass[i];
         mass_nominal_arr(i) = PZsparse(mass_matrix);
-        mass_uncertain_arr(i) = PZsparse(mass_matrix, mass_uncertainty);
+        mass_uncertain_arr(i) = PZsparse(mass_matrix, mass_uncertainty[i]);
 
         Eigen::Matrix3d inertia_matrix;
         for (int j = 0; j < 9; j++) {
             inertia_matrix(j) = inertia[i * 9 + j]; // This may not be right...
         }
         I_nominal_arr(i) = PZsparse(inertia_matrix);
-        I_uncertain_arr(i) = PZsparse(inertia_matrix, inertia_uncertainty);
+        I_uncertain_arr(i) = PZsparse(inertia_matrix, inertia_uncertainty[i]);
 
         if (i < NUM_FACTORS) {
             r(i) = PZsparse(0, Interval(-eps, eps));

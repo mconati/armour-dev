@@ -1,7 +1,8 @@
 #include "Dynamics.h"
 #include "CollisionChecking.h"
 
-const std::string pathname = "/home/roahmlab/Documents/armour-dev/kinova_src/kinova_simulator_interfaces/kinova_planner_realtime/buffer/";
+// const std::string pathname = "/home/roahmlab/Documents/armour-dev/kinova_src/kinova_simulator_interfaces/kinova_planner_realtime/buffer/";
+const std::string pathname = "/home/baiyuew/ROAHM/armour-dev/kinova_src/kinova_simulator_interfaces/kinova_planner_realtime/buffer/";
 const std::string inputfilename = pathname + "armour.in";
 const std::string outputfilename1 = pathname + "armour.out";
 const std::string outputfilename2 = pathname + "armour_joint_position_center.out";
@@ -204,10 +205,10 @@ Section III:
     Slice reachable sets at some point
 */
 
-    double factors[NUM_FACTORS] = {0.5, 0.7, 0.7, 0.0, -0.8, -0.6, -0.7};
+    // double factors[NUM_FACTORS] = {0.5, 0.7, 0.7, 0.0, -0.8, -0.6, -0.7};
     // double factors[NUM_FACTORS] = {0,0,0,0,0,0,0};
     // double factors[NUM_FACTORS] = {1,1,1,1,1,1,1};
-    // double factors[NUM_FACTORS] = {-1,-1,-1,-1,-1,-1,-1};
+    double factors[NUM_FACTORS] = {-1,-1,-1,-1,-1,-1,-1};
 
     Eigen::MatrixXd qd_des_sliced_center(NUM_FACTORS, NUM_TIME_STEPS);
     Eigen::MatrixXd torque_sliced_center(NUM_FACTORS, NUM_TIME_STEPS);
@@ -553,8 +554,8 @@ Section IV:
     }
     outputstream8.close();
 
-    for(int i=0;i<NUM_TIME_STEPS;i++){
-        cout << qd_center(1,i) << endl;
-    }
+    // for(int i=0;i<NUM_TIME_STEPS;i++){
+    //     cout << qd_center(1,i) << endl;
+    // }
 
 }

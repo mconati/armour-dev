@@ -11,8 +11,8 @@ classdef simulator_armtd < simulator
 
 %% properties
     properties (Access = public)
-        stop_sim_when_input_exceeded = true;
-        stop_sim_when_ultimate_bound_exceeded = true;
+        stop_sim_when_input_exceeded = false;
+        stop_sim_when_ultimate_bound_exceeded = false;
         stop_sim_when_joint_limit_exceeded = false;
     end
 

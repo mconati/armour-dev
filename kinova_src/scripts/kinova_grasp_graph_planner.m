@@ -70,19 +70,19 @@ plot_waypoint_arm_flag  = true ;
 lookahead_distance = 0.1 ; % used if RRT is false
 
 % plotting
-plot_while_running = false ;
+plot_while_running = true ;
 
 % simulation
 max_sim_time = 86400 ; % 24 hours = 86400 sec; 48 hours = sec
 max_sim_iter = 3000 ;
 stop_threshold = 3 ; % number of failed iterations before exiting
 
-% file handling
-save_file_header = 'trial_' ;
-file_location = '../results/rtd-force/dur2s_largeStateBuffer_10Obs_03082023' ;
-if ~exist(file_location, 'dir')
-    mkdir(file_location);
-end
+% % file handling
+% save_file_header = 'trial_' ;
+% file_location = '../results/rtd-force/dur2s_largeStateBuffer_10Obs_03082023' ;
+% if ~exist(file_location, 'dir')
+%     mkdir(file_location);
+% end
 
 % world file
 world_file_header = 'scene';
@@ -113,7 +113,7 @@ if plot_while_running
     figure(1); clf; view(3); grid on;
 end
 
-idx = 13:13;
+idx = 17:17;
 
 % read world CSV to get start and goal, populate obstacles:
 world_filename = world_file_list(idx).name;
