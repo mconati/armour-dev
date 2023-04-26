@@ -5,24 +5,24 @@
 // #include "KinovaInfo.h"
 // #include "KinovaWithoutGripperInfo.h"
 // #include "KinovaForceInfo.h"
-#include "KinovaFixedGripperInfo.h"
-// #include "KinovaForceHardwareInfo.h"
+// #include "KinovaFixedGripperInfo.h"
+#include "KinovaForceHardwareInfo.h"
 
 // #define DEBUG_MODE true
 
 // Parameters for PZsparse.h:
     // monomials with a coefficient smaller than this number will be reduced (should be close to V_m magnitude)
-    #define SIMPLIFY_THRESHOLD 2e-4
+    #define SIMPLIFY_THRESHOLD 3e-4
 
 // Parameters for Trajectories.h:
     // Duration of the Bezier Curve
-    #define DURATION 2.0
+    #define DURATION 1.75
 
     // number of time steps (This should be an EVEN number!!!)
-    #define NUM_TIME_STEPS 128
+    #define NUM_TIME_STEPS 50
 
     // range of parameters (size of generators in PZ).
-    const double k_range[NUM_FACTORS] = { M_PI / 72, M_PI / 72, M_PI / 72, M_PI / 72, M_PI / 72, M_PI / 72, M_PI / 72 }; // (radian)
+    const double k_range[NUM_FACTORS] = { M_PI / 40, M_PI / 40, M_PI / 48, M_PI / 48, M_PI / 48, M_PI / 48, M_PI / 48 }; // (radian)
 
 // Parameters for CollisionChecking.h:
     // maximum number of obstacles (used for memory pre-allocation)

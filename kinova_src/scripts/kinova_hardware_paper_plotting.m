@@ -6,6 +6,26 @@ close all;
 clc;
 fig_num = 1;
 
+%% Parameters
+
+fontsize = 16;
+linewidth = 3;
+% number of time steps to skip
+skip_num = 1;
+% planning iteration to plot
+plan_index = 1;
+% start index of the planning iteration?
+traj_index = 1;
+
+% match to hardware settings
+time_steps = 50; 
+time_index = time_steps/2; % for plotting half a trajectory
+duration = 1.75;
+dt = duration/time_steps;
+t_traj = linspace(0,duration,time_steps);
+surf_rad = 0.058/2;
+u_s = 0.6;
+
 %% Description
 
 % use 
@@ -14,6 +34,15 @@ fig_num = 1;
     % debug_traj_accel
     % debug_traj_k
 % to calculate unsliced reachsets again and also the nominal values
+
+%% Color Coding
+
+unsliced_color = 1/256*[90,200,243];
+% slice_color = 1/256*[72,181,163]; % light green
+slice_color = 1/256*[75,154,76]; % dark green
+face_alpha = 0.3;
+face_alpha_light = 0.03;
+edge_alpha = 0.5;
 
 %% Load Hardware ROS Data
 
@@ -135,35 +164,40 @@ end
             % update the reach sets.
             % reset the time counter.
         % else increment time counter and continue
-    % plot the nominal value
+    % plot the nominal value separately
+
+%% Iteration
+
+
 
 %% Calculate Unsliced Reachable Sets
 
 % get agent info
-agent_info = A.get_agent_info() ; % how to get agent info? what specifically is needed?
+% agent_info = A.get_agent_info() ; % how to get agent info? what specifically is needed?
 
 % get world info
 % given the current state of the agent, query the world
 % to get the surrounding obstacles
-world_info = W.get_world_info(agent_info,P) ; % how to get world info? what specifically is needed?
+% world_info = W.get_world_info(agent_info,P) ; % how to get world info? what specifically is needed?
 % might need to hard code obstacle position and size
 
 % ! don't need the obstacle for the unsliced reach sets ! and then can
 % slice using the provided k
 
 % initial condition
-q_0 = A.state(A.joint_state_indices,traj_index);
-q_dot_0 = A.state(A.joint_speed_indices,traj_index);
-q_ddot_0 = A.reference_acceleration(:,traj_index);
+q_0 = rs_pos(1,:);
+q_dot_0 = rs_vel(1,:);
+q_ddot_0 = rs_accel(1,:);
 
-q_des = P.HLP.waypoints(:,plan_index);
+% pass in the k_opt as 
+q_des = rs_opt_k(1,:);
 
 % organize input to cuda program
-P.vdisp('Calling CUDA & C++ Program!',3);
+% P.vdisp('Calling CUDA & C++ Program!',3);
 % P.kinova_test_folder_path = 'C:\Users\roahmlab\Documents\GitHub\armour-dev\kinova_src';
-P.kinova_test_folder_path = '/home/baiyuew/ROAHM/armour-dev/kinova_src';
+kinova_test_folder_path = '/home/baiyuew/ROAHM/armour-dev/kinova_src';
 % cuda_input_file = fopen([P.kinova_test_folder_path, '\kinova_simulator_interfaces\kinova_planner_realtime\buffer\armour.in'], 'w');  
-cuda_input_file = fopen([P.kinova_test_folder_path, '/kinova_simulator_interfaces/kinova_planner_realtime/buffer/armour.in'], 'w');  
+cuda_input_file = fopen([kinova_test_folder_path, '/kinova_simulator_interfaces/kinova_planner_realtime/buffer/armour.in'], 'w');  
 
 for ind = 1:length(q_0)
     fprintf(cuda_input_file, '%.10f ', q_0(ind));
@@ -180,15 +214,15 @@ fprintf(cuda_input_file, '\n');
 for ind = 1:length(q_des)
     fprintf(cuda_input_file, '%.10f ', q_des(ind));
 end
-fprintf(cuda_input_file, '\n');
-fprintf(cuda_input_file, '%d\n', max(length(world_info.obstacles), 0));
-for obs_ind = 1:length(world_info.obstacles)
-    temp = reshape(world_info.obstacles{obs_ind}.Z, [1,size(world_info.obstacles{obs_ind}.Z,1) * size(world_info.obstacles{obs_ind}.Z,2)]);
-    for ind = 1:length(temp)
-        fprintf(cuda_input_file, '%.10f ', temp(ind));
-    end
-    fprintf(cuda_input_file, '\n');
-end
+% fprintf(cuda_input_file, '\n');
+% fprintf(cuda_input_file, '%d\n', max(length(world_info.obstacles), 0));
+% for obs_ind = 1:length(world_info.obstacles)
+%     temp = reshape(world_info.obstacles{obs_ind}.Z, [1,size(world_info.obstacles{obs_ind}.Z,1) * size(world_info.obstacles{obs_ind}.Z,2)]);
+%     for ind = 1:length(temp)
+%         fprintf(cuda_input_file, '%.10f ', temp(ind));
+%     end
+%     fprintf(cuda_input_file, '\n');
+% end
 
 fclose(cuda_input_file);
 
@@ -197,28 +231,28 @@ fclose(cuda_input_file);
 terminal_output = system('env -i bash -i -c "../kinova_simulator_interfaces/kinova_planner_realtime/rtd_force_main_v2" '); % rtd-force path
 %                     terminal_output = system('env -i bash -i -c "./../kinova_simulator_interfaces/kinova_planner_realtime_original/armour_main"'); % armour path
 
-if terminal_output == 0
-    data = readmatrix([P.kinova_test_folder_path, '/kinova_simulator_interfaces/kinova_planner_realtime/buffer/armour.out'], 'FileType', 'text');
-%                         data = readmatrix([P.kinova_test_folder_path, '/kinova_simulator_interfaces/kinova_planner_realtime_original/buffer/armour.out'], 'FileType', 'text');
-    k_opt = data(1:end-1);
-    planning_time = data(end) / 1000.0; % original data is milliseconds
-
-    if length(k_opt) == 1
-        P.vdisp('Unable to find new trajectory!',3)
-        k_opt = nan;
-    elseif planning_time > P.t_plan
-        P.vdisp('Solver Took Too Long!',3)
-        k_opt = nan;
-    else
-        P.vdisp('New trajectory found!',3);
-        for i = 1:length(k_opt)
-            fprintf('%7.6f ', k_opt(i));
-        end
-        fprintf('\n');
-    end
-else
-    error('CUDA program error! Check the executable path in armour-dev/kinova_src/kinova_simulator_interfaces/uarmtd_planner');
-end
+% if terminal_output == 0
+%     data = readmatrix([P.kinova_test_folder_path, '/kinova_simulator_interfaces/kinova_planner_realtime/buffer/armour.out'], 'FileType', 'text');
+% %                         data = readmatrix([P.kinova_test_folder_path, '/kinova_simulator_interfaces/kinova_planner_realtime_original/buffer/armour.out'], 'FileType', 'text');
+%     k_opt = data(1:end-1);
+%     planning_time = data(end) / 1000.0; % original data is milliseconds
+% 
+%     if length(k_opt) == 1
+%         P.vdisp('Unable to find new trajectory!',3)
+%         k_opt = nan;
+%     elseif planning_time > P.t_plan
+%         P.vdisp('Solver Took Too Long!',3)
+%         k_opt = nan;
+%     else
+%         P.vdisp('New trajectory found!',3);
+%         for i = 1:length(k_opt)
+%             fprintf('%7.6f ', k_opt(i));
+%         end
+%         fprintf('\n');
+%     end
+% else
+%     error('CUDA program error! Check the executable path in armour-dev/kinova_src/kinova_simulator_interfaces/uarmtd_planner');
+% end
 
 if terminal_output == 0
     % read FRS information if needed
@@ -232,27 +266,23 @@ else
     k_opt = nan;
 end
 
+%% Parse the Unsliced Output
+
 % parse the unsliced PZ output
 [force_PZ_unsliced,moment_PZ_unsliced] = parse_unsliced_PZs_func();
 
-%%
-
-%% Get PZ Wrench Info
-
-% might have to update to getsubset of current 
-% or can use the wrench radii from above?? no because the k won't be the
-% same
+%% Process Sliced Wrench PZ
 
 force_vertices = [];
 for i = 1 % :length(sim_result.P.info.wrench_radii)
 
-    wrench = sim_result.P.info.wrench_radii{i};
+%     wrench = wrench_radii{i};
     
     % get center and radii values of sliced PZs
-    force_center = wrench(:,1:3);
-    moment_center = wrench(:,4:6);
-    force_radii = wrench(:,7:9);
-    moment_radii = wrench(:,10:12);
+    force_center = wrench_radii(:,1:3);
+    moment_center = wrench_radii(:,4:6);
+    force_radii = wrench_radii(:,7:9);
+    moment_radii = wrench_radii(:,10:12);
 
 end
 
@@ -289,7 +319,7 @@ end
 % sliced
 for i = 1:time_index
     force_int{i} = interval(force_center(i,3)-force_radii(i,3),force_center(i,3)+force_radii(i,3));
-    moment_zono = polyZonotope_ROAHM(moment_center(j,:)',eye(3).*moment_radii(j,:)');
+    moment_zono = polyZonotope_ROAHM(moment_center(i,:)',eye(3).*moment_radii(i,:)');
     % calculating the PZ form of the constraints
     ZMP_PZ_top = cross([0;0;1],moment_zono);
     ZMP_PZ_bottom = force_int{i}; % *[0,0,1]; % modified
@@ -307,6 +337,8 @@ end
 fig_num = fig_num + 1;
 figure(fig_num); clf; hold on;
 
+max_sup = -1;
+
 % plot unsliced force overapproximation
 for i = 1:time_index
 
@@ -317,6 +349,10 @@ for i = 1:time_index
     fz1.FaceColor = unsliced_color;
     fz1.FaceAlpha = face_alpha;
     fz1.EdgeAlpha = edge_alpha;
+
+    if force_int_unsliced.sup(3) > max_sup
+        max_sup = force_int_unsliced.sup(3);
+    end
 
 end
 
@@ -330,10 +366,11 @@ for i = 1:time_index
 end
 
 % plot the nominal values
-plot(t_traj(1:time_index+1), force(3,1:time_index+1),'-k','LineWidth',linewidth)
+nom_idx = find(time < t_traj(time_index+1));
+plot(time(nom_idx), force(3,nom_idx),'-k','LineWidth',linewidth)
 
 % formatting for plot
-ylim([0 2.5])
+ylim([0 max_sup+0.1])
 xlim([0 t_traj(time_index+1)])
 xlabel('Time (s)')
 ylabel('Force (N)')
@@ -349,10 +386,10 @@ figure(fig_num)
 hold on
 
 % plotting friction cone boundary
-max_fz = max(force(3,1:time_index));
+max_fz = max(force(3,1:time_index)); % UPDATE THIS SHOULDN't BE TIME INDEX
 min_fz = min(force(3,1:time_index));
-[max_fz_x, max_fz_y] = circle(2*max_fz*W.u_s,0,0,0,2*pi,0.01);
-[min_fz_x, min_fz_y] = circle(2*min_fz*W.u_s,0,0,0,2*pi,0.01);
+[max_fz_x, max_fz_y] = circle(2*max_fz*u_s,0,0,0,2*pi,0.01);
+[min_fz_x, min_fz_y] = circle(2*min_fz*u_s,0,0,0,2*pi,0.01);
 plot(max_fz_x, max_fz_y,'-r')
 plot(min_fz_x, min_fz_y,'-r')
 fill([max_fz_x flip(min_fz_x)],[max_fz_y flip(min_fz_y)],'r','FaceAlpha',0.9)
@@ -376,7 +413,8 @@ for i = 1:skip_num:time_index
 end
 
 % plotting nominal values
-plot(force(1,1:time_index),force(2,1:time_index),'-k')
+nom_idx = find(time < t_traj(time_index+1));
+plot(force(1,nom_idx),force(2,nom_idx),'-k')
 
 % plot formatting
 xlabel('x-axis Force (N)')
@@ -426,7 +464,8 @@ for i = 1:skip_num:time_index
 end
 
 % plot nominal
-plot(ZMP(1,1:time_index).*factor,ZMP(2,1:time_index).*factor,'-k')
+nom_idx = find(time < t_traj(time_index+1));
+plot(ZMP(1,nom_idx).*factor,ZMP(2,nom_idx).*factor,'-k')
 
 % plot formatting
 xlabel('x_o position (cm)')
