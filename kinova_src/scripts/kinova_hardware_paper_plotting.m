@@ -1,6 +1,8 @@
 %% Hardware Experiment Contact Diagram Plotting
 % Zachary Brei
 
+%%%%% NEEDS TO BE FIXED WITH ACCELERATION PROCESSING %%%%%%
+
 clear all;
 close all;
 clc;
@@ -46,7 +48,12 @@ edge_alpha = 0.5;
 
 %% Load Hardware ROS Data
 
-load_file = 'HardwareVideoROSData_04222023.mat';
+% load_file = 'HardwareVideoROSData_04222023.mat';
+% agent_urdf = 'Kinova_Grasp_w_Tray.urdf';
+
+load_file = 'HardwareFailureROSData.mat';
+agent_urdf = 'Kinova_Grasp_URDF.urdf';
+
 data = load(load_file);
 
 % contact parameters: match with hardware experiment settings
@@ -78,7 +85,6 @@ add_uncertainty_to = 'all'; % choose 'all', 'link', or 'none'
 links_with_uncertainty = {}; % if add_uncertainty_to = 'link', specify links here.
 uncertain_mass_range = [0.97, 1.03];
 
-agent_urdf = 'Kinova_Grasp_w_Tray.urdf';
 robot = importrobot(agent_urdf);
 robot.DataFormat = 'col';
 robot.Gravity = [0 0 -9.81];

@@ -4,6 +4,14 @@
 clear all;
 close all;
 clc;
+
+%% What to Update Before Running
+% Info file in CUDA code
+% Contact parameters in CUDA code main file
+% Data and URDF being loaded
+% Save file names
+
+%% Figure Icrementing
 fig_num = 1;
 
 %% Parameters
@@ -18,16 +26,34 @@ fric_plot = figure(fric_plot_num);
 tip_plot = figure(tip_plot_num);
 
 % file name to save the gif as
-sep_save_file = 'TestHardwareGif_Separation.gif';
-fric_save_file = 'TestHardwareGif_Friction.gif';
-tip_save_file = 'TestHardwareGif_Tipping.gif';
+sep_save_file = 'TestHardwareGif_Separation';
+fric_save_file = 'TestHardwareGif_Friction';
+tip_save_file = 'TestHardwareGif_Tipping';
+% create video writer objects
+sep_vid = VideoWriter(sep_save_file);
+fric_vid = VideoWriter(fric_save_file);
+tip_vid = VideoWriter(tip_save_file);
+% setting the frame rate
+framerate = 100;
+sep_vid.FrameRate = framerate;
+fric_vid.FrameRate = framerate;
+tip_vid.FrameRate = framerate;
+% setting quality
+Quality = 100;
+sep_vid.Quality = Quality;
+fric_vid.Quality = Quality;
+tip_vid.Quality = Quality;
+% open the files
+open(sep_vid)
+open(fric_vid)
+open(tip_vid)
 
 % plot formatting parameters
 fontsize = 16;
 linewidth = 3;
 markersize = 2;
 % number of samples to skip over to get 50 fps?
-skip_rate = 20;
+skip_rate = 10;
 % number of time steps to skip
 skip_num = 1;
 % planning iteration to plot
@@ -40,8 +66,6 @@ time_steps = 50;
 time_index = time_steps/2; % for plotting half a trajectory
 duration = 1.75;
 dt = duration/time_steps;
-surf_rad = 0.058/2;
-u_s = 0.6;
 
 %% Description
 
@@ -63,11 +87,16 @@ edge_alpha = 0.4;
 
 %% Load Hardware ROS Data
 
-load_file = 'HardwareVideoROSData_04222023.mat';
+% load_file = 'HardwareVideoROSData_04222023.mat';
+% agent_urdf = 'Kinova_Grasp_w_Tray.urdf';
+
+load_file = 'HardwareSuccessROSData.mat';
+agent_urdf = 'Kinova_Grasp_URDF.urdf';
+
 data = load(load_file);
 
 % contact parameters: match with hardware experiment settings
-u_s = 0.6;
+u_s = 0.2561;
 surf_rad = 0.058/2;
 
 %% Extract Data
@@ -76,10 +105,12 @@ surf_rad = 0.058/2;
 time = data.rosbag.raw_time - data.rosbag.raw_time(1);
 
 % for nominal values
-pos = data.rosbag.debug_traj_pos;
-vel = data.rosbag.debug_traj_vel;
-accel = data.rosbag.debug_traj_accel;
+pos = data.rosbag.debug_q_des;
+vel = data.rosbag.debug_qd_des;
+accel = data.rosbag.debug_qdd_des;
 opt_k = data.rosbag.debug_traj_k;
+
+control_torque = data.rosbag.control_torque;
 
 % for reach set values
 rs_duration = data.rosbag.debug_duration; % for determining if braking maneuver occured
@@ -95,7 +126,6 @@ add_uncertainty_to = 'all'; % choose 'all', 'link', or 'none'
 links_with_uncertainty = {}; % if add_uncertainty_to = 'link', specify links here.
 uncertain_mass_range = [0.97, 1.03];
 
-agent_urdf = 'Kinova_Grasp_w_Tray.urdf';
 robot = importrobot(agent_urdf);
 robot.DataFormat = 'col';
 robot.Gravity = [0 0 -9.81];
@@ -111,22 +141,30 @@ transmision_inertia = [8.02999999999999936 11.99620246153036440 9.00254278617515
 
 joint_angles = pos';
 joint_angular_velocity = vel';
+input = control_torque';
 
-qdd_post = accel'; % zeros(7,length(A.time));
-%     % calculating the acceleration in post to compare with what is stored
-% for i = 1:length(A.time(1:end-1))
-%     [M, C, g] = A.calculate_dynamics(joint_angles(:,i), joint_angular_velocity(:,i), params.true);
-%     for j = 1:size(M,1)
-%         M(j,j) = M(j,j) + transmision_inertia(j);
-%     end
-%     qdd_post(:,i) = M\(A.input(:,i+1)-C*joint_angular_velocity(:,i)-g);
-% end
+qdd_post = zeros(7,length(time)); % accel'; % 
+    % calculating the acceleration in post to compare with what is stored
+parfor i = 1:length(time(1:end-1))
+    [M, C, g] = calculate_dynamics(joint_angles(:,i)', joint_angular_velocity(:,i)', params.true);
+    for j = 1:size(M,1)
+        M(j,j) = M(j,j) + transmision_inertia(j);
+    end
+    qdd_post(:,i) = M\(input(:,i+1)-C*joint_angular_velocity(:,i)-g);
+end
+
+%% 
 
 % calling rnea
-for i = 1:length(pos)
+Tau = cell(1,length(pos));
+F = cell(1,length(pos));
+N = cell(1,length(pos));
+force = zeros(3,length(pos));
+moment = zeros(3,length(pos));
+parfor i = 1:length(pos)
 
-    % clear relevant variables
-    clear tau f n
+%     % clear relevant variables
+%     clear tau f n
 
     % call rnea
     [tau, f, n] = rnea(joint_angles(:,i)',joint_angular_velocity(:,i)',joint_angular_velocity(:,i)',qdd_post(:,i)',true,params.true); % A.acceleration(:,i)'
@@ -189,7 +227,7 @@ t_traj = linspace(0,duration,time_steps);
 time_threshold = -1;
 plan_iter = 0;
 frame_idx = 1;
-for plot_idx = 1:skip_rate:10000 %length(time) % UPDATE TO ITERATE THROUGH AT A FRAME RATE?
+for plot_idx = 1:skip_rate:5000 % length(time) %length(time) % UPDATE TO ITERATE THROUGH AT A FRAME RATE?
 
     if time(plot_idx) > time_threshold % check if new planning iteration
 
@@ -291,20 +329,26 @@ for plot_idx = 1:skip_rate:10000 %length(time) % UPDATE TO ITERATE THROUGH AT A 
             fc1 = fill([max_fz_x flip(min_fz_x)],[max_fz_y flip(min_fz_y)],'r','FaceAlpha',0.9);
             fc2 = line([max_fz_x(end) min_fz_x(1)],[max_fz_y(end) min_fz_y(1)]);
             set(fc2,'Color','r') % ,'EdgeAlpha',0.3)
+
+            [max_circ_x, max_circ_y] = circle(2*max_fz*u_s,0,0,0,2*pi,0.001);
+            fc3 = plot(max_circ_x,max_circ_y,'-r');
+            [min_circ_x, min_circ_y] = circle(2*min_fz*u_s,0,0,0,2*pi,0.001);
+            fc4 = plot(min_circ_x,min_circ_y,'-r');
+
             
             % plotting unsliced overapproximation
             for i = 1:skip_num:time_index
             
                 force_int_unsliced = interval(force_PZ_unsliced{i});
             
-                fc3 = patch([force_int_unsliced.inf(1),force_int_unsliced.sup(1),force_int_unsliced.sup(1),force_int_unsliced.inf(1)],[force_int_unsliced.inf(2),force_int_unsliced.inf(2),force_int_unsliced.sup(2),force_int_unsliced.sup(2)],unsliced_color,'FaceAlpha',face_alpha_light,'EdgeAlpha',edge_alpha,'EdgeColor',unsliced_color);
+                fc5 = patch([force_int_unsliced.inf(1),force_int_unsliced.sup(1),force_int_unsliced.sup(1),force_int_unsliced.inf(1)],[force_int_unsliced.inf(2),force_int_unsliced.inf(2),force_int_unsliced.sup(2),force_int_unsliced.sup(2)],unsliced_color,'FaceAlpha',face_alpha_light,'EdgeAlpha',edge_alpha,'EdgeColor',unsliced_color);
             
             end
             
             % plotting sliced overapproximation
             for i = 1:skip_num:time_index
             
-                fc4 = patch([force_lower(i,1),force_upper(i,1),force_upper(i,1),force_lower(i,1)],[force_lower(i,2),force_lower(i,2),force_upper(i,2),force_upper(i,2)],slice_color,'FaceAlpha',face_alpha_light,'EdgeAlpha',edge_alpha,'EdgeColor',slice_color);
+                fc6 = patch([force_lower(i,1),force_upper(i,1),force_upper(i,1),force_lower(i,1)],[force_lower(i,2),force_lower(i,2),force_upper(i,2),force_upper(i,2)],slice_color,'FaceAlpha',face_alpha_light,'EdgeAlpha',edge_alpha,'EdgeColor',slice_color);
             
             end
 
@@ -379,7 +423,12 @@ for plot_idx = 1:skip_rate:10000 %length(time) % UPDATE TO ITERATE THROUGH AT A 
     sep_plot = figure(sep_plot_num);
     title('Contact Joint z-Axis Force')
     ylim([0 max_sup+0.1])
-    xlim([0 t_traj(time_index+1)]) % UPDATE THE TIME RANGE TO BE FIXED
+    sep_plot_range = 5; % seconds
+    if time(plot_idx) < sep_plot_range/2
+        xlim([0 sep_plot_range]) % UPDATE THE TIME RANGE TO BE FIXED
+    else
+        xlim([time(plot_idx)-sep_plot_range/2 time(plot_idx)+sep_plot_range/2])
+    end
     xlabel('Time (s)')
     ylabel('Force (N)')
     set(gca,'FontSize',fontsize)
@@ -415,11 +464,18 @@ for plot_idx = 1:skip_rate:10000 %length(time) % UPDATE TO ITERATE THROUGH AT A 
 %     make_animation(sep_plot,frame_idx,sep_save_file)
 %     make_animation(fric_plot,frame_idx,fric_save_file)
 %     make_animation(tip_plot,frame_idx,tip_save_file)
-    make_video()
+    make_video(sep_plot,sep_vid)
+    make_video(fric_plot,fric_vid)
+    make_video(tip_plot,tip_vid)
     
     % increment frame index
     frame_idx = frame_idx + 1;
 end
+
+% close the videos
+close(sep_vid)
+close(fric_vid)
+close(tip_vid)
 
 %% Update Reach Sets Function
 
@@ -547,6 +603,13 @@ end
 
 
 %% helper functions
+
+function [M, C, g] = calculate_dynamics(q, qd, params)
+            M = rnea_mass(q, params);
+            C = rnea_coriolis(q, qd, params);
+            g = rnea_gravity(q, params);
+end
+
 function [link_poly_zonotopes, link_sizes, mesh] = create_link_poly_zonos(robot)
 % takes in a robot
 % creates overapproximating PZ bounding box for each body of the robot.
@@ -746,9 +809,11 @@ function make_animation( h,index,filename )
     end
 end
 
-function make_video( h,filename )
+function make_video( h,video )
     frame = getframe(h);
-    writeVideo(filename,frame)
+%     open(video)
+    writeVideo(video,frame)
+%     close(video)
 %     im = frame2im(frame);
 %     [imind,cm] = rgb2ind(im,256);
 %     if index == 1
