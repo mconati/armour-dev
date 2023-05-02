@@ -7,7 +7,7 @@ clc;
 %% Define Start and Goal to Check
 
 % define base joint offset rotation
-offset = pi;
+offset = 0;
 
 % define start and goal configurations
 
@@ -29,8 +29,8 @@ robot.Gravity = [0 0 -9.81];
 %% Load Joint Positions
 
 % path from /scripts to /Graphs
-% sample_nodes = load('../../Graphs/uniformNodes.csv');
-sample_nodes = load('../../Graphs/QConfig_uniform_tiltrand_v2.txt');
+sample_nodes = load('../../Graphs/uniformNodes_hardware.csv');
+% sample_nodes = load('../../Graphs/QConfig_uniform_tiltrand_v2.txt');
 
 % wrapping to [-pi pi]
 sample_nodes(:,1) = wrapToPi(sample_nodes(:,1));
@@ -49,8 +49,8 @@ end
 %% Load In Adjacency Matrix
 
 % read adjacency matrix file
-% adj_matrix_sparse_data = readmatrix('../../Graphs/adj_matrix_uniform_mult5.csv');
-adj_matrix_sparse_data = readmatrix('../../Graphs/adj_matrix_uniform_tiltrand_v2_range0p6.txt');
+adj_matrix_sparse_data = readmatrix('../../Graphs/adj_matrix_uniform_mult5.csv');
+% adj_matrix_sparse_data = readmatrix('../../Graphs/adj_matrix_uniform_tiltrand_v2_range0p6.txt');
 
 % form sparse matrix from adjacency matrix
 adj_matrix_sparse = sparse(adj_matrix_sparse_data(1:end,1)+1, ...
