@@ -68,8 +68,10 @@ time = data.rosbag.raw_time - data.rosbag.raw_time(1);
 % for nominal values
 pos = data.rosbag.debug_traj_pos;
 vel = data.rosbag.debug_traj_vel;
-accel = data.rosbag.debug_traj_accel;
+% accel = data.rosbag.debug_traj_accel; % acceleration needs to be calculated
 opt_k = data.rosbag.debug_traj_k;
+
+control_torque = data.rosbag.control_torque;
 
 % for reach set values
 duration = data.rosbag.debug_duration; % for determining if braking maneuver occured
@@ -101,21 +103,36 @@ transmision_inertia = [8.02999999999999936 11.99620246153036440 9.00254278617515
 joint_angles = pos';
 joint_angular_velocity = vel';
 
-qdd_post = accel'; % zeros(7,length(A.time));
-%     % calculating the acceleration in post to compare with what is stored
-% for i = 1:length(A.time(1:end-1))
-%     [M, C, g] = A.calculate_dynamics(joint_angles(:,i), joint_angular_velocity(:,i), params.true);
-%     for j = 1:size(M,1)
-%         M(j,j) = M(j,j) + transmision_inertia(j);
-%     end
-%     qdd_post(:,i) = M\(A.input(:,i+1)-C*joint_angular_velocity(:,i)-g);
-% end
+qdd_post = zeros(7,length(time)); % accel'; % 
+    % calculating the acceleration in post to compare with what is stored
+parfor i = 1:length(time(1:end-1))
+    [M, C, g] = calculate_dynamics(joint_angles(:,i)', joint_angular_velocity(:,i)', params.true);
+    for j = 1:size(M,1)
+        M(j,j) = M(j,j) + transmision_inertia(j);
+    end
+    qdd_post(:,i) = M\(input(:,i+1)-C*joint_angular_velocity(:,i)-g);
+end
+
+%% Plotting the Acceleration
+
+fig_num = fig_num + 1;
+figure(fig_num)
+hold on
+
+plot(time,qdd_post)
+
+%%
 
 % calling rnea
-for i = 1:length(pos)
+Tau = cell(1,length(pos));
+F = cell(1,length(pos));
+N = cell(1,length(pos));
+force = zeros(3,length(pos));
+moment = zeros(3,length(pos));
+parfor i = 1:length(pos)
 
-    % clear relevant variables
-    clear tau f n
+%     % clear relevant variables
+%     clear tau f n
 
     % call rnea
     [tau, f, n] = rnea(joint_angles(:,i)',joint_angular_velocity(:,i)',joint_angular_velocity(:,i)',qdd_post(:,i)',true,params.true); % A.acceleration(:,i)'
@@ -153,28 +170,6 @@ for i = 1:length(pos)
     ZMP_bottom2 = dot([0;0;1],force(:,i));
     tip2(i) = ZMP_top(1)^2 + ZMP_top(2)^2 - ZMP_bottom^2*(surf_rad)^2;
 end
-
-%% Iterate Through Planning Iterations?
-
-% need to plot all of the nominal values
-% update the reach sets each time a planning iteration passes
-    % extend the reach sets when a braking maneuver happens?
-    % check what the duration is and plot the correct amount of reach sets
-    % based on that. 
-
-% outer loop iterates through length of pos
-    % check if the time counter is greater than duration
-        % if so, 
-            % check next (two down?) duration value to see if next planning iteration
-            % has a braking maneuver.
-            % update the reach sets.
-            % reset the time counter.
-        % else increment time counter and continue
-    % plot the nominal value separately
-
-%% Iteration
-
-
 
 %% Calculate Unsliced Reachable Sets
 

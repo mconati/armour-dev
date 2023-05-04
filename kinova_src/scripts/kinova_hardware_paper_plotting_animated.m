@@ -105,9 +105,10 @@ surf_rad = 0.058/2;
 time = data.rosbag.raw_time - data.rosbag.raw_time(1);
 
 % for nominal values
-pos = data.rosbag.debug_q_des;
-vel = data.rosbag.debug_qd_des;
-accel = data.rosbag.debug_qdd_des;
+pos = data.rosbag.debug_traj_pos;
+vel = data.rosbag.debug_traj_vel;
+% accel = data.rosbag.debug_qdd_des; % acceleration needs to be calculated
+% separately
 opt_k = data.rosbag.debug_traj_k;
 
 control_torque = data.rosbag.control_torque;
