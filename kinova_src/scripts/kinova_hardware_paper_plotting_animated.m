@@ -90,13 +90,13 @@ edge_alpha = 0.4;
 % load_file = 'HardwareVideoROSData_04222023.mat';
 % agent_urdf = 'Kinova_Grasp_w_Tray.urdf';
 
-load_file = 'HardwareSuccessROSData.mat';
+load_file = 'HardwareSuccessROSData_v2_05_04_2023.mat';
 agent_urdf = 'Kinova_Grasp_URDF.urdf';
 
 data = load(load_file);
 
 % contact parameters: match with hardware experiment settings
-u_s = 0.39;
+u_s = 0.36;
 surf_rad = 0.058/2;
 
 %% Extract Data
@@ -222,13 +222,16 @@ end
         % else increment time counter and continue
     % plot the nominal value separately
 
+figure()
+plot(time,slip)
+
 %% Iteration
 
 t_traj = linspace(0,duration,time_steps);
 time_threshold = -1;
 plan_iter = 0;
 frame_idx = 1;
-for plot_idx = 1:skip_rate:5000 % length(time) %length(time) % UPDATE TO ITERATE THROUGH AT A FRAME RATE?
+for plot_idx = 1:skip_rate:25000 % length(time) %length(time) % UPDATE TO ITERATE THROUGH AT A FRAME RATE?
 
     if time(plot_idx) > time_threshold % check if new planning iteration
 

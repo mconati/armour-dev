@@ -26,7 +26,7 @@
 
 // Parameters for CollisionChecking.h:
     // maximum number of obstacles (used for memory pre-allocation)
-    #define MAX_OBSTACLE_NUM 10
+    #define MAX_OBSTACLE_NUM 40
 
     // number of generators of obstacle zonotopes
     #define MAX_OBSTACLE_GENERATOR_NUM 3
@@ -59,12 +59,12 @@
     #define VELOCITY_LIMITS_VIOLATION_THRESHOLD 1e-3
 
     // scale the cost function value so that it could converge faster (be careful with it!)
-    #define COST_FUNCTION_OPTIMALITY_SCALE 1.0
+    #define COST_FUNCTION_OPTIMALITY_SCALE 10.0
 
 // Parameters for armour_main.cpp
     #define IPOPT_OPTIMIZATION_TOLERANCE 1e-4
 
-    #define IPOPT_MAX_CPU_TIME 12.0 // 14.0
+    #define IPOPT_MAX_CPU_TIME 14.0 // 14.0
 
     #define IPOPT_PRINT_LEVEL 0
 
