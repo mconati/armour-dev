@@ -96,7 +96,7 @@ agent_urdf = 'Kinova_Grasp_URDF.urdf';
 data = load(load_file);
 
 % contact parameters: match with hardware experiment settings
-u_s = 0.2561;
+u_s = 0.39;
 surf_rad = 0.058/2;
 
 %% Extract Data
