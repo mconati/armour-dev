@@ -11,8 +11,8 @@
 namespace py = pybind11;
 
 #define NUM_EDGES 112826403 // 50221615
-#define COLLISION_THRESHOLD -0.05 // -0.10
-#define EDGE_THRESHOLD 0.4 // 1000
+#define COLLISION_THRESHOLD -0.075 // -0.10
+#define EDGE_THRESHOLD 0.45 // 1000
 
 class pzsparse {
     private:
@@ -34,10 +34,10 @@ class pzsparse {
         // Eigen::MatrixXd qd0; //qd0.setZero();
         // Eigen::MatrixXd qdd0; //qdd0.setZero();
         // Eigen::MatrixXd q_des; //q_des.setZero();
-
-        double t_plan = DURATION; // 0.5; // 0.5; // 
+ 
+        double t_plan = 0.5*DURATION; // 0.5; // 0.5; // 
         // Kinova Hardware Demo Values: u_s = 0.609382421; surf_rad =  0.058/2;
-        double u_s = 0.36;  // 0.396674703; // 0.3358; // 0.609382421; // 0.5; // static coefficient of friction between tray and object
+        double u_s = 0.6;  // 0.396674703; // 0.3358; // 0.609382421; // 0.5; // static coefficient of friction between tray and object
         double surf_rad =  0.058 / 2; // 0.0762; // RADIUS of contact area between tray and object (area assumed to be circular) 
         // Note: might want to change this to be input to the C++ code from matlab?
 

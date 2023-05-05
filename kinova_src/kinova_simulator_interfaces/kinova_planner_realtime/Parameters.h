@@ -22,7 +22,7 @@
     #define NUM_TIME_STEPS 50
 
     // range of parameters (size of generators in PZ).
-    const double k_range[NUM_FACTORS] = { M_PI / 48, M_PI / 48, M_PI / 48, M_PI / 48, M_PI / 48, M_PI / 48, M_PI / 48 }; // (radian)
+    const double k_range[NUM_FACTORS] = { M_PI / 36, M_PI / 36, M_PI / 36, M_PI / 48, M_PI / 48, M_PI / 48, M_PI / 48 }; // (radian)
 
 // Parameters for CollisionChecking.h:
     // maximum number of obstacles (used for memory pre-allocation)
