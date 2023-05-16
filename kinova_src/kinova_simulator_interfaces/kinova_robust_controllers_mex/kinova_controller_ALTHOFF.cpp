@@ -4,8 +4,6 @@
 #include "robot_models.hpp"
 #include "robot_model_file_path.hpp"
 
-const double ModelUncertainty = 0.03;
-
 void copyPointerToEigenVector(Eigen::VectorXd& a, double* b, unsigned int n) {
     for (unsigned int i = 0; i < n; i++) {
         a(i) = b[i];
@@ -19,7 +17,12 @@ void copyEigenVectorToPointer(double* a, Eigen::VectorXd& b, unsigned int n) {
 }
 
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
-    // create a left pinned model
+    // create a Kinova model
+    double ModelUncertainty = 0.03;
+    if (nrhs > 9) {
+        ModelUncertainty = *(double*)mxGetData(prhs[9]);
+    }
+
     std::unique_ptr<Robot> Kinova = nullptr;
     try {
         Kinova = std::make_unique<Robot>(RobotFilePath, ModelUncertainty);

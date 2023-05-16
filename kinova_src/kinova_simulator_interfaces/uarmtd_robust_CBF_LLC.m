@@ -3,17 +3,21 @@ classdef uarmtd_robust_CBF_LLC < robot_arm_LLC
     % performance within some ultimate bound
     
     properties
-        Kr = 10;
-        V_max = 1e-7; % 3.1e-7; % max allowable value of lyapunov function
+        Kr = 5;
+        V_max = 1e-2
         r_norm_threshold = 0;
-        alpha_constant = 1;
+        alpha_constant = 10;
         alpha = [];
+        Kp = [28.1037,2];
+        Ki = [2,0.2];
+        maxError = 1e-5;
         use_true_params_for_robust = false;
         use_disturbance_norm = false;
         ultimate_bound;
         ultimate_bound_position;
         ultimate_bound_velocity;
         if_use_mex_controller = false;
+        if_use_armour_robust_controller = true;
         saturate_input = false;
     end
     
@@ -156,7 +160,13 @@ classdef uarmtd_robust_CBF_LLC < robot_arm_LLC
                     end
                 end
             else
-                [u, tau, v] = kinova_controller(LLC.Kr * ones(7,1), LLC.alpha_constant, LLC.V_max, LLC.r_norm_threshold, q, qd, q_des, qd_des, qdd_des);
+                model_uncertainty = (A.params.interval.mass_range(2) - A.params.interval.mass_range(1)) / 2;
+
+                if LLC.if_use_armour_robust_controller
+                    [u, tau, v] = kinova_controller(LLC.Kr * ones(A.n_inputs,1), LLC.alpha_constant, LLC.V_max, LLC.r_norm_threshold, q, qd, q_des, qd_des, qdd_des, model_uncertainty);
+                else
+                    [u, tau, v] = kinova_controller_ALTHOFF(LLC.Kr * ones(A.n_inputs,1), LLC.Kp, LLC.Ki, LLC.maxError, q, qd, q_des, qd_des, qdd_des, model_uncertainty);
+                end
 
                 if nargout > 3
                     if ~LLC.use_true_params_for_robust
