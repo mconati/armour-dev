@@ -11,7 +11,7 @@
 namespace py = pybind11;
 
 #define NUM_EDGES 112826403 // 50221615
-#define COLLISION_THRESHOLD -0.075 // -0.10
+#define COLLISION_THRESHOLD -0.125 // -0.10
 #define EDGE_THRESHOLD 0.45 // 1000
 
 class pzsparse {

@@ -44,7 +44,7 @@ const double rots[NUM_JOINTS * 3] = { M_PI,       0, 0,
 // const double mass[NUM_JOINTS] = { 1.3773, 1.1636, 1.1636, 0.9302, 0.6781, 0.6781, 1.15225, 0.1715 }; // system w/ 3D printed tray, the end effector is a 0.1715 kg cube
 const double mass[NUM_JOINTS] = { 1.3773, 1.1636, 1.1636, 0.9302, 0.6781, 0.6781, 1.4643, 0.592 }; // system w/ circular tray, the end effector is a 0.592 kg cup of bolts
 // const double mass_uncertainty = 0.02;
-const double mass_uncertainty[NUM_JOINTS] = {0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02};
+const double mass_uncertainty[NUM_JOINTS] = {0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.05};
 
 // updated for hardware video
 // link center of mass
@@ -69,7 +69,7 @@ const double inertia[NUM_JOINTS * 9] = {  0.00457, 0.000001, 0.000002, 0.000001,
 										0.0273262, 4.7262e-8, -1.0167e-5, 4.7262e-8, 0.026442, 5.1493e-4, -1.0167e-5, 5.1493e-4, 0.0016939,
 										0.00033005074, 0, 0, 0, 0.00033005074, 0, 0, 0, 0.00042925501 };
 // const double inertia_uncertainty = 0.02;
-const double inertia_uncertainty[NUM_JOINTS] = { 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02}; // uncertainty value affects all inertia properties for respective link (can set individually with 7x9 array)
+const double inertia_uncertainty[NUM_JOINTS] = { 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.05}; // uncertainty value affects all inertia properties for respective link (can set individually with 7x9 array)
 
 // joint friction
 const double friction[NUM_JOINTS] = {0.5217383101288284, 0.5769579059927288, 0.4213397946418778, 0.4945515376566732, 0.1611070502661354, 0.1333491185514130, 0.1434440181717370};
@@ -93,7 +93,6 @@ const double torque_limits[NUM_FACTORS] = { 56.7, 56.7, 56.7, 56.7, 29.4, 29.4, 
 
 const double gravity = 9.81;
 
-// TODO: update for hardware video
 // link zonotope information
 const double link_zonotope_center[NUM_JOINTS][3] = {{ 0.000000, -0.001297, -0.088375 },
 													{ 0.000000, -0.089400, -0.007877 },
@@ -101,8 +100,8 @@ const double link_zonotope_center[NUM_JOINTS][3] = {{ 0.000000, -0.001297, -0.08
 													{ 0.000000, -0.087450, -0.013648 },
 													{ 0.000001, -0.009023, -0.071752 },
 													{ 0.000000, -0.041661, -0.009251 },
-													{ 0.000000, -0.018585, -0.083462 },
-													{ 0.0,       0.0225,     0.0325}}; 
+													{ 0.000000, -0.010000, -0.084462 },
+													{ 0.000000,  0.060000,  0.040000 }}; // tangential, radial, vertical
 
 const double link_zonotope_generators[NUM_JOINTS][3] = {{ 0.046358, 0.047354, 0.086000 },
 														{ 0.046000, 0.135400, 0.047501 },
@@ -110,16 +109,16 @@ const double link_zonotope_generators[NUM_JOINTS][3] = {{ 0.046358, 0.047354, 0.
 														{ 0.046000, 0.133450, 0.042293 },
 														{ 0.034999, 0.044023, 0.069252 },
 														{ 0.035000, 0.076739, 0.044076 },
-														{ 0.045500, 0.056085, 0.12}, // 0.030963
-														{ 0.0575,     0.06,     0.035}}; 
+														{ 0.070000, 0.070000, 0.140000 }, // 0.030963
+														{ 0.150000, 0.150000, 0.050000 }}; 
 
 // ultimate bound
 const double alpha = 10.0; // 1.0
-const double V_m = 1.5e-2;
+const double V_m = 1.65e-2;
 const double M_max = 21.90042595;
 const double M_min = 8.0386;
 const double eps = sqrt(2 * V_m / M_min);
-const double K = 5.0; // 5.0
+const double K = 4.0; // 5.0
 const double qe = eps / K;
 const double qde = 2 * eps;
 const double qdae = eps;
