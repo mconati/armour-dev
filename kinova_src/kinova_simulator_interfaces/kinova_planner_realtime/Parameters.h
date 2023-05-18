@@ -12,17 +12,17 @@
 
 // Parameters for PZsparse.h:
     // monomials with a coefficient smaller than this number will be reduced (should be close to V_m magnitude)
-    #define SIMPLIFY_THRESHOLD 3e-4
+    #define SIMPLIFY_THRESHOLD 2.5e-4
 
 // Parameters for Trajectories.h:
     // Duration of the Bezier Curve
     #define DURATION 1.75
 
     // number of time steps (This should be an EVEN number!!!)
-    #define NUM_TIME_STEPS 50
+    #define NUM_TIME_STEPS 40
 
     // range of parameters (size of generators in PZ).
-    const double k_range[NUM_FACTORS] = { M_PI / 40, M_PI / 40, M_PI / 40, M_PI / 40, M_PI / 72, M_PI / 72, M_PI / 72 }; // (radian)
+    const double k_range[NUM_FACTORS] = { M_PI / 32, M_PI / 32, M_PI / 72, M_PI / 72, M_PI / 72, M_PI / 32, M_PI / 72 }; // (radian)
 
 // Parameters for CollisionChecking.h:
     // maximum number of obstacles (used for memory pre-allocation)
