@@ -48,11 +48,11 @@ edge_alpha = 0.5;
 
 %% Load Hardware ROS Data
 
-% load_file = 'HardwareVideoROSData_04222023.mat';
-% agent_urdf = 'Kinova_Grasp_w_Tray.urdf';
+load_file = 'HardwareVideo_MultipleTrials_05_17_2023_ROSData.mat';
+agent_urdf = 'Kinova_Grasp_w_Tray.urdf';
 
-load_file = 'HardwareFailureROSData.mat';
-agent_urdf = 'Kinova_Grasp_URDF.urdf';
+% load_file = 'HardwareFailureROSData.mat';
+% agent_urdf = 'Kinova_Grasp_URDF.urdf';
 
 data = load(load_file);
 
@@ -113,12 +113,17 @@ parfor i = 1:length(time(1:end-1))
     qdd_post(:,i) = M\(input(:,i+1)-C*joint_angular_velocity(:,i)-g);
 end
 
-%% Plotting the Acceleration
+%% Plotting the States
 
 fig_num = fig_num + 1;
 figure(fig_num)
 hold on
 
+subplot(3,1,1)
+plot(time,pos)
+subplot(3,1,2)
+plot(time,vel)
+subplot(3,1,3)
 plot(time,qdd_post)
 
 %%
