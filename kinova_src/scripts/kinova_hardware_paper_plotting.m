@@ -66,8 +66,8 @@ surf_rad = 0.058/2;
 exp_time = data.rosbag.raw_time - data.rosbag.raw_time(1);
 
 % for nominal values
-pos = data.rosbag.debug_traj_pos;
-vel = data.rosbag.debug_traj_vel;
+pos = data.rosbag.debug_pos;
+vel = data.rosbag.debug_vel;
 % accel = data.rosbag.debug_traj_accel; % acceleration needs to be calculated
 opt_k = data.rosbag.debug_traj_k;
 
@@ -122,11 +122,11 @@ figure(fig_num)
 hold on
 
 subplot(3,1,1)
-plot(time,pos)
+plot(exp_time,pos)
 subplot(3,1,2)
-plot(time,vel)
+plot(exp_time,vel)
 subplot(3,1,3)
-plot(time,qdd_post)
+plot(exp_time,qdd_post)
 
 %%
 
