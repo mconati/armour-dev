@@ -194,7 +194,7 @@ if plot_accel
 
     qdd_post = zeros(7,length(A.time));
     % calculating the acceleration in post to compare with what is stored
-    for i = 1:length(A.time(1:end-1))
+    for i = 1:length(A.time(1:end-1)) % parfor this
         [M, C, g] = A.calculate_dynamics(joint_angles(:,i), joint_angular_velocity(:,i), A.params.true);
 
         %% can I call u=A.LLC.get_control_inputs() here with the P.info?
@@ -240,7 +240,7 @@ end
 %% calling rnea
 
 
-for i = 1:length(A.time)
+for i = 1:length(A.time) % parfor this
 
     % clear relevant variables
     clear tau f n
