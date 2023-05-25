@@ -976,14 +976,5 @@ end
 
 function make_video( h,video )
     frame = getframe(h);
-%     open(video)
     writeVideo(video,frame)
-%     close(video)
-%     im = frame2im(frame);
-%     [imind,cm] = rgb2ind(im,256);
-%     if index == 1
-%         imwrite(imind,cm,filename,'gif', 'Loopcount',inf,'DelayTime',0.02);
-%     else
-%         imwrite(imind,cm,filename,'gif','WriteMode','append','DelayTime',0.02);
-%     end
 end

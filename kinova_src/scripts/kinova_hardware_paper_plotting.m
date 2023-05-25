@@ -64,8 +64,8 @@ surf_rad = 0.058/2;
 exp_time = data.rosbag.raw_time - data.rosbag.raw_time(1);
 
 % for nominal values
-pos = data.rosbag.debug_traj_pos;
-vel = data.rosbag.debug_traj_vel;
+pos = data.rosbag.debug_pos;
+vel = data.rosbag.debug_vel;
 % accel = data.rosbag.debug_traj_accel; % acceleration needs to be calculated
 opt_k = data.rosbag.debug_traj_k;
 
@@ -113,13 +113,18 @@ parfor i = 1:length(exp_time_2)
     qdd_post(:,i) = M\(input(:,i+1)-C*joint_angular_velocity(:,i)-g);
 end
 
-%% Plotting the Acceleration
+%% Plotting the States
 
-% fig_num = fig_num + 1;
-% figure(fig_num)
-% hold on
-% 
-% plot(exp_time,qdd_post)
+fig_num = fig_num + 1;
+figure(fig_num)
+hold on
+
+subplot(3,1,1)
+plot(exp_time,pos)
+subplot(3,1,2)
+plot(exp_time,vel)
+subplot(3,1,3)
+plot(exp_time,qdd_post)
 
 %%
 
