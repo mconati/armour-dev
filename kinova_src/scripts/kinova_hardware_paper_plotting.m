@@ -48,11 +48,11 @@ edge_alpha = 0.5;
 
 %% Load Hardware ROS Data
 
-% load_file = 'HardwareVideoROSData_04222023.mat';
-% agent_urdf = 'Kinova_Grasp_w_Tray.urdf';
+load_file = 'HardwareVideo_MultipleTrials_05_17_2023_ROSData.mat';
+agent_urdf = 'Kinova_Grasp_w_Tray.urdf';
 
-load_file = 'HardwareFailureROSData.mat';
-agent_urdf = 'Kinova_Grasp_URDF.urdf';
+% load_file = 'HardwareFailureROSData.mat';
+% agent_urdf = 'Kinova_Grasp_URDF.urdf';
 
 data = load(load_file);
 
@@ -63,11 +63,11 @@ surf_rad = 0.058/2;
 %% Extract Data
 
 % process the raw time measurements to offset to zero
-time = data.rosbag.raw_time - data.rosbag.raw_time(1);
+exp_time = data.rosbag.raw_time - data.rosbag.raw_time(1);
 
 % for nominal values
-pos = data.rosbag.debug_traj_pos;
-vel = data.rosbag.debug_traj_vel;
+pos = data.rosbag.debug_pos;
+vel = data.rosbag.debug_vel;
 % accel = data.rosbag.debug_traj_accel; % acceleration needs to be calculated
 opt_k = data.rosbag.debug_traj_k;
 
@@ -102,10 +102,12 @@ transmision_inertia = [8.02999999999999936 11.99620246153036440 9.00254278617515
 
 joint_angles = pos';
 joint_angular_velocity = vel';
+input = control_torque';
 
-qdd_post = zeros(7,length(time)); % accel'; % 
+qdd_post = zeros(7,length(exp_time)); % accel'; % 
     % calculating the acceleration in post to compare with what is stored
-parfor i = 1:length(time(1:end-1))
+exp_time_2 = exp_time(1:end-1);
+parfor i = 1:length(exp_time_2)
     [M, C, g] = calculate_dynamics(joint_angles(:,i)', joint_angular_velocity(:,i)', params.true);
     for j = 1:size(M,1)
         M(j,j) = M(j,j) + transmision_inertia(j);
@@ -113,13 +115,18 @@ parfor i = 1:length(time(1:end-1))
     qdd_post(:,i) = M\(input(:,i+1)-C*joint_angular_velocity(:,i)-g);
 end
 
-%% Plotting the Acceleration
+%% Plotting the States
 
 fig_num = fig_num + 1;
 figure(fig_num)
 hold on
 
-plot(time,qdd_post)
+subplot(3,1,1)
+plot(exp_time,pos)
+subplot(3,1,2)
+plot(exp_time,vel)
+subplot(3,1,3)
+plot(exp_time,qdd_post)
 
 %%
 
@@ -367,8 +374,8 @@ for i = 1:time_index
 end
 
 % plot the nominal values
-nom_idx = find(time < t_traj(time_index+1));
-plot(time(nom_idx), force(3,nom_idx),'-k','LineWidth',linewidth)
+nom_idx = find(exp_time < t_traj(time_index+1));
+plot(exp_time(nom_idx), force(3,nom_idx),'-k','LineWidth',linewidth)
 
 % formatting for plot
 ylim([0 max_sup+0.1])
@@ -397,24 +404,24 @@ fill([max_fz_x flip(min_fz_x)],[max_fz_y flip(min_fz_y)],'r','FaceAlpha',0.9)
 fp_bound = line([max_fz_x(end) min_fz_x(1)],[max_fz_y(end) min_fz_y(1)]);
 set(fp_bound,'Color','r') % ,'EdgeAlpha',0.3)
 
-% plotting unsliced overapproximation
-for i = 1:skip_num:time_index
-
-    force_int_unsliced = interval(force_PZ_unsliced{i});
-
-    patch([force_int_unsliced.inf(1),force_int_unsliced.sup(1),force_int_unsliced.sup(1),force_int_unsliced.inf(1)],[force_int_unsliced.inf(2),force_int_unsliced.inf(2),force_int_unsliced.sup(2),force_int_unsliced.sup(2)],unsliced_color,'FaceAlpha',face_alpha_light,'EdgeAlpha',edge_alpha,'EdgeColor',unsliced_color)
-
-end
-
-% plotting sliced overapproximation
-for i = 1:skip_num:time_index
-
-    patch([force_lower(i,1),force_upper(i,1),force_upper(i,1),force_lower(i,1)],[force_lower(i,2),force_lower(i,2),force_upper(i,2),force_upper(i,2)],slice_color,'FaceAlpha',face_alpha_light,'EdgeAlpha',edge_alpha,'EdgeColor',slice_color)
-
-end
+% % plotting unsliced overapproximation
+% for i = 1:skip_num:time_index
+% 
+%     force_int_unsliced = interval(force_PZ_unsliced{i});
+% 
+%     patch([force_int_unsliced.inf(1),force_int_unsliced.sup(1),force_int_unsliced.sup(1),force_int_unsliced.inf(1)],[force_int_unsliced.inf(2),force_int_unsliced.inf(2),force_int_unsliced.sup(2),force_int_unsliced.sup(2)],unsliced_color,'FaceAlpha',face_alpha_light,'EdgeAlpha',edge_alpha,'EdgeColor',unsliced_color)
+% 
+% end
+% 
+% % plotting sliced overapproximation
+% for i = 1:skip_num:time_index
+% 
+%     patch([force_lower(i,1),force_upper(i,1),force_upper(i,1),force_lower(i,1)],[force_lower(i,2),force_lower(i,2),force_upper(i,2),force_upper(i,2)],slice_color,'FaceAlpha',face_alpha_light,'EdgeAlpha',edge_alpha,'EdgeColor',slice_color)
+% 
+% end
 
 % plotting nominal values
-nom_idx = find(time < t_traj(time_index+1));
+nom_idx = find(exp_time < t_traj(time_index+1));
 plot(force(1,nom_idx),force(2,nom_idx),'-k')
 
 % plot formatting
@@ -465,7 +472,7 @@ for i = 1:skip_num:time_index
 end
 
 % plot nominal
-nom_idx = find(time < t_traj(time_index+1));
+nom_idx = find(exp_time < t_traj(time_index+1));
 plot(ZMP(1,nom_idx).*factor,ZMP(2,nom_idx).*factor,'-k')
 
 % plot formatting
@@ -675,4 +682,10 @@ function make_animation( h,index,filename )
     else
         imwrite(imind,cm,filename,'gif','WriteMode','append','DelayTime',0.001);
     end
+end
+
+function [M, C, g] = calculate_dynamics(q, qd, params)
+    M = rnea_mass(q, params);
+    C = rnea_coriolis(q, qd, params);
+    g = rnea_gravity(q, params);
 end
