@@ -25,8 +25,6 @@ time_index = time_steps/2; % for plotting half a trajectory
 duration = 1.75;
 dt = duration/time_steps;
 t_traj = linspace(0,duration,time_steps);
-surf_rad = 0.058/2;
-u_s = 0.6;
 
 %% Description
 
@@ -48,16 +46,16 @@ edge_alpha = 0.5;
 
 %% Load Hardware ROS Data
 
-load_file = 'HardwareVideo_MultipleTrials_05_17_2023_ROSData.mat';
-agent_urdf = 'Kinova_Grasp_w_Tray.urdf';
+% load_file = 'HardwareVideo_MultipleTrials_05_17_2023_ROSData.mat';
+% agent_urdf = 'Kinova_Grasp_w_Tray.urdf';
 
-% load_file = 'HardwareFailureROSData.mat';
-% agent_urdf = 'Kinova_Grasp_URDF.urdf';
+load_file = 'HardwareFailureROSData.mat';
+agent_urdf = 'Kinova_Grasp_URDF.urdf';
 
 data = load(load_file);
 
 % contact parameters: match with hardware experiment settings
-u_s = 0.6;
+u_s = 0.33;
 surf_rad = 0.058/2;
 
 %% Extract Data
@@ -117,11 +115,11 @@ end
 
 %% Plotting the Acceleration
 
-fig_num = fig_num + 1;
-figure(fig_num)
-hold on
-
-plot(exp_time,qdd_post)
+% fig_num = fig_num + 1;
+% figure(fig_num)
+% hold on
+% 
+% plot(exp_time,qdd_post)
 
 %%
 
@@ -172,6 +170,10 @@ for i = 1:length(pos)
     ZMP_bottom2 = dot([0;0;1],force(:,i));
     tip2(i) = ZMP_top(1)^2 + ZMP_top(2)^2 - ZMP_bottom^2*(surf_rad)^2;
 end
+
+fig_num = fig_num + 1;
+figure(fig_num)
+plot(exp_time,slip)
 
 %% Calculate Unsliced Reachable Sets
 

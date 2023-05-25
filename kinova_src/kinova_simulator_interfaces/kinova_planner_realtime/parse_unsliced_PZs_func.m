@@ -4,7 +4,7 @@ function [unsliced_f_c_PZs,unsliced_n_c_PZs] = parse_unsliced_PZs_func()
 unsliced_f_c_int = readmatrix('unsliced_f_c_int.out', 'FileType', 'text');
 unsliced_n_c_int = readmatrix('unsliced_n_c_int.out', 'FileType', 'text');
 
-num_time_steps = 50;
+num_time_steps = 40;
 
 %% parse output to zonotopes
 

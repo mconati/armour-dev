@@ -349,6 +349,94 @@ classdef agent < handle
                 % create plot
                 A.plot_at_time(t_idx)
 
+                % plot waypoint
+                    % get correct waypoint index
+                    % get patch data using: HLP.current_waypoint_patch_data = agent_info.get_collision_check_volume(HLP.graph_waypoints(:,HLP.current_graph_waypoint_index)) ;
+                    % plot the patch at the waypoint configuration: plot(HLP) function
+
+                if A.animation_set_axes_flag
+                    axis equal
+                    axis(lims)
+                end
+                
+                if A.animation_set_view_flag
+                    view(A.animation_view)
+                end
+
+                % create gif
+                if save_gif
+                    % get current figure
+                    fh = get(groot,'CurrentFigure') ;
+                    frame = getframe(fh) ;
+                    im = frame2im(frame);
+                    [imind,cm] = rgb2ind(im,256);
+
+                    if start_gif
+                        imwrite(imind,cm,filename,'gif', 'Loopcount',inf,...
+                                'DelayTime',frame_rate) ;
+                        start_gif = false ;
+                    else 
+                        imwrite(imind,cm,filename,'gif','WriteMode','append',...
+                                'DelayTime',frame_rate) ;
+                    end
+                else
+                    pause(frame_rate)
+                end
+            end
+        end
+
+        function animate_w_waypoint(A,P,save_gif,time_interval)
+        % method: animate(save_gif)
+        %
+        % Given the agent's executed trajectory, animate it for the
+        % duration given by A.time. The time between animated frames is
+        % given by A.animation_time_discretization.
+
+            if nargin < 2
+                save_gif = false ;
+                start_gif = false ;
+            else
+                start_gif = true ;
+                filename = A.gif_setup() ;
+            end
+            
+            if nargin < 4
+                time_interval = [A.time(1), A.time(end)] ;
+            end
+
+            % get timing info
+            t_vec = time_interval(1):A.animation_time_discretization:time_interval(end) ;
+            frame_rate = A.animation_time_discretization / A.animation_playback_rate ;
+
+            % get axis limits
+            lims = A.get_axis_lims() ;
+
+            plan_iter = 1;
+            P.HLP.current_waypoint_patch_data = P.agent_info.get_collision_check_volume(P.HLP.q_des(:,plan_iter));
+            P.HLP.next_waypoint_patch_data = P.agent_info.get_collision_check_volume(P.HLP.q_des(:,plan_iter+1));
+
+            for t_idx = t_vec
+                % create plot
+                A.plot_at_time(t_idx)
+
+                % plot waypoint
+                if t_idx == plan_iter
+
+                    P.HLP.current_waypoint_patch_data = P.agent_info.get_collision_check_volume(P.HLP.q_des(:,plan_iter));
+
+                    if plan_iter > 1
+                        P.HLP.previous_waypoint_patch_data = P.agent_info.get_collision_check_volume(P.HLP.q_des(:,plan_iter-1));
+                    end
+                    if plan_iter < size(P.HLP.q_des,2)
+                        P.HLP.next_waypoint_patch_data = P.agent_info.get_collision_check_volume(P.HLP.q_des(:,plan_iter+1));
+                    end
+                    % get correct waypoint index
+                    % get patch data using: HLP.current_waypoint_patch_data = agent_info.get_collision_check_volume(HLP.graph_waypoints(:,HLP.current_graph_waypoint_index)) ;
+                    % plot the patch at the waypoint configuration: plot(HLP) function
+                    plan_iter = plan_iter + P.DURATION / 2;
+                end
+                P.HLP.plot()
+
                 if A.animation_set_axes_flag
                     axis equal
                     axis(lims)

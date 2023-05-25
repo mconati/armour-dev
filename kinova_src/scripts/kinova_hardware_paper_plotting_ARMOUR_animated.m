@@ -28,9 +28,9 @@ fric_plot = figure(fric_plot_num);
 tip_plot = figure(tip_plot_num);
 
 % file name to save the gif as
-sep_save_file = 'Multiple_Gif_Separation_framerate_100';
-fric_save_file = 'Multiple_Gif_Friction_framerate_100';
-tip_save_file = 'Multiple_Gif_Tipping_framerate_100';
+sep_save_file = 'Failure_Gif_Separation_framerate_100';
+fric_save_file = 'Failure_Gif_Friction_framerate_100';
+tip_save_file = 'Failure_Gif_Tipping_framerate_100';
 % create video writer objects
 sep_vid = VideoWriter(sep_save_file);
 fric_vid = VideoWriter(fric_save_file);
@@ -64,7 +64,7 @@ plan_index = 1;
 traj_index = 1;
 
 % match to hardware settings
-time_steps = 40; 
+time_steps = 50; 
 time_index = time_steps/2; % for plotting half a trajectory
 duration = 1.75;
 dt = duration/time_steps;
@@ -89,16 +89,16 @@ edge_alpha = 0.4;
 
 %% Load Hardware ROS Data
 
-load_file = 'HardwareVideo_MultipleTrials_05_17_2023_ROSData.mat';
-agent_urdf = 'Kinova_Grasp_w_Tray.urdf';
+% load_file = 'HardwareVideo_MultipleTrials_05_17_2023_ROSData.mat';
+% agent_urdf = 'Kinova_Grasp_w_Tray.urdf';
 
-% load_file = 'HardwareSuccessROSData_v2_05_04_2023.mat';
-% agent_urdf = 'Kinova_Grasp_URDF.urdf';
+load_file = 'HardwareFailureROSData_05_04_2023.mat';
+agent_urdf = 'Kinova_Grasp_URDF.urdf';
 
 data = load(load_file);
 
 % contact parameters: match with hardware experiment settings
-u_s = 0.6;
+u_s = 0.33;
 surf_rad = 0.058/2;
 
 %% Extract Data
@@ -232,87 +232,254 @@ plan_iter = 0;
 frame_idx = 1;
 for plot_idx = 1:skip_rate:25000 % length(time) % length(time) %length(time) % UPDATE TO ITERATE THROUGH AT A FRAME RATE?
 
-    if time(plot_idx) > time_threshold % check if new planning iteration
-
-        % update plan iter to be the current planning iteration
-        plan_iter = plan_iter + 1; % do this for braking maneuver half as well?
-
-        if rs_duration(plot_idx) == duration % braking maneuver
-            % plot last half of previous trajectory
-            %  Plotting 
-
-            if plan_iter > 1
-%                 sp2 = subplot(1,3,2);
-                fric_plot = figure(fric_plot_num);
-                cla(fric_plot)
-
-%                 sp3 = subplot(1,3,3);
-                tip_plot = figure(tip_plot_num);
-                cla(tip_plot)
-            end
-
-            if plan_iter > 5
-                sep_plot = figure(sep_plot_num);
-                for i = 1:50
-                    delete(fz1{(plan_iter-5)*50+i})
-                    delete(fz2{(plan_iter-5)*50+i})
-                end
-            end
-
-            % Plotting Separation
-
-            % fig_num = fig_num + 1;
-            % figure(fig_num);
-%             subplot(1,3,1)
-            sep_plot = figure(sep_plot_num);
-            hold on;
-            
-            max_sup = -1;
-
-            
-            % plot unsliced force overapproximation
-            for i = time_index:time_steps % 1:time_index % first half
-            
-                force_int_unsliced = interval(force_PZ_unsliced{i});
-            
-                fz1{plan_iter*50+i} = patch([t_traj(i)+dt; t_traj(i)+dt; t_traj(i); t_traj(i)], [force_int_unsliced.sup(3); force_int_unsliced.inf(3); force_int_unsliced.inf(3); force_int_unsliced.sup(3)],'b');
-                fz1{plan_iter*50+i}.LineWidth = 0.01;
-                fz1{plan_iter*50+i}.FaceColor = unsliced_color;
-                fz1{plan_iter*50+i}.FaceAlpha = face_alpha;
-                fz1{plan_iter*50+i}.EdgeAlpha = edge_alpha;
-                fz1{plan_iter*50+i}.EdgeColor = unsliced_color;
-            
-                if force_int_unsliced.sup(3) > max_sup
-                    max_sup = force_int_unsliced.sup(3);
-                end
-            
-            end
-            
-            % plot sliced force overapproximation
-            for i = time_index:time_steps % 1:time_index
-                fz2{plan_iter*50+i} = patch([t_traj(i)+dt; t_traj(i)+dt; t_traj(i); t_traj(i)], [force_upper(i,3); force_lower(i,3); force_lower(i,3); force_upper(i,3)],'b');
-                fz2{plan_iter*50+i}.LineWidth = 0.01;
-                fz2{plan_iter*50+i}.FaceColor = slice_color;
-                fz2{plan_iter*50+i}.FaceAlpha = face_alpha;
-                fz2{plan_iter*50+i}.EdgeAlpha = edge_alpha;
-                fz2{plan_iter*50+i}.EdgeColor = slice_color;
-            end
-
-            % Plotting Friction Cone Diagram
-            
-            % fig_num = fig_num + 1;
-            % figure(fig_num)
-%             subplot(1,3,2)
+%     if time(plot_idx) > time_threshold % check if new planning iteration
+% 
+%         % update plan iter to be the current planning iteration
+%         plan_iter = plan_iter + 1; % do this for braking maneuver half as well?
+% 
+%         if rs_duration(plot_idx) == duration % braking maneuver
+%             % plot last half of previous trajectory
+%             %  Plotting 
+% 
+%             if plan_iter > 1
+% %                 sp2 = subplot(1,3,2);
+%                 fric_plot = figure(fric_plot_num);
+%                 cla(fric_plot)
+% 
+% %                 sp3 = subplot(1,3,3);
+%                 tip_plot = figure(tip_plot_num);
+%                 cla(tip_plot)
+%             end
+% 
+%             if plan_iter > 5
+%                 sep_plot = figure(sep_plot_num);
+%                 for i = 1:50
+%                     delete(fz1{(plan_iter-5)*50+i})
+%                     delete(fz2{(plan_iter-5)*50+i})
+%                 end
+%             end
+% 
+%             % Plotting Separation
+% 
+%             % fig_num = fig_num + 1;
+%             % figure(fig_num);
+% %             subplot(1,3,1)
+%             sep_plot = figure(sep_plot_num);
+%             hold on;
+%             
+%             max_sup = -1;
+% 
+%             
+%             % plot unsliced force overapproximation
+%             for i = time_index:time_steps % 1:time_index % first half
+%             
+%                 force_int_unsliced = interval(force_PZ_unsliced{i});
+%             
+%                 fz1{plan_iter*50+i} = patch([t_traj(i)+dt; t_traj(i)+dt; t_traj(i); t_traj(i)], [force_int_unsliced.sup(3); force_int_unsliced.inf(3); force_int_unsliced.inf(3); force_int_unsliced.sup(3)],'b');
+%                 fz1{plan_iter*50+i}.LineWidth = 0.01;
+%                 fz1{plan_iter*50+i}.FaceColor = unsliced_color;
+%                 fz1{plan_iter*50+i}.FaceAlpha = face_alpha;
+%                 fz1{plan_iter*50+i}.EdgeAlpha = edge_alpha;
+%                 fz1{plan_iter*50+i}.EdgeColor = unsliced_color;
+%             
+%                 if force_int_unsliced.sup(3) > max_sup
+%                     max_sup = force_int_unsliced.sup(3);
+%                 end
+%             
+%             end
+%             
+%             % plot sliced force overapproximation
+%             for i = time_index:time_steps % 1:time_index
+%                 fz2{plan_iter*50+i} = patch([t_traj(i)+dt; t_traj(i)+dt; t_traj(i); t_traj(i)], [force_upper(i,3); force_lower(i,3); force_lower(i,3); force_upper(i,3)],'b');
+%                 fz2{plan_iter*50+i}.LineWidth = 0.01;
+%                 fz2{plan_iter*50+i}.FaceColor = slice_color;
+%                 fz2{plan_iter*50+i}.FaceAlpha = face_alpha;
+%                 fz2{plan_iter*50+i}.EdgeAlpha = edge_alpha;
+%                 fz2{plan_iter*50+i}.EdgeColor = slice_color;
+%             end
+% 
+%             % Plotting Friction Cone Diagram
+%             
+%             % fig_num = fig_num + 1;
+%             % figure(fig_num)
+% %             subplot(1,3,2)
+%             fric_plot = figure(fric_plot_num);
+%             hold on
+% 
+%             % find time indices in certain range and use those indices in
+%             % force()
+% 
+%             lower_time_bound = plan_iter * duration/2;
+%             upper_time_bound = (plan_iter+1) * duration/2;
+%             boundary_time_indices = find(time>lower_time_bound & time<upper_time_bound);
+%             
+%             % plotting friction cone boundary
+%             max_fz = max(force(3,boundary_time_indices));
+%             min_fz = min(force(3,boundary_time_indices));
+%             [max_fz_x, max_fz_y] = circle(2*max_fz*u_s,0,0,0,2*pi,0.01);
+%             [min_fz_x, min_fz_y] = circle(2*min_fz*u_s,0,0,0,2*pi,0.01);
+%             plot(max_fz_x, max_fz_y,'-r')
+%             plot(min_fz_x, min_fz_y,'-r')
+%             fc1 = fill([max_fz_x flip(min_fz_x)],[max_fz_y flip(min_fz_y)],'r','FaceAlpha',0.9);
+%             fc2 = line([max_fz_x(end) min_fz_x(1)],[max_fz_y(end) min_fz_y(1)]);
+%             set(fc2,'Color','r') % ,'EdgeAlpha',0.3)
+% 
+%             [max_circ_x, max_circ_y] = circle(2*max_fz*u_s,0,0,0,2*pi,0.001);
+%             fc3 = plot(max_circ_x,max_circ_y,'-r');
+%             [min_circ_x, min_circ_y] = circle(2*min_fz*u_s,0,0,0,2*pi,0.001);
+%             fc4 = plot(min_circ_x,min_circ_y,'-r');
+% 
+%             
+%             % plotting unsliced overapproximation
+%             for i = time_index:skip_num:time_steps % 1:skip_num:time_index
+%             
+%                 force_int_unsliced = interval(force_PZ_unsliced{i});
+%             
+%                 fc5 = patch([force_int_unsliced.inf(1),force_int_unsliced.sup(1),force_int_unsliced.sup(1),force_int_unsliced.inf(1)],[force_int_unsliced.inf(2),force_int_unsliced.inf(2),force_int_unsliced.sup(2),force_int_unsliced.sup(2)],unsliced_color,'FaceAlpha',face_alpha_light,'EdgeAlpha',edge_alpha,'EdgeColor',unsliced_color);
+%             
+%             end
+%             
+%             % plotting sliced overapproximation
+%             for i = time_index:skip_num:time_steps % 1:skip_num:time_index
+%             
+%                 fc6 = patch([force_lower(i,1),force_upper(i,1),force_upper(i,1),force_lower(i,1)],[force_lower(i,2),force_lower(i,2),force_upper(i,2),force_upper(i,2)],slice_color,'FaceAlpha',face_alpha_light,'EdgeAlpha',edge_alpha,'EdgeColor',slice_color);
+%             
+%             end
+% 
+%             % Plotting ZMP Diagram
+%             
+%             % fig_num = fig_num + 1;
+%             % figure(fig_num)
+% %             subplot(1,3,3)
+%             tip_plot = figure(tip_plot_num);
+%             hold on
+%             
+%             % scale from meter to centimeter
+%             factor = 100; 
+%             
+%             % plot constraint boundary
+%             r=surf_rad*factor;
+%             x=0;
+%             y=0;
+%             th = linspace(0,2*pi,500);
+%             xunit = r * cos(th) + x;
+%             yunit = r * sin(th) + y;
+%             tipplot1 = plot(xunit, yunit,'-r');
+% 
+%             % plot unsliced
+%             for i = time_index:skip_num:time_steps % 1:skip_num:time_index
+%                 zmp1 = plot(ZMP_unsliced_PZ{i}.*factor,[1,2],'Filled',true);
+%                 zmp1.LineWidth = 0.1;
+%                 zmp1.FaceColor = unsliced_color;
+%                 zmp1.EdgeColor = unsliced_color;
+%                 zmp1.EdgeAlpha = edge_alpha;
+%                 zmp1.FaceAlpha = face_alpha_light;
+%             end
+%             
+%             % plot sliced
+%             for i = time_index:skip_num:time_steps % 1:skip_num:time_index
+%                 zmp2 = plot(ZMP_PZ{i}.*factor,[1,2],'Filled',true);
+%                 zmp2.LineWidth = 0.1;
+%                 zmp2.FaceColor = slice_color;
+%                 zmp2.EdgeColor = slice_color;
+%                 zmp2.EdgeAlpha = edge_alpha;
+%                 zmp2.FaceAlpha = face_alpha_light;
+%             end
+% 
+%             if plot_idx > 1
+%                 t_traj = t_traj + duration/2;
+%             end
+% 
+%         else % not a braking maneuver
+%             
+%             % Clear Previous Reach Sets from Friction Cone and ZMP Diagrams
+%             
+%             if plan_iter > 1
+% %                 sp2 = subplot(1,3,2);
+%                 fric_plot = figure(fric_plot_num);
+%                 cla(fric_plot)
+% 
+% %                 sp3 = subplot(1,3,3);
+%                 tip_plot = figure(tip_plot_num);
+%                 cla(tip_plot)
+%             end
+% 
+%             if plan_iter > 5
+%                 sep_plot = figure(sep_plot_num);
+%                 for i = 1:50
+%                     delete(fz1{(plan_iter-5)*50+i})
+%                     delete(fz2{(plan_iter-5)*50+i})
+%                 end
+%             end
+% 
+%             % calculate new reach set
+% 
+%             plot_info_struct = update_reach_sets(rs_pos(plan_iter,:),rs_vel(plan_iter,:),rs_accel(plan_iter,:),rs_opt_k(plan_iter,:));
+%             force_PZ_unsliced = plot_info_struct.force_PZ_unsliced;
+%             moment_PZ_unsliced = plot_info_struct.moment_PZ_unsliced;
+%             force_lower = plot_info_struct.force_lower;
+%             force_upper = plot_info_struct.force_upper;
+%             ZMP_unsliced_PZ = plot_info_struct.ZMP_unsliced_PZ;
+%             ZMP_PZ = plot_info_struct.ZMP_PZ;
+% 
+%             % Plotting 
+% 
+%             % Plotting Separation
+% 
+%             % fig_num = fig_num + 1;
+%             % figure(fig_num);
+% %             subplot(1,3,1)
+%             sep_plot = figure(sep_plot_num);
+%             hold on;
+%             
+%             max_sup = -1;
+%             if plot_idx > 1
+%                 t_traj = t_traj + duration/2;
+%             end
+%             
+%             % plot unsliced force overapproximation
+%             for i = 1:time_index % first half
+%             
+%                 force_int_unsliced = interval(force_PZ_unsliced{i});
+%             
+%                 fz1{plan_iter*50+i} = patch([t_traj(i)+dt; t_traj(i)+dt; t_traj(i); t_traj(i)], [force_int_unsliced.sup(3); force_int_unsliced.inf(3); force_int_unsliced.inf(3); force_int_unsliced.sup(3)],'b');
+%                 fz1{plan_iter*50+i}.LineWidth = 0.01;
+%                 fz1{plan_iter*50+i}.FaceColor = unsliced_color;
+%                 fz1{plan_iter*50+i}.FaceAlpha = face_alpha;
+%                 fz1{plan_iter*50+i}.EdgeAlpha = edge_alpha;
+%                 fz1{plan_iter*50+i}.EdgeColor = unsliced_color;
+%             
+%                 if force_int_unsliced.sup(3) > max_sup
+%                     max_sup = force_int_unsliced.sup(3);
+%                 end
+%             
+%             end
+%             
+%             % plot sliced force overapproximation
+%             for i = 1:time_index
+%                 fz2{plan_iter*50+i} = patch([t_traj(i)+dt; t_traj(i)+dt; t_traj(i); t_traj(i)], [force_upper(i,3); force_lower(i,3); force_lower(i,3); force_upper(i,3)],'b');
+%                 fz2{plan_iter*50+i}.LineWidth = 0.01;
+%                 fz2{plan_iter*50+i}.FaceColor = slice_color;
+%                 fz2{plan_iter*50+i}.FaceAlpha = face_alpha;
+%                 fz2{plan_iter*50+i}.EdgeAlpha = edge_alpha;
+%                 fz2{plan_iter*50+i}.EdgeColor = slice_color;
+%             end
+% 
+%             % Plotting Friction Cone Diagram
+%             
+%             % fig_num = fig_num + 1;
+%             % figure(fig_num)
+% %             subplot(1,3,2)
             fric_plot = figure(fric_plot_num);
             hold on
-
-            % find time indices in certain range and use those indices in
-            % force()
-
+% 
+%             % find time indices in certain range and use those indices in
+%             % force()
+% 
             lower_time_bound = plan_iter * duration/2;
             upper_time_bound = (plan_iter+1) * duration/2;
             boundary_time_indices = find(time>lower_time_bound & time<upper_time_bound);
-            
+%             
             % plotting friction cone boundary
             max_fz = max(force(3,boundary_time_indices));
             min_fz = min(force(3,boundary_time_indices));
@@ -328,26 +495,26 @@ for plot_idx = 1:skip_rate:25000 % length(time) % length(time) %length(time) % U
             fc3 = plot(max_circ_x,max_circ_y,'-r');
             [min_circ_x, min_circ_y] = circle(2*min_fz*u_s,0,0,0,2*pi,0.001);
             fc4 = plot(min_circ_x,min_circ_y,'-r');
-
-            
-            % plotting unsliced overapproximation
-            for i = time_index:skip_num:time_steps % 1:skip_num:time_index
-            
-                force_int_unsliced = interval(force_PZ_unsliced{i});
-            
-                fc5 = patch([force_int_unsliced.inf(1),force_int_unsliced.sup(1),force_int_unsliced.sup(1),force_int_unsliced.inf(1)],[force_int_unsliced.inf(2),force_int_unsliced.inf(2),force_int_unsliced.sup(2),force_int_unsliced.sup(2)],unsliced_color,'FaceAlpha',face_alpha_light,'EdgeAlpha',edge_alpha,'EdgeColor',unsliced_color);
-            
-            end
-            
-            % plotting sliced overapproximation
-            for i = time_index:skip_num:time_steps % 1:skip_num:time_index
-            
-                fc6 = patch([force_lower(i,1),force_upper(i,1),force_upper(i,1),force_lower(i,1)],[force_lower(i,2),force_lower(i,2),force_upper(i,2),force_upper(i,2)],slice_color,'FaceAlpha',face_alpha_light,'EdgeAlpha',edge_alpha,'EdgeColor',slice_color);
-            
-            end
-
-            % Plotting ZMP Diagram
-            
+% 
+%             
+%             % plotting unsliced overapproximation
+%             for i = 1:skip_num:time_index
+%             
+%                 force_int_unsliced = interval(force_PZ_unsliced{i});
+%             
+%                 fc5 = patch([force_int_unsliced.inf(1),force_int_unsliced.sup(1),force_int_unsliced.sup(1),force_int_unsliced.inf(1)],[force_int_unsliced.inf(2),force_int_unsliced.inf(2),force_int_unsliced.sup(2),force_int_unsliced.sup(2)],unsliced_color,'FaceAlpha',face_alpha_light,'EdgeAlpha',edge_alpha,'EdgeColor',unsliced_color);
+%             
+%             end
+%             
+%             % plotting sliced overapproximation
+%             for i = 1:skip_num:time_index
+%             
+%                 fc6 = patch([force_lower(i,1),force_upper(i,1),force_upper(i,1),force_lower(i,1)],[force_lower(i,2),force_lower(i,2),force_upper(i,2),force_upper(i,2)],slice_color,'FaceAlpha',face_alpha_light,'EdgeAlpha',edge_alpha,'EdgeColor',slice_color);
+%             
+%             end
+% 
+%             % Plotting ZMP Diagram
+%             
             % fig_num = fig_num + 1;
             % figure(fig_num)
 %             subplot(1,3,3)
@@ -356,7 +523,7 @@ for plot_idx = 1:skip_rate:25000 % length(time) % length(time) %length(time) % U
             
             % scale from meter to centimeter
             factor = 100; 
-            
+%             
             % plot constraint boundary
             r=surf_rad*factor;
             x=0;
@@ -365,206 +532,39 @@ for plot_idx = 1:skip_rate:25000 % length(time) % length(time) %length(time) % U
             xunit = r * cos(th) + x;
             yunit = r * sin(th) + y;
             tipplot1 = plot(xunit, yunit,'-r');
-
-            % plot unsliced
-            for i = time_index:skip_num:time_steps % 1:skip_num:time_index
-                zmp1 = plot(ZMP_unsliced_PZ{i}.*factor,[1,2],'Filled',true);
-                zmp1.LineWidth = 0.1;
-                zmp1.FaceColor = unsliced_color;
-                zmp1.EdgeColor = unsliced_color;
-                zmp1.EdgeAlpha = edge_alpha;
-                zmp1.FaceAlpha = face_alpha_light;
-            end
-            
-            % plot sliced
-            for i = time_index:skip_num:time_steps % 1:skip_num:time_index
-                zmp2 = plot(ZMP_PZ{i}.*factor,[1,2],'Filled',true);
-                zmp2.LineWidth = 0.1;
-                zmp2.FaceColor = slice_color;
-                zmp2.EdgeColor = slice_color;
-                zmp2.EdgeAlpha = edge_alpha;
-                zmp2.FaceAlpha = face_alpha_light;
-            end
-
-            if plot_idx > 1
-                t_traj = t_traj + duration/2;
-            end
-
-        else % not a braking maneuver
-            
-            % Clear Previous Reach Sets from Friction Cone and ZMP Diagrams
-            
-            if plan_iter > 1
-%                 sp2 = subplot(1,3,2);
-                fric_plot = figure(fric_plot_num);
-                cla(fric_plot)
-
-%                 sp3 = subplot(1,3,3);
-                tip_plot = figure(tip_plot_num);
-                cla(tip_plot)
-            end
-
-            if plan_iter > 5
-                sep_plot = figure(sep_plot_num);
-                for i = 1:50
-                    delete(fz1{(plan_iter-5)*50+i})
-                    delete(fz2{(plan_iter-5)*50+i})
-                end
-            end
-
-            % calculate new reach set
-
-            plot_info_struct = update_reach_sets(rs_pos(plan_iter,:),rs_vel(plan_iter,:),rs_accel(plan_iter,:),rs_opt_k(plan_iter,:));
-            force_PZ_unsliced = plot_info_struct.force_PZ_unsliced;
-            moment_PZ_unsliced = plot_info_struct.moment_PZ_unsliced;
-            force_lower = plot_info_struct.force_lower;
-            force_upper = plot_info_struct.force_upper;
-            ZMP_unsliced_PZ = plot_info_struct.ZMP_unsliced_PZ;
-            ZMP_PZ = plot_info_struct.ZMP_PZ;
-
-            % Plotting 
-
-            % Plotting Separation
-
-            % fig_num = fig_num + 1;
-            % figure(fig_num);
-%             subplot(1,3,1)
-            sep_plot = figure(sep_plot_num);
-            hold on;
-            
-            max_sup = -1;
-            if plot_idx > 1
-                t_traj = t_traj + duration/2;
-            end
-            
-            % plot unsliced force overapproximation
-            for i = 1:time_index % first half
-            
-                force_int_unsliced = interval(force_PZ_unsliced{i});
-            
-                fz1{plan_iter*50+i} = patch([t_traj(i)+dt; t_traj(i)+dt; t_traj(i); t_traj(i)], [force_int_unsliced.sup(3); force_int_unsliced.inf(3); force_int_unsliced.inf(3); force_int_unsliced.sup(3)],'b');
-                fz1{plan_iter*50+i}.LineWidth = 0.01;
-                fz1{plan_iter*50+i}.FaceColor = unsliced_color;
-                fz1{plan_iter*50+i}.FaceAlpha = face_alpha;
-                fz1{plan_iter*50+i}.EdgeAlpha = edge_alpha;
-                fz1{plan_iter*50+i}.EdgeColor = unsliced_color;
-            
-                if force_int_unsliced.sup(3) > max_sup
-                    max_sup = force_int_unsliced.sup(3);
-                end
-            
-            end
-            
-            % plot sliced force overapproximation
-            for i = 1:time_index
-                fz2{plan_iter*50+i} = patch([t_traj(i)+dt; t_traj(i)+dt; t_traj(i); t_traj(i)], [force_upper(i,3); force_lower(i,3); force_lower(i,3); force_upper(i,3)],'b');
-                fz2{plan_iter*50+i}.LineWidth = 0.01;
-                fz2{plan_iter*50+i}.FaceColor = slice_color;
-                fz2{plan_iter*50+i}.FaceAlpha = face_alpha;
-                fz2{plan_iter*50+i}.EdgeAlpha = edge_alpha;
-                fz2{plan_iter*50+i}.EdgeColor = slice_color;
-            end
-
-            % Plotting Friction Cone Diagram
-            
-            % fig_num = fig_num + 1;
-            % figure(fig_num)
-%             subplot(1,3,2)
-            fric_plot = figure(fric_plot_num);
-            hold on
-
-            % find time indices in certain range and use those indices in
-            % force()
-
-            lower_time_bound = plan_iter * duration/2;
-            upper_time_bound = (plan_iter+1) * duration/2;
-            boundary_time_indices = find(time>lower_time_bound & time<upper_time_bound);
-            
-            % plotting friction cone boundary
-            max_fz = max(force(3,boundary_time_indices));
-            min_fz = min(force(3,boundary_time_indices));
-            [max_fz_x, max_fz_y] = circle(2*max_fz*u_s,0,0,0,2*pi,0.01);
-            [min_fz_x, min_fz_y] = circle(2*min_fz*u_s,0,0,0,2*pi,0.01);
-            plot(max_fz_x, max_fz_y,'-r')
-            plot(min_fz_x, min_fz_y,'-r')
-            fc1 = fill([max_fz_x flip(min_fz_x)],[max_fz_y flip(min_fz_y)],'r','FaceAlpha',0.9);
-            fc2 = line([max_fz_x(end) min_fz_x(1)],[max_fz_y(end) min_fz_y(1)]);
-            set(fc2,'Color','r') % ,'EdgeAlpha',0.3)
-
-            [max_circ_x, max_circ_y] = circle(2*max_fz*u_s,0,0,0,2*pi,0.001);
-            fc3 = plot(max_circ_x,max_circ_y,'-r');
-            [min_circ_x, min_circ_y] = circle(2*min_fz*u_s,0,0,0,2*pi,0.001);
-            fc4 = plot(min_circ_x,min_circ_y,'-r');
-
-            
-            % plotting unsliced overapproximation
-            for i = 1:skip_num:time_index
-            
-                force_int_unsliced = interval(force_PZ_unsliced{i});
-            
-                fc5 = patch([force_int_unsliced.inf(1),force_int_unsliced.sup(1),force_int_unsliced.sup(1),force_int_unsliced.inf(1)],[force_int_unsliced.inf(2),force_int_unsliced.inf(2),force_int_unsliced.sup(2),force_int_unsliced.sup(2)],unsliced_color,'FaceAlpha',face_alpha_light,'EdgeAlpha',edge_alpha,'EdgeColor',unsliced_color);
-            
-            end
-            
-            % plotting sliced overapproximation
-            for i = 1:skip_num:time_index
-            
-                fc6 = patch([force_lower(i,1),force_upper(i,1),force_upper(i,1),force_lower(i,1)],[force_lower(i,2),force_lower(i,2),force_upper(i,2),force_upper(i,2)],slice_color,'FaceAlpha',face_alpha_light,'EdgeAlpha',edge_alpha,'EdgeColor',slice_color);
-            
-            end
-
-            % Plotting ZMP Diagram
-            
-            % fig_num = fig_num + 1;
-            % figure(fig_num)
-%             subplot(1,3,3)
-            tip_plot = figure(tip_plot_num);
-            hold on
-            
-            % scale from meter to centimeter
-            factor = 100; 
-            
-            % plot constraint boundary
-            r=surf_rad*factor;
-            x=0;
-            y=0;
-            th = linspace(0,2*pi,500);
-            xunit = r * cos(th) + x;
-            yunit = r * sin(th) + y;
-            tipplot1 = plot(xunit, yunit,'-r');
-
-            % plot unsliced
-            for i = 1:skip_num:time_index
-                zmp1 = plot(ZMP_unsliced_PZ{i}.*factor,[1,2],'Filled',true);
-                zmp1.LineWidth = 0.1;
-                zmp1.FaceColor = unsliced_color;
-                zmp1.EdgeColor = unsliced_color;
-                zmp1.EdgeAlpha = edge_alpha;
-                zmp1.FaceAlpha = face_alpha_light;
-            end
-            
-            % plot sliced
-            for i = 1:skip_num:time_index
-                zmp2 = plot(ZMP_PZ{i}.*factor,[1,2],'Filled',true);
-                zmp2.LineWidth = 0.1;
-                zmp2.FaceColor = slice_color;
-                zmp2.EdgeColor = slice_color;
-                zmp2.EdgeAlpha = edge_alpha;
-                zmp2.FaceAlpha = face_alpha_light;
-            end
-
-        end
-
-        if time_threshold == -1
-            time_threshold = duration/2;
-        else
-            % increase time_threshold by duration?
-            time_threshold = time_threshold + duration/2;
-        end
-        
-    else % not a new planning iteration
-
-    end
+% 
+%             % plot unsliced
+%             for i = 1:skip_num:time_index
+%                 zmp1 = plot(ZMP_unsliced_PZ{i}.*factor,[1,2],'Filled',true);
+%                 zmp1.LineWidth = 0.1;
+%                 zmp1.FaceColor = unsliced_color;
+%                 zmp1.EdgeColor = unsliced_color;
+%                 zmp1.EdgeAlpha = edge_alpha;
+%                 zmp1.FaceAlpha = face_alpha_light;
+%             end
+%             
+%             % plot sliced
+%             for i = 1:skip_num:time_index
+%                 zmp2 = plot(ZMP_PZ{i}.*factor,[1,2],'Filled',true);
+%                 zmp2.LineWidth = 0.1;
+%                 zmp2.FaceColor = slice_color;
+%                 zmp2.EdgeColor = slice_color;
+%                 zmp2.EdgeAlpha = edge_alpha;
+%                 zmp2.FaceAlpha = face_alpha_light;
+%             end
+% 
+%         end
+% 
+%         if time_threshold == -1
+%             time_threshold = duration/2;
+%         else
+%             % increase time_threshold by duration?
+%             time_threshold = time_threshold + duration/2;
+%         end
+%         
+%     else % not a new planning iteration
+% 
+%     end
 
     % plot nominal values
 %     subplot(1,3,1)
@@ -587,7 +587,8 @@ for plot_idx = 1:skip_rate:25000 % length(time) % length(time) %length(time) % U
 %     subplot(1,3,1)
     sep_plot = figure(sep_plot_num);
     title('Contact Joint z-Axis Force')
-    ylim([0 max_sup+0.1])
+    max_fz = max(force(3,:));
+    ylim([0 max_fz+0.1])
     sep_plot_range = 5; % seconds
     if time(plot_idx) < sep_plot_range/2
         xlim([0 sep_plot_range]) % UPDATE THE TIME RANGE TO BE FIXED
@@ -604,8 +605,8 @@ for plot_idx = 1:skip_rate:25000 % length(time) % length(time) %length(time) % U
     title('Friction Cone')
     xlabel('x-axis Force (N)')
     ylabel('y-axis Force (N)')
-    xlim([-4.25 4.25])
-    ylim([-4.25 4.25])
+    xlim([-1 1])
+    ylim([-1 1])
     set(gca,'FontSize',fontsize)
     set(gcf,'color','w')
     axis square
@@ -629,9 +630,9 @@ for plot_idx = 1:skip_rate:25000 % length(time) % length(time) %length(time) % U
 %     make_animation(sep_plot,frame_idx,sep_save_file)
 %     make_animation(fric_plot,frame_idx,fric_save_file)
 %     make_animation(tip_plot,frame_idx,tip_save_file)
-    make_video(sep_plot,sep_vid)
-    make_video(fric_plot,fric_vid)
-    make_video(tip_plot,tip_vid)
+%     make_video(sep_plot,sep_vid)
+%     make_video(fric_plot,fric_vid)
+%     make_video(tip_plot,tip_vid)
     
     % increment frame index
     frame_idx = frame_idx + 1;

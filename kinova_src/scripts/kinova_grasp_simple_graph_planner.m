@@ -17,11 +17,12 @@ close all; clear; clc;
 
 %% user parameters
 
-u_s = 0.609382421; 
+u_s = 0.6; 
 surf_rad =  0.058 / 2;
 grasp_constraint_flag = true;
 
 use_robust_input = true;
+stop_sim_when_ultimate_bound_exceeded = false;
 
 goal_type = 'configuration'; % pick 'end_effector_location' or 'configuration'
 goal_radius = pi/30;
@@ -29,7 +30,7 @@ dimension = 3 ;
 verbosity = 10;
 
 % trajectory duration (must match C++)
-DURATION = 2;
+DURATION = 2.0;
 
 %%% for planner
 traj_type = 'bernstein'; % pick 'orig' or 'bernstein'
@@ -37,10 +38,10 @@ allow_replan_errors = true ;
 first_iter_pause_flag = false;
 use_q_plan_for_cost = false; % otherwise use q_stop (q at final time)
 input_constraints_flag = true;
-save_FO_zono_flag = true;
+save_FO_zono_flag = false;
 
 %%% for agent
-agent_urdf = 'Kinova_Grasp_URDF.urdf';
+agent_urdf = 'Kinova_Grasp_w_Tray.urdf';
 
 % RTD-Force Experiment 1: no uncertainty
 % RTD-Force Experiment 2: no uncertainty
@@ -48,7 +49,7 @@ agent_urdf = 'Kinova_Grasp_URDF.urdf';
 %                           object
 add_uncertainty_to = 'all'; % choose 'all', 'link', or 'none'
 links_with_uncertainty = {}; % if add_uncertainty_to = 'link', specify links here.
-uncertain_mass_range = [0.97, 1.03];
+uncertain_mass_range = [0.98, 1.02];
 
 agent_move_mode = 'integrator' ; % pick 'direct' or 'integrator'
 use_CAD_flag = true;
@@ -59,8 +60,8 @@ measurement_noise_size_ = 0;
 LLC_V_max = 2e-2;
 use_true_params_for_robust = false;
 if_use_mex_controller = true;
-alpha_constant = 1;
-Kr = 5;
+alpha_constant = 10;
+Kr = 4;
 
 %%% for HLP
 if_use_RRT = false;
@@ -68,6 +69,8 @@ HLP_grow_tree_mode = 'new' ;
 plot_waypoint_flag = true ;
 plot_waypoint_arm_flag  = true ;
 lookahead_distance = 0.1 ; % used if RRT is false
+increment_waypoint_distance = 0.18;
+use_SLP = true; % use SLP between high level graph waypoints
 
 % plotting
 plot_while_running = true ;
@@ -80,28 +83,36 @@ stop_threshold = 3 ; % number of failed iterations before exiting
 %% Defining Start, Goal and Obstacles
 
 % Hardware start and goal
-start = [3.75,-0.5236,0,-2.0944,0,1.0472,0]';
-goal = [1.75, -0.5236, 0, -2.0944, 0, 1.0472, 0]';
+start = wrapToPi([3.75,-1.0472,0,-2.0944,0,1.5708,0]');
+goal = [1.75,-0.5236,0,-2.0944,0,1.0472,0]';
+start_node = 2057743;
+goal_node = 1416420;
 
 % Code Currently Expects 10 Obstacles
-obstacles{1} = box_obstacle_zonotope('center', [0.75; 0; 0.25],...
-                                     'side_lengths', [0.2; 0.2; 1.2]) ;
-% Hardware environment obstacles
-% back wall
+obstacles{1} = box_obstacle_zonotope('center',[-0.3;0;0.5],...
+                                    'side_lengths',[0.01; 2; 2]);
+%box_obstacle_zonotope('center', [0.51089; 0.084019; 0.067449],...
+%                                      'side_lengths', [0.24; 0.22; 0.175]) ;
 obstacles{2} = box_obstacle_zonotope('center',[-0.3;0;0.5],...
                                     'side_lengths',[0.01; 2; 2]);
+% box_obstacle_zonotope('center',[0.63016; 0.40426; 0.13992],...
+%                                     'side_lengths', [0.32; 0.32; 0.32]);
+% Hardware environment obstacles
+% back wall
+obstacles{3} = box_obstacle_zonotope('center',[-0.3;0;0.5],...
+                                    'side_lengths',[0.01; 2; 2]);
 % ceiling
-obstacles{3} = box_obstacle_zonotope('center',[0.8; 0; 1],...
+obstacles{4} = box_obstacle_zonotope('center',[0.8; 0; 1],...
                                     'side_lengths',[2; 2; 0.01]);
 % side wall
-obstacles{4} = box_obstacle_zonotope('center',[1; 0.81; 0],...
+obstacles{5} = box_obstacle_zonotope('center',[1; 1.5; 0],...
                                     'side_lengths',[2; 0.01; 2]);
 % floor
-obstacles{5} = box_obstacle_zonotope('center',[1; 0; -0.01],...
+obstacles{6} = box_obstacle_zonotope('center',[1; 0; -0.01],...
                                     'side_lengths',[2; 2; 0.01]);
 
 % extra obstacles
-obstacles{6} = obstacles{1};
+% obstacles{6} = obstacles{1};
 obstacles{7} = obstacles{1};
 obstacles{8} = obstacles{1};
 obstacles{9} = obstacles{1};
@@ -120,7 +131,7 @@ joint_speed_limits = [-1.3963, -1.3963, -1.3963, -1.3963, -1.2218, -1.2218, -1.2
 joint_input_limits = [-56.7, -56.7, -56.7, -56.7, -29.4, -29.4, -29.4;
                        56.7,  56.7,  56.7,  56.7,  29.4,  29.4,  29.4]; % matlab doesn't import these from urdf so hard code into class
 transmision_inertia = [8.02999999999999936 11.99620246153036440 9.00254278617515169 11.58064393167063599 8.46650409179141228 8.85370693737424297 8.85873036646853151]; % matlab doesn't import these from urdf so hard code into class
-M_min_eigenvalue = 8.2998203638; % matlab doesn't import these from urdf so hard code into class
+M_min_eigenvalue = 8.0386; % matlab doesn't import these from urdf so hard code into class
 
 use_cuda_flag = true;
 
@@ -182,6 +193,8 @@ P = uarmtd_planner('verbose', verbosity, ...
                    'save_FO_zono_flag', save_FO_zono_flag,...
                    'DURATION',DURATION,...
                    'lookahead_distance',lookahead_distance, ...
+                   'increment_waypoint_distance', increment_waypoint_distance,...
+                   'use_SLP',use_SLP,...
                    'plot_HLP_flag', true) ; % _wrapper
 
 P.HLP = kinova_samplebased_HLP();
@@ -203,7 +216,7 @@ S = simulator_armtd(A,W,P, ...
                     'allow_replan_errors',allow_replan_errors,...
                     'max_sim_time',max_sim_time,...
                     'max_sim_iterations',max_sim_iter,...
-                    'stop_sim_when_ultimate_bound_exceeded', use_robust_input) ; 
+                    'stop_sim_when_ultimate_bound_exceeded', stop_sim_when_ultimate_bound_exceeded) ; 
 
 % %% plotting
 if plot_while_running
@@ -224,3 +237,7 @@ end
 
 % run simulation
 summary = S.run() ;
+
+%%
+
+% animate(A)

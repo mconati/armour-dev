@@ -2,15 +2,15 @@
 #include "BufferPath.h"
 
 const std::string inputfilename1 = pathname + "obstacles.csv";
-const std::string inputfilename2 = pathname + "joint_positions_uniform_hardware_dense_rand.csv"; // "joint_positions_uniform.csv"; // NOTE: comes from precompute joints positions matlab script
-const std::string inputfilename3 = pathname + "adj_matrix_uniform_hardware_dense_rand_range0p3.txt"; // adj_matrix_uniform_mult5.csv
+const std::string inputfilename2 = pathname + "joint_positions_uniform.csv"; // "joint_positions_uniform.csv"; // NOTE: comes from precompute joints positions matlab script
+const std::string inputfilename3 = pathname + "adj_matrix_uniform_mult5.csv"; // adj_matrix_uniform_mult5.csv
 const std::string outputfilename1 = pathname + "node_feasibility.csv";
 const std::string outputfilename2 = pathname + "link_c.csv";
 const std::string outputfilename3 = pathname + "collision_free_adj_matrix.csv";
 
 #define NUM_EDGES 112826403
-#define COLLISION_THRESHOLD -0.075
-#define EDGE_THRESHOLD 0.1154*4
+#define COLLISION_THRESHOLD -0.125
+#define EDGE_THRESHOLD 0.45
 
 int main() {
 /*

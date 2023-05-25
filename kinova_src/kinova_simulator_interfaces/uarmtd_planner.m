@@ -52,6 +52,9 @@ classdef uarmtd_planner < robot_arm_generic_planner
 
 %         t_plan = 0.5; % already defined in superclass planner.m
         DURATION = 1;
+
+        increment_waypoint_distance = 0.1;
+        use_SLP = false;
     end
     
     methods
@@ -126,7 +129,8 @@ classdef uarmtd_planner < robot_arm_generic_planner
                 end
                 P.iter = P.iter + 1;
                 planning_time = tic;
-                q_des = P.HLP.get_waypoint(agent_info,world_info,P.lookahead_distance) ;
+                q_des = P.HLP.get_waypoint(agent_info,world_info,P.lookahead_distance,P.increment_waypoint_distance) ;
+                
 
                 if isempty(q_des)
                     P.vdisp('Waypoint creation failed! Using global goal instead.', 3)
@@ -156,7 +160,7 @@ classdef uarmtd_planner < robot_arm_generic_planner
 
                 %%%%% This one
                 if strcmp(P.traj_type, 'bernstein')
-                    P.jrs_info.n_t = 100;
+                    P.jrs_info.n_t = 40;
                     P.jrs_info.n_q = 7;
                     P.jrs_info.n_k = 7;
                     P.jrs_info.c_k_bernstein = zeros(7,1);
@@ -164,11 +168,14 @@ classdef uarmtd_planner < robot_arm_generic_planner
                     % Make sure this is consistent with the k_range in
                     % cuda-dev/PZsparse-Bernstein/Trajectory.h 
                     % !!!!!!
-%                     P.jrs_info.g_k_bernstein = [pi/24; pi/24; pi/24; pi/24; pi/24; pi/24; pi/24];
-                    P.jrs_info.g_k_bernstein = pi/72*ones(P.jrs_info.n_q, 1);
+                    P.jrs_info.g_k_bernstein = [pi/32; pi/32; pi/72; pi/72; pi/72; pi/32; pi/72];
+%                     P.jrs_info.g_k_bernstein = pi/72*ones(P.jrs_info.n_q, 1);
 
     
-                    q_des = P.HLP.get_waypoint(agent_info,world_info,P.lookahead_distance) ;
+                    q_des = P.HLP.get_waypoint(agent_info,world_info,P.use_SLP,P.lookahead_distance,P.increment_waypoint_distance) ;
+                    % store the q_des for each planning iteration
+                    P.HLP.q_des = [P.HLP.q_des, q_des];
+
                     if isempty(q_des)
                         P.vdisp('Waypoint creation failed! Using global goal instead.', 3)
                         q_des = P.HLP.goal ;
