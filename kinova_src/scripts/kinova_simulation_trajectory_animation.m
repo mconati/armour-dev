@@ -30,28 +30,29 @@ linewidth = 2;
 
 %% Load Data
 
-load('HardwareVideo_MultipleTrials_05_17_2023_ROSData');
+load('Simulation_v2.mat');
 agent_urdf = 'Kinova_Grasp_w_Tray.urdf';
 
 %% Extract Data
 
 % for nominal values
-time = rosbag.raw_time - rosbag.raw_time(1);
-pos = rosbag.debug_pos;
-vel = rosbag.debug_vel;
-control_torque = rosbag.control_torque;
+time = A.time;
+pos = A.state(A.joint_state_indices,:);
+vel = A.state(A.joint_speed_indices,:);
+accel = A.reference_acceleration;
+% control_torque = rosbag.control_torque;
 
 % for desired values
-pos_des = rosbag.debug_q_des;
-vel_des = rosbag.debug_qd_des;
-accel_des = rosbag.debug_qdd_des;
+% pos_des = rosbag.debug_q_des;
+% vel_des = rosbag.debug_qd_des;
+% accel_des = rosbag.debug_qdd_des;
 
 % for reach set values
-rs_duration = rosbag.debug_duration; % for determining if braking maneuver occured
-rs_pos = rosbag.traj_pos;
-rs_vel = rosbag.traj_vel;
-rs_accel = rosbag.traj_accel;
-rs_opt_k = rosbag.traj_k;
+% rs_duration = rosbag.debug_duration; % for determining if braking maneuver occured
+% rs_pos = rosbag.traj_pos;
+% rs_vel = rosbag.traj_vel;
+% rs_accel = rosbag.traj_accel;
+% rs_opt_k = rosbag.traj_k;
 
 %% Load Robot Parameters
 
@@ -87,6 +88,8 @@ params = load_robot_params(robot, ...
 %     qdd_post(:,i) = M\(input(:,i+1)-C*joint_angular_velocity(:,i)-g);
 % end
 
+
+
 %% RNEA
 
 % % calling rnea
@@ -101,7 +104,7 @@ params = load_robot_params(robot, ...
 % %     clear tau f n
 % 
 %     % call rnea
-%     [tau, f, n] = rnea(joint_angles(:,i)',joint_angular_velocity(:,i)',joint_angular_velocity(:,i)',qdd_post(:,i)',true,params.true); % A.acceleration(:,i)'
+%     [tau, f, n] = rnea(joint_angles(:,i)',joint_angular_velocity(:,i)',joint_angular_velocity(:,i)',d_postd_post(:,i)',true,params.true); % A.acceleration(:,i)'
 % 
 %     % store rnea results
 %     Tau{i} = tau;
@@ -117,66 +120,66 @@ params = load_robot_params(robot, ...
 
 %% Plotting Braking Patches
 
-counter = 0;
-for i = 1:68 % length(rs_opt_k)
-
-    subplot(3,1,1)
-    hold on
-    plot([duration*0.5*i duration*0.5*i], [-6 6],'--r')
-    subplot(3,1,2)
-    hold on
-    plot([duration*0.5*i duration*0.5*i], [-6 6],'--r')
-    subplot(3,1,3)
-    hold on
-    plot([duration*0.5*i duration*0.5*i], [-6 6],'--r')
-    
-    if sum(rs_opt_k(i,:)) == 0
-        counter = counter + 1;
-
-        if i == 54
-            counter = counter - 1;
-        end
-
-        time_window = (i+counter) * duration*0.5;
-        subplot(3,1,1)
-        hold on
-        patch([time_window time_window time_window+duration*0.5 time_window+duration*0.5],[-6 6 6 -6],brake_face_color,'FaceAlpha',brake_face_alpha,'FaceColor',brake_face_color,'EdgeAlpha',0)
-        subplot(3,1,2)
-        hold on
-        patch([time_window time_window time_window+duration*0.5 time_window+duration*0.5],[-6 6 6 -6],brake_face_color,'FaceAlpha',brake_face_alpha,'FaceColor',brake_face_color,'EdgeAlpha',0)
-        subplot(3,1,3)
-        hold on
-        patch([time_window time_window time_window+duration*0.5 time_window+duration*0.5],[-6 6 6 -6],brake_face_color,'FaceAlpha',brake_face_alpha,'FaceColor',brake_face_color,'EdgeAlpha',0)
-
-    end
-
-end
+% counter = 0;
+% for i = 1:68 % length(rs_opt_k)
+% 
+%     subplot(3,1,1)
+%     hold on
+%     plot([duration*0.5*i duration*0.5*i], [-6 6],'--r')
+%     subplot(3,1,2)
+%     hold on
+%     plot([duration*0.5*i duration*0.5*i], [-6 6],'--r')
+%     subplot(3,1,3)
+%     hold on
+%     plot([duration*0.5*i duration*0.5*i], [-6 6],'--r')
+%     
+%     if sum(rs_opt_k(i,:)) == 0
+%         counter = counter + 1;
+% 
+%         if i == 54
+%             counter = counter - 1;
+%         end
+% 
+%         time_window = (i+counter) * duration*0.5;
+%         subplot(3,1,1)
+%         hold on
+%         patch([time_window time_window time_window+duration*0.5 time_window+duration*0.5],[-6 6 6 -6],brake_face_color,'FaceAlpha',brake_face_alpha,'FaceColor',brake_face_color,'EdgeAlpha',0)
+%         subplot(3,1,2)
+%         hold on
+%         patch([time_window time_window time_window+duration*0.5 time_window+duration*0.5],[-6 6 6 -6],brake_face_color,'FaceAlpha',brake_face_alpha,'FaceColor',brake_face_color,'EdgeAlpha',0)
+%         subplot(3,1,3)
+%         hold on
+%         patch([time_window time_window time_window+duration*0.5 time_window+duration*0.5],[-6 6 6 -6],brake_face_color,'FaceAlpha',brake_face_alpha,'FaceColor',brake_face_color,'EdgeAlpha',0)
+% 
+%     end
+% 
+% end
 
 %% Plotting Jitter Patches
 
-% patch 1
-time_window = [19.25 19.25 30.625 30.625];
-subplot(3,1,1)
-hold on
-patch(time_window,[-6 6 6 -6],brake_face_color,'FaceAlpha',brake_face_alpha,'FaceColor',jitter_face_color,'EdgeAlpha',0)
-subplot(3,1,2)
-hold on
-patch(time_window,[-6 6 6 -6],brake_face_color,'FaceAlpha',brake_face_alpha,'FaceColor',jitter_face_color,'EdgeAlpha',0)
-subplot(3,1,3)
-hold on
-patch(time_window,[-6 6 6 -6],brake_face_color,'FaceAlpha',brake_face_alpha,'FaceColor',jitter_face_color,'EdgeAlpha',0)
-
-% patch 2
-time_window = [39.375 39.375 53.375 53.375];
-subplot(3,1,1)
-hold on
-patch(time_window,[-6 6 6 -6],brake_face_color,'FaceAlpha',brake_face_alpha,'FaceColor',jitter_face_color,'EdgeAlpha',0)
-subplot(3,1,2)
-hold on
-patch(time_window,[-6 6 6 -6],brake_face_color,'FaceAlpha',brake_face_alpha,'FaceColor',jitter_face_color,'EdgeAlpha',0)
-subplot(3,1,3)
-hold on
-patch(time_window,[-6 6 6 -6],brake_face_color,'FaceAlpha',brake_face_alpha,'FaceColor',jitter_face_color,'EdgeAlpha',0)
+% % patch 1
+% time_window = [19.25 19.25 30.625 30.625];
+% subplot(3,1,1)
+% hold on
+% patch(time_window,[-6 6 6 -6],brake_face_color,'FaceAlpha',brake_face_alpha,'FaceColor',jitter_face_color,'EdgeAlpha',0)
+% subplot(3,1,2)
+% hold on
+% patch(time_window,[-6 6 6 -6],brake_face_color,'FaceAlpha',brake_face_alpha,'FaceColor',jitter_face_color,'EdgeAlpha',0)
+% subplot(3,1,3)
+% hold on
+% patch(time_window,[-6 6 6 -6],brake_face_color,'FaceAlpha',brake_face_alpha,'FaceColor',jitter_face_color,'EdgeAlpha',0)
+% 
+% % patch 2
+% time_window = [39.375 39.375 53.375 53.375];
+% subplot(3,1,1)
+% hold on
+% patch(time_window,[-6 6 6 -6],brake_face_color,'FaceAlpha',brake_face_alpha,'FaceColor',jitter_face_color,'EdgeAlpha',0)
+% subplot(3,1,2)
+% hold on
+% patch(time_window,[-6 6 6 -6],brake_face_color,'FaceAlpha',brake_face_alpha,'FaceColor',jitter_face_color,'EdgeAlpha',0)
+% subplot(3,1,3)
+% hold on
+% patch(time_window,[-6 6 6 -6],brake_face_color,'FaceAlpha',brake_face_alpha,'FaceColor',jitter_face_color,'EdgeAlpha',0)
 
 
 %% Plotting Base Trajectories
@@ -184,21 +187,21 @@ patch(time_window,[-6 6 6 -6],brake_face_color,'FaceAlpha',brake_face_alpha,'Fac
 % plot position trajectories
 subplot(3,1,1)
 hold on
-plot(time,pos_des,'LineWidth',linewidth)
+plot(time,pos,'LineWidth',linewidth)
 
 % plot velocity trajectories
 subplot(3,1,2)
 hold on
-plot(time,vel_des,'LineWidth',linewidth)
+plot(time,vel,'LineWidth',linewidth)
 
 % plot acceleration trajectories
 subplot(3,1,3)
 hold on
-plot(time,accel_des,'LineWidth',linewidth)
+plot(time,accel,'LineWidth',linewidth)
 
 %% Animate Plots
 
-time_end = 55; % seconds
+time_end = time(end); % seconds
 framerate = 50; % fps
 
 time_animation = 0:1/framerate:time_end;
