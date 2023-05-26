@@ -76,6 +76,10 @@ classdef robot_arm_graph_planner_HLP < high_level_planner
                     waypoint = get_SLP_to_waypoint(HLP,new_goal,agent_info,SLP_lookahead_distance); % new_goal; % 
                 else 
                     waypoint = new_goal;
+                    % update current waypoints
+                    HLP.current_waypoint = waypoint;
+                    HLP.waypoints = [HLP.waypoints, waypoint];
+                    HLP.current_waypoint_index = HLP.current_waypoint_index + 1;
                 end
             else
 
@@ -93,6 +97,10 @@ classdef robot_arm_graph_planner_HLP < high_level_planner
                         waypoint = get_SLP_to_waypoint(HLP,new_goal,agent_info,SLP_lookahead_distance); % new_goal; % 
                     else 
                         waypoint = new_goal;
+                        % update current waypoints
+                        HLP.current_waypoint = waypoint;
+                        HLP.waypoints = [HLP.waypoints, waypoint];
+                        HLP.current_waypoint_index = HLP.current_waypoint_index + 1;
                     end
                 else % choose next waypoint
                     if HLP.current_graph_waypoint_index == size(HLP.graph_waypoints,2) % (:,end) % if already at last waypoint, return goal
@@ -107,6 +115,10 @@ classdef robot_arm_graph_planner_HLP < high_level_planner
                             waypoint = get_SLP_to_waypoint(HLP,new_goal,agent_info,SLP_lookahead_distance); % new_goal; % 
                         else 
                             waypoint = new_goal;
+                            % update current waypoints
+                            HLP.current_waypoint = waypoint;
+                            HLP.waypoints = [HLP.waypoints, waypoint];
+                            HLP.current_waypoint_index = HLP.current_waypoint_index + 1;
                         end
 %                         HLP.current_waypoint = waypoint;
                     end

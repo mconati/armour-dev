@@ -103,22 +103,22 @@ classdef kinova_samplebased_HLP < robot_arm_graph_planner_HLP
                 HLP.plot_data.waypoint_arm_volume = patch(HLP.current_waypoint_patch_data,...
                     'FaceColor','c','FaceAlpha',0.1,...
                     'EdgeColor','c','EdgeAlpha',0.5) ;
-            if ~isempty(HLP.previous_waypoint_patch_data)
-                if ~isempty(HLP.plot_data.previous_waypoint_arm_volume)
-                    delete(HLP.plot_data.previous_waypoint_arm_volume)
-                end
-                HLP.plot_data.previous_waypoint_arm_volume = patch(HLP.previous_waypoint_patch_data,...
-                    'FaceColor','b','FaceAlpha',0.1,...
-                    'EdgeColor','b','EdgeAlpha',0.5) ;
-            end
-            if ~isempty(HLP.next_waypoint_patch_data)
-                if ~isempty(HLP.plot_data.next_waypoint_arm_volume)
-                    delete(HLP.plot_data.next_waypoint_arm_volume)
-                end
-                HLP.plot_data.next_waypoint_arm_volume = patch(HLP.next_waypoint_patch_data,...
-                    'FaceColor','w','FaceAlpha',0.1,...
-                    'EdgeColor','w','EdgeAlpha',0.5) ;
-            end
+%             if ~isempty(HLP.previous_waypoint_patch_data)
+% %                 if ~isempty(HLP.plot_data.previous_waypoint_arm_volume)
+% %                     delete(HLP.plot_data.previous_waypoint_arm_volume)
+% %                 end
+%                 HLP.plot_data.previous_waypoint_arm_volume = patch(HLP.previous_waypoint_patch_data,...
+%                     'FaceColor','b','FaceAlpha',0.1,...
+%                     'EdgeColor','b','EdgeAlpha',0.5) ;
+%             end
+%             if ~isempty(HLP.next_waypoint_patch_data)
+% %                 if ~isempty(HLP.plot_data.next_waypoint_arm_volume)
+% %                     delete(HLP.plot_data.next_waypoint_arm_volume)
+% %                 end
+%                 HLP.plot_data.next_waypoint_arm_volume = patch(HLP.next_waypoint_patch_data,...
+%                     'FaceColor','w','FaceAlpha',0.1,...
+%                     'EdgeColor','w','EdgeAlpha',0.5) ;
+%             end
             end
         end
     end
