@@ -8,6 +8,7 @@ close all;
 clc;
 fig_num = 1;
 
+
 %% Parameters
 
 fontsize = 16;
@@ -26,14 +27,12 @@ duration = 1.75;
 dt = duration/time_steps;
 t_traj = linspace(0,duration,time_steps);
 
-%% Description
+%% Planning Iteration to Plot
 
-% use 
-    % debug_traj_pos
-    % debug_traj_vel
-    % debug_traj_accel
-    % debug_traj_k
-% to calculate unsliced reachsets again and also the nominal values
+time_in_video = 29; % seconds
+iter_to_plot = floor(time_in_video / (duration / 2));
+start_time_to_plot = iter_to_plot * (duration / 2);
+end_time_to_plot = (iter_to_plot + 1) * (duration / 2);
 
 %% Color Coding
 
@@ -46,22 +45,27 @@ edge_alpha = 0.5;
 
 %% Load Hardware ROS Data
 
-% load_file = 'HardwareVideo_MultipleTrials_05_17_2023_ROSData.mat';
-% agent_urdf = 'Kinova_Grasp_w_Tray.urdf';
+load_file = 'HardwareVideo_MultipleTrials_05_17_2023_ROSData.mat';
+agent_urdf = 'Kinova_Grasp_w_Tray.urdf';
 
-load_file = 'HardwareFailureROSData.mat';
-agent_urdf = 'Kinova_Grasp_URDF.urdf';
+% load_file = 'HardwareFailureROSData.mat';
+% agent_urdf = 'Kinova_Grasp_URDF.urdf';
 
 data = load(load_file);
 
 % contact parameters: match with hardware experiment settings
-u_s = 0.33;
+u_s = 0.6;
 surf_rad = 0.058/2;
 
 %% Extract Data
 
 % process the raw time measurements to offset to zero
 exp_time = data.rosbag.raw_time - data.rosbag.raw_time(1);
+% find time indices to plot
+start_time_indices = find(exp_time>start_time_to_plot);
+start_time_index = start_time_indices(1);
+end_time_indices = find(exp_time>end_time_to_plot);
+end_time_index = end_time_indices(1);
 
 % for nominal values
 pos = data.rosbag.debug_pos;
@@ -72,7 +76,7 @@ opt_k = data.rosbag.debug_traj_k;
 control_torque = data.rosbag.control_torque;
 
 % for reach set values
-duration = data.rosbag.debug_duration; % for determining if braking maneuver occured
+rs_duration = data.rosbag.debug_duration; % for determining if braking maneuver occured
 rs_pos = data.rosbag.traj_pos;
 rs_vel = data.rosbag.traj_vel;
 rs_accel = data.rosbag.traj_accel;
@@ -83,7 +87,7 @@ rs_opt_k = data.rosbag.traj_k;
 % match with Hardware experiment settings
 add_uncertainty_to = 'all'; % choose 'all', 'link', or 'none'
 links_with_uncertainty = {}; % if add_uncertainty_to = 'link', specify links here.
-uncertain_mass_range = [0.97, 1.03];
+uncertain_mass_range = [0.98, 1.02];
 
 robot = importrobot(agent_urdf);
 robot.DataFormat = 'col';
@@ -195,12 +199,12 @@ plot(exp_time,slip)
 % slice using the provided k
 
 % initial condition
-q_0 = rs_pos(1,:);
-q_dot_0 = rs_vel(1,:);
-q_ddot_0 = rs_accel(1,:);
+q_0 = rs_pos(iter_to_plot,:);
+q_dot_0 = rs_vel(iter_to_plot,:);
+q_ddot_0 = rs_accel(iter_to_plot,:);
 
 % pass in the k_opt as 
-q_des = rs_opt_k(1,:);
+q_des = rs_opt_k(iter_to_plot,:);
 
 % organize input to cuda program
 % P.vdisp('Calling CUDA & C++ Program!',3);
@@ -377,16 +381,15 @@ end
 
 % plot the nominal values
 nom_idx = find(exp_time < t_traj(time_index+1));
-plot(exp_time(nom_idx), force(3,nom_idx),'-k','LineWidth',linewidth)
+plot(exp_time(start_time_index:end_time_index), force(3,start_time_index:end_time_index),'-k','LineWidth',linewidth)
 
 % formatting for plot
 ylim([0 max_sup+0.1])
-xlim([0 t_traj(time_index+1)])
+xlim([exp_time(start_time_index) exp_time(end_time_index)])
 xlabel('Time (s)')
 ylabel('Force (N)')
 title('Contact Joint z-Axis Force')
 set(gca,'FontSize',fontsize)
-
 
 
 %% Plotting Friction Cone Diagram
@@ -396,8 +399,8 @@ figure(fig_num)
 hold on
 
 % plotting friction cone boundary
-max_fz = max(force(3,1:time_index)); % UPDATE THIS SHOULDN't BE TIME INDEX
-min_fz = min(force(3,1:time_index));
+max_fz = max(force(3,start_time_index:end_time_index)); % UPDATE THIS SHOULDN't BE TIME INDEX
+min_fz = min(force(3,start_time_index:end_time_index));
 [max_fz_x, max_fz_y] = circle(2*max_fz*u_s,0,0,0,2*pi,0.01);
 [min_fz_x, min_fz_y] = circle(2*min_fz*u_s,0,0,0,2*pi,0.01);
 plot(max_fz_x, max_fz_y,'-r')
@@ -424,7 +427,7 @@ set(fp_bound,'Color','r') % ,'EdgeAlpha',0.3)
 
 % plotting nominal values
 nom_idx = find(exp_time < t_traj(time_index+1));
-plot(force(1,nom_idx),force(2,nom_idx),'-k')
+plot(force(1,start_time_index:end_time_index),force(2,start_time_index:end_time_index),'-k')
 
 % plot formatting
 xlabel('x-axis Force (N)')
@@ -475,7 +478,7 @@ end
 
 % plot nominal
 nom_idx = find(exp_time < t_traj(time_index+1));
-plot(ZMP(1,nom_idx).*factor,ZMP(2,nom_idx).*factor,'-k')
+plot(ZMP(1,start_time_index:end_time_index).*factor,ZMP(2,start_time_index:end_time_index).*factor,'-k')
 
 % plot formatting
 xlabel('x_o position (cm)')
