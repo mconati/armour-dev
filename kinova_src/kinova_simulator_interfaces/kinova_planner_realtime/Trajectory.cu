@@ -25,6 +25,8 @@ BezierCurve::BezierCurve(const Eigen::VectorXd& q0_inp,
     // cout << TTqdd0.transpose() << endl;
 
     // pre-allocate memory
+    cos_q_des = PZsparseArray(NUM_FACTORS, NUM_TIME_STEPS);
+    sin_q_des = PZsparseArray(NUM_FACTORS, NUM_TIME_STEPS);
     R = PZsparseArray(NUM_JOINTS + 1, NUM_TIME_STEPS);
     R_t = PZsparseArray(NUM_JOINTS, NUM_TIME_STEPS);
     qd_des = PZsparseArray(NUM_FACTORS, NUM_TIME_STEPS);
@@ -112,7 +114,7 @@ void BezierCurve::makePolyZono(int s_ind) {
         cos_q_des_degree[0][i] = 1; // k
         cos_q_des_degree[1][i + NUM_FACTORS * 4] = 1; // cosqe
 
-        // cos_q_des[s_ind * NUM_FACTORS + i] = PZsparse(cos_q_des_center, cos_q_des_coeff, cos_q_des_degree, 2);
+        cos_q_des(i, s_ind) = PZsparse(cos_q_des_center, cos_q_des_coeff, cos_q_des_degree, 2);
 
         // Part 1.b: sin(q_des) 
         double sin_q_des_center = sin(q_des_center);
@@ -129,7 +131,7 @@ void BezierCurve::makePolyZono(int s_ind) {
         sin_q_des_degree[0][i] = 1; // k
         sin_q_des_degree[1][i + NUM_FACTORS * 5] = 1; // sinqe
 
-        // sin_q_des[s_ind * NUM_FACTORS + i] = PZsparse(sin_q_des_center, sin_q_des_coeff, sin_q_des_degree, 2);
+        sin_q_des(i, s_ind) = PZsparse(sin_q_des_center, sin_q_des_coeff, sin_q_des_degree, 2);
 
         R(i, s_ind) = PZsparse(rots[i * 3], rots[i * 3 + 1], rots[i * 3 + 2]);
 

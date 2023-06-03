@@ -56,6 +56,8 @@ public:
     double ds = 0;
 
     // rotation matrix (and its transpose) of each joint
+    PZsparseArray cos_q_des;
+    PZsparseArray sin_q_des;
     PZsparseArray R;
     PZsparseArray R_t;
 
