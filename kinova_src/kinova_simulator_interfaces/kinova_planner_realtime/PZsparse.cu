@@ -244,32 +244,36 @@ void PZsparse::makeRotationMatrix(Eigen::MatrixXd& R, const double cosElt, const
             R(1,1) = cosElt;
             break;
         default:
-            WARNING_PRINT("Undefined axis");
+            cout << "Undefined axis" << endl;
             throw -1;
     }
 }
 
 bool PZsparse::internalCheck() const {
     if (center.rows() != NRows) {
-        WARNING_PRINT("PZsparse error: center matrix number of rows not consistent!");
+        cout << "PZsparse error: center matrix number of rows not consistent!" << endl;
+        cout << center.rows() << ' ' << NRows << endl;
         return false;
     }
     if (center.cols() != NCols) {
-        WARNING_PRINT("PZsparse error: center matrix number of columns not consistent!");
+        cout << "PZsparse error: center matrix number of columns not consistent!" << endl;
+        cout << center.cols() << ' ' << NCols << endl;
         return false;
     }
     if (independent.rows() != NRows) {
-        WARNING_PRINT("PZsparse error: independent generator matrix number of rows not consistent!");
+        cout << "PZsparse error: independent generator matrix number of rows not consistent!" << endl;
+        cout << independent.rows() << ' ' << NRows << endl;
         return false;
     }
     if (independent.cols() != NCols) {
-        WARNING_PRINT("PZsparse error: independent generator matrix number of columns not consistent!");
+        cout << "PZsparse error: independent generator matrix number of columns not consistent!" << endl;
+        cout << independent.cols() << ' ' << NCols << endl;
         return false;
     }
     for (uint i = 0; i < independent.rows(); i++) {
         for (uint j = 0; j < independent.cols(); j++) {
             if (independent(i, j) < 0) {
-                WARNING_PRINT("PZsparse error: independent generator matrix has negative entry!");
+                cout << "PZsparse error: independent generator matrix has negative entry: " << independent(i, j) << "!" << endl;
                 return false;
             }
         }
@@ -586,7 +590,7 @@ uint64_t convertDegreeToHash(const uint64_t* degreeArray) {
 
     for (uint64_t i = 0; i < NUM_FACTORS * 6; i++) {
         if (degreeArray[i] > 1) {
-            WARNING_PRINT("degree can not be larger than 1!");
+            cout << "degree can not be larger than 1!" << endl;
             throw;
         }
 
@@ -731,7 +735,7 @@ PZsparse PZsparse::operator-() {
         res.polynomial.emplace_back(-it.coeff, it.degree);
     }
 
-    res.independent = -independent;
+    // res.independent = -independent;
 
     return res;
 }

@@ -125,49 +125,48 @@ void KinematicsDynamics::rnea(uint s_ind,
     PZsparse& qdd6 = traj->qdda_des(5, s_ind);
     PZsparse& qdd7 = traj->qdda_des(6, s_ind);
 
-    PZsparse w1;
-    PZsparse w2;
-    PZsparse w3;
-    PZsparse w_aux1;
-    PZsparse w_aux2;
-    PZsparse w_aux3;
-    PZsparse wdot1;
-    PZsparse wdot2;
-    PZsparse wdot3;
-    PZsparse linear_acc1;
-    PZsparse linear_acc2;
-    PZsparse linear_acc3;
+    PZsparse w1(0);
+    PZsparse w2(0);
+    PZsparse w3(0);
+    PZsparse w_aux1(0);
+    PZsparse w_aux2(0);
+    PZsparse w_aux3(0);
+    PZsparse wdot1(0);
+    PZsparse wdot2(0);
+    PZsparse wdot3(0);
+    PZsparse linear_acc1(0);
+    PZsparse linear_acc2(0);
+    PZsparse linear_acc3(0);
 
-    PZsparse w_new1;
-    PZsparse w_new2;
-    PZsparse w_new3;
-    PZsparse w_aux_new1;
-    PZsparse w_aux_new2;
-    PZsparse w_aux_new3;
-    PZsparse wdot_new1;
-    PZsparse wdot_new2;
-    PZsparse wdot_new3;
-    PZsparse linear_acc_new1;
-    PZsparse linear_acc_new2;
-    PZsparse linear_acc_new3;
+    PZsparse w_new1(0);
+    PZsparse w_new2(0);
+    PZsparse w_new3(0);
+    PZsparse w_aux_new1(0);
+    PZsparse w_aux_new2(0);
+    PZsparse w_aux_new3(0);
+    PZsparse wdot_new1(0);
+    PZsparse wdot_new2(0);
+    PZsparse wdot_new3(0);
+    PZsparse linear_acc_new1(0);
+    PZsparse linear_acc_new2(0);
+    PZsparse linear_acc_new3(0);
 
-    PZsparse t1;
-    PZsparse t2;
-    PZsparse t3;
-    PZsparse t4;
-    PZsparse t5;
-    PZsparse t6;
-    PZsparse t7;
-    PZsparse t8;
-    PZsparse t9;
-    PZsparse t10;
-    PZsparse t11;
-    PZsparse t12;
-    PZsparse t13;
-    PZsparse t14;
-    PZsparse t15;
-    PZsparse t16;
-    PZsparse t17;
+    PZsparse t2(0);
+    PZsparse t3(0);
+    PZsparse t4(0);
+    PZsparse t5(0);
+    PZsparse t6(0);
+    PZsparse t7(0);
+    PZsparse t8(0);
+    PZsparse t9(0);
+    PZsparse t10(0);
+    PZsparse t11(0);
+    PZsparse t12(0);
+    PZsparse t13(0);
+    PZsparse t14(0);
+    PZsparse t15(0);
+    PZsparse t16(0);
+    PZsparse t17(0);
 
     // joint 1
     w_new3 = qd1;
@@ -176,13 +175,19 @@ void KinematicsDynamics::rnea(uint s_ind,
 
     wdot_new3 = qdd1;
 
-    if (setGravity) {
-        linear_acc_new3 = PZsparse(-gravity);
-    }
+    linear_acc_new3 = -9.81E+2/1.0E+2;
 
+    w1 = w_new1;
+    w2 = w_new2;
     w3 = w_new3;
+    w_aux1 = w_aux_new1;
+    w_aux2 = w_aux_new2;
     w_aux3 = w_aux_new3;
+    wdot1 = wdot_new1;
+    wdot2 = wdot_new2;
     wdot3 = wdot_new3;
+    linear_acc1 = linear_acc_new1;
+    linear_acc2 = linear_acc_new2;
     linear_acc3 = linear_acc_new3;
 
     t2 = com[0][0]*w_aux2;
@@ -197,25 +202,25 @@ void KinematicsDynamics::rnea(uint s_ind,
     t11 = t2+t8;
     t12 = t3+t9;
     t13 = t5+t10;
-    PZsparse F1_1 = -mass_arr(0, 0)*(-linear_acc1+com[0][1]*wdot3-com[0][2]*wdot2+t11*w2+t12*w3);
-    PZsparse F1_2 = mass_arr(0, 0)*(linear_acc2+com[0][0]*wdot3-com[0][2]*wdot1+t11*w1-t13*w3);
-    PZsparse F1_3 = mass_arr(0, 0)*(linear_acc3-com[0][0]*wdot2+com[0][1]*wdot1+t12*w1+t13*w2);
+    PZsparse F1_1 = -mass_arr(0,0)*(-linear_acc1+com[0][1]*wdot3-com[0][2]*wdot2+t11*w2+t12*w3);
+    PZsparse F1_2 = mass_arr(0,0)*(linear_acc2+com[0][0]*wdot3-com[0][2]*wdot1+t11*w1-t13*w3);
+    PZsparse F1_3 = mass_arr(0,0)*(linear_acc3-com[0][0]*wdot2+com[0][1]*wdot1+t12*w1+t13*w2);
 
-    t2 = I_arr(0,0)*w1;
-    t3 = I_arr(0,1)*w2;
-    t4 = I_arr(0,2)*w3;
-    t5 = I_arr(0,3)*w1;
-    t6 = I_arr(0,4)*w2;
-    t7 = I_arr(0,5)*w3;
-    t8 = I_arr(0,6)*w1;
-    t9 = I_arr(0,7)*w2;
-    t10 = I_arr(0,8)*w3;
+    t2 = I_arr(0,0)(0,0)*w1;
+    t3 = I_arr(0,0)(0,1)*w2;
+    t4 = I_arr(0,0)(0,2)*w3;
+    t5 = I_arr(0,0)(1,0)*w1;
+    t6 = I_arr(0,0)(1,1)*w2;
+    t7 = I_arr(0,0)(1,2)*w3;
+    t8 = I_arr(0,0)(2,0)*w1;
+    t9 = I_arr(0,0)(2,1)*w2;
+    t10 = I_arr(0,0)(2,2)*w3;
     t11 = t2+t3+t4;
     t12 = t5+t6+t7;
     t13 = t8+t9+t10;
-    PZsparse N1_1 = I_arr(0,0)*wdot1+I_arr(0,1)*wdot2+I_arr(0,2)*wdot3-t12*w_aux3+t13*w_aux2;
-    PZsparse N1_2 = I_arr(0,3)*wdot1+I_arr(0,4)*wdot2+I_arr(0,5)*wdot3+t11*w_aux3-t13*w_aux1;
-    PZsparse N1_3 = I_arr(0,6)*wdot1+I_arr(0,7)*wdot2+I_arr(0,8)*wdot3-t11*w_aux2+t12*w_aux1;
+    PZsparse N1_1 = I_arr(0,0)(0,0)*wdot1+I_arr(0,0)(0,1)*wdot2+I_arr(0,0)(0,2)*wdot3-t12*w_aux3+t13*w_aux2;
+    PZsparse N1_2 = I_arr(0,0)(1,0)*wdot1+I_arr(0,0)(1,1)*wdot2+I_arr(0,0)(1,2)*wdot3+t11*w_aux3-t13*w_aux1;
+    PZsparse N1_3 = I_arr(0,0)(2,0)*wdot1+I_arr(0,0)(2,1)*wdot2+I_arr(0,0)(2,2)*wdot3-t11*w_aux2+t12*w_aux1;
 
     // joint 2
     w_new1 = cq2*w1+sq2*w3;
@@ -273,25 +278,25 @@ void KinematicsDynamics::rnea(uint s_ind,
     t11 = t2+t8;
     t12 = t3+t9;
     t13 = t5+t10;
-    PZsparse F2_1 = -mass_arr(1, 0)*(-linear_acc1+com[1][1]*wdot3-com[1][2]*wdot2+t11*w2+t12*w3);
-    PZsparse F2_2 = mass_arr(1, 0)*(linear_acc2+com[1][0]*wdot3-com[1][2]*wdot1+t11*w1-t13*w3);
-    PZsparse F2_3 = mass_arr(1, 0)*(linear_acc3-com[1][0]*wdot2+com[1][1]*wdot1+t12*w1+t13*w2);
+    PZsparse F2_1 = -mass_arr(1,0)*(-linear_acc1+com[1][1]*wdot3-com[1][2]*wdot2+t11*w2+t12*w3);
+    PZsparse F2_2 = mass_arr(1,0)*(linear_acc2+com[1][0]*wdot3-com[1][2]*wdot1+t11*w1-t13*w3);
+    PZsparse F2_3 = mass_arr(1,0)*(linear_acc3-com[1][0]*wdot2+com[1][1]*wdot1+t12*w1+t13*w2);
 
-    t2 = I_arr(1,0)*w1;
-    t3 = I_arr(1,1)*w2;
-    t4 = I_arr(1,2)*w3;
-    t5 = I_arr(1,3)*w1;
-    t6 = I_arr(1,4)*w2;
-    t7 = I_arr(1,5)*w3;
-    t8 = I_arr(1,6)*w1;
-    t9 = I_arr(1,7)*w2;
-    t10 = I_arr(1,8)*w3;
+    t2 = I_arr(1,0)(0,0)*w1;
+    t3 = I_arr(1,0)(0,1)*w2;
+    t4 = I_arr(1,0)(0,2)*w3;
+    t5 = I_arr(1,0)(1,0)*w1;
+    t6 = I_arr(1,0)(1,1)*w2;
+    t7 = I_arr(1,0)(1,2)*w3;
+    t8 = I_arr(1,0)(2,0)*w1;
+    t9 = I_arr(1,0)(2,1)*w2;
+    t10 = I_arr(1,0)(2,2)*w3;
     t11 = t2+t3+t4;
     t12 = t5+t6+t7;
     t13 = t8+t9+t10;
-    PZsparse N2_1 = I_arr(1,0)*wdot1+I_arr(1,1)*wdot2+I_arr(1,2)*wdot3-t12*w_aux3+t13*w_aux2;
-    PZsparse N2_2 = I_arr(1,3)*wdot1+I_arr(1,4)*wdot2+I_arr(1,5)*wdot3+t11*w_aux3-t13*w_aux1;
-    PZsparse N2_3 = I_arr(1,6)*wdot1+I_arr(1,7)*wdot2+I_arr(1,8)*wdot3-t11*w_aux2+t12*w_aux1;
+    PZsparse N2_1 = I_arr(1,0)(0,0)*wdot1+I_arr(1,0)(0,1)*wdot2+I_arr(1,0)(0,2)*wdot3-t12*w_aux3+t13*w_aux2;
+    PZsparse N2_2 = I_arr(1,0)(1,0)*wdot1+I_arr(1,0)(1,1)*wdot2+I_arr(1,0)(1,2)*wdot3+t11*w_aux3-t13*w_aux1;
+    PZsparse N2_3 = I_arr(1,0)(2,0)*wdot1+I_arr(1,0)(2,1)*wdot2+I_arr(1,0)(2,2)*wdot3-t11*w_aux2+t12*w_aux1;
 
     // joint 3
     w_new1 = cq3*w1-sq3*w3;
@@ -351,25 +356,25 @@ void KinematicsDynamics::rnea(uint s_ind,
     t11 = t2+t8;
     t12 = t3+t9;
     t13 = t5+t10;
-    PZsparse F3_1 = -mass_arr(2, 0)*(-linear_acc1+com[2][1]*wdot3-com[2][2]*wdot2+t11*w2+t12*w3);
-    PZsparse F3_2 = mass_arr(2, 0)*(linear_acc2+com[2][0]*wdot3-com[2][2]*wdot1+t11*w1-t13*w3);
-    PZsparse F3_3 = mass_arr(2, 0)*(linear_acc3-com[2][0]*wdot2+com[2][1]*wdot1+t12*w1+t13*w2);
+    PZsparse F3_1 = -mass_arr(2,0)*(-linear_acc1+com[2][1]*wdot3-com[2][2]*wdot2+t11*w2+t12*w3);
+    PZsparse F3_2 = mass_arr(2,0)*(linear_acc2+com[2][0]*wdot3-com[2][2]*wdot1+t11*w1-t13*w3);
+    PZsparse F3_3 = mass_arr(2,0)*(linear_acc3-com[2][0]*wdot2+com[2][1]*wdot1+t12*w1+t13*w2);
 
-    t2 = I_arr(2,0)*w1;
-    t3 = I_arr(2,1)*w2;
-    t4 = I_arr(2,2)*w3;
-    t5 = I_arr(2,3)*w1;
-    t6 = I_arr(2,4)*w2;
-    t7 = I_arr(2,5)*w3;
-    t8 = I_arr(2,6)*w1;
-    t9 = I_arr(2,7)*w2;
-    t10 = I_arr(2,8)*w3;
+    t2 = I_arr(2,0)(0,0)*w1;
+    t3 = I_arr(2,0)(0,1)*w2;
+    t4 = I_arr(2,0)(0,2)*w3;
+    t5 = I_arr(2,0)(1,0)*w1;
+    t6 = I_arr(2,0)(1,1)*w2;
+    t7 = I_arr(2,0)(1,2)*w3;
+    t8 = I_arr(2,0)(2,0)*w1;
+    t9 = I_arr(2,0)(2,1)*w2;
+    t10 = I_arr(2,0)(2,2)*w3;
     t11 = t2+t3+t4;
     t12 = t5+t6+t7;
     t13 = t8+t9+t10;
-    PZsparse N3_1 = I_arr(2,0)*wdot1+I_arr(2,1)*wdot2+I_arr(2,2)*wdot3-t12*w_aux3+t13*w_aux2;
-    PZsparse N3_2 = I_arr(2,3)*wdot1+I_arr(2,4)*wdot2+I_arr(2,5)*wdot3+t11*w_aux3-t13*w_aux1;
-    PZsparse N3_3 = I_arr(2,6)*wdot1+I_arr(2,7)*wdot2+I_arr(2,8)*wdot3-t11*w_aux2+t12*w_aux1;
+    PZsparse N3_1 = I_arr(2,0)(0,0)*wdot1+I_arr(2,0)(0,1)*wdot2+I_arr(2,0)(0,2)*wdot3-t12*w_aux3+t13*w_aux2;
+    PZsparse N3_2 = I_arr(2,0)(1,0)*wdot1+I_arr(2,0)(1,1)*wdot2+I_arr(2,0)(1,2)*wdot3+t11*w_aux3-t13*w_aux1;
+    PZsparse N3_3 = I_arr(2,0)(2,0)*wdot1+I_arr(2,0)(2,1)*wdot2+I_arr(2,0)(2,2)*wdot3-t11*w_aux2+t12*w_aux1;
 
     // joint 4
     w_new1 = cq4*w1+sq4*w3;
@@ -427,25 +432,25 @@ void KinematicsDynamics::rnea(uint s_ind,
     t11 = t2+t8;
     t12 = t3+t9;
     t13 = t5+t10;
-    PZsparse F4_1 = -mass_arr(3, 0)*(-linear_acc1+com[3][1]*wdot3-com[3][2]*wdot2+t11*w2+t12*w3);
-    PZsparse F4_2 = mass_arr(3, 0)*(linear_acc2+com[3][0]*wdot3-com[3][2]*wdot1+t11*w1-t13*w3);
-    PZsparse F4_3 = mass_arr(3, 0)*(linear_acc3-com[3][0]*wdot2+com[3][1]*wdot1+t12*w1+t13*w2);
+    PZsparse F4_1 = -mass_arr(3,0)*(-linear_acc1+com[3][1]*wdot3-com[3][2]*wdot2+t11*w2+t12*w3);
+    PZsparse F4_2 = mass_arr(3,0)*(linear_acc2+com[3][0]*wdot3-com[3][2]*wdot1+t11*w1-t13*w3);
+    PZsparse F4_3 = mass_arr(3,0)*(linear_acc3-com[3][0]*wdot2+com[3][1]*wdot1+t12*w1+t13*w2);
 
-    t2 = I_arr(3,0)*w1;
-    t3 = I_arr(3,1)*w2;
-    t4 = I_arr(3,2)*w3;
-    t5 = I_arr(3,3)*w1;
-    t6 = I_arr(3,4)*w2;
-    t7 = I_arr(3,5)*w3;
-    t8 = I_arr(3,6)*w1;
-    t9 = I_arr(3,7)*w2;
-    t10 = I_arr(3,8)*w3;
+    t2 = I_arr(3,0)(0,0)*w1;
+    t3 = I_arr(3,0)(0,1)*w2;
+    t4 = I_arr(3,0)(0,2)*w3;
+    t5 = I_arr(3,0)(1,0)*w1;
+    t6 = I_arr(3,0)(1,1)*w2;
+    t7 = I_arr(3,0)(1,2)*w3;
+    t8 = I_arr(3,0)(2,0)*w1;
+    t9 = I_arr(3,0)(2,1)*w2;
+    t10 = I_arr(3,0)(2,2)*w3;
     t11 = t2+t3+t4;
     t12 = t5+t6+t7;
     t13 = t8+t9+t10;
-    PZsparse N4_1 = I_arr(3,0)*wdot1+I_arr(3,1)*wdot2+I_arr(3,2)*wdot3-t12*w_aux3+t13*w_aux2;
-    PZsparse N4_2 = I_arr(3,3)*wdot1+I_arr(3,4)*wdot2+I_arr(3,5)*wdot3+t11*w_aux3-t13*w_aux1;
-    PZsparse N4_3 = I_arr(3,6)*wdot1+I_arr(3,7)*wdot2+I_arr(3,8)*wdot3-t11*w_aux2+t12*w_aux1;
+    PZsparse N4_1 = I_arr(3,0)(0,0)*wdot1+I_arr(3,0)(0,1)*wdot2+I_arr(3,0)(0,2)*wdot3-t12*w_aux3+t13*w_aux2;
+    PZsparse N4_2 = I_arr(3,0)(1,0)*wdot1+I_arr(3,0)(1,1)*wdot2+I_arr(3,0)(1,2)*wdot3+t11*w_aux3-t13*w_aux1;
+    PZsparse N4_3 = I_arr(3,0)(2,0)*wdot1+I_arr(3,0)(2,1)*wdot2+I_arr(3,0)(2,2)*wdot3-t11*w_aux2+t12*w_aux1;
 
     // joint 5
     w_new1 = cq5*w1-sq5*w3;
@@ -505,25 +510,25 @@ void KinematicsDynamics::rnea(uint s_ind,
     t11 = t2+t8;
     t12 = t3+t9;
     t13 = t5+t10;
-    PZsparse F5_1 = -mass_arr(4, 0)*(-linear_acc1+com[4][1]*wdot3-com[4][2]*wdot2+t11*w2+t12*w3);
-    PZsparse F5_2 = mass_arr(4, 0)*(linear_acc2+com[4][0]*wdot3-com[4][2]*wdot1+t11*w1-t13*w3);
-    PZsparse F5_3 = mass_arr(4, 0)*(linear_acc3-com[4][0]*wdot2+com[4][1]*wdot1+t12*w1+t13*w2);
+    PZsparse F5_1 = -mass_arr(4,0)*(-linear_acc1+com[4][1]*wdot3-com[4][2]*wdot2+t11*w2+t12*w3);
+    PZsparse F5_2 = mass_arr(4,0)*(linear_acc2+com[4][0]*wdot3-com[4][2]*wdot1+t11*w1-t13*w3);
+    PZsparse F5_3 = mass_arr(4,0)*(linear_acc3-com[4][0]*wdot2+com[4][1]*wdot1+t12*w1+t13*w2);
 
-    t2 = I_arr(4,0)*w1;
-    t3 = I_arr(4,1)*w2;
-    t4 = I_arr(4,2)*w3;
-    t5 = I_arr(4,3)*w1;
-    t6 = I_arr(4,4)*w2;
-    t7 = I_arr(4,5)*w3;
-    t8 = I_arr(4,6)*w1;
-    t9 = I_arr(4,7)*w2;
-    t10 = I_arr(4,8)*w3;
+    t2 = I_arr(4,0)(0,0)*w1;
+    t3 = I_arr(4,0)(0,1)*w2;
+    t4 = I_arr(4,0)(0,2)*w3;
+    t5 = I_arr(4,0)(1,0)*w1;
+    t6 = I_arr(4,0)(1,1)*w2;
+    t7 = I_arr(4,0)(1,2)*w3;
+    t8 = I_arr(4,0)(2,0)*w1;
+    t9 = I_arr(4,0)(2,1)*w2;
+    t10 = I_arr(4,0)(2,2)*w3;
     t11 = t2+t3+t4;
     t12 = t5+t6+t7;
     t13 = t8+t9+t10;
-    PZsparse N5_1 = I_arr(4,0)*wdot1+I_arr(4,1)*wdot2+I_arr(4,2)*wdot3-t12*w_aux3+t13*w_aux2;
-    PZsparse N5_2 = I_arr(4,3)*wdot1+I_arr(4,4)*wdot2+I_arr(4,5)*wdot3+t11*w_aux3-t13*w_aux1;
-    PZsparse N5_3 = I_arr(4,6)*wdot1+I_arr(4,7)*wdot2+I_arr(4,8)*wdot3-t11*w_aux2+t12*w_aux1;
+    PZsparse N5_1 = I_arr(4,0)(0,0)*wdot1+I_arr(4,0)(0,1)*wdot2+I_arr(4,0)(0,2)*wdot3-t12*w_aux3+t13*w_aux2;
+    PZsparse N5_2 = I_arr(4,0)(1,0)*wdot1+I_arr(4,0)(1,1)*wdot2+I_arr(4,0)(1,2)*wdot3+t11*w_aux3-t13*w_aux1;
+    PZsparse N5_3 = I_arr(4,0)(2,0)*wdot1+I_arr(4,0)(2,1)*wdot2+I_arr(4,0)(2,2)*wdot3-t11*w_aux2+t12*w_aux1;
 
     // joint 6
     w_new1 = cq6*w1+sq6*w3;
@@ -581,25 +586,25 @@ void KinematicsDynamics::rnea(uint s_ind,
     t11 = t2+t8;
     t12 = t3+t9;
     t13 = t5+t10;
-    PZsparse F6_1 = -mass_arr(5, 0)*(-linear_acc1+com[5][1]*wdot3-com[5][2]*wdot2+t11*w2+t12*w3);
-    PZsparse F6_2 = mass_arr(5, 0)*(linear_acc2+com[5][0]*wdot3-com[5][2]*wdot1+t11*w1-t13*w3);
-    PZsparse F6_3 = mass_arr(5, 0)*(linear_acc3-com[5][0]*wdot2+com[5][1]*wdot1+t12*w1+t13*w2);
+    PZsparse F6_1 = -mass_arr(5,0)*(-linear_acc1+com[5][1]*wdot3-com[5][2]*wdot2+t11*w2+t12*w3);
+    PZsparse F6_2 = mass_arr(5,0)*(linear_acc2+com[5][0]*wdot3-com[5][2]*wdot1+t11*w1-t13*w3);
+    PZsparse F6_3 = mass_arr(5,0)*(linear_acc3-com[5][0]*wdot2+com[5][1]*wdot1+t12*w1+t13*w2);
 
-    t2 = I_arr(5,0)*w1;
-    t3 = I_arr(5,1)*w2;
-    t4 = I_arr(5,2)*w3;
-    t5 = I_arr(5,3)*w1;
-    t6 = I_arr(5,4)*w2;
-    t7 = I_arr(5,5)*w3;
-    t8 = I_arr(5,6)*w1;
-    t9 = I_arr(5,7)*w2;
-    t10 = I_arr(5,8)*w3;
+    t2 = I_arr(5,0)(0,0)*w1;
+    t3 = I_arr(5,0)(0,1)*w2;
+    t4 = I_arr(5,0)(0,2)*w3;
+    t5 = I_arr(5,0)(1,0)*w1;
+    t6 = I_arr(5,0)(1,1)*w2;
+    t7 = I_arr(5,0)(1,2)*w3;
+    t8 = I_arr(5,0)(2,0)*w1;
+    t9 = I_arr(5,0)(2,1)*w2;
+    t10 = I_arr(5,0)(2,2)*w3;
     t11 = t2+t3+t4;
     t12 = t5+t6+t7;
     t13 = t8+t9+t10;
-    PZsparse N6_1 = I_arr(5,0)*wdot1+I_arr(5,1)*wdot2+I_arr(5,2)*wdot3-t12*w_aux3+t13*w_aux2;
-    PZsparse N6_2 = I_arr(5,3)*wdot1+I_arr(5,4)*wdot2+I_arr(5,5)*wdot3+t11*w_aux3-t13*w_aux1;
-    PZsparse N6_3 = I_arr(5,6)*wdot1+I_arr(5,7)*wdot2+I_arr(5,8)*wdot3-t11*w_aux2+t12*w_aux1;
+    PZsparse N6_1 = I_arr(5,0)(0,0)*wdot1+I_arr(5,0)(0,1)*wdot2+I_arr(5,0)(0,2)*wdot3-t12*w_aux3+t13*w_aux2;
+    PZsparse N6_2 = I_arr(5,0)(1,0)*wdot1+I_arr(5,0)(1,1)*wdot2+I_arr(5,0)(1,2)*wdot3+t11*w_aux3-t13*w_aux1;
+    PZsparse N6_3 = I_arr(5,0)(2,0)*wdot1+I_arr(5,0)(2,1)*wdot2+I_arr(5,0)(2,2)*wdot3-t11*w_aux2+t12*w_aux1;
 
     // joint 7
     w_new1 = cq7*w1-sq7*w3;
@@ -659,25 +664,25 @@ void KinematicsDynamics::rnea(uint s_ind,
     t11 = t2+t8;
     t12 = t3+t9;
     t13 = t5+t10;
-    PZsparse F7_1 = -mass_arr(6, 0)*(-linear_acc1+com[6][1]*wdot3-com[6][2]*wdot2+t11*w2+t12*w3);
-    PZsparse F7_2 = mass_arr(6, 0)*(linear_acc2+com[6][0]*wdot3-com[6][2]*wdot1+t11*w1-t13*w3);
-    PZsparse F7_3 = mass_arr(6, 0)*(linear_acc3-com[6][0]*wdot2+com[6][1]*wdot1+t12*w1+t13*w2);
+    PZsparse F7_1 = -mass_arr(6,0)*(-linear_acc1+com[6][1]*wdot3-com[6][2]*wdot2+t11*w2+t12*w3);
+    PZsparse F7_2 = mass_arr(6,0)*(linear_acc2+com[6][0]*wdot3-com[6][2]*wdot1+t11*w1-t13*w3);
+    PZsparse F7_3 = mass_arr(6,0)*(linear_acc3-com[6][0]*wdot2+com[6][1]*wdot1+t12*w1+t13*w2);
 
-    t2 = I_arr(6,0)*w1;
-    t3 = I_arr(6,1)*w2;
-    t4 = I_arr(6,2)*w3;
-    t5 = I_arr(6,3)*w1;
-    t6 = I_arr(6,4)*w2;
-    t7 = I_arr(6,5)*w3;
-    t8 = I_arr(6,6)*w1;
-    t9 = I_arr(6,7)*w2;
-    t10 = I_arr(6,8)*w3;
+    t2 = I_arr(6,0)(0,0)*w1;
+    t3 = I_arr(6,0)(0,1)*w2;
+    t4 = I_arr(6,0)(0,2)*w3;
+    t5 = I_arr(6,0)(1,0)*w1;
+    t6 = I_arr(6,0)(1,1)*w2;
+    t7 = I_arr(6,0)(1,2)*w3;
+    t8 = I_arr(6,0)(2,0)*w1;
+    t9 = I_arr(6,0)(2,1)*w2;
+    t10 = I_arr(6,0)(2,2)*w3;
     t11 = t2+t3+t4;
     t12 = t5+t6+t7;
     t13 = t8+t9+t10;
-    PZsparse N7_1 = I_arr(6,0)*wdot1+I_arr(6,1)*wdot2+I_arr(6,2)*wdot3-t12*w_aux3+t13*w_aux2;
-    PZsparse N7_2 = I_arr(6,3)*wdot1+I_arr(6,4)*wdot2+I_arr(6,5)*wdot3+t11*w_aux3-t13*w_aux1;
-    PZsparse N7_3 = I_arr(6,6)*wdot1+I_arr(6,7)*wdot2+I_arr(6,8)*wdot3-t11*w_aux2+t12*w_aux1;
+    PZsparse N7_1 = I_arr(6,0)(0,0)*wdot1+I_arr(6,0)(0,1)*wdot2+I_arr(6,0)(0,2)*wdot3-t12*w_aux3+t13*w_aux2;
+    PZsparse N7_2 = I_arr(6,0)(1,0)*wdot1+I_arr(6,0)(1,1)*wdot2+I_arr(6,0)(1,2)*wdot3+t11*w_aux3-t13*w_aux1;
+    PZsparse N7_3 = I_arr(6,0)(2,0)*wdot1+I_arr(6,0)(2,1)*wdot2+I_arr(6,0)(2,2)*wdot3-t11*w_aux2+t12*w_aux1;
 
     PZsparse f7_1 = F7_1;
     PZsparse f7_2 = F7_2;
@@ -691,41 +696,41 @@ void KinematicsDynamics::rnea(uint s_ind,
     PZsparse f6_2 = F6_2+f7_3;
     PZsparse f6_3 = F6_3-cq7*f7_2-f7_1*sq7;
 
-    PZsparse  n6_1 = N6_1+f7_3*1.75050000000003E-4+F6_3*com[5][1]-F6_2*com[5][2]+cq7*f7_2*1.0593E-1+cq7*n7_1+f7_1*sq7*1.0593E-1-n7_2*sq7;
-    PZsparse  n6_2 = N6_2+n7_3-F6_3*com[5][0]+F6_1*com[5][2]-cq7*f7_1*1.75050000000003E-4+f7_2*sq7*1.75050000000003E-4;
-    PZsparse  n6_3 = N6_3+F6_2*com[5][0]-F6_1*com[5][1]+cq7*f7_1*1.0593E-1-cq7*n7_2-f7_2*sq7*1.0593E-1-n7_1*sq7;
+    PZsparse n6_1 = N6_1+f7_3*1.75050000000003E-4+F6_3*com[5][1]-F6_2*com[5][2]+cq7*f7_2*1.0593E-1+cq7*n7_1+f7_1*sq7*1.0593E-1-n7_2*sq7;
+    PZsparse n6_2 = N6_2+n7_3-F6_3*com[5][0]+F6_1*com[5][2]-cq7*f7_1*1.75050000000003E-4+f7_2*sq7*1.75050000000003E-4;
+    PZsparse n6_3 = N6_3+F6_2*com[5][0]-F6_1*com[5][1]+cq7*f7_1*1.0593E-1-cq7*n7_2-f7_2*sq7*1.0593E-1-n7_1*sq7;
 
     PZsparse f5_1 = F5_1+cq6*f6_1-f6_2*sq6;
     PZsparse f5_2 = F5_2-f6_3;
     PZsparse f5_3 = F5_3+cq6*f6_2+f6_1*sq6;
 
-    PZsparse  n5_1 = N5_1-f6_3*1.0593E-1+F5_3*com[4][1]-F5_2*com[4][2]+cq6*f6_2*1.750499999999995E-4+cq6*n6_1+f6_1*sq6*1.750499999999995E-4-n6_2*sq6;
-    PZsparse  n5_2 = N5_2-n6_3-F5_3*com[4][0]+F5_1*com[4][2]-cq6*f6_1*1.0593E-1+f6_2*sq6*1.0593E-1;
-    PZsparse  n5_3 = N5_3+F5_2*com[4][0]-F5_1*com[4][1]-cq6*f6_1*1.750499999999995E-4+cq6*n6_2+f6_2*sq6*1.750499999999995E-4+n6_1*sq6;
+    PZsparse n5_1 = N5_1-f6_3*1.0593E-1+F5_3*com[4][1]-F5_2*com[4][2]+cq6*f6_2*1.750499999999995E-4+cq6*n6_1+f6_1*sq6*1.750499999999995E-4-n6_2*sq6;
+    PZsparse n5_2 = N5_2-n6_3-F5_3*com[4][0]+F5_1*com[4][2]-cq6*f6_1*1.0593E-1+f6_2*sq6*1.0593E-1;
+    PZsparse n5_3 = N5_3+F5_2*com[4][0]-F5_1*com[4][1]-cq6*f6_1*1.750499999999995E-4+cq6*n6_2+f6_2*sq6*1.750499999999995E-4+n6_1*sq6;
 
     PZsparse f4_1 = F4_1+cq5*f5_1-f5_2*sq5;
     PZsparse f4_2 = F4_2+f5_3;
     PZsparse f4_3 = F4_3-cq5*f5_2-f5_1*sq5;
 
-    PZsparse  n4_1 = N4_1+f5_3*6.375E-3+F4_3*com[3][1]-F4_2*com[3][2]+cq5*f5_2*2.0843E-1+cq5*n5_1+f5_1*sq5*2.0843E-1-n5_2*sq5;
-    PZsparse  n4_2 = N4_2+n5_3-F4_3*com[3][0]+F4_1*com[3][2]-cq5*f5_1*6.375E-3+f5_2*sq5*6.375E-3;
-    PZsparse  n4_3 = N4_3+F4_2*com[3][0]-F4_1*com[3][1]+cq5*f5_1*2.0843E-1-cq5*n5_2-f5_2*sq5*2.0843E-1-n5_1*sq5;
+    PZsparse n4_1 = N4_1+f5_3*6.375E-3+F4_3*com[3][1]-F4_2*com[3][2]+cq5*f5_2*2.0843E-1+cq5*n5_1+f5_1*sq5*2.0843E-1-n5_2*sq5;
+    PZsparse n4_2 = N4_2+n5_3-F4_3*com[3][0]+F4_1*com[3][2]-cq5*f5_1*6.375E-3+f5_2*sq5*6.375E-3;
+    PZsparse n4_3 = N4_3+F4_2*com[3][0]-F4_1*com[3][1]+cq5*f5_1*2.0843E-1-cq5*n5_2-f5_2*sq5*2.0843E-1-n5_1*sq5;
 
     PZsparse f3_1 = F3_1+cq4*f4_1-f4_2*sq4;
     PZsparse f3_2 = F3_2-f4_3;
     PZsparse f3_3 = F3_3+cq4*f4_2+f4_1*sq4;
 
-    PZsparse  n3_1 = N3_1-f4_3*2.1038E-1+F3_3*com[2][1]-F3_2*com[2][2]+cq4*f4_2*6.375E-3+cq4*n4_1+f4_1*sq4*6.375E-3-n4_2*sq4;
-    PZsparse  n3_2 = N3_2-n4_3-F3_3*com[2][0]+F3_1*com[2][2]-cq4*f4_1*2.1038E-1+f4_2*sq4*2.1038E-1;
-    PZsparse  n3_3 = N3_3+F3_2*com[2][0]-F3_1*com[2][1]-cq4*f4_1*6.375E-3+cq4*n4_2+f4_2*sq4*6.375E-3+n4_1*sq4;
+    PZsparse n3_1 = N3_1-f4_3*2.1038E-1+F3_3*com[2][1]-F3_2*com[2][2]+cq4*f4_2*6.375E-3+cq4*n4_1+f4_1*sq4*6.375E-3-n4_2*sq4;
+    PZsparse n3_2 = N3_2-n4_3-F3_3*com[2][0]+F3_1*com[2][2]-cq4*f4_1*2.1038E-1+f4_2*sq4*2.1038E-1;
+    PZsparse n3_3 = N3_3+F3_2*com[2][0]-F3_1*com[2][1]-cq4*f4_1*6.375E-3+cq4*n4_2+f4_2*sq4*6.375E-3+n4_1*sq4;
 
     PZsparse f2_1 = F2_1+cq3*f3_1-f3_2*sq3;
     PZsparse f2_2 = F2_2+f3_3;
     PZsparse f2_3 = F2_3-cq3*f3_2-f3_1*sq3;
 
-    PZsparse  n2_1 = N2_1+f3_3*6.375E-3+F2_3*com[1][1]-F2_2*com[1][2]+cq3*f3_2*2.1038E-1+cq3*n3_1+f3_1*sq3*2.1038E-1-n3_2*sq3;
-    PZsparse  n2_2 = N2_2+n3_3-F2_3*com[1][0]+F2_1*com[1][2]-cq3*f3_1*6.375E-3+f3_2*sq3*6.375E-3;
-    PZsparse  n2_3 = N2_3+F2_2*com[1][0]-F2_1*com[1][1]+cq3*f3_1*2.1038E-1-cq3*n3_2-f3_2*sq3*2.1038E-1-n3_1*sq3;
+    PZsparse n2_1 = N2_1+f3_3*6.375E-3+F2_3*com[1][1]-F2_2*com[1][2]+cq3*f3_2*2.1038E-1+cq3*n3_1+f3_1*sq3*2.1038E-1-n3_2*sq3;
+    PZsparse n2_2 = N2_2+n3_3-F2_3*com[1][0]+F2_1*com[1][2]-cq3*f3_1*6.375E-3+f3_2*sq3*6.375E-3;
+    PZsparse n2_3 = N2_3+F2_2*com[1][0]-F2_1*com[1][1]+cq3*f3_1*2.1038E-1-cq3*n3_2-f3_2*sq3*2.1038E-1-n3_1*sq3;
 
     PZsparse f1_1 = F1_1+cq2*f2_1-f2_2*sq2;
     PZsparse f1_2 = F1_2-f2_3;
@@ -735,13 +740,13 @@ void KinematicsDynamics::rnea(uint s_ind,
     PZsparse n1_2 = N1_2-n2_3-F1_3*com[0][0]+F1_1*com[0][2]-cq2*f2_1*1.2838E-1+f2_2*sq2*1.2838E-1;
     PZsparse n1_3 = N1_3+F1_2*com[0][0]-F1_1*com[0][1]-cq2*f2_1*5.375E-3+cq2*n2_2+f2_2*sq2*5.375E-3+n2_1*sq2;
 
-    u(1, 0) = n1_3;
-    u(2, 0) = n2_3;
-    u(3, 0) = n3_3;
-    u(4, 0) = n4_3;
-    u(5, 0) = n5_3;
-    u(6, 0) = n6_3;
-    u(7, 0) = n7_3;
+    u(0,s_ind) = n1_3;
+    u(1,s_ind) = n2_3;
+    u(2,s_ind) = n3_3;
+    u(3,s_ind) = n4_3;
+    u(4,s_ind) = n5_3;
+    u(5,s_ind) = n6_3;
+    u(6,s_ind) = n7_3;
 }
 
 // void KinematicsDynamics::rnea(uint s_ind,

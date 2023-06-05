@@ -164,7 +164,6 @@ u = sym(zeros(num_q,1));
 filename = [robot_name,'_rnea.cpp'];
 fid = fopen(filename, 'w');
 
-fprintf(fid, 'function u = %s_rnea(q, qd, qda, qdd, mass, com, I)\n', robot_name);
 for i = 1:7
     fprintf(fid, 'PZsparse& cq%d = traj->cos_q_des(%d, s_ind);\n', i,i-1 );
 end
@@ -187,30 +186,30 @@ end
 fprintf(fid, '\n');
 
 for j = 1:3
-    fprintf(fid, '%s\n', ['PZsparse w', num2str(j),';']);
+    fprintf(fid, '%s\n', ['PZsparse w', num2str(j),'(0);']);
 end
 for j = 1:3
-    fprintf(fid, '%s\n', ['PZsparse w_aux', num2str(j),';']);
+    fprintf(fid, '%s\n', ['PZsparse w_aux', num2str(j),'(0);']);
 end
 for j = 1:3
-    fprintf(fid, '%s\n', ['PZsparse wdot', num2str(j),';']);
+    fprintf(fid, '%s\n', ['PZsparse wdot', num2str(j),'(0);']);
 end
 for j = 1:3
-    fprintf(fid, '%s\n', ['PZsparse linear_acc', num2str(j),';']);
+    fprintf(fid, '%s\n', ['PZsparse linear_acc', num2str(j),'(0);']);
 end
 fprintf(fid, '\n');
 
 for j = 1:3
-    fprintf(fid, '%s\n', ['PZsparse w_new', num2str(j),';']);
+    fprintf(fid, '%s\n', ['PZsparse w_new', num2str(j),'(0);']);
 end
 for j = 1:3
-    fprintf(fid, '%s\n', ['PZsparse w_aux_new', num2str(j),';']);
+    fprintf(fid, '%s\n', ['PZsparse w_aux_new', num2str(j),'(0);']);
 end
 for j = 1:3
-    fprintf(fid, '%s\n', ['PZsparse wdot_new', num2str(j),';']);
+    fprintf(fid, '%s\n', ['PZsparse wdot_new', num2str(j),'(0);']);
 end
 for j = 1:3
-    fprintf(fid, '%s\n', ['PZsparse linear_acc_new', num2str(j),';']);
+    fprintf(fid, '%s\n', ['PZsparse linear_acc_new', num2str(j),'(0);']);
 end
 fprintf(fid, '\n');
 
@@ -379,11 +378,11 @@ for i = 1:num_joints
     switch joint_types{i}
         case 'revolute'
             if z(1,i) == 1
-                fprintf(fid, 'u(%d, 0) = n%d_1;\n', robot_params.q_index(i), i);
+                fprintf(fid, 'u(%d,s_ind) = n%d_1;\n', robot_params.q_index(i)-1, i);
             elseif z(2,i) == 1
-                fprintf(fid, 'u(%d, 0) = n%d_2;\n', robot_params.q_index(i), i);
+                fprintf(fid, 'u(%d,s_ind) = n%d_2;\n', robot_params.q_index(i)-1, i);
             else
-                fprintf(fid, 'u(%d, 0) = n%d_3;\n', robot_params.q_index(i), i);
+                fprintf(fid, 'u(%d,s_ind) = n%d_3;\n', robot_params.q_index(i)-1, i);
             end
         case 'fixed'
             continue;
@@ -391,6 +390,49 @@ for i = 1:num_joints
             error('Joint type not implemented');
     end
 end
+
+fclose(fid);
+
+%% post processing
+fid = fopen(filename, 'r');
+    
+resstr = '';
+tline = fgetl(fid);
+while ischar(tline)
+    % replace mass
+    for i = 1:robot_params.num_q
+        tline = strrep(tline, ['mass',num2str(i)], ['mass_arr(',num2str(i-1),',0)']);
+    end
+
+    % replace com
+    for i = 1:robot_params.num_q
+        for j = 1:3
+            tline = strrep(tline, ['com',num2str(j),'_',num2str(i)], ['com[',num2str(i-1),'][',num2str(j-1),']']);
+        end
+    end
+
+    for i = 1:robot_params.num_q
+        tline = strrep(tline, ['I',num2str(i),'_1_1'], ['I_arr(',num2str(i-1),',0)(0,0)']);
+        tline = strrep(tline, ['I',num2str(i),'_1_2'], ['I_arr(',num2str(i-1),',0)(0,1)']);
+        tline = strrep(tline, ['I',num2str(i),'_1_3'], ['I_arr(',num2str(i-1),',0)(0,2)']);
+        tline = strrep(tline, ['I',num2str(i),'_2_1'], ['I_arr(',num2str(i-1),',0)(1,0)']);
+        tline = strrep(tline, ['I',num2str(i),'_2_2'], ['I_arr(',num2str(i-1),',0)(1,1)']);
+        tline = strrep(tline, ['I',num2str(i),'_2_3'], ['I_arr(',num2str(i-1),',0)(1,2)']);
+        tline = strrep(tline, ['I',num2str(i),'_3_1'], ['I_arr(',num2str(i-1),',0)(2,0)']);
+        tline = strrep(tline, ['I',num2str(i),'_3_2'], ['I_arr(',num2str(i-1),',0)(2,1)']);
+        tline = strrep(tline, ['I',num2str(i),'_3_3'], ['I_arr(',num2str(i-1),',0)(2,2)']);
+    end
+
+    resstr = [resstr, tline, newline];
+
+    tline = fgetl(fid);
+end
+
+fclose(fid);
+
+fid = fopen(filename, 'w');
+
+fprintf(fid, '%s', resstr);
 
 fclose(fid);
 
