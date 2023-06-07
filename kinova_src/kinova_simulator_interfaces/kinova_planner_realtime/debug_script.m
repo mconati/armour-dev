@@ -32,8 +32,8 @@ qdd0 = [2.0000000000 2.0000000000 2.0000000000 2.0000000000 2.0000000000 2.00000
 
 % choose a random k_range and make sure they are aligned with k_range in
 % Parameters.h
-% k_range = [pi/24, pi/24, pi/24, pi/24, pi/24, pi/24, pi/30]';
-k_range = [pi/48, pi/48, pi/48, pi/48, pi/48, pi/48, pi/60]';
+k_range = [pi/24, pi/24, pi/24, pi/24, pi/24, pi/24, pi/24]';
+% k_range = [pi/48, pi/48, pi/48, pi/48, pi/48, pi/48, pi/60]';
 
 % choose a random point to slice and make sure they are equal to variable
 % factors defined in PZ_test.cpp
@@ -81,46 +81,46 @@ torque_reachset_radius = readmatrix('buffer/armour_control_input_radius.out', 'F
 
 % end
 
-[q, qd, qdd] = get_desired_traj(beta, linspace(0,2,128), 2);
-
-for i = 1:7
-    subplot(3,3,i);
-    plot(linspace(0,1,128), qd(i,:), 'b');
-    hold on;
-    plot(linspace(0,1,128), torque_reachset_center(:,i), 'r');
-end
-sgtitle('desired velocity plot');
-
-% figure; hold on;
+% [q, qd, qdd] = get_desired_traj(beta, linspace(0,2,128), 2);
 % 
-% us = zeros(7,128);
-% ts = zeros(1,128);
-% for tid = 1:128
-%     % choose a random time inside this time interval
-%     t_lb = tspan(tid);
-%     t_ub = tspan(tid + 1);
-%     ts(tid) = (t_ub - t_lb) * rand + t_lb;
-% 
-%     [q, qd, qdd] = get_desired_traj(beta, ts(tid));
-% 
-%     us(:,tid) = rnea(q, qd, qd, qdd, true, params.nominal) + transmision_inertia' .* qdd;
-% end
-% 
-% u_lb = torque_reachset_center - torque_reachset_radius;
-% u_ub = torque_reachset_center + torque_reachset_radius;
-% 
-% % there is a better way to do this
 % for i = 1:7
 %     subplot(3,3,i);
+%     plot(linspace(0,1,128), qd(i,:), 'b');
 %     hold on;
-%     plot(ts, us(i,:), 'r');
-%     plot(ts, u_lb(:,i), 'b');
-%     plot(ts, u_ub(:,i), 'b');
-%     title(['link ', num2str(i)]);
-%     xlabel('time (sec)');
-%     ylabel('torque (N*m)');
+%     plot(linspace(0,1,128), torque_reachset_center(:,i), 'r');
 % end
-% sgtitle('sliced torque reachable set');
+% sgtitle('desired velocity plot');
+
+figure; hold on;
+
+us = zeros(7,128);
+ts = zeros(1,128);
+for tid = 1:128
+    % choose a random time inside this time interval
+    t_lb = tspan(tid);
+    t_ub = tspan(tid + 1);
+    ts(tid) = (t_ub - t_lb) * rand + t_lb;
+
+    [q, qd, qdd] = get_desired_traj(beta, ts(tid));
+
+    us(:,tid) = rnea(q, qd, qd, qdd, true, params.nominal) + transmision_inertia' .* qdd;
+end
+
+u_lb = torque_reachset_center - torque_reachset_radius;
+u_ub = torque_reachset_center + torque_reachset_radius;
+
+% there is a better way to do this
+for i = 1:7
+    subplot(3,3,i);
+    hold on;
+    plot(ts, us(i,:), 'r');
+    plot(ts, u_lb(:,i), 'b');
+    plot(ts, u_ub(:,i), 'b');
+    title(['link ', num2str(i)]);
+    xlabel('time (sec)');
+    ylabel('torque (N*m)');
+end
+sgtitle('sliced torque reachable set');
 
 
 %% helper functions

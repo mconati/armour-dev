@@ -636,10 +636,10 @@ PZsparse n1_1 = N1_1-f2_3*1.2838E-1+F1_3*com[0][1]-F1_2*com[0][2]+cq2*f2_2*5.375
 PZsparse n1_2 = N1_2-n2_3-F1_3*com[0][0]+F1_1*com[0][2]-cq2*f2_1*1.2838E-1+f2_2*sq2*1.2838E-1;
 PZsparse n1_3 = N1_3+F1_2*com[0][0]-F1_1*com[0][1]-cq2*f2_1*5.375E-3+cq2*n2_2+f2_2*sq2*5.375E-3+n2_1*sq2;
 
-u(0,0) = n1_3;
-u(1,0) = n2_3;
-u(2,0) = n3_3;
-u(3,0) = n4_3;
-u(4,0) = n5_3;
-u(5,0) = n6_3;
-u(6,0) = n7_3;
+u(0,s_ind) = n1_3 + damping[0] * traj->qd_des(0, s_ind) + armature[0] * traj->qdda_des(0, s_ind);
+u(1,s_ind) = n2_3 + damping[1] * traj->qd_des(1, s_ind) + armature[1] * traj->qdda_des(1, s_ind);
+u(2,s_ind) = n3_3 + damping[2] * traj->qd_des(2, s_ind) + armature[2] * traj->qdda_des(2, s_ind);
+u(3,s_ind) = n4_3 + damping[3] * traj->qd_des(3, s_ind) + armature[3] * traj->qdda_des(3, s_ind);
+u(4,s_ind) = n5_3 + damping[4] * traj->qd_des(4, s_ind) + armature[4] * traj->qdda_des(4, s_ind);
+u(5,s_ind) = n6_3 + damping[5] * traj->qd_des(5, s_ind) + armature[5] * traj->qdda_des(5, s_ind);
+u(6,s_ind) = n7_3 + damping[6] * traj->qd_des(6, s_ind) + armature[6] * traj->qdda_des(6, s_ind);

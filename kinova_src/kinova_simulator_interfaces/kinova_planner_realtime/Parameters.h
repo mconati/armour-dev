@@ -7,14 +7,14 @@
 
 // Parameters for PZsparse.h:
     // monomials with a coefficient smaller than this number will be reduced
-    #define SIMPLIFY_THRESHOLD 5e-4
+    #define SIMPLIFY_THRESHOLD 1e-5
 
 // Parameters for Trajectories.h:
     // duration of the Bezier curve
     #define DURATION 1.0
 
     // number of time steps (This should be an EVEN number!!!)
-    #define NUM_TIME_STEPS 96
+    #define NUM_TIME_STEPS 128
 
     // range of parameters (size of generators in PZ).
     const double k_range[NUM_FACTORS] = { M_PI / 24, M_PI / 24, M_PI / 24, M_PI / 24, M_PI / 24, M_PI / 24, M_PI / 24 }; // (radian)

@@ -378,11 +378,11 @@ for i = 1:num_joints
     switch joint_types{i}
         case 'revolute'
             if z(1,i) == 1
-                fprintf(fid, 'u(%d,s_ind) = n%d_1;\n', robot_params.q_index(i)-1, i);
+                fprintf(fid, 'u(%d,s_ind) = n%d_1 + damping[%d] * traj->qd_des(%d, s_ind) + armature[%d] * traj->qdda_des(%d, s_ind);\n', robot_params.q_index(i)-1, i, robot_params.q_index(i)-1, robot_params.q_index(i)-1, robot_params.q_index(i)-1, robot_params.q_index(i)-1);
             elseif z(2,i) == 1
-                fprintf(fid, 'u(%d,s_ind) = n%d_2;\n', robot_params.q_index(i)-1, i);
+                fprintf(fid, 'u(%d,s_ind) = n%d_2 + damping[%d] * traj->qd_des(%d, s_ind) + armature[%d] * traj->qdda_des(%d, s_ind);\n', robot_params.q_index(i)-1, i, robot_params.q_index(i)-1, robot_params.q_index(i)-1, robot_params.q_index(i)-1, robot_params.q_index(i)-1);
             else
-                fprintf(fid, 'u(%d,s_ind) = n%d_3;\n', robot_params.q_index(i)-1, i);
+                fprintf(fid, 'u(%d,s_ind) = n%d_3 + damping[%d] * traj->qd_des(%d, s_ind) + armature[%d] * traj->qdda_des(%d, s_ind);\n', robot_params.q_index(i)-1, i, robot_params.q_index(i)-1, robot_params.q_index(i)-1, robot_params.q_index(i)-1, robot_params.q_index(i)-1);
             end
         case 'fixed'
             continue;
