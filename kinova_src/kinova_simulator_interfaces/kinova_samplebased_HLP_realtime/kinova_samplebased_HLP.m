@@ -97,9 +97,9 @@ classdef kinova_samplebased_HLP < robot_arm_graph_planner_HLP
         function plot(HLP)
             % plot the waypoint
             if ~isempty(HLP.current_waypoint_patch_data)
-                if ~isempty(HLP.plot_data.waypoint_arm_volume)
-                    delete(HLP.plot_data.waypoint_arm_volume)
-                end
+%                 if ~isempty(HLP.plot_data.waypoint_arm_volume)
+%                     delete(HLP.plot_data.waypoint_arm_volume)
+%                 end
                 HLP.plot_data.waypoint_arm_volume = patch(HLP.current_waypoint_patch_data,...
                     'FaceColor','c','FaceAlpha',0.1,...
                     'EdgeColor','c','EdgeAlpha',0.5) ;

@@ -421,6 +421,14 @@ classdef agent < handle
 
                 % plot waypoint
                 if t_idx == plan_iter
+                    
+                    plan_iter = plan_iter + P.DURATION / 2;
+
+                    % need to somehow check for braking maneuver?
+
+                    if plan_iter > length(P.HLP.q_des)
+                        plan_iter = plan_iter - P.DURATION / 2;
+                    end
 
                     P.HLP.current_waypoint_patch_data = P.agent_info.get_collision_check_volume(P.HLP.q_des(:,plan_iter));
 
@@ -433,7 +441,7 @@ classdef agent < handle
                     % get correct waypoint index
                     % get patch data using: HLP.current_waypoint_patch_data = agent_info.get_collision_check_volume(HLP.graph_waypoints(:,HLP.current_graph_waypoint_index)) ;
                     % plot the patch at the waypoint configuration: plot(HLP) function
-                    plan_iter = plan_iter + P.DURATION / 2;
+                    
                 end
                 P.HLP.plot()
 

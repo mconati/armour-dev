@@ -213,7 +213,7 @@ bool armtd_NLP::get_starting_point(
         // x[i] = 0.0;
 
         // try to avoid local minimum
-        x[i] = min(max((q_des[i] - desired_trajectory->q0[i]) / k_range[i], -0.8), 0.8);
+        x[i] = min(max((q_des[i] - desired_trajectory->q0[i]) / k_range[i], -0.25), 0.25);
     }
 
     return true;
@@ -579,13 +579,16 @@ bool armtd_NLP::eval_f(
 
     // auto start_nom = std::chrono::high_resolution_clock::now();
 
+    // evaluate cost function
     // obj_value = sum((q_plan - q_des).^2);
+
+    // calculate desired joint angles at planning time
     obj_value = 0; 
     Eigen::VectorXd q_plan(7);
     for(Index i = 0; i < n; i++){
         q_plan(i) = q_des_func(desired_trajectory->q0[i], desired_trajectory->qd0[i], desired_trajectory->qdd0[i], k_range[i] * x[i], t_plan); // Bohao question: why pass in t_plan here instead of duration?
     }
-
+    // evaluate the cost
     obj_value = pow(wrap_to_pi(q_des[0] - q_plan[0]), 2) +
                 pow(wrap_to_pi(q_des[2] - q_plan[2]), 2) + 
                 pow(wrap_to_pi(q_des[4] - q_plan[4]), 2) + 
@@ -593,14 +596,23 @@ bool armtd_NLP::eval_f(
                 pow(q_des[1] - q_plan[1], 2) + 
                 pow(q_des[3] - q_plan[3], 2) + 
                 pow(q_des[5] - q_plan[5], 2);
-
+    // scale the cost
     obj_value *= COST_FUNCTION_OPTIMALITY_SCALE; // needs to change in the gradient as well
+
+    // // modified cost: minimize only the first n joints
+    // obj_value = pow(wrap_to_pi(q_des[0] - q_plan[0]), 2) +
+    //             pow(wrap_to_pi(q_des[2] - q_plan[2]), 2) + 
+    //             pow(q_des[1] - q_plan[1], 2) + 
+    //             pow(q_des[3] - q_plan[3], 2);
+    // // scale the cost
+    // obj_value *= COST_FUNCTION_OPTIMALITY_SCALE; // needs to change in the gradient as well
 
     // auto stop_nom = std::chrono::high_resolution_clock::now();
     // auto duration_nom = std::chrono::duration<long, std::nano>(stop_nom - start_nom);
     // cout << "        Time for Evaluating Cost Nominal Term: " << duration_nom.count() << " nanoseconds" << endl;
 
     // auto start_f = std::chrono::high_resolution_clock::now();
+
 
     // // new cost term
     // // loop to pull out slip constraint values
@@ -645,6 +657,7 @@ bool armtd_NLP::eval_grad_f(
     // cout << "        Time Taken to Calculate new_x from f grad: " << duration_new_x.count() << " milliseconds" << endl;
 
 
+    // compute gradient of cost function
     for(Index i = 0; i < n; i++){
 
         // values is 7x1
@@ -661,6 +674,28 @@ bool armtd_NLP::eval_grad_f(
         }
         grad_f[i] *= COST_FUNCTION_OPTIMALITY_SCALE;
     }
+
+    // // modified compute gradient of cost function
+    // for(Index i = 0; i < n; i++){
+
+    //     // values is 7x1
+    //     // sum for each time step resulting in 7x1
+    //     // add each element to corresponding element of grad_f?
+
+    //     double q_plan = q_des_func(desired_trajectory->q0[i], desired_trajectory->qd0[i], desired_trajectory->qdd0[i], k_range[i] * x[i], t_plan); // Bohao question: why pass in t_plan here instead of duration?
+    //     double dk_q_plan = pow(t_plan,3) * (6 * pow(t_plan,2) - 15 * t_plan + 10);
+    //     if ((i == 4) || (i == 5) || (i == 6)) {
+    //         grad_f[i] = 0;
+    //     }
+    //     else if (i % 2 == 0) {
+    //         grad_f[i] = (2 * wrap_to_pi(q_plan - q_des[i]) * dk_q_plan * k_range[i]);
+    //     }
+    //     else {
+    //         grad_f[i] = (2 * (q_plan - q_des[i]) * dk_q_plan * k_range[i]);
+    //     }
+    //     grad_f[i] *= COST_FUNCTION_OPTIMALITY_SCALE;
+    // }
+
 
     // auto start_grad = std::chrono::high_resolution_clock::now();
 
@@ -864,11 +899,11 @@ void armtd_NLP::finalize_solution(
 
     // added for reconstructing sliced reachable sets from hardware data
     // comment out for simulation use
-    Number q_des_copy[NUM_JOINTS];
-    for(int i=0;i<NUM_JOINTS;i++){
-        q_des_copy[i] = q_des[i];
-    }
-    compute(true, q_des_copy);
+    // Number q_des_copy[NUM_JOINTS];
+    // for(int i=0;i<NUM_JOINTS;i++){
+    //     q_des_copy[i] = q_des[i];
+    // }
+    // compute(true, q_des_copy);
 
     cout << "        CUDA & C++: Ipopt: desired joint angles: " << q_des.transpose() << endl;
     cout << "        CUDA & C++: Ipopt: final cost function value: " << obj_value / COST_FUNCTION_OPTIMALITY_SCALE << endl;

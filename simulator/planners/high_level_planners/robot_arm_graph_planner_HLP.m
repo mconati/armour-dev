@@ -36,6 +36,8 @@ classdef robot_arm_graph_planner_HLP < high_level_planner
         next_waypoint_patch_data = [];
         previous_waypoint_patch_data = [];
         q_des = [];
+        waypoint_counter = 0;
+        max_waypoint_counter = 15;
 
         nearly_reach_goal = false;
     end
@@ -58,6 +60,8 @@ classdef robot_arm_graph_planner_HLP < high_level_planner
         
         %% get waypoint
         function waypoint = get_waypoint(HLP,agent_info,world_info,use_SLP,SLP_lookahead_distance,increment_waypoint_distance)
+            % tracking number of times one graph waypoint is tracked
+            HLP.waypoint_counter = HLP.waypoint_counter + 1;
 
             q_cur = agent_info.state(HLP.arm_joint_state_indices, end);
 
@@ -83,26 +87,51 @@ classdef robot_arm_graph_planner_HLP < high_level_planner
                 end
             else
 
-                % check how close to current waypoint
-                cur_dist = norm(angdiff(q_cur, HLP.graph_waypoints(:,HLP.current_graph_waypoint_index)));
-
-                fprintf('        HLP: Current distance to waypoint: %f\n', cur_dist);
-
-                % decide waypoint based on distance
-                if ~HLP.nearly_reach_goal && cur_dist > increment_waypoint_distance
-                    % if too far away, return SLP waypoint based on current
-                    % graph waypoint
-                    new_goal = HLP.graph_waypoints(:,HLP.current_graph_waypoint_index);
-                    if use_SLP
-                        waypoint = get_SLP_to_waypoint(HLP,new_goal,agent_info,SLP_lookahead_distance); % new_goal; % 
-                    else 
-                        waypoint = new_goal;
-                        % update current waypoints
-                        HLP.current_waypoint = waypoint;
-                        HLP.waypoints = [HLP.waypoints, waypoint];
-                        HLP.current_waypoint_index = HLP.current_waypoint_index + 1;
+                if HLP.waypoint_counter < HLP.max_waypoint_counter
+                    % check how close to current waypoint
+                    cur_dist = norm(angdiff(q_cur, HLP.graph_waypoints(:,HLP.current_graph_waypoint_index)));
+    
+                    fprintf('        HLP: Current distance to waypoint: %f\n', cur_dist);
+    
+                    % decide waypoint based on distance
+                    if ~HLP.nearly_reach_goal && cur_dist > increment_waypoint_distance
+                        % if too far away, return SLP waypoint based on current
+                        % graph waypoint
+                        new_goal = HLP.graph_waypoints(:,HLP.current_graph_waypoint_index);
+                        if use_SLP
+                            waypoint = get_SLP_to_waypoint(HLP,new_goal,agent_info,SLP_lookahead_distance); % new_goal; % 
+                        else 
+                            waypoint = new_goal;
+                            % update current waypoints
+                            HLP.current_waypoint = waypoint;
+                            HLP.waypoints = [HLP.waypoints, waypoint];
+                            HLP.current_waypoint_index = HLP.current_waypoint_index + 1;
+                        end
+                    else % choose next waypoint
+                        if HLP.current_graph_waypoint_index == size(HLP.graph_waypoints,2) % (:,end) % if already at last waypoint, return goal
+    %                         waypoint = get_SLP_to_waypoint(HLP,HLP.goal,agent_info,lookahead_distance);
+                            waypoint = HLP.goal;
+                            HLP.current_waypoint_index = length(HLP.waypoints);
+                            HLP.nearly_reach_goal = true;
+                        else % return the next waypoint
+                            HLP.current_graph_waypoint_index = HLP.current_graph_waypoint_index + 1;
+                            new_goal = HLP.graph_waypoints(:,HLP.current_graph_waypoint_index);
+                            if use_SLP
+                                waypoint = get_SLP_to_waypoint(HLP,new_goal,agent_info,SLP_lookahead_distance); % new_goal; % 
+                            else 
+                                waypoint = new_goal;
+                                % update current waypoints
+                                HLP.current_waypoint = waypoint;
+                                HLP.waypoints = [HLP.waypoints, waypoint];
+                                HLP.current_waypoint_index = HLP.current_waypoint_index + 1;
+                            end
+    %                         HLP.current_waypoint = waypoint;
+                        end
+                        HLP.waypoint_counter = 0;
                     end
-                else % choose next waypoint
+                else % tracked one graph waypoint for too long
+                    % can be triggered by goal being tracked too long but
+                    % then just keep passing back goal?
                     if HLP.current_graph_waypoint_index == size(HLP.graph_waypoints,2) % (:,end) % if already at last waypoint, return goal
 %                         waypoint = get_SLP_to_waypoint(HLP,HLP.goal,agent_info,lookahead_distance);
                         waypoint = HLP.goal;
@@ -122,6 +151,7 @@ classdef robot_arm_graph_planner_HLP < high_level_planner
                         end
 %                         HLP.current_waypoint = waypoint;
                     end
+                    HLP.waypoint_counter = 0;
                 end
             end
 

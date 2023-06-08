@@ -66,9 +66,9 @@ bernstein_final_range = pi/72*ones(n_q, 1);
 % bernstein_final_range = pi/24*ones(n_q, 1);
 % bernstein_final_range = [pi/24; pi/72; pi/24; pi/72; pi/72; pi/72; pi/72];
 
-t_f = 2;
-t_p = 1;
-dt = 0.02;
+t_f = 1;
+t_p = 0.5;
+dt = 0.05;
 n_t = t_f/dt;
 n_t_p = t_p/t_f*n_t; % last time step of "planning" phase before braking phase
 
@@ -148,7 +148,7 @@ case 'bernstein'
        q1{j, 1} = q(j) + bernstein_center(j) + bernstein_final_range(j).*K{j}; % final position is initial position +- k \in [-1, 1]
        dq1 = 0;
        ddq1 = 0;
-       beta{j} = match_deg5_bernstein_coefficients({q(j); dq(j); ddq(j); q1{j}; dq1; ddq1});
+       beta{j} = match_deg5_bernstein_coefficients({q(j); dq(j); ddq(j); q1{j}; dq1; ddq1},t_f);
        alpha{j} = bernstein_to_poly(beta{j}, 5);
     end
 end

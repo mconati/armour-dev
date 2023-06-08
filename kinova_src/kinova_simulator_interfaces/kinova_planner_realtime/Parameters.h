@@ -64,7 +64,7 @@
 // Parameters for armour_main.cpp
     #define IPOPT_OPTIMIZATION_TOLERANCE 1e-4
 
-    #define IPOPT_MAX_CPU_TIME 14.0 // 14.0
+    #define IPOPT_MAX_CPU_TIME 140.0 // 14.0
 
     #define IPOPT_PRINT_LEVEL 0
 
