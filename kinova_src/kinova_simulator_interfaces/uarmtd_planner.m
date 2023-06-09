@@ -73,7 +73,7 @@ classdef uarmtd_planner < robot_arm_generic_planner
                 varargin{:}) ;
             
             % hard code planning time...
-%             P.t_plan = 0.5;
+            P.t_plan = 0.5*DURATION;
             P.DURATION = DURATION;
 
             % init info object
