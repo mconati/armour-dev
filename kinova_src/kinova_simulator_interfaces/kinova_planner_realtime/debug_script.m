@@ -371,6 +371,6 @@ function [q, qd, qdd] = get_desired_traj(beta, t, duration)
         qdd = qdd + beta{j} .* ddB(:,j)';
     end
 
-    qd = qd / duration; % commenting out these durations matches the c++ and matlab code
+    qd = qd / duration;
     qdd = qdd / duration / duration;
 end

@@ -11,25 +11,29 @@ cd(initialize_script_path(1:end-29));
 
 close all; clear; clc; dbstop if error
 
+delete(gcp('nocreate'))
+% parpool('threads')
+
 %% user parameters
-goal_type = 'configuration'; % pick 'end_effector_location' or 'configuration'
-goal_radius = pi/300;
+goal_type = 'end_effector_location'; % pick 'end_effector_location' or 'configuration'
+goal_radius = pi/20;
 dimension = 3 ;
 verbosity = 10;
 
-DURATION = 2.0;
+DURATION = 1.0;
 
 u_s = 0.609382421; 
 surf_rad =  0.058 / 2;
 
 %%% for planner
 traj_type = 'bernstein'; % pick 'orig' (ARMTD) or 'bernstein' (ARMOUR)
-use_cuda_flag = true;
+use_cuda_flag = false;
+grasp_constraints_flag = true;
 
 %%% for agent
 agent_urdf = 'Kinova_Grasp_w_Tray.urdf';
 
-add_uncertainty_to = 'all'; % choose 'all', 'link', or 'none'
+add_uncertainty_to = 'none'; % choose 'all', 'link', or 'none'
 links_with_uncertainty = {}; % if add_uncertainty_to = 'link', specify links here.
 uncertain_mass_range = [0.97, 1.03];
 
@@ -38,7 +42,9 @@ use_CAD_flag = true; % plot robot with CAD or bounding boxes
 
 %%% for LLC
 use_robust_input = true;
-LLC_V_max = 2.0e-2;
+use_true_params_for_robust = false;
+if_use_mex_controller = true;
+LLC_V_max = 2.0e-4;
 alpha_constant = 10;
 Kr = 4.0;
 
@@ -50,7 +56,7 @@ plot_waypoint_arm_flag  = true ;
 lookahead_distance = 0.1 ;
 
 % plotting
-plot_while_running = true ;
+plot_while_running = false ;
 
 % simulation
 max_sim_time = 172800 ; % 48 hours
@@ -62,16 +68,15 @@ stop_threshold = 3 ; % number of failed iterations before exiting
 % goal = [1; 1; 1; 1; 1; 1; 1]; % goal configuration
 
 % simple rotation
-start = [0;-pi/2;0;0;0;0;0];
-goal = [0;-pi/2;0;0;0;0;pi];
+% start = [0;-pi/2;0;0;0;0;0];
+% goal = [pi/4;-pi/2;0;0;0;0;0];
 
 % start = [-pi/6;-pi/2;-pi/2;pi/2;0;pi/2;pi/2];
 % goal = [pi/6;-pi/2;pi/2;pi/2;pi;-pi/2;pi/2];
 
 % start = [3.9270, -1.0472, 0, -2.0944, 0, 1.5708, 0]';
-% goal = [3.9270, -1.0472, 0, -2.0944, 0, 1.5708, pi]';
-% goal = [2.5,-0.5236,0,-2.0944,0,1.0472,0]';
-
+start = [3.9270, -1.0472, 0, -2.0944, 0, 1.5708, 0]';
+goal = [2.5,-0.5236,0,-2.0944,0,1.0472,0]';
 
 % start = [0.4933;
 %     0.9728;
@@ -128,7 +133,7 @@ end
 
 % run loop
 tic;
-W = kinova_grasp_world_static('create_random_obstacles_flag', false, 'goal_radius', goal_radius, 'N_obstacles',length(obstacles),'dimension',dimension,'workspace_goal_check', 0, 'verbose',verbosity, 'start', start, 'goal', goal, 'obstacles', obstacles, 'goal_type', goal_type, 'grasp_constraint_flag', false,'ik_start_goal_flag', true,'u_s', u_s, 'surf_rad', surf_rad) ;
+W = kinova_grasp_world_static('create_random_obstacles_flag', false, 'goal_radius', goal_radius, 'N_obstacles',length(obstacles),'dimension',dimension,'workspace_goal_check', 0, 'verbose',verbosity, 'start', start, 'goal', goal, 'obstacles', obstacles, 'goal_type', goal_type, 'grasp_constraint_flag', grasp_constraints_flag,'ik_start_goal_flag', true,'u_s', u_s, 'surf_rad', surf_rad) ;
 
 % create arm agent
 A = uarmtd_agent(robot, params,...
@@ -148,11 +153,11 @@ A = uarmtd_agent(robot, params,...
 % LLC
 if use_robust_input
     A.LLC = uarmtd_robust_CBF_LLC('verbose', verbosity, ...
-                                  'use_true_params_for_robust', false, ...
+                                  'use_true_params_for_robust', use_true_params_for_robust, ...
                                   'V_max', LLC_V_max, ...
                                   'alpha_constant', alpha_constant, ...
                                   'Kr', Kr, ...
-                                  'if_use_mex_controller', true);
+                                  'if_use_mex_controller', if_use_mex_controller);
 else
     A.LLC = uarmtd_nominal_passivity_LLC('verbose', verbosity);
 end
@@ -162,12 +167,15 @@ A.LLC.setup(A);
 P = uarmtd_planner('verbose', verbosity, ...
                    'first_iter_pause_flag', false, ...
                    'use_q_plan_for_cost', true, ...
-                   'input_constraints_flag', true, ...
+                   'input_constraints_flag', false, ...
+                   'grasp_constraints_flag', grasp_constraints_flag,...
                    'use_robust_input', use_robust_input, ...
                    'traj_type', traj_type, ...
                    'use_cuda', use_cuda_flag,...
                    'plot_HLP_flag', true, ...
-                   'lookahead_distance', 0.1, ...
+                   'lookahead_distance', 0.4, ...
+                   'u_s', u_s,...
+                   'surf_rad', surf_rad,...
                    'DURATION', DURATION) ; % 't_move_temp', t_move't_plan', t_plan,...'t_stop', t_stop % _wrapper
 
 if if_use_RRT

@@ -73,7 +73,7 @@ classdef uarmtd_planner < robot_arm_generic_planner
                 varargin{:}) ;
             
             % hard code planning time...
-%             P.t_plan = 0.5;
+            P.t_plan = 0.5*DURATION;
             P.DURATION = DURATION;
 
             % init info object
@@ -129,13 +129,14 @@ classdef uarmtd_planner < robot_arm_generic_planner
                 end
                 P.iter = P.iter + 1;
                 planning_time = tic;
-                q_des = P.HLP.get_waypoint(agent_info,world_info,P.lookahead_distance,P.increment_waypoint_distance) ;
+                q_des = P.HLP.get_waypoint(agent_info,world_info,P.lookahead_distance); % ,P.increment_waypoint_distance) ;
                 
 
                 if isempty(q_des)
                     P.vdisp('Waypoint creation failed! Using global goal instead.', 3)
                     q_des = P.HLP.goal ;
                 end
+                q_des
                             
                 % get current obstacles and create constraints
                 P.vdisp('Generating constraints',6)
@@ -169,7 +170,7 @@ classdef uarmtd_planner < robot_arm_generic_planner
                     % cuda-dev/PZsparse-Bernstein/Trajectory.h 
                     % !!!!!!
                     P.jrs_info.g_k_bernstein = [pi/32; pi/32; pi/72; pi/72; pi/72; pi/32; pi/72];
-%                     P.jrs_info.g_k_bernstein = pi/72*ones(P.jrs_info.n_q, 1);
+%                     P.jrs_info.g_k_bernstein = pi/32*ones(P.jrs_info.n_q, 1);
 
     
                     q_des = P.HLP.get_waypoint(agent_info,world_info,P.use_SLP,P.lookahead_distance,P.increment_waypoint_distance) ;
@@ -227,7 +228,7 @@ classdef uarmtd_planner < robot_arm_generic_planner
                         if length(k_opt) == 1
                             P.vdisp('Unable to find new trajectory!',3)
                             k_opt = nan;
-                        elseif planning_time > P.t_plan
+                        elseif planning_time > inf % P.t_plan
                             P.vdisp('Solver Took Too Long!',3)
                             k_opt = nan;
                         else
@@ -282,9 +283,9 @@ classdef uarmtd_planner < robot_arm_generic_planner
             P.info.q_dot_0 = [P.info.q_dot_0, {q_dot_0}] ;
             P.info.k_opt = [P.info.k_opt, {k_opt}] ;
 
-            P.info.contact_constraint_radii = [P.info.contact_constraint_radii {contact_constraint_radii}];
-            P.info.wrench_radii = [P.info.wrench_radii {wrench_radii}];
-            P.info.constraints_value = [P.info.constraints_value {constraints_value}];
+%             P.info.contact_constraint_radii = [P.info.contact_constraint_radii {contact_constraint_radii}];
+%             P.info.wrench_radii = [P.info.wrench_radii {wrench_radii}];
+%             P.info.constraints_value = [P.info.constraints_value {constraints_value}];
 
 
 %             if P.save_FO_zono_flag
@@ -454,8 +455,13 @@ classdef uarmtd_planner < robot_arm_generic_planner
                 u_s = P.u_s; % A.u_s; 0.5
                 surf_rad = P.surf_rad; % 0.0762; % A.db2 0.0762
 
+                tau_int = cell(jrs_info.n_t,1);
+                n_int = cell(jrs_info.n_t,1);
+                f_int = cell(jrs_info.n_t,1);
+
                 % iterate through all of the time steps
-                for i = 1:jrs_info.n_t
+                
+                parfor i = 1:jrs_info.n_t
                     
                     % only checking one contact joint (for now)
                     % ASSUMING SURFACE NORMAL IS POSITIVE Z-DIRECTION
@@ -553,7 +559,7 @@ classdef uarmtd_planner < robot_arm_generic_planner
                     % constraint so to rewrite as -1.*Fz<0 it
                     % needs to be multiplied by a -1.
                     sep_poly_temp = -1.*Fz_poly; % verified (matches regular rnea and constraint, but slightly more negative (safer) than regular value. should subtract Grest instead?)
-%                     sep_poly_temp = reduce(sep_poly_temp, 'girard', P.agent_info.params.pz_interval.zono_order);
+                    sep_poly_temp = reduce(sep_poly_temp, 'girard', P.agent_info.params.pz_interval.zono_order);
                     sep_poly{i,1} = polyZonotope_ROAHM(sep_poly_temp.c + sum(abs(sep_poly_temp.Grest)),sep_poly_temp.G,[],sep_poly_temp.expMat,sep_poly_temp.id);
                     % create new pz with grest collapsed
 
@@ -562,7 +568,7 @@ classdef uarmtd_planner < robot_arm_generic_planner
                     % Ftanx^2+Ftany^2 - u_s^2*Fnorm^2 < 0
 
                     slip_poly_temp = Fx_poly.*Fx_poly + Fy_poly.*Fy_poly - u_s^2*Fz_poly.*Fz_poly;
-%                     slip_poly_temp = reduce(slip_poly_temp, 'girard', P.agent_info.params.pz_interval.zono_order);
+                    slip_poly_temp = reduce(slip_poly_temp, 'girard', P.agent_info.params.pz_interval.zono_order);
                     slip_poly{i,1} = polyZonotope_ROAHM(slip_poly_temp.c + sum(abs(slip_poly_temp.Grest)),slip_poly_temp.G,[],slip_poly_temp.expMat,slip_poly_temp.id);
                     % create new pz with grest collapsed
                     
@@ -590,7 +596,7 @@ classdef uarmtd_planner < robot_arm_generic_planner
                     end
 
                     tip_poly_full = ZMP_topx.*ZMP_topx + ZMP_topy.*ZMP_topy - ZMP_temp;
-%                     tip_poly_full = reduce(tip_poly_full, 'girard', P.agent_info.params.pz_interval.zono_order);
+                    tip_poly_full = reduce(tip_poly_full, 'girard', P.agent_info.params.pz_interval.zono_order);
                     
                     % don't necessarily need to do this if statement since
                     % not trying to pull out things that aren't there.
@@ -708,30 +714,30 @@ classdef uarmtd_planner < robot_arm_generic_planner
                     % adding separation constraints
                     sep_int = interval(sep_poly{i,1});
                     % First check if the constraint is necessary
-%                     if ~(sep_int.sup < 0)
+                    if ~(sep_int.sup < 0)
                         fprintf('ADDED GRASP SEPARATION CONSTRAINT \n')
                         P.constraints{end+1,1} = @(k) slice(sep_poly{i,1},k);
                         grad_sep_poly = grad(sep_poly{i,1},P.jrs_info.n_q);
                         P.grad_constraints{end+1, 1} = @(k) cellfun(@(C) slice(C, k), grad_sep_poly);
-%                     end
+                    end
                     
                     % adding slipping constraints
                     slip_int = interval(slip_poly{i,1});
-%                     if ~(slip_int.sup < 0)
+                    if ~(slip_int.sup < 0)
                         fprintf('ADDED GRASP SLIPPING CONSTRAINT \n')
                         P.constraints{end+1,1} = @(k) slice(slip_poly{i,1},k);
                         grad_slip_poly = grad(slip_poly{i,1},P.jrs_info.n_q);
                         P.grad_constraints{end+1, 1} = @(k) cellfun(@(C) slice(C, k), grad_slip_poly);
-%                     end
+                    end
                     
                     % adding tipping constraints
                     tip_int = interval(tip_poly{i,1});
-%                     if ~(tip_int.sup < 0)
+                    if ~(tip_int.sup < 0)
                         fprintf('ADDED GRASP TIPPING CONSTRAINT \n')
                         P.constraints{end+1,1} = @(k) slice(tip_poly{i,1},k);
                         grad_tip_poly = grad(tip_poly{i,1},P.jrs_info.n_q);
                         P.grad_constraints{end+1, 1} = @(k) cellfun(@(C) slice(C, k), grad_tip_poly);
-%                     end
+                    end
                 end
             end
 
@@ -843,18 +849,29 @@ classdef uarmtd_planner < robot_arm_generic_planner
 %             options = optimoptions('fmincon','SpecifyConstraintGradient',true, 'CheckGradients', true);
             [k_opt, ~, exitflag, ~] = fmincon(cost_func, initial_guess, [], [], [], [], lb, ub, constraint_func, options) ;
             
+            fprintf('k_opt: ')
+            k_opt
+
             trajopt_failed = exitflag <= 0 ;
         end
         
         function [cost] = eval_cost(P, k, q_0, q_dot_0, q_ddot_0, q_des)
-            if P.use_q_plan_for_cost
-                q_plan = P.desired_trajectory(q_0, q_dot_0, q_ddot_0, P.t_plan, k);
-                cost = sum((q_plan - q_des).^2);
-            else
-                % use final position as cost
-                q_stop = P.desired_trajectory(q_0, q_dot_0, q_ddot_0, P.t_stop, k);
-                cost = sum((q_stop - q_des).^2);
-            end
+            
+            q_plan = P.desired_trajectory(q_0, q_dot_0, q_ddot_0, P.t_plan, k);
+            ee_plan = P.agent_info.get_end_effector_location(q_plan);
+            ee_des = P.agent_info.get_end_effector_location(q_des);
+            cost = sum((ee_plan - ee_des).^2);
+
+%             forward_kinematics(q_plan,)
+            
+%             if P.use_q_plan_for_cost
+%                 q_plan = P.desired_trajectory(q_0, q_dot_0, q_ddot_0, P.t_plan, k);
+%                 cost = sum((q_plan - q_des).^2);
+%             else
+%                 % use final position as cost
+%                 q_stop = P.desired_trajectory(q_0, q_dot_0, q_ddot_0, P.t_stop, k);
+%                 cost = sum((q_stop - q_des).^2);
+%             end
         end
 
         function [h, heq, grad_h, grad_heq] = eval_constraint(P, k)

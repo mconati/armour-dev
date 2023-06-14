@@ -49,7 +49,7 @@ agent_urdf = 'Kinova_Grasp_w_Tray.urdf';
 %                           object
 add_uncertainty_to = 'all'; % choose 'all', 'link', or 'none'
 links_with_uncertainty = {}; % if add_uncertainty_to = 'link', specify links here.
-uncertain_mass_range = [0.98, 1.02];
+uncertain_mass_range = [0.97, 1.03];
 
 agent_move_mode = 'integrator' ; % pick 'direct' or 'integrator'
 use_CAD_flag = true;
@@ -68,12 +68,12 @@ if_use_RRT = false;
 HLP_grow_tree_mode = 'new' ;
 plot_waypoint_flag = true ;
 plot_waypoint_arm_flag  = true ;
-lookahead_distance = 0.05 ; % used if RRT is false
-increment_waypoint_distance = 0.40;
+lookahead_distance = 0.2 ; % used if RRT is false
+increment_waypoint_distance = 0.18;
 use_SLP = false; % use SLP between high level graph waypoints
 
 % plotting
-plot_while_running = true ;
+plot_while_running = true;
 
 % simulation
 max_sim_time = 86400 ; % 24 hours = 86400 sec; 48 hours = sec
@@ -85,18 +85,18 @@ stop_threshold = 3 ; % number of failed iterations before exiting
 % Hardware start and goal
 start = wrapToPi([3.75,-1.0472,0,-2.0944,0,1.5708,0]');
 goal = [1.75,-0.5236,0,-2.0944,0,1.0472,0]';
-start_node = 2057743;
-goal_node = 1416420;
+% start_node = 2057743;
+% goal_node = 1416420;
 
 % Code Currently Expects 10 Obstacles
-obstacles{1} = box_obstacle_zonotope('center', [0.51089; 0.084019; 0.067449],...
-                                     'side_lengths', [0.24; 0.22; 0.175]) ;
-% box_obstacle_zonotope('center',[-0.3;0;0.5],...
+obstacles{1} = box_obstacle_zonotope('center', [0.53016; 0.30426; 0.47],...
+                                     'side_lengths', [0.24; 0.22; 0.175]) ; % pos: 0.51089; 0.084019; 0.067449
+% obstacles{1} = box_obstacle_zonotope('center',[-0.3;0;0.5],...
 %                                     'side_lengths',[0.01; 2; 2]);
 
-obstacles{2} = box_obstacle_zonotope('center',[0.63016; 0.40426; 0.13992],...
+obstacles{2} = box_obstacle_zonotope('center',[0.53016; 0.30426; 0.13992],...
                                     'side_lengths', [0.32; 0.32; 0.32]);
-% box_obstacle_zonotope('center',[-0.3;0;0.5],...
+% obstacles{2} = box_obstacle_zonotope('center',[-0.3;0;0.5],...
 %                                     'side_lengths',[0.01; 2; 2]);
 
 % Hardware environment obstacles
@@ -242,4 +242,7 @@ summary = S.run() ;
 
 %%
 
-save('Simulation_GraphOnly_ID_0p40.mat')
+figure()
+plot(A.time,A.state(A.joint_speed_indices,:))
+
+save('Simulation_GraphOnly_FixedHLP_ObsStackFlip_DifGuess0p25_ID_0p18.mat')

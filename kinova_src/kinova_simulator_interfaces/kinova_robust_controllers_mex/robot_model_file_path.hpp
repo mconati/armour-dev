@@ -1,1 +1,1 @@
-const char RobotFilePath[] = "C:\Users\zacbr\Documents\GitHub\armour-dev\kinova_src/kinova_simulator_interfaces/kinova_robust_controllers_mex/kinova_with_gripper.txt";
+const char RobotFilePath[] = "/home/baiyuew/ROAHM/armour-dev/kinova_src/kinova_simulator_interfaces/kinova_robust_controllers_mex/kinova_with_gripper.txt";
