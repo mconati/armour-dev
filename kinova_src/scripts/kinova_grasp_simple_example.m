@@ -15,8 +15,8 @@ delete(gcp('nocreate'))
 % parpool('threads')
 
 %% user parameters
-goal_type = 'configuration'; % pick 'end_effector_location' or 'configuration'
-goal_radius = pi/300;
+goal_type = 'end_effector_location'; % pick 'end_effector_location' or 'configuration'
+goal_radius = pi/20;
 dimension = 3 ;
 verbosity = 10;
 
@@ -56,7 +56,7 @@ plot_waypoint_arm_flag  = true ;
 lookahead_distance = 0.1 ;
 
 % plotting
-plot_while_running = true ;
+plot_while_running = false ;
 
 % simulation
 max_sim_time = 172800 ; % 48 hours
@@ -68,15 +68,15 @@ stop_threshold = 3 ; % number of failed iterations before exiting
 % goal = [1; 1; 1; 1; 1; 1; 1]; % goal configuration
 
 % simple rotation
-start = [0;-pi/2;0;0;0;0;0];
-goal = [pi/4;-pi/2;0;0;0;0;0];
+% start = [0;-pi/2;0;0;0;0;0];
+% goal = [pi/4;-pi/2;0;0;0;0;0];
 
 % start = [-pi/6;-pi/2;-pi/2;pi/2;0;pi/2;pi/2];
 % goal = [pi/6;-pi/2;pi/2;pi/2;pi;-pi/2;pi/2];
 
 % start = [3.9270, -1.0472, 0, -2.0944, 0, 1.5708, 0]';
-% goal = [3.9270, -1.0472, 0, -2.0944, 0, 1.5708, pi]';
-% goal = [2.5,-0.5236,0,-2.0944,0,1.0472,0]';
+start = [3.9270, -1.0472, 0, -2.0944, 0, 1.5708, 0]';
+goal = [2.5,-0.5236,0,-2.0944,0,1.0472,0]';
 
 % start = [0.4933;
 %     0.9728;
@@ -173,7 +173,7 @@ P = uarmtd_planner('verbose', verbosity, ...
                    'traj_type', traj_type, ...
                    'use_cuda', use_cuda_flag,...
                    'plot_HLP_flag', true, ...
-                   'lookahead_distance', 0.1, ...
+                   'lookahead_distance', 0.4, ...
                    'u_s', u_s,...
                    'surf_rad', surf_rad,...
                    'DURATION', DURATION) ; % 't_move_temp', t_move't_plan', t_plan,...'t_stop', t_stop % _wrapper
