@@ -199,10 +199,10 @@ bool armtd_NLP::get_starting_point(
 
     for( Index i = 0; i < n; i++ ) {
         // initialize to zero
-        // x[i] = 0.0;
+        x[i] = 0.0;
 
         // try to avoid local minimum
-        x[i] = min(max((q_des[i] - desired_trajectory->q0[i]) / k_range[i], -0.5), 0.5);
+        // x[i] = min(max((q_des[i] - desired_trajectory->q0[i]) / k_range[i], -0.25), 0.25);
     }
 
     return true;
@@ -571,7 +571,7 @@ bool armtd_NLP::eval_f(
     // obj_value = sum((q_plan - q_des).^2);
     obj_value = 0; 
     for(Index i = 0; i < n; i++){
-        double q_plan = q_des_func(desired_trajectory->q0[i], desired_trajectory->Tqd0[i], desired_trajectory->TTqdd0[i], k_range[i] * x[i], t_plan); // Bohao question: why pass in t_plan here instead of duration?
+        double q_plan = q_des_func(desired_trajectory->q0[i], desired_trajectory->Tqd0[i], desired_trajectory->TTqdd0[i], k_range[i] * x[i], t_plan);
         obj_value += pow(q_des[i] - q_plan, 2);
     }
 
@@ -634,7 +634,7 @@ bool armtd_NLP::eval_grad_f(
         // sum for each time step resulting in 7x1
         // add each element to corresponding element of grad_f?
 
-        double q_plan = q_des_func(desired_trajectory->q0[i], desired_trajectory->Tqd0[i], desired_trajectory->TTqdd0[i], k_range[i] * x[i], t_plan); // Bohao question: why pass in t_plan here instead of duration?
+        double q_plan = q_des_func(desired_trajectory->q0[i], desired_trajectory->Tqd0[i], desired_trajectory->TTqdd0[i], k_range[i] * x[i], t_plan);
         double dk_q_plan = pow(t_plan,3) * (6 * pow(t_plan,2) - 15 * t_plan + 10);
         grad_f[i] = (2 * (q_plan - q_des[i]) * dk_q_plan * k_range[i]) * COST_FUNCTION_OPTIMALITY_SCALE;
     }
