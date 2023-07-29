@@ -12,9 +12,9 @@
 
 3. Note that you have to configure the Ipopt path if it is installed in a different path on your computer! (introduce some other fancy ways to compile code)
 
-4. In 'armour_main.cpp', change the variable 'pathname' to 'WHERE-YOU-INSTALL-ARMTD/armtd-dev/cuda-dev/PZsparse-Bernstein/results/'.
+4. In `armour_main.cpp`, change the variable `pathname` to `WHERE-YOU-INSTALL-ARMOUR/armour-dev/kinova_src/kinova_simulator_interfaces/kinova_planner_realtime/buffer/`. (This has been automated in `initialize.m` in `kinova_src/`)
 
-5. Run './compile.sh' in the terminal to compile the C++ program.
+5. Run `./compile.sh` in the terminal to compile the C++ program.
 
 ## Files
 ### armour_main.cpp
@@ -48,7 +48,7 @@ All hyperparameters are defined in Parameters.h and all robot physical propertie
 
 * NUM TIME STEPS: number of time intervals split in the planning horizon (This must be an even number for the current 5-degree Bezier curve class!)
 
-* k range[NUM_FACTORS]: The range of the destination away from the initial position at the end of the desired trajectory (check ARMOUR paper)
+* k range[NUM_FACTORS]: The range of the destination away from the initial position at the end of the desired trajectory (check ARMOUR paper). Note that this should be consistent with `P.jrs_info.g_k_bernstein` in `uarmtd_planner.m`
 
 * MAX OBSTACLE NUM: maximum number of obstacles for memory preallocation (number of obstacles should NEVER be larger than this!)
 
@@ -73,7 +73,7 @@ All hyperparameters are defined in Parameters.h and all robot physical propertie
 (You can add more Ipopt options in armour_main.cpp)
 
 ## Usage
-Interface with Matlab is implemented by calling a compiled C++ program in Matlab through function 'system'.
+Interface with Matlab is implemented by calling a compiled C++ program in Matlab through function `system`.
 It allows users to run operating system commands and get the output in Matlab.
 In that way, Matlab will not be affected even if there is error in the C++ program.
 The communication between Matlab and the C++ program is initiated through reading and writing different files since the communication in Matlab simulation does not require synchronization.
@@ -81,7 +81,7 @@ Since the Matlab scripts may call the C++ program in different paths, we use abs
 Make sure you change the "pathname" defined in armour_main.cpp when you run the Matlab tests in a different computer.
 
 ### Input
-Input is stored as a text file in 'armtd-dev/cuda-dev/PZsparse-Bernstein/results/armour_main.in'
+Input is stored as a text file in `buffer/armour_main.in`
 
 * Initial joint position: NUM_FACTORS floating numbers
 
@@ -95,10 +95,8 @@ Input is stored as a text file in 'armtd-dev/cuda-dev/PZsparse-Bernstein/results
 
 * Obstacle zonotopes: (Number of obstacles) * (MAX OBSTACLE GENERATOR NUM + 1) * 3 floating numbers
 
-* t_plan: 1 floating number range from 0 to 1 (unit: second), minimize the distance between the desired joint position and the joint trajectory at t_plan. For example, in the middle of the planning, this should be 0.5 in order to achieve receding horizon planning. At the end of the planning (the last HLP waypoint has been provided), this should be 1 because we want the robot to stop at the final goal position.
-
 ### Output
-Output is stored as multiple text files in 'armtd-dev/cuda-dev/PZsparse-Bernstein/results/armour_main_xxx.out'
+Output is stored as multiple text files in `armtd-dev/cuda-dev/PZsparse-Bernstein/results/armour_main_xxx.out`
 
 * armour_main.out stores k_opt, which contains NUM_FACTORS floating numbers
 
