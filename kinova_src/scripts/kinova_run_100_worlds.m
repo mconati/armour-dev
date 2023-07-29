@@ -26,7 +26,7 @@ dimension = 3 ;
 verbosity = 10;
 
 %%% for planner
-traj_type = 'orig'; % pick 'orig' or 'bernstein'
+traj_type = 'bernstein'; % pick 'orig' or 'bernstein'
 allow_replan_errors = true ;
 first_iter_pause_flag = false;
 use_q_plan_for_cost = false; % otherwise use q_stop (q at final time)
@@ -45,7 +45,7 @@ add_measurement_noise_ = false;
 measurement_noise_size_ = 0;
 
 %%% for LLC
-LLC_V_max = 5e-5;
+LLC_V_max = 1e-2;
 use_true_params_for_robust = false;
 if_use_mex_controller = true;
 

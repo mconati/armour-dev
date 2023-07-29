@@ -7,7 +7,7 @@
 
 // Parameters for PZsparse.h:
     // monomials with a coefficient smaller than this number will be reduced
-    #define SIMPLIFY_THRESHOLD 1e-5
+    #define SIMPLIFY_THRESHOLD 3e-4
 
 // Parameters for Trajectories.h:
     // duration of the Bezier curve
@@ -17,8 +17,8 @@
     #define NUM_TIME_STEPS 128
 
     // range of parameters (size of generators in PZ).
-    const double k_range[NUM_FACTORS] = { M_PI / 24, M_PI / 24, M_PI / 24, M_PI / 24, M_PI / 24, M_PI / 24, M_PI / 24 }; // (radian)
-    // const double k_range[NUM_FACTORS] = { M_PI / 48, M_PI / 48, M_PI / 48, M_PI / 48, M_PI / 48, M_PI / 48, M_PI / 48 }; // (radian)
+    // const double k_range[NUM_FACTORS] = { M_PI / 24, M_PI / 24, M_PI / 24, M_PI / 24, M_PI / 24, M_PI / 24, M_PI / 24 }; // (radian)
+    const double k_range[NUM_FACTORS] = { M_PI / 48, M_PI / 48, M_PI / 48, M_PI / 48, M_PI / 48, M_PI / 48, M_PI / 48 }; // (radian)
     // const double k_range[NUM_FACTORS] = { M_PI / 72, M_PI / 72, M_PI / 72, M_PI / 72, M_PI / 72, M_PI / 72, M_PI / 96 }; // (radian)
 
 // Parameters for CollisionChecking.h:
@@ -44,7 +44,7 @@
     #define COST_FUNCTION_OPTIMALITY_SCALE 10.0
 
     // whether to turn off the torque input constriants
-    #define TURN_OFF_INPUT_CONSTRAINTS true
+    #define TURN_OFF_INPUT_CONSTRAINTS false
 
 // Parameters for armour_main.cpp
     #define IPOPT_OPTIMIZATION_TOLERANCE 1e-7

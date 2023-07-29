@@ -144,8 +144,8 @@ classdef uarmtd_planner < robot_arm_generic_planner
                     % Make sure this is consistent with the k_range in
                     % kinova_src/kinova_simulator_interfaces/kinova_planner_realtime/Parameters.h 
                     % !!!!!!
-                    P.jrs_info.g_k_bernstein = [pi/24; pi/24; pi/24; pi/24; pi/24; pi/24; pi/24];
-%                     P.jrs_info.g_k_bernstein = [pi/48; pi/48; pi/48; pi/48; pi/48; pi/48; pi/48];
+%                     P.jrs_info.g_k_bernstein = [pi/24; pi/24; pi/24; pi/24; pi/24; pi/24; pi/24];
+                    P.jrs_info.g_k_bernstein = [pi/48; pi/48; pi/48; pi/48; pi/48; pi/48; pi/48];
     
                     q_des = P.HLP.get_waypoint(agent_info,world_info,P.lookahead_distance) ;
                     if isempty(q_des)
@@ -211,7 +211,11 @@ classdef uarmtd_planner < robot_arm_generic_planner
                         % read FRS information if needed
                         link_frs_center = readmatrix('armour_joint_position_center.out', 'FileType', 'text');
                         link_frs_generators = readmatrix('armour_joint_position_radius.out', 'FileType', 'text');
-                        control_input_radius = readmatrix('armour_control_input_radius.out', 'FileType', 'text');
+                        if P.input_constraints_flag
+                            control_input_radius = readmatrix('armour_control_input_radius.out', 'FileType', 'text');
+                        else
+                            control_input_radius = [];
+                        end
                         constraints_value = readmatrix('armour_constraints.out', 'FileType', 'text');
 
                         record_tids = [1:10:P.jrs_info.n_t, P.jrs_info.n_t];
