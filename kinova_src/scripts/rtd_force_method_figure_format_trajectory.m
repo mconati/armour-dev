@@ -1,6 +1,6 @@
-figure(19)
+figure(14)
 
-title('Joint Trajectory')
+% title('Joint Trajectory')
 xlabel('Time (s)')
-ylabel('q_1 (deg)')
+ylabel('Joint 1 Angle (deg)')
 set(gca,'FontSize',fontsize)
