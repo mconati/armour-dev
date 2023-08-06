@@ -35,7 +35,7 @@ traj_index = 1;
 
 %% Load Simulation Result
 
-sim_result_file = 'trial_scene_010_001.csv.mat';
+sim_result_file = 'trial_scene_010_003.csv.mat';
 sim_result = load(sim_result_file);
 
 % extract information
@@ -99,11 +99,11 @@ A.link_plot_face_opacity = 1 ;
 W.setup(agent_info)
 clear_plot_data(W);
 
-% Plotting World
+%% Plotting World
 
 fig_num = fig_num + 1;
-figure(fig_num);
-% hold on
+sim_robot_fig = figure(fig_num);
+hold on
 
 plot(W) ;
 view(3)
@@ -111,17 +111,24 @@ grid off
 axis off
 axis equal
 plot_at_time(A, 0);
+set(gcf,'color','w')
+view([45,20])
+
+exportgraphics(sim_robot_fig,'PaperSimFig_Robot_v3.jpg','Resolution',300)
+
 
 % hold on
 
 %% Color Coding
 
+history_line_color = 1/256*[211,211,211];
 unsliced_color = 1/256*[90,200,243];
 % slice_color = 1/256*[72,181,163]; % light green
-slice_color = 1/256*[75,154,76]; % dark green
+% slice_color = 1/256*[75,154,76]; % dark green
+slice_color = 1/256*[186,85,255]; % light purple
 face_alpha = 0.3;
 face_alpha_light = 0.03;
-edge_alpha = 0.5;
+edge_alpha = 0.4;
 
 %% Calculate Nominal Constraint Values
 
@@ -132,7 +139,7 @@ joint_angular_velocity = A.state(A.joint_speed_indices,:);
 
 qdd_post = zeros(7,length(A.time));
     % calculating the acceleration in post to compare with what is stored
-for i = 1:length(A.time(1:end-1))
+parfor i = 1:length(A.time(1:end-1))
     [M, C, g] = A.calculate_dynamics(joint_angles(:,i), joint_angular_velocity(:,i), A.params.true);
     for j = 1:size(M,1)
         M(j,j) = M(j,j) + transmision_inertia(j);
@@ -141,10 +148,15 @@ for i = 1:length(A.time(1:end-1))
 end
 
 % calling rnea
-for i = 1:length(A.time)
+Tau = cell(1,length(joint_angles));
+F = cell(1,length(joint_angles));
+N = cell(1,length(joint_angles));
+force = zeros(3,length(joint_angles));
+moment = zeros(3,length(joint_angles));
+parfor i = 1:length(A.time)
 
     % clear relevant variables
-    clear tau f n
+%     clear tau f n
 
     % call rnea
     [tau, f, n] = rnea(joint_angles(:,i)',joint_angular_velocity(:,i)',joint_angular_velocity(:,i)',qdd_post(:,i)',true,A.params.true); % A.acceleration(:,i)'
@@ -323,7 +335,7 @@ end
 % sliced
 for i = 1:time_index
     force_int{i} = interval(force_center(i,3)-force_radii(i,3),force_center(i,3)+force_radii(i,3));
-    moment_zono = polyZonotope_ROAHM(moment_center(j,:)',eye(3).*moment_radii(j,:)');
+    moment_zono = polyZonotope_ROAHM(moment_center(i,:)',eye(3).*moment_radii(i,:)');
     % calculating the PZ form of the constraints
     ZMP_PZ_top = cross([0;0;1],moment_zono);
     ZMP_PZ_bottom = force_int{i}; % *[0,0,1]; % modified
@@ -370,9 +382,11 @@ plot(t_traj(1:time_index+1), force(3,1:time_index+1),'-k','LineWidth',linewidth)
 ylim([0 2.5])
 xlim([0 t_traj(time_index+1)])
 xlabel('Time (s)')
-ylabel('Force (N)')
+ylabel('z_o Force (N)')
 title('Contact Joint z-Axis Force')
 set(gca,'FontSize',fontsize)
+set(gcf,'color','w')
+box on
 
 
 
@@ -385,13 +399,15 @@ hold on
 % plotting friction cone boundary
 max_fz = max(force(3,1:time_index));
 min_fz = min(force(3,1:time_index));
-[max_fz_x, max_fz_y] = circle(2*max_fz*W.u_s,0,0,0,2*pi,0.01);
-[min_fz_x, min_fz_y] = circle(2*min_fz*W.u_s,0,0,0,2*pi,0.01);
-plot(max_fz_x, max_fz_y,'-r')
-plot(min_fz_x, min_fz_y,'-r')
-fill([max_fz_x flip(min_fz_x)],[max_fz_y flip(min_fz_y)],'r','FaceAlpha',0.9)
-fp_bound = line([max_fz_x(end) min_fz_x(1)],[max_fz_y(end) min_fz_y(1)]);
-set(fp_bound,'Color','r') % ,'EdgeAlpha',0.3)
+% [max_fz_x, max_fz_y] = circle(2*max_fz*W.u_s,0,0,0,2*pi,0.01);
+% [min_fz_x, min_fz_y] = circle(2*min_fz*W.u_s,0,0,0,2*pi,0.01);
+% plot(max_fz_x, max_fz_y,'-r')
+% plot(min_fz_x, min_fz_y,'-r')
+% fill([max_fz_x flip(min_fz_x)],[max_fz_y flip(min_fz_y)],'r','FaceAlpha',0.9)
+% fp_bound = line([max_fz_x(end) min_fz_x(1)],[max_fz_y(end) min_fz_y(1)]);
+% set(fp_bound,'Color','r') % ,'EdgeAlpha',0.3)
+
+plotConcentricCircles(fig_num,min_fz*u_s,max_fz*u_s,[1,0,0,0.25],'r')
 
 % plotting unsliced overapproximation
 for i = 1:skip_num:time_index
@@ -413,12 +429,15 @@ end
 plot(force(1,1:time_index),force(2,1:time_index),'-k')
 
 % plot formatting
-xlabel('x-axis Force (N)')
-ylabel('y-axis Force (N)')
+xlabel('x_o Force (N)')
+ylabel('y_o Force (N)')
 title('Friction Cone')
 set(gca,'FontSize',fontsize)
 axis square
 axis equal
+set(gcf,'color','w')
+box on
+
 
 %% Plotting ZMP Diagram
 
@@ -468,8 +487,11 @@ ylabel('y_o position (cm)')
 title('Zero Moment Point')
 axis('square')
 axis equal
-grid on
+% grid on
 set(gca,'FontSize',fontsize)
+set(gcf,'color','w')
+box on
+
 
 %% helper functions
 function [link_poly_zonotopes, link_sizes, mesh] = create_link_poly_zonos(robot)
@@ -670,4 +692,51 @@ function make_animation( h,index,filename )
     else
         imwrite(imind,cm,filename,'gif','WriteMode','append','DelayTime',0.001);
     end
+end
+
+function plotConcentricCircles(fig, inner_radius, outer_radius, fill_color, edge_color)
+% PLOTCONCENTRICCIRCLES plots two concentric circles with specified properties.
+%   plotConcentricCircles(fig, inner_radius, outer_radius, fill_color, edge_color)
+%
+%   Inputs:
+%       fig:          Figure handle where the circles will be plotted.
+%       inner_radius: Inner radius of the donut (hole).
+%       outer_radius: Outer radius of the donut (edge).
+%       fill_color:   Color to fill the donut (e.g., 'r' for red).
+%       edge_color:   Color of the donut's edge (e.g., 'b' for blue).
+
+    % Switch to the specified figure or create a new one if not provided
+    if nargin < 1
+        fig = figure;
+    else
+        figure(fig); 
+    end
+    
+    hold on;
+    
+    rectangle('Position',[-outer_radius,-outer_radius,2*outer_radius,2*outer_radius],...
+        'Curvature',[1,1],...
+        'FaceColor',fill_color,...
+        'EdgeColor',edge_color); % Set the face color of the outer circle
+
+    % Plot the inner circle
+    rectangle('Position',[-inner_radius,-inner_radius,2*inner_radius,2*inner_radius],...
+        'Curvature',[1,1],...
+        'FaceColor','w',...     % Set the face color of the inner circle to white (hole)
+        'EdgeColor',edge_color); % Set the edge color of the inner circle
+
+%     hold off;
+
+%     % Set axis limits to better view the donut
+%     axis equal;
+%     xlim([-outer_radius-1, outer_radius+1]);
+%     ylim([-outer_radius-1, outer_radius+1]);
+% 
+%     % Set labels and title
+%     xlabel('X');
+%     ylabel('Y');
+%     title('Concentric Circles');
+% 
+%     % Display the grid for better visualization (optional)
+%     grid on;
 end

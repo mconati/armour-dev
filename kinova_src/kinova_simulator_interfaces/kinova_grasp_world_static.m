@@ -42,6 +42,8 @@ classdef kinova_grasp_world_static < world
         creation_buffer = 0 ; % distance in m from closest obstacle or link
         base_creation_buffer = 0 ;
         setting_up = false ; % change this flag when setting up start/goal config, obstacles
+
+        robot_params
     end
     
     methods
@@ -114,6 +116,14 @@ classdef kinova_grasp_world_static < world
                     W.vdisp('Setting end effector position as goal in workspace!',5)
                     J = I.get_joint_locations(W.goal) ;
                     W.goal_in_workspace = J(:,end) ;
+                case 'fk_func'
+                    % the difference between this case and the
+                    % 'end_effector_location' case is that this uses the
+                    % forward_kinematics.m function which currently only
+                    % does forward kinematics for actuated joints.
+                    W.vdisp('Setting goal as forward_kinematics(q) result',5)
+                    fk_result = forward_kinematics(W.goal,W.robot_params.true.T0,W.robot_params.true.joint_axes);
+                    W.goal_in_workspace = fk_result(1:3,4);
             end
             W.vdisp('Arm world setup complete',2)
                     
@@ -200,6 +210,40 @@ classdef kinova_grasp_world_static < world
                         W.goal = new_goal ;
                     end
                 case 'end_effector_location'
+                    % make a position that isn't in any obstacles
+                    goal_in_obs = true ;
+                    while goal_in_obs
+                        B = W.bounds ;
+                        B = reshape(B(:),2,[])' ;
+                        new_goal = rand_range(B(:,1),B(:,2)) ;
+                        
+                        dists_to_obs = zeros(1,length(W.obstacles)) ;
+                        
+                        for idx = 1:length(W.obstacles)
+                            o = W.obstacles{idx} ;
+                            if isa(o,'box_obstacle_zonotope')
+                                
+                                dists_to_obs(idx) = dist_point_to_box(new_goal,...
+                                    o.side_lengths(1),...
+                                    o.side_lengths(2),...
+                                    o.side_lengths(3),...
+                                    o.center) ;
+                                
+                            end
+                        end
+                        
+                        d = min(dists_to_obs) ;
+                        if d < W.goal_buffer_distance
+                            goal_in_obs = false ;
+                        end
+                    end
+                    
+                    if ~isempty(new_goal)
+                        W.goal = new_goal ;
+                    else
+                        error('goal creation failed!')
+                    end
+                case 'fk_func'
                     % make a position that isn't in any obstacles
                     goal_in_obs = true ;
                     while goal_in_obs
@@ -690,6 +734,15 @@ classdef kinova_grasp_world_static < world
                     % location
                     dz = vecnorm(J_ee - repmat(W.goal_in_workspace,1,N_J)) ;
                     out = any(dz <= W.goal_radius) ;
+                case 'fk_func'
+                    % get the joint locations
+                    ee_cur = forward_kinematics(agent_info.position(:,end),W.robot_params.true.T0,W.robot_params.true.joint_axes);
+                    ee_cur_pos = ee_cur(1:3,4);
+                    % check how far the end effector is from the goal
+                    % location
+                    dz = vecnorm(ee_cur_pos - W.goal_in_workspace) ;
+                    out = any(dz <= W.goal_radius) ;
+
                 otherwise
                     error(['The goal type ',W.goal_type,' is not supported!'])
             end
@@ -780,6 +833,12 @@ classdef kinova_grasp_world_static < world
                         W.plot_data.goal = data ;
                     end
                 case 'end_effector_location'
+                    g = W.goal_in_workspace ;
+                    if ~check_if_plot_is_available(W,'goal') && ~isempty(W.goal)
+                        data = plot_path(g,'p','Color',W.goal_plot_edge_color,'LineWidth',2) ;
+                        W.plot_data.goal = data ;
+                    end
+                case 'fk_func'
                     g = W.goal_in_workspace ;
                     if ~check_if_plot_is_available(W,'goal') && ~isempty(W.goal)
                         data = plot_path(g,'p','Color',W.goal_plot_edge_color,'LineWidth',2) ;

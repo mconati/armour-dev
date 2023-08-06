@@ -15,14 +15,14 @@ delete(gcp('nocreate'))
 % parpool('threads')
 
 %% user parameters
-goal_type = 'end_effector_location'; % pick 'end_effector_location' or 'configuration'
+goal_type = 'fk_func'; % pick 'end_effector_location' or 'configuration' or 'fk_func'
 goal_radius = pi/20;
 dimension = 3 ;
 verbosity = 10;
 
 DURATION = 1.0;
 
-u_s = 0.609382421; 
+u_s = 0.6; 
 surf_rad =  0.058 / 2;
 
 %%% for planner
@@ -35,7 +35,7 @@ agent_urdf = 'Kinova_Grasp_w_Tray.urdf';
 
 add_uncertainty_to = 'none'; % choose 'all', 'link', or 'none'
 links_with_uncertainty = {}; % if add_uncertainty_to = 'link', specify links here.
-uncertain_mass_range = [0.97, 1.03];
+uncertain_mass_range = [0.98, 1.02];
 
 agent_move_mode = 'integrator' ; % pick 'direct' or 'integrator'
 use_CAD_flag = true; % plot robot with CAD or bounding boxes
@@ -44,7 +44,7 @@ use_CAD_flag = true; % plot robot with CAD or bounding boxes
 use_robust_input = true;
 use_true_params_for_robust = false;
 if_use_mex_controller = true;
-LLC_V_max = 2.0e-4;
+LLC_V_max = 2e-2;
 alpha_constant = 10;
 Kr = 4.0;
 
@@ -56,7 +56,7 @@ plot_waypoint_arm_flag  = true ;
 lookahead_distance = 0.1 ;
 
 % plotting
-plot_while_running = false ;
+plot_while_running = true ;
 
 % simulation
 max_sim_time = 172800 ; % 48 hours
@@ -68,15 +68,15 @@ stop_threshold = 3 ; % number of failed iterations before exiting
 % goal = [1; 1; 1; 1; 1; 1; 1]; % goal configuration
 
 % simple rotation
-% start = [0;-pi/2;0;0;0;0;0];
-% goal = [pi/4;-pi/2;0;0;0;0;0];
+goal = [0;-pi/2;0;0;0;0;0];
+start = [pi/4;-pi/2;0;0;0;0;0];
 
 % start = [-pi/6;-pi/2;-pi/2;pi/2;0;pi/2;pi/2];
 % goal = [pi/6;-pi/2;pi/2;pi/2;pi;-pi/2;pi/2];
 
 % start = [3.9270, -1.0472, 0, -2.0944, 0, 1.5708, 0]';
-start = [3.9270, -1.0472, 0, -2.0944, 0, 1.5708, 0]';
-goal = [2.5,-0.5236,0,-2.0944,0,1.0472,0]';
+% start = [3.9270, -1.0472, 0, -2.0944, 0, 1.5708, 0]';
+% goal = [2.5,-0.5236,0,-2.0944,0,1.0472,0]';
 
 % start = [0.4933;
 %     0.9728;
@@ -121,7 +121,7 @@ joint_speed_limits = [-1.3963, -1.3963, -1.3963, -1.3963, -1.2218, -1.2218, -1.2
 joint_input_limits = [-56.7, -56.7, -56.7, -56.7, -29.4, -29.4, -29.4;
                        56.7,  56.7,  56.7,  56.7,  29.4,  29.4,  29.4]; % matlab doesn't import these from urdf so hard code into class
 transmision_inertia = [8.02999999999999936 11.99620246153036440 9.00254278617515169 11.58064393167063599 8.46650409179141228 8.85370693737424297 8.85873036646853151]; % matlab doesn't import these from urdf so hard code into class
-M_min_eigenvalue = 8.0386472; % 8.29938; % matlab doesn't import these from urdf so hard code into class
+M_min_eigenvalue = 8.0386472; % 8.29938; % ; matlab doesn't import these from urdf so hard code into class
 
 figure(101)
 show(robot)
@@ -133,7 +133,7 @@ end
 
 % run loop
 tic;
-W = kinova_grasp_world_static('create_random_obstacles_flag', false, 'goal_radius', goal_radius, 'N_obstacles',length(obstacles),'dimension',dimension,'workspace_goal_check', 0, 'verbose',verbosity, 'start', start, 'goal', goal, 'obstacles', obstacles, 'goal_type', goal_type, 'grasp_constraint_flag', grasp_constraints_flag,'ik_start_goal_flag', true,'u_s', u_s, 'surf_rad', surf_rad) ;
+W = kinova_grasp_world_static('create_random_obstacles_flag', false, 'goal_radius', goal_radius, 'N_obstacles',length(obstacles),'dimension',dimension,'workspace_goal_check', 0, 'verbose',verbosity, 'start', start, 'goal', goal, 'obstacles', obstacles, 'goal_type', goal_type, 'grasp_constraint_flag', grasp_constraints_flag,'ik_start_goal_flag', true,'u_s', u_s, 'surf_rad', surf_rad, 'robot_params', params) ;
 
 % create arm agent
 A = uarmtd_agent(robot, params,...
@@ -386,12 +386,12 @@ max_tilt_angle_deg = rad2deg(max_tilt_angle)
 % forward_kin = forward_kinematics(A.state(A.joint_state_indices,max_tilt_angle_index),params.true.T0,params.true.joint_axes)
 % corresponding_euler_angles = rotm2eul(forward_kin(1:3,1:3))
 
-%% Max Euler Angles
-
-for i = 1:length(A.time)
-    forward_kin{i} = forward_kinematics(A.state(A.joint_state_indices,i),params.true.T0,params.true.joint_axes);
-    corresponding_euler_angles = rotm2eul(forward_kin{i}(1:3,1:3));
-    quat_angles{i} = eul2quat(corresponding_euler_angles);
-end
-
-save('TiltTest_1em4_v2.mat','forward_kin','quat_angles')
+% %% Max Euler Angles
+% 
+% for i = 1:length(A.time)
+%     forward_kin{i} = forward_kinematics(A.state(A.joint_state_indices,i),params.true.T0,params.true.joint_axes);
+%     corresponding_euler_angles = rotm2eul(forward_kin{i}(1:3,1:3));
+%     quat_angles{i} = eul2quat(corresponding_euler_angles);
+% end
+% 
+% save('TiltTest_1em4_v2.mat','forward_kin','quat_angles')

@@ -28,9 +28,9 @@ fric_plot = figure(fric_plot_num);
 tip_plot = figure(tip_plot_num);
 
 % file name to save the gif as
-sep_save_file = 'Hardware_Success_v2_Separation_framerate_100';
-fric_save_file = 'Hardware_Success_v2_Friction_framerate_100';
-tip_save_file = 'Hardware_Success_v2_Tipping_framerate_100';
+sep_save_file = 'Hardware_Multiple_Trial123_v12_Separation_framerate_100';
+fric_save_file = 'Hardware_Multiple_Trial123_v12_Friction_framerate_100';
+tip_save_file = 'Hardware_Multiple_Trial123_v12_Tipping_framerate_100';
 % create video writer objects
 sep_vid = VideoWriter(sep_save_file);
 fric_vid = VideoWriter(fric_save_file);
@@ -53,7 +53,7 @@ open(tip_vid)
 % plot formatting parameters
 fontsize = 16;
 linewidth = 3;
-markersize = 2;
+markersize = 15;
 % number of samples to skip over to get 50 fps?
 skip_rate = 50;
 % number of time steps to skip
@@ -64,32 +64,37 @@ plan_index = 1;
 traj_index = 1;
 
 % match to hardware settings
-time_steps = 50; 
+time_steps = 40; 
 time_index = time_steps/2; % for plotting half a trajectory
-duration = 1.75;
+duration = 2.0;
 dt = duration/time_steps;
 
 %% Color Coding
 
+history_line_color = 1/256*[211,211,211];
 unsliced_color = 1/256*[90,200,243];
 % slice_color = 1/256*[72,181,163]; % light green
-slice_color = 1/256*[75,154,76]; % dark green
+% slice_color = 1/256*[75,154,76]; % dark green
+slice_color = 1/256*[186,85,255]; % light purple
 face_alpha = 0.3;
 face_alpha_light = 0.03;
 edge_alpha = 0.4;
 
 %% Load Hardware ROS Data
 
-% load_file = 'HardwareVideo_MultipleRuns_06_15_2023_ROSBAG_Data.mat';
-% agent_urdf = 'Kinova_Grasp_w_Tray.urdf';
+load_file = 'HardwareVideo_MultipleRuns_06_15_2023_ROSBAG_Data.mat';
+agent_urdf = 'Kinova_Grasp_w_Tray.urdf';
 
-load_file = 'HardwareSuccessROSData_v2_05_04_2023.mat';
-agent_urdf = 'Kinova_Grasp_URDF.urdf';
+% load_file = 'HardwareSuccessROSData_v2_05_04_2023.mat';
+% agent_urdf = 'Kinova_Grasp_URDF.urdf';
+% success v2 ends at index 117265 - 132.1239 sec - 150 planning iterations?
+% the rs_* is missing planning iterations
+% switch to using the debug values? 
 
 data = load(load_file);
 
 % contact parameters: match with hardware experiment settings
-u_s = 0.33;
+u_s = 0.6;
 surf_rad = 0.058/2;
 
 %% Extract Data
@@ -108,10 +113,10 @@ control_torque = data.rosbag.control_torque;
 
 % for reach set values
 rs_duration = data.rosbag.debug_duration; % for determining if braking maneuver occured
-rs_pos = data.rosbag.traj_pos;
-rs_vel = data.rosbag.traj_vel;
-rs_accel = data.rosbag.traj_accel;
-rs_opt_k = data.rosbag.traj_k;
+rs_pos = data.rosbag.debug_traj_pos;
+rs_vel = data.rosbag.debug_traj_vel;
+rs_accel = data.rosbag.debug_traj_accel;
+rs_opt_k = data.rosbag.debug_traj_k;
 
 %% Load Robot Parameters
 
@@ -221,8 +226,14 @@ t_traj = linspace(0,duration,time_steps);
 time_threshold = -1;
 plan_iter = 0;
 frame_idx = 1;
-for plot_idx = 1:skip_rate:length(time) % length(time) % length(time) %length(time) % UPDATE TO ITERATE THROUGH AT A FRAME RATE?
+for plot_idx = 1:skip_rate:length(time) % UPDATE TO ITERATE THROUGH AT A FRAME RATE? % trial 1 - 1:35000
 
+    if plot_idx > 1
+        delete(fric_plot_cur_marker)
+        delete(ZMP_plot_cur_marker)
+        delete(sep_plot_cur_marker)
+    end
+    
     if time(plot_idx) > time_threshold % check if new planning iteration
 
         % update plan iter to be the current planning iteration
@@ -233,11 +244,9 @@ for plot_idx = 1:skip_rate:length(time) % length(time) % length(time) %length(ti
             %  Plotting 
 
             if plan_iter > 1
-%                 sp2 = subplot(1,3,2);
                 fric_plot = figure(fric_plot_num);
                 cla(fric_plot)
 
-%                 sp3 = subplot(1,3,3);
                 tip_plot = figure(tip_plot_num);
                 cla(tip_plot)
             end
@@ -405,7 +414,7 @@ for plot_idx = 1:skip_rate:length(time) % length(time) % length(time) %length(ti
 
             % calculate new reach set
 
-            plot_info_struct = update_reach_sets(rs_pos(plan_iter,:),rs_vel(plan_iter,:),rs_accel(plan_iter,:),rs_opt_k(plan_iter,:));
+            plot_info_struct = update_reach_sets(rs_pos(plot_idx,:),rs_vel(plot_idx,:),rs_accel(plot_idx,:),rs_opt_k(plot_idx,:));
             force_PZ_unsliced = plot_info_struct.force_PZ_unsliced;
             moment_PZ_unsliced = plot_info_struct.moment_PZ_unsliced;
             force_lower = plot_info_struct.force_lower;
@@ -561,21 +570,26 @@ for plot_idx = 1:skip_rate:length(time) % length(time) % length(time) %length(ti
 %     subplot(1,3,1)
     sep_plot = figure(sep_plot_num);
     if plot_idx <= 5000
-        plot(time(1:plot_idx), force(3,1:plot_idx),'-k')%,'MarkerSize',markersize)
+        plot(time(1:plot_idx), force(3,1:plot_idx),'-','Color',history_line_color)%,'MarkerSize',markersize)
     else
-        plot(time(plot_idx-5000:plot_idx), force(3,plot_idx-5000:plot_idx),'-k')
+        plot(time(plot_idx-5000:plot_idx), force(3,plot_idx-5000:plot_idx),'-','Color',history_line_color)
     end
+    sep_plot_cur_marker = plot(time(plot_idx),force(3,plot_idx),'xk','MarkerSize',markersize);
+
 %     subplot(1,3,2)
     fric_plot = figure(fric_plot_num);
-    plot(force(1,1:plot_idx),force(2,1:plot_idx),'-k')%,'MarkerSize',markersize)
+    plot(force(1,1:plot_idx),force(2,1:plot_idx),'-','Color',history_line_color)%,'MarkerSize',markersize)
+    fric_plot_cur_marker = plot(force(1,plot_idx),force(2,plot_idx),'kx','MarkerSize',markersize);
+
+%     plot(force(1,1:plot_idx),force(2,1:plot_idx),'-k')%,'MarkerSize',markersize)
 %     subplot(1,3,3)
     tip_plot = figure(tip_plot_num);
-    plot(ZMP(1,1:plot_idx).*factor,ZMP(2,1:plot_idx).*factor,'-k')%,'MarkerSize',markersize)
+    plot(ZMP(1,1:plot_idx).*factor,ZMP(2,1:plot_idx).*factor,'-','Color',history_line_color)%,'MarkerSize',markersize)
+    ZMP_plot_cur_marker = plot(ZMP(1,plot_idx).*factor,ZMP(2,plot_idx).*factor,'kx','MarkerSize',markersize);
     
     % need to plot lines as well? or large enough dots
 
     % plot formatting
-%     subplot(1,3,1)
     sep_plot = figure(sep_plot_num);
     title('Contact Joint z-Axis Force')
     ylim([0 max_sup+0.1])
@@ -590,19 +604,19 @@ for plot_idx = 1:skip_rate:length(time) % length(time) % length(time) %length(ti
     set(gca,'FontSize',fontsize)
     set(gcf,'color','w')
     box on
-%     subplot(1,3,2)
+
     fric_plot = figure(fric_plot_num);
     title('Friction Cone')
     xlabel('x-axis Force (N)')
     ylabel('y-axis Force (N)')
-    xlim([-0.65 0.65])
-    ylim([-0.65 0.65])
+    xlim([-4 4])
+    ylim([-4 4])
     set(gca,'FontSize',fontsize)
     set(gcf,'color','w')
     axis square
 %     axis equal
     box on
-%     subplot(1,3,3)
+
     tip_plot = figure(tip_plot_num);
     title('Zero Moment Point')
     xlabel('x_o position (cm)')
