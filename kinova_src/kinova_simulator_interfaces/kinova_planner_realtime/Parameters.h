@@ -7,7 +7,7 @@
 
 // Parameters for PZsparse.h:
     // monomials with a coefficient smaller than this number will be reduced
-    #define SIMPLIFY_THRESHOLD 3e-4
+    #define SIMPLIFY_THRESHOLD 4e-4
 
 // Parameters for Trajectories.h:
     // duration of the Bezier curve
@@ -47,9 +47,9 @@
     #define TURN_OFF_INPUT_CONSTRAINTS false
 
 // Parameters for armour_main.cpp
-    #define IPOPT_OPTIMIZATION_TOLERANCE 1e-7
+    #define IPOPT_OPTIMIZATION_TOLERANCE 1e-5
 
-    #define IPOPT_MAX_CPU_TIME 8.0
+    #define IPOPT_MAX_CPU_TIME 2.0
 
     #define IPOPT_PRINT_LEVEL 0
 

@@ -66,9 +66,10 @@ stop_threshold = 4 ; % number of failed iterations before exiting
 
 % file handling
 save_file_header = 'trial_' ;
+file_location = '../results/random/' ;
 % file_location = '../results/random_24pi/' ;
 % file_location = '../results/random_turnoffinputconstraints/' ;
-file_location = '../results/random_armtd/' ;
+% file_location = '../results/random_armtd/' ;
 if ~exist(file_location, 'dir')
     mkdir(file_location);
 end
@@ -98,7 +99,7 @@ use_cuda_flag = true;
 
 %% automated from here
 % run loop
-for idx = 1:length(world_file_list)
+for idx = 99:length(world_file_list)
     clc; 
     fprintf("THIS IS WORLD %d\n\n", idx);
 
