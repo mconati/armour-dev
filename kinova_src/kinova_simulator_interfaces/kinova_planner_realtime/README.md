@@ -40,11 +40,13 @@ This header file defines an NLP class required by Ipopt.
 ## Parameters
 All hyperparameters are defined in Parameters.h and all robot physical properties should be defined in "Robot"Info.h
 
-* NUM_JOINTS: number of joints (including fixed joints).
+* NUM JOINTS: number of joints (including fixed joints).
 
-* NUM_FACTORS: number of actuated&parameterized joints, Note that we assume that all actuated joints are sequentially located at the beginning of the kinematics chain.
+* NUM FACTORS: number of actuated&parameterized joints, Note that we assume that all actuated joints are sequentially located at the beginning of the kinematics chain.
 
-* SIMPLIFY_THRESHOLD: If the coefficient of a monomial in the polynomial zonotope is smaller than this threshold, then it will be reduced and over-approximated into the independent interval of the polynomial zonotope.
+* SIMPLIFY THRESHOLD: If the coefficient of a monomial in the polynomial zonotope is smaller than this threshold, then it will be reduced and over-approximated into the independent interval of the polynomial zonotope.
+
+* DURATION: the total duration of the trajectory.
 
 * NUM TIME STEPS: number of time intervals split in the planning horizon (This must be an even number for the current 5-degree Bezier curve class!)
 
@@ -60,15 +62,15 @@ All hyperparameters are defined in Parameters.h and all robot physical propertie
 
 * TORQUE INPUT CONSTRAINT VIOLATION THRESHOLD: threshold for input constraint considered to be violated (unit: Newton * meter)
 
-* IPOPT_OPTIMIZATION_TOLERANCE: Ipopt option. Click [here](https://coin-or.github.io/Ipopt/OPTIONS.html#OPT_tol) for more info
+* IPOPT OPTIMIZATION TOLERANCE: Ipopt option. Click [here](https://coin-or.github.io/Ipopt/OPTIONS.html#OPT_tol) for more info
 
-* IPOPT_MAX_CPU_TIME: Ipopt option. Click [here](https://coin-or.github.io/Ipopt/OPTIONS.html#OPT_max_cpu_time) for more info
+* IPOPT TIME BUFFER: setup Ipopt option IPOPT_MAX_WALL_TIME. The time allocated for Ipopt is equal to (DURATION / 2) - (time taken by generating reachable sets) - (this parameter), so that the total time cost is always lower than half of the DURATION to enforce receding horizon planning. Click [here](https://coin-or.github.io/Ipopt/OPTIONS.html#OPT_max_wall_time) for more info
 
-* IPOPT_PRINT_LEVEL: Ipopt option. Click [here](https://coin-or.github.io/Ipopt/OPTIONS.html#OPT_print_level) for more info
+* IPOPT PRINT LEVEL: Ipopt option. Click [here](https://coin-or.github.io/Ipopt/OPTIONS.html#OPT_print_level) for more info
 
-* IPOPT_MU_STRATEGY: Ipopt option. Click [here](https://coin-or.github.io/Ipopt/OPTIONS.html#OPT_mu_strategy) for more info
+* IPOPT MU STRATEGY: Ipopt option. Click [here](https://coin-or.github.io/Ipopt/OPTIONS.html#OPT_mu_strategy) for more info
 
-* IPOPT_LINEAR_SOLVER: Ipopt option. Click [here](https://coin-or.github.io/Ipopt/OPTIONS.html#OPT_linear_solver) for more info
+* IPOPT LINEAR SOLVER: Ipopt option. Click [here](https://coin-or.github.io/Ipopt/OPTIONS.html#OPT_linear_solver) for more info
 
 (You can add more Ipopt options in armour_main.cpp)
 
