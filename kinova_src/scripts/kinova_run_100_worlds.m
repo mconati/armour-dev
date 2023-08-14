@@ -57,19 +57,19 @@ plot_waypoint_arm_flag  = true ;
 lookahead_distance = 0.1 ;
 
 % plotting
-plot_while_running = false ;
+plot_while_running = true ;
 
 % simulation
 max_sim_time = 172800 ; % 48 hours
-max_sim_iter = 300 ;
+max_sim_iter = 500 ;
 stop_threshold = 4 ; % number of failed iterations before exiting
 
 % file handling
 save_file_header = 'trial_' ;
-file_location = '../results/random/' ;
-% file_location = '../results/random_24pi/' ;
-% file_location = '../results/random_turnoffinputconstraints/' ;
-% file_location = '../results/random_armtd/' ;
+file_location = '../results/new_random/' ;
+% file_location = '../results/new_random_24pi/' ;
+% file_location = '../results/new_random_turnoffinputconstraints/' ;
+% file_location = '../results/new_random_armtd/' ;
 if ~exist(file_location, 'dir')
     mkdir(file_location);
 end
@@ -99,7 +99,7 @@ use_cuda_flag = true;
 
 %% automated from here
 % run loop
-for idx = 99:length(world_file_list)
+for idx = 1:length(world_file_list)
     clc; 
     fprintf("THIS IS WORLD %d\n\n", idx);
 
