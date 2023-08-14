@@ -7,7 +7,7 @@
 
 // Parameters for PZsparse.h:
     // monomials with a coefficient smaller than this number will be reduced
-    #define SIMPLIFY_THRESHOLD 4e-4
+    #define SIMPLIFY_THRESHOLD 5e-4
 
 // Parameters for Trajectories.h:
     // duration of the Bezier curve
@@ -18,7 +18,7 @@
 
     // range of parameters (size of generators in PZ).
     // const double k_range[NUM_FACTORS] = { M_PI / 24, M_PI / 24, M_PI / 24, M_PI / 24, M_PI / 24, M_PI / 24, M_PI / 24 }; // (radian)
-    const double k_range[NUM_FACTORS] = { M_PI / 48, M_PI / 48, M_PI / 48, M_PI / 48, M_PI / 48, M_PI / 48, M_PI / 48 }; // (radian)
+    const double k_range[NUM_FACTORS] = { M_PI / 48, M_PI / 48, M_PI / 48, M_PI / 48, M_PI / 48, M_PI / 48, M_PI / 60 }; // (radian)
     // const double k_range[NUM_FACTORS] = { M_PI / 72, M_PI / 72, M_PI / 72, M_PI / 72, M_PI / 72, M_PI / 72, M_PI / 96 }; // (radian)
 
 // Parameters for CollisionChecking.h:
@@ -47,9 +47,9 @@
     #define TURN_OFF_INPUT_CONSTRAINTS false
 
 // Parameters for armour_main.cpp
-    #define IPOPT_OPTIMIZATION_TOLERANCE 1e-5
+    #define IPOPT_OPTIMIZATION_TOLERANCE 1e-4
 
-    #define IPOPT_MAX_CPU_TIME 2.0
+    #define IPOPT_TIME_BUFFER 0.01
 
     #define IPOPT_PRINT_LEVEL 0
 

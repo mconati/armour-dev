@@ -224,6 +224,10 @@ Section II:
     auto duration1 = std::chrono::duration_cast<std::chrono::milliseconds>(stop1 - start1);
     cout << "        CUDA & C++: Time taken by generating reachable sets: " << duration1.count() << " milliseconds" << endl;
 
+    double time_for_optimization = DURATION * 0.5 - duration1.count() / 1000.0 - IPOPT_TIME_BUFFER;
+    time_for_optimization = max(time_for_optimization, 0.0);
+    cout << "        CUDA & C++: Time allocated for Ipopt: " << time_for_optimization * 1000.0 << " milliseconds" << endl;
+
 /*
 Section III:
     Solve the optimization problem using IPOPT
@@ -242,7 +246,7 @@ Section III:
     SmartPtr<IpoptApplication> app = IpoptApplicationFactory();
 
     app->Options()->SetNumericValue("tol", IPOPT_OPTIMIZATION_TOLERANCE);
-	app->Options()->SetNumericValue("max_cpu_time", IPOPT_MAX_CPU_TIME);
+	app->Options()->SetNumericValue("max_wall_time", time_for_optimization);
 	app->Options()->SetIntegerValue("print_level", IPOPT_PRINT_LEVEL);
     app->Options()->SetStringValue("mu_strategy", IPOPT_MU_STRATEGY);
     app->Options()->SetStringValue("linear_solver", IPOPT_LINEAR_SOLVER);
@@ -276,14 +280,27 @@ Section III:
     auto stop2 = std::chrono::high_resolution_clock::now();
     auto duration2 = std::chrono::duration_cast<std::chrono::milliseconds>(stop2 - start2);
 
-    if (status == Maximum_CpuTime_Exceeded) {
-        cout << "        CUDA & C++: Ipopt maximum CPU time exceeded!\n";
-    }
-    
     if (status == Invalid_Option) {
         cout << "        CUDA & C++: Cannot find HSL library! Need to put libcoinhsl.so in proper path!\n";
     }
     else {
+        if (status == Maximum_CpuTime_Exceeded) {
+            cout << "        CUDA & C++: Ipopt maximum CPU time exceeded!\n";
+            if (mynlp->feasible) {
+                cout << "        CUDA & C++: Found a feasible solution!\n";
+            }
+            else {
+                cout << "        CUDA & C++: Did not find a feasible solution!\n";
+            }
+        }
+        else {
+            if (mynlp->feasible) {
+                cout << "        CUDA & C++: Found an optimal solution!\n";
+            }
+            else {
+                cout << "        CUDA & C++: Problem infeasible!\n";
+            }
+        }
         cout << "        CUDA & C++: Time taken by Ipopt: " << duration2.count() << " milliseconds" << endl;
     }
 
