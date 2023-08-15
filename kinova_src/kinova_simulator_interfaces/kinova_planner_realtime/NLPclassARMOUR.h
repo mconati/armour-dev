@@ -137,7 +137,7 @@ public:
     );
     //@}
 
-    double t_plan = 1.0;
+    double t_plan = DURATION;
 
     double solution[NUM_FACTORS];
 

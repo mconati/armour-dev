@@ -1,4 +1,5 @@
-#include "NLPclass.h"
+// #include "NLPclass.h"
+#include "NLPclassARMOUR.h"
 #include "FastCollisionChecking.h"
 #include "ReachsetsPath.h"
 #include <cmath>

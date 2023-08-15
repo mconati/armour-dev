@@ -2,11 +2,11 @@
 #define PARAMETERS_H
 
 // #include "FetchInfo.h"
-// #include "KinovaInfo.h"
+#include "KinovaInfo.h"
 // #include "KinovaWithoutGripperInfo.h"
 // #include "KinovaForceInfo.h"
 // #include "KinovaFixedGripperInfo.h"
-#include "KinovaForceHardwareInfo.h"
+// #include "KinovaForceHardwareInfo.h"
 
 // #define DEBUG_MODE true
 
@@ -16,13 +16,13 @@
 
 // Parameters for Trajectories.h:
     // Duration of the Bezier Curve
-    #define DURATION 2.0
+    #define DURATION 1.75
 
     // number of time steps (This should be an EVEN number!!!)
     #define NUM_TIME_STEPS 40
 
     // range of parameters (size of generators in PZ).
-    const double k_range[NUM_FACTORS] = { M_PI / 32, M_PI / 32, M_PI / 72, M_PI / 72, M_PI / 72, M_PI / 32, M_PI / 72 }; // (radian)
+    const double k_range[NUM_FACTORS] = { M_PI / 24, M_PI / 24, M_PI / 60, M_PI / 24, M_PI / 60, M_PI / 24, M_PI / 60 }; // (radian)
 
 // Parameters for CollisionChecking.h:
     // maximum number of obstacles (used for memory pre-allocation)
