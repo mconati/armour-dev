@@ -66,10 +66,10 @@ stop_threshold = 4 ; % number of failed iterations before exiting
 
 % file handling
 save_file_header = 'trial_' ;
-file_location = '../results/new_random/' ;
-% file_location = '../results/new_random_24pi/' ;
-% file_location = '../results/new_random_turnoffinputconstraints/' ;
-% file_location = '../results/new_random_armtd/' ;
+file_location = '../results/random/' ;
+% file_location = '../results/random_24pi/' ;
+% file_location = '../results/random_turnoffinputconstraints/' ;
+% file_location = '../results/random_armtd/' ;
 if ~exist(file_location, 'dir')
     mkdir(file_location);
 end
