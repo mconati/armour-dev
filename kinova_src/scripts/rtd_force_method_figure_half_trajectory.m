@@ -59,11 +59,14 @@ save_plot = false;
 
 fontsize = 16;
 
+nominal_line_width = 2;
+
 %% Color Coding
 
 unsliced_color = 1/256*[90,200,243];
 % slice_color = 1/256*[72,181,163]; % light green
-slice_color = 1/256*[75,154,76]; % dark green
+slice_color = 1/256*[186, 85, 255]; % light purple
+% 1/256*[75,154,76]; % dark green
 face_alpha = 0.3;
 face_alpha_light = 0.03;
 
@@ -80,7 +83,9 @@ slice_step_color = 1/256*[255, 0, 0];
 
 unsliced_color = 1/256*[90,200,243];
 unsliced_w_err_color = 1/256*[72,181,163];
-sliced_color = 1/256*[165,137,193];
+% sliced_color = 1/256*[165,137,193]; % green
+sliced_color = 1/256*[177, 156, 217]; % light purple
+
 
 blues = 1/256*[222,235,247;
 158,202,225;
@@ -100,9 +105,13 @@ time_to_slice = 6;
 % q_0 = [0;-pi/4;0;-pi/2;0;pi/4;0];
 % qd_0= [-pi/3;-pi/12;0;0;0;0;0];
 % qdd_0 = [pi/3;-pi/6;0;0;0;0;-pi/24];
-% new figure
+% current paper figure values
+% q_0 = [pi/4;-pi/4;0;-pi/2;0;pi/4;0];
+% qd_0= [-pi/3;pi/30;0;0;0;0;0];
+% qdd_0 = [0;pi/30;0;0;0;0;0];
+% Beyster App
 q_0 = [pi/4;-pi/4;0;-pi/2;0;pi/4;0];
-qd_0= [-pi/3;pi/30;0;0;0;0;0];
+qd_0= [-pi/4;pi/30;0;0;0;0;0];
 qdd_0 = [0;pi/30;0;0;0;0;0];
 
 % clf(101)
@@ -123,7 +132,8 @@ add_ultimate_bound = true;
 % old figure
 % kvec = [0.6; -0.8; 0.5; -0.2; -0.4; 0.35; 0.34];
 % new figure
-kvec = [0.001; 0.5; 0.001; 0.5; 0.001; 0.5; 0.001];
+% kvec = [0.001; 0.5; 0.001; 0.5; 0.001; 0.5; 0.001]; % current paper value
+kvec = [0.001; 0.48; 0.001; 0.48; 0.001; 0.48; 0.001];
 % kvec = [-1;-1;-1;-1;-1;-1;-1];
 % kvec = [1;1;1;1;1;1;1];
 
@@ -160,11 +170,11 @@ q_des_dt = zeros(length(kvec), n_steps);
 qd_des = zeros(length(kvec), n_steps);
 qdd_des = zeros(length(kvec), n_steps);
 
-for i = 1:length(t_steps)
+parfor i = 1:length(t_steps)
     [q_des(:,i), qd_des(:,i), qdd_des(:,i)] = desired_trajectory(P, q_0, qd_0, qdd_0, t_steps(i), kvec);
 end
 
-for i = 1:jrs_info.n_t
+parfor i = 1:jrs_info.n_t
     [q_des_dt(:,i), ~, ~] = desired_trajectory(P, q_0, qd_0, qdd_0, t_steps_dt(i), kvec);
 end
 
@@ -188,8 +198,9 @@ for i = 1:jrs_info.n_t
 end
 
 %% Calling PZRNEA
-
-for i = 1:jrs_info.n_t
+f_int = cell(1,jrs_info.n_t);
+n_int = cell(1,jrs_info.n_t);
+parfor i = 1:jrs_info.n_t
     [tau_temp, f_temp, n_temp] = poly_zonotope_rnea(R{i}, R_t{i}, Qd{i}, Qd_a{i}, Qdd_a{i}, true, params.pz_interval);
 %     tau_int{i} = tau_temp{10,1};
     f_int{i} = f_temp{10,1};
@@ -255,7 +266,7 @@ sep_nom = -1*f_nom(3,:);
 slip_nom = sqrt(f_nom(1,:).^2+f_nom(2,:).^2) - u_s.*abs(f_nom(3,:));
 slip2_nom = f_nom(1,:).^2+f_nom(2,:).^2 - u_s^2.*f_nom(3,:).^2;
 
-for i = 1:floor(length(t_steps)/2)
+for i = 1:length(t_steps) % floor(length(t_steps)/2)
     % tipping constraint the normal way
     ZMP_top = cross([0;0;1],n_nom(:,i)); % normal vector should come first
     ZMP_bottom = dot([0;0;1],f_nom(:,i));
@@ -277,7 +288,7 @@ if plot_force_trajectory
 
     plot_idx = plot_idx + 1;
     figure(plot_idx); clf; hold on;
-    title('Contact Joint z-Axis Force')
+%     title('Constraint Boundary')
 
     % plot unsliced force overapproximation
     for i = 1:time_index
@@ -295,7 +306,7 @@ if plot_force_trajectory
         p1.LineWidth = 0.1;
         p1.FaceColor = unsliced_color;
         p1.FaceAlpha = face_alpha;
-
+        p1.EdgeColor = unsliced_color;
     end
 
     % plot sliced force overapproximation
@@ -312,14 +323,18 @@ if plot_force_trajectory
 %         p1.EdgeColor = pz_err_color;
         p1.LineWidth = 0.1;
         p1.FaceColor = slice_color;
+        p1.EdgeColor = slice_color;
         p1.FaceAlpha = face_alpha;
     end
 
     % plot the nominal values
-    plot(t_steps(1:time_index+1), f_nom(force,1:time_index+1),'-k')
+    plot(t_steps(1:time_index+1), f_nom(force,1:time_index+1),'-k','LineWidth',nominal_line_width)
+
+    % plot separation constraint boundary
+    plot([t_steps(1) t_steps(time_index+1)], [0 0],'-r')
 
     % formatting for plot
-    ylim([0 2.5])
+    ylim([-0.1 2.5])
     xlabel('Time (s)')
     ylabel('Force (N)')
     set(gca,'FontSize',fontsize)
@@ -331,7 +346,7 @@ end
 plot_idx = plot_idx + 1;
 figure(plot_idx); clf; hold on;
 % title('Friction Cone Unsliced Plot')
-title('Friction Cone')
+% title('Friction Cone')
 
 % plot the friction cone boundary
 max_fz = max(f_nom(3,1:time_index));
@@ -366,7 +381,7 @@ for i = 1:time_index
 end
 
 % plotting the nominal force values
-plot(f_nom(1,1:time_index+1),f_nom(2,1:time_index+1),'-k')
+plot(f_nom(1,1:time_index+1),f_nom(2,1:time_index+1),'-k','LineWidth',nominal_line_width)
 
 % plot formatting
 xlabel('x-axis Force (N)')
@@ -545,7 +560,7 @@ axis equal
 plot_idx = plot_idx + 1;
 figure(plot_idx); clf; hold on;
 % title('ZMP Unsliced Plot')
-title('Zero Moment Point')
+% title('Support Basin')
 factor = 100;
 
 % plot constraint boundary
@@ -580,7 +595,10 @@ for i = 1:time_index
 end
 
 % plot nominal ZMP point
-tipplot2 = plot(ZMP(1,1:time_index+1).*factor,ZMP(2,1:time_index+1).*factor,'-k');
+tipplot2 = plot(ZMP(1,1:time_index+1).*factor,ZMP(2,1:time_index+1).*factor,'-k','LineWidth',nominal_line_width);
+
+set(gca,'FontSize',fontsize)
+
 
 %% Plotting Separation Constraint
 
@@ -665,7 +683,7 @@ if plot_trajectory_1
         end
         
         % plot scalar trajectories
-        plot(t_steps(1:time_index+1), rad2deg(q_des(j,1:time_index+1)), '-k');
+        plot(t_steps(1:time_index+1), rad2deg(q_des(j,1:time_index+1)), '-k','LineWidth',nominal_line_width);
 %         plot(t_steps, q_max(j,:), '--r');
 %         plot(t_steps, q_min(j,:), '--r');
 

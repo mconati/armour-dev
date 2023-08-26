@@ -5,7 +5,7 @@ clc;
 
 %% Loading Data
 % data = readmatrix("HardwareVideoROSData_04222023.csv");
-data = readmatrix("HardwareSuccessROSData_v2_05_04_2023.csv");
+data = readmatrix("HardwareVideo_MultipleRuns_06_15_2023_ROSBAG_Data.csv");
 
 %% Sorting Data
 
@@ -48,4 +48,4 @@ rosbag.traj_vel = rosbag.traj_vel(all(~isnan(rosbag.traj_vel),2),:);
 
 %% Saving ROS Bag Data as .mat File
 
-% save('HardwareVideo_MultipleTrials_05_17_2023_ROSData.mat','rosbag')
+save('HardwareVideo_MultipleRuns_06_15_2023_ROSBAG_Data.mat','rosbag')

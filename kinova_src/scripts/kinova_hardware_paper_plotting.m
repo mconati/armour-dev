@@ -12,7 +12,7 @@ fig_num = 1;
 %% Parameters
 
 fontsize = 16;
-linewidth = 3;
+linewidth = 2;
 % number of time steps to skip
 skip_num = 1;
 % planning iteration to plot
@@ -21,34 +21,37 @@ plan_index = 1;
 traj_index = 1;
 
 % match to hardware settings
-time_steps = 50; 
+time_steps = 36; 
 time_index = time_steps/2; % for plotting half a trajectory
-duration = 1.75;
+duration = 2.0;
 dt = duration/time_steps;
 t_traj = linspace(0,duration,time_steps);
 
 %% Planning Iteration to Plot
 
-time_in_video = 29; % seconds
+time_in_video = 35; % seconds
 iter_to_plot = floor(time_in_video / (duration / 2));
 start_time_to_plot = iter_to_plot * (duration / 2);
 end_time_to_plot = (iter_to_plot + 1) * (duration / 2);
 
 %% Color Coding
 
+history_line_color = 1/256*[211,211,211];
 unsliced_color = 1/256*[90,200,243];
 % slice_color = 1/256*[72,181,163]; % light green
-slice_color = 1/256*[75,154,76]; % dark green
+% slice_color = 1/256*[75,154,76]; % dark green
+slice_color = 1/256*[186,85,255]; % light purple
 face_alpha = 0.3;
 face_alpha_light = 0.03;
-edge_alpha = 0.5;
+edge_alpha = 0.4;
 
 %% Load Hardware ROS Data
 
-load_file = 'HardwareVideo_MultipleTrials_05_17_2023_ROSData.mat';
+load_file = 'HardwareVideo_MultipleRuns_06_15_2023_ROSBAG_Data.mat';
 agent_urdf = 'Kinova_Grasp_w_Tray.urdf';
 
-% load_file = 'HardwareFailureROSData.mat';
+% load_file = 'HardwareFailureROSData_05_04_2023.mat';
+% load_file = 'HardwareSuccessROSData_v2_05_04_2023.mat';
 % agent_urdf = 'Kinova_Grasp_URDF.urdf';
 
 data = load(load_file);
@@ -77,17 +80,17 @@ control_torque = data.rosbag.control_torque;
 
 % for reach set values
 rs_duration = data.rosbag.debug_duration; % for determining if braking maneuver occured
-rs_pos = data.rosbag.traj_pos;
-rs_vel = data.rosbag.traj_vel;
-rs_accel = data.rosbag.traj_accel;
-rs_opt_k = data.rosbag.traj_k;
+rs_pos = data.rosbag.debug_traj_pos;
+rs_vel = data.rosbag.debug_traj_vel;
+rs_accel = data.rosbag.debug_traj_accel;
+rs_opt_k = data.rosbag.debug_traj_k;
 
 %% Load Robot Parameters
 
 % match with Hardware experiment settings
 add_uncertainty_to = 'all'; % choose 'all', 'link', or 'none'
 links_with_uncertainty = {}; % if add_uncertainty_to = 'link', specify links here.
-uncertain_mass_range = [0.98, 1.02];
+uncertain_mass_range = [0.97, 1.03];
 
 robot = importrobot(agent_urdf);
 robot.DataFormat = 'col';
@@ -119,16 +122,16 @@ end
 
 %% Plotting the States
 
-fig_num = fig_num + 1;
-figure(fig_num)
-hold on
-
-subplot(3,1,1)
-plot(exp_time,pos)
-subplot(3,1,2)
-plot(exp_time,vel)
-subplot(3,1,3)
-plot(exp_time,qdd_post)
+% fig_num = fig_num + 1;
+% figure(fig_num)
+% hold on
+% 
+% subplot(3,1,1)
+% plot(exp_time,pos)
+% subplot(3,1,2)
+% plot(exp_time,vel)
+% subplot(3,1,3)
+% plot(exp_time,qdd_post)
 
 %%
 
@@ -180,9 +183,9 @@ for i = 1:length(pos)
     tip2(i) = ZMP_top(1)^2 + ZMP_top(2)^2 - ZMP_bottom^2*(surf_rad)^2;
 end
 
-fig_num = fig_num + 1;
-figure(fig_num)
-plot(exp_time,slip)
+% fig_num = fig_num + 1;
+% figure(fig_num)
+% plot(exp_time,slip)
 
 %% Calculate Unsliced Reachable Sets
 
@@ -198,13 +201,38 @@ plot(exp_time,slip)
 % ! don't need the obstacle for the unsliced reach sets ! and then can
 % slice using the provided k
 
+% find the correct index to pull from data
+iter_counter = 0;
+time_threshold = -1;
+
+for plot_idx = 1:length(exp_time)
+
+    if exp_time(plot_idx) > time_threshold % check if new planning iteration
+
+        iter_counter = iter_counter+1;
+
+        if time_threshold == -1
+            time_threshold = duration/2;
+        else
+            % increase time_threshold by duration?
+            time_threshold = time_threshold + duration/2;
+        end
+
+    end
+
+    if iter_counter == iter_to_plot
+        break
+    end
+
+end
+
 % initial condition
-q_0 = rs_pos(iter_to_plot,:);
-q_dot_0 = rs_vel(iter_to_plot,:);
-q_ddot_0 = rs_accel(iter_to_plot,:);
+q_0 = rs_pos(plot_idx,:);
+q_dot_0 = rs_vel(plot_idx,:);
+q_ddot_0 = rs_accel(plot_idx,:);
 
 % pass in the k_opt as 
-q_des = rs_opt_k(iter_to_plot,:);
+q_des = rs_opt_k(plot_idx,:);
 
 % organize input to cuda program
 % P.vdisp('Calling CUDA & C++ Program!',3);
@@ -358,11 +386,12 @@ for i = 1:time_index
 
     force_int_unsliced = interval(force_PZ_unsliced{i});
 
-    fz1 = patch([t_traj(i)+dt; t_traj(i)+dt; t_traj(i); t_traj(i)], [force_int_unsliced.sup(3); force_int_unsliced.inf(3); force_int_unsliced.inf(3); force_int_unsliced.sup(3)],'b');
+    fz1 = patch([t_traj(i)+dt+exp_time(start_time_index)-0.01; t_traj(i)+dt+exp_time(start_time_index)-0.01; t_traj(i)+exp_time(start_time_index)-0.01; t_traj(i)+exp_time(start_time_index)-0.01], [force_int_unsliced.sup(3); force_int_unsliced.inf(3); force_int_unsliced.inf(3); force_int_unsliced.sup(3)],'b');
     fz1.LineWidth = 0.01;
     fz1.FaceColor = unsliced_color;
     fz1.FaceAlpha = face_alpha;
     fz1.EdgeAlpha = edge_alpha;
+    fz1.EdgeColor = unsliced_color;
 
     if force_int_unsliced.sup(3) > max_sup
         max_sup = force_int_unsliced.sup(3);
@@ -372,25 +401,28 @@ end
 
 % plot sliced force overapproximation
 for i = 1:time_index
-    fz2 = patch([t_traj(i)+dt; t_traj(i)+dt; t_traj(i); t_traj(i)], [force_upper(i,3); force_lower(i,3); force_lower(i,3); force_upper(i,3)],'b');
+    fz2 = patch([t_traj(i)+dt+exp_time(start_time_index)-0.01; t_traj(i)+dt+exp_time(start_time_index)-0.01; t_traj(i)+exp_time(start_time_index)-0.01; t_traj(i)+exp_time(start_time_index)-0.01], [force_upper(i,3); force_lower(i,3); force_lower(i,3); force_upper(i,3)],'b');
     fz2.LineWidth = 0.01;
     fz2.FaceColor = slice_color;
     fz2.FaceAlpha = face_alpha;
     fz2.EdgeAlpha = edge_alpha;
+    fz2.EdgeColor = slice_color;
 end
 
 % plot the nominal values
 nom_idx = find(exp_time < t_traj(time_index+1));
-plot(exp_time(start_time_index:end_time_index), force(3,start_time_index:end_time_index),'-k','LineWidth',linewidth)
+plot(exp_time(start_time_index:end_time_index)-0.01, force(3,start_time_index:end_time_index),'-k','LineWidth',linewidth)
+plot([exp_time(start_time_index) exp_time(end_time_index)],[0 0],'-r')
 
 % formatting for plot
-ylim([0 max_sup+0.1])
-xlim([exp_time(start_time_index) exp_time(end_time_index)])
+ylim([-0.5 max_sup+0.1])
+xlim([floor(exp_time(start_time_index)) round(exp_time(end_time_index))])
 xlabel('Time (s)')
 ylabel('Force (N)')
 title('Contact Joint z-Axis Force')
 set(gca,'FontSize',fontsize)
-
+set(gcf,'color','w')
+box on
 
 %% Plotting Friction Cone Diagram
 
@@ -401,31 +433,36 @@ hold on
 % plotting friction cone boundary
 max_fz = max(force(3,start_time_index:end_time_index)); % UPDATE THIS SHOULDN't BE TIME INDEX
 min_fz = min(force(3,start_time_index:end_time_index));
-[max_fz_x, max_fz_y] = circle(2*max_fz*u_s,0,0,0,2*pi,0.01);
-[min_fz_x, min_fz_y] = circle(2*min_fz*u_s,0,0,0,2*pi,0.01);
-plot(max_fz_x, max_fz_y,'-r')
-plot(min_fz_x, min_fz_y,'-r')
-fill([max_fz_x flip(min_fz_x)],[max_fz_y flip(min_fz_y)],'r','FaceAlpha',0.9)
-fp_bound = line([max_fz_x(end) min_fz_x(1)],[max_fz_y(end) min_fz_y(1)]);
-set(fp_bound,'Color','r') % ,'EdgeAlpha',0.3)
+% [max_fz_x, max_fz_y] = circle(2*max_fz*u_s,0,0,0,2*pi,0.01);
+% [min_fz_x, min_fz_y] = circle(2*min_fz*u_s,0,0,0,2*pi,0.01);
+% plot(max_fz_x, max_fz_y,'-r')
+% plot(min_fz_x, min_fz_y,'-r')
+% fill([max_fz_x flip(min_fz_x)],[max_fz_y flip(min_fz_y)],'r','FaceAlpha',0.9)
+% fp_bound = line([max_fz_x(end) min_fz_x(1)],[max_fz_y(end) min_fz_y(1)]);
+% set(fp_bound,'Color','r') % ,'EdgeAlpha',0.3)
 
-% % plotting unsliced overapproximation
-% for i = 1:skip_num:time_index
-% 
-%     force_int_unsliced = interval(force_PZ_unsliced{i});
-% 
-%     patch([force_int_unsliced.inf(1),force_int_unsliced.sup(1),force_int_unsliced.sup(1),force_int_unsliced.inf(1)],[force_int_unsliced.inf(2),force_int_unsliced.inf(2),force_int_unsliced.sup(2),force_int_unsliced.sup(2)],unsliced_color,'FaceAlpha',face_alpha_light,'EdgeAlpha',edge_alpha,'EdgeColor',unsliced_color)
-% 
-% end
-% 
-% % plotting sliced overapproximation
-% for i = 1:skip_num:time_index
-% 
-%     patch([force_lower(i,1),force_upper(i,1),force_upper(i,1),force_lower(i,1)],[force_lower(i,2),force_lower(i,2),force_upper(i,2),force_upper(i,2)],slice_color,'FaceAlpha',face_alpha_light,'EdgeAlpha',edge_alpha,'EdgeColor',slice_color)
-% 
-% end
+plotConcentricCircles(fig_num,min_fz*u_s,max_fz*u_s,[1,0,0,0.25],'r')
 
-% plotting nominal values
+% plotting unsliced overapproximation
+for i = 1:skip_num:time_index
+
+    force_int_unsliced = interval(force_PZ_unsliced{i});
+
+    patch([force_int_unsliced.inf(1),force_int_unsliced.sup(1),force_int_unsliced.sup(1),force_int_unsliced.inf(1)],[force_int_unsliced.inf(2),force_int_unsliced.inf(2),force_int_unsliced.sup(2),force_int_unsliced.sup(2)],unsliced_color,'FaceAlpha',face_alpha_light,'EdgeAlpha',edge_alpha,'EdgeColor',unsliced_color)
+
+end
+
+% plotting sliced overapproximation
+for i = 1:skip_num:time_index
+
+    patch([force_lower(i,1),force_upper(i,1),force_upper(i,1),force_lower(i,1)],[force_lower(i,2),force_lower(i,2),force_upper(i,2),force_upper(i,2)],slice_color,'FaceAlpha',face_alpha_light,'EdgeAlpha',edge_alpha,'EdgeColor',slice_color)
+
+end
+
+% plotting nominal values of past planning iterations
+% plot(force(1,1:plot_idx),force(2,1:plot_idx),'-','Color',history_line_color)%,'MarkerSize',markersize)
+
+% plotting nominal values of current planning iteration
 nom_idx = find(exp_time < t_traj(time_index+1));
 plot(force(1,start_time_index:end_time_index),force(2,start_time_index:end_time_index),'-k')
 
@@ -436,6 +473,8 @@ title('Friction Cone')
 set(gca,'FontSize',fontsize)
 axis square
 axis equal
+set(gcf,'color','w')
+box on
 
 %% Plotting ZMP Diagram
 
@@ -476,9 +515,13 @@ for i = 1:skip_num:time_index
     zmp2.FaceAlpha = face_alpha_light;
 end
 
+% plotting nominal values of past planning iterations
+% plot(ZMP(1,1:plot_idx).*factor,ZMP(2,1:plot_idx).*factor,'-','Color',history_line_color)%,'MarkerSize',markersize)
+
 % plot nominal
 nom_idx = find(exp_time < t_traj(time_index+1));
 plot(ZMP(1,start_time_index:end_time_index).*factor,ZMP(2,start_time_index:end_time_index).*factor,'-k')
+
 
 % plot formatting
 xlabel('x_o position (cm)')
@@ -486,8 +529,10 @@ ylabel('y_o position (cm)')
 title('Zero Moment Point')
 axis('square')
 axis equal
-grid on
+% grid on
 set(gca,'FontSize',fontsize)
+set(gcf,'color','w')
+box on
 
 %% helper functions
 function [link_poly_zonotopes, link_sizes, mesh] = create_link_poly_zonos(robot)
@@ -693,4 +738,51 @@ function [M, C, g] = calculate_dynamics(q, qd, params)
     M = rnea_mass(q, params);
     C = rnea_coriolis(q, qd, params);
     g = rnea_gravity(q, params);
+end
+
+function plotConcentricCircles(fig, inner_radius, outer_radius, fill_color, edge_color)
+% PLOTCONCENTRICCIRCLES plots two concentric circles with specified properties.
+%   plotConcentricCircles(fig, inner_radius, outer_radius, fill_color, edge_color)
+%
+%   Inputs:
+%       fig:          Figure handle where the circles will be plotted.
+%       inner_radius: Inner radius of the donut (hole).
+%       outer_radius: Outer radius of the donut (edge).
+%       fill_color:   Color to fill the donut (e.g., 'r' for red).
+%       edge_color:   Color of the donut's edge (e.g., 'b' for blue).
+
+    % Switch to the specified figure or create a new one if not provided
+    if nargin < 1
+        fig = figure;
+    else
+        figure(fig); 
+    end
+    
+    hold on;
+    
+    rectangle('Position',[-outer_radius,-outer_radius,2*outer_radius,2*outer_radius],...
+        'Curvature',[1,1],...
+        'FaceColor',fill_color,...
+        'EdgeColor',edge_color); % Set the face color of the outer circle
+
+    % Plot the inner circle
+    rectangle('Position',[-inner_radius,-inner_radius,2*inner_radius,2*inner_radius],...
+        'Curvature',[1,1],...
+        'FaceColor','w',...     % Set the face color of the inner circle to white (hole)
+        'EdgeColor',edge_color); % Set the edge color of the inner circle
+
+%     hold off;
+
+%     % Set axis limits to better view the donut
+%     axis equal;
+%     xlim([-outer_radius-1, outer_radius+1]);
+%     ylim([-outer_radius-1, outer_radius+1]);
+% 
+%     % Set labels and title
+%     xlabel('X');
+%     ylabel('Y');
+%     title('Concentric Circles');
+% 
+%     % Display the grid for better visualization (optional)
+%     grid on;
 end
