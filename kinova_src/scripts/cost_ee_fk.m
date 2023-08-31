@@ -29,6 +29,8 @@ fk_result = simplify(forward_kinematics_symbolic(q_plan,params.true.T0,params.tr
 
 %%
 
-ee_pos = fk_result(1:3,4)
+ee_pos = fk_result(1:3,4);
 
-gradient(ee_pos)
+cost_ee_sym = sum(ee_pos);
+
+grad_cost_ee_sym = gradient(cost_sym)

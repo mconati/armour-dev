@@ -2,7 +2,7 @@ function T = forward_kinematics_symbolic(q, T0, joint_axes)
 
     T = sym(eye(4));
 
-    threshold = 1e-4;
+    threshold = 1e-10;
 
     for i = 1:size(T0, 3)
         R = T0(1:3,1:3,i);
