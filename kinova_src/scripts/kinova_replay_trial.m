@@ -2,8 +2,8 @@
 clear all;
 close all;
 
-% filename = 'trial_scene_059_.mat';
-filename = ['TestNewCost_FixedGoal_v3.mat'];
+filename = 'trial_scene_003_.mat';
+% filename = ['TestNewCost_FixedGoal_v3.mat'];
 
 verbosity = 0 ;
 dimension = 3 ;
