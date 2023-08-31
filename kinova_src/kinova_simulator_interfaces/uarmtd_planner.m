@@ -84,7 +84,7 @@ classdef uarmtd_planner < robot_arm_generic_planner
             P.combs.combs = generate_combinations_upto(200);
 
             data = load('kinova_test_folder_path');
-            P.kinova_test_folder_path = data.name; % kinova_test_folder_path; %  
+            P.kinova_test_folder_path = kinova_test_folder_path; %  
         end
         
         function init_info(P)
