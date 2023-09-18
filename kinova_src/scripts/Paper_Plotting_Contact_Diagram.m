@@ -49,20 +49,24 @@ goal_pose = [-pi/2-travel/2;-pi/2;0;0;0;0;0];
 % grid off
 
 figure(202)
+
 % plot robot in start pose
 ax = show(robot,start_pose,'Frames','off',PreservePlot=false,FastUpdate=true);
+
 % find patch to adjust transparency
 mesh_name = 'object_link';
 rbtpatches=findobj(ax.Children,'Type','patch','-regexp','DisplayName',mesh_name);
 set(rbtpatches,'FaceAlpha',0.6);
 % set(rbtpatches,'FaceColor',[1 0 0]);
+
+% set plot parameters
 view(-37.5,20)
 xlim([-0.5 0.5])
 ylim([-0.9 0.15])
 zlim([0 1])
+% zoom(1.0)
 grid off
 material dull
 % lighting gouraud
 % camlight
 lightangle(-37.5,20)
-% zoom(1.5)

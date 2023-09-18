@@ -45,11 +45,11 @@ edge_alpha = 0.5;
 
 %% Load Hardware ROS Data
 
-load_file = 'HardwareVideo_MultipleTrials_05_17_2023_ROSData.mat';
-agent_urdf = 'Kinova_Grasp_w_Tray.urdf';
+% load_file = 'HardwareVideo_MultipleTrials_05_17_2023_ROSData.mat';
+% agent_urdf = 'Kinova_Grasp_w_Tray.urdf';
 
-% load_file = 'HardwareFailureROSData.mat';
-% agent_urdf = 'Kinova_Grasp_URDF.urdf';
+load_file = 'HardwareSuccessROSData_v2_05_04_2023.mat';
+agent_urdf = 'Kinova_Grasp_URDF.urdf';
 
 data = load(load_file);
 
@@ -81,6 +81,21 @@ rs_pos = data.rosbag.traj_pos;
 rs_vel = data.rosbag.traj_vel;
 rs_accel = data.rosbag.traj_accel;
 rs_opt_k = data.rosbag.traj_k;
+
+% for error values
+pos_err = data.rosbag.pos_track_error;
+vel_err = data.rosbag.vel_track_error;
+
+spacing = 1000;
+figure(202)
+subplot(2,1,1)
+hold on
+plot(exp_time(1:spacing:end),pos_err(1:spacing:end,:))
+plot([1 exp_time(end)],[0.0176 0.0176],'--r')
+ylim([-0.018 0.018])
+subplot(2,1,2)
+hold on
+plot(exp_time(1:spacing:end),vel_err(1:spacing:end,:))
 
 %% Load Robot Parameters
 

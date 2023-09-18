@@ -44,9 +44,9 @@ use_CAD_flag = true; % plot robot with CAD or bounding boxes
 use_robust_input = true;
 use_true_params_for_robust = false;
 if_use_mex_controller = true;
-LLC_V_max = 2.0e-4;
+LLC_V_max = 1.5e-2;
 alpha_constant = 10;
-Kr = 4.0;
+Kr = 5.0;
 
 %%% for HLP
 if_use_RRT = false;
