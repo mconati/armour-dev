@@ -2,8 +2,8 @@
 clear all;
 close all;
 
-% filename = 'trial_scene_059_.mat';
-filename = ['trial_scene_010_003.csv.mat'];
+filename = 'trial_scene_003_.mat';
+% filename = ['TestNewCost_FixedGoal_v3.mat'];
 
 verbosity = 0 ;
 dimension = 3 ;
@@ -78,10 +78,10 @@ plot(W) ;
 
 if dimension == 3
 %     view(3)
-    view(-100,10) ;
-    xlim([-1.5 0.5])
-    ylim([-0.5 1.5])
-    zlim([-0.5 1.0])
+    view(80,10) ;
+    xlim([-0.5 1])
+    ylim([-1 1])
+    zlim([0 1])
 end
 
 if plot_start_and_end_config_only
@@ -92,7 +92,7 @@ if plot_start_and_end_config_only
     pause();
     plot(A) ;
 else
-    animate(A,'TestNewCostAnimation_v2.gif');
+    animate(A,'TestNewCostAnimation_v5.gif');
 end
 
 % figure(2)

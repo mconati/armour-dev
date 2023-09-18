@@ -1,0 +1,57 @@
+import pybullet as p
+import pybullet_data
+import numpy as np
+import pickle
+from pybullet_recorder.recorder import PyBulletRecorder
+
+# Initialize PyBullet and set up simulation parameters
+p.connect(p.GUI)  # or p.DIRECT for non-graphical simulation
+p.setAdditionalSearchPath(pybullet_data.getDataPath())
+p.setGravity(0, 0, -9.81)  # Set gravity in the z direction
+
+# Load robot URDF and get robot ID
+robot_urdf_path = "urdfs\kinova\Kinova_Grasp_Cylinder_Edge.urdf"
+robot_start_orientation = p.getQuaternionFromEuler([0, 0, 0])  # Roll, Pitch, Yaw
+robot_id = p.loadURDF(robot_urdf_path, [0, 0, 0], robot_start_orientation)
+
+# Load start position, trajectory, and obstacles from CSV
+data = np.loadtxt("robot_trajectory.csv", delimiter=",", skiprows=0, dtype=str)
+start_position = data[0, :7].astype(float)
+trajectory = data[1:data.shape[0]-1, :7].astype(float)
+obstacles = data[data.shape[0]-1:, :9].astype(float)  # Update the number of columns
+
+# Initialize the recorder
+recorder = PyBulletRecorder()
+
+# Start recording
+recorder.startRecording()
+
+# Simulate the robot's motion along the trajectory
+for target_pos in trajectory:
+    p.stepSimulation()
+    p.setJointMotorControlArray(
+        bodyUniqueId=robot_id,
+        jointIndices=list(range(p.getNumJoints(robot_id))),
+        controlMode=p.POSITION_CONTROL,
+        targetPositions=target_pos
+    )
+    recorder.captureFrame()  # Capture the current frame
+
+# Add obstacles to the simulation
+for obstacle in obstacles:
+    obstacle_pos = obstacle[:3]
+    obstacle_orientation = p.getQuaternionFromEuler(obstacle[3:6])
+    obstacle_size = obstacle[6:]
+    obstacle_id = p.createCollisionShape(p.GEOM_BOX, halfExtents=obstacle_size)
+    p.createMultiBody(baseCollisionShapeIndex=obstacle_id, basePosition=obstacle_pos, baseOrientation=obstacle_orientation)
+
+# Stop recording
+recorder.stopRecording()
+
+# Save recorded data to a .pkl file
+recorded_data = recorder.getRecordedData()
+with open("recorded_positions.pkl", "wb") as f:
+    pickle.dump(recorded_data, f)
+
+# Disconnect from the simulation
+p.disconnect()

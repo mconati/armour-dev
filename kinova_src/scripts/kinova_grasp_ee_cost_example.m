@@ -7,7 +7,7 @@
 % Created 25 November 2022
 
 initialize_script_path = matlab.desktop.editor.getActiveFilename;
-cd(initialize_script_path(1:end-29));
+cd(initialize_script_path(1:end-30));
 
 close all; clear; clc; dbstop if error
 
@@ -44,16 +44,16 @@ use_CAD_flag = true; % plot robot with CAD or bounding boxes
 use_robust_input = true;
 use_true_params_for_robust = false;
 if_use_mex_controller = true;
-LLC_V_max = 1.5e-2;
+LLC_V_max = 2e-2;
 alpha_constant = 10;
-Kr = 5.0;
+Kr = 4.0;
 
 %%% for HLP
 if_use_RRT = false;
 HLP_grow_tree_mode = 'new' ; % pick 'new' or 'keep'
 plot_waypoint_flag = true ;
 plot_waypoint_arm_flag  = true ;
-lookahead_distance = 0.1 ;
+lookahead_distance = 0.5 ;
 
 % plotting
 plot_while_running = true ;
@@ -68,15 +68,15 @@ stop_threshold = 3 ; % number of failed iterations before exiting
 % goal = [1; 1; 1; 1; 1; 1; 1]; % goal configuration
 
 % simple rotation
-goal = [0;-pi/2;0;0;0;0;0];
-start = [pi/4;-pi/2;0;0;0;0;0];
+% goal = [0;-pi/2;0;0;0;0;0];
+% start = [pi/4;-pi/2;0;0;0;0;0];
 
 % start = [-pi/6;-pi/2;-pi/2;pi/2;0;pi/2;pi/2];
 % goal = [pi/6;-pi/2;pi/2;pi/2;pi;-pi/2;pi/2];
 
 % start = [3.9270, -1.0472, 0, -2.0944, 0, 1.5708, 0]';
-% start = [3.9270, -1.0472, 0, -2.0944, 0, 1.5708, 0]';
-% goal = [2.5,-0.5236,0,-2.0944,0,1.0472,0]';
+start = [3.9270, -1.0472, 0, -2.0944, 0, 1.5708, 0]';
+goal = [2.5,-0.5236,0,-2.0944,0,1.0472,0]';
 
 % start = [0.4933;
 %     0.9728;
@@ -121,7 +121,7 @@ joint_speed_limits = [-1.3963, -1.3963, -1.3963, -1.3963, -1.2218, -1.2218, -1.2
 joint_input_limits = [-56.7, -56.7, -56.7, -56.7, -29.4, -29.4, -29.4;
                        56.7,  56.7,  56.7,  56.7,  29.4,  29.4,  29.4]; % matlab doesn't import these from urdf so hard code into class
 transmision_inertia = [8.02999999999999936 11.99620246153036440 9.00254278617515169 11.58064393167063599 8.46650409179141228 8.85370693737424297 8.85873036646853151]; % matlab doesn't import these from urdf so hard code into class
-M_min_eigenvalue = 8.2998203638; % 8.0386472; % 8.29938; % ; matlab doesn't import these from urdf so hard code into class
+M_min_eigenvalue = 8.0386472; % 8.29938; % ; matlab doesn't import these from urdf so hard code into class
 
 figure(101)
 show(robot)
@@ -164,7 +164,7 @@ end
 
 A.LLC.setup(A);
 
-P = uarmtd_planner('verbose', verbosity, ...
+P = uarmtd_planner_ee_cost('verbose', verbosity, ...
                    'first_iter_pause_flag', false, ...
                    'use_q_plan_for_cost', true, ...
                    'input_constraints_flag', false, ...
@@ -173,7 +173,7 @@ P = uarmtd_planner('verbose', verbosity, ...
                    'traj_type', traj_type, ...
                    'use_cuda', use_cuda_flag,...
                    'plot_HLP_flag', true, ...
-                   'lookahead_distance', 0.4, ...
+                   'lookahead_distance', lookahead_distance, ...
                    'u_s', u_s,...
                    'surf_rad', surf_rad,...
                    'DURATION', DURATION) ; % 't_move_temp', t_move't_plan', t_plan,...'t_stop', t_stop % _wrapper

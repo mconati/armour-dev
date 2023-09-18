@@ -66,5 +66,9 @@ eval_grad = vpa(subs(grad_cost_ee,q_plan,q_test))
 
 grad_func = matlabFunction(grad_cost_ee);
 
+ee_pos = fk_result(1:3,4);
 
+cost_ee_sym = sum(ee_pos);
+
+grad_cost_ee_sym = gradient(cost_sym)
 

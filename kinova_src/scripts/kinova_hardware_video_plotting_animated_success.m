@@ -29,9 +29,9 @@ fric_plot = figure(fric_plot_num);
 
 % file name to save the gif as
 % sep_save_file = 'Hardware_Success_v2_Separation_framerate_100';
-% fric_save_file = 'Hardware_Success_v4_Friction_framerate_100';
+fric_save_file = 'Hardware_Success_v7_Friction_framerate_100';
 % tip_save_file = 'Hardware_Success_v2_Tipping_framerate_100';
-fric_save_file = 'HardwareSuccessErrorPlot_v1';
+% fric_save_file = 'Test_v1';
 % create video writer objects
 % sep_vid = VideoWriter(sep_save_file);
 fric_vid = VideoWriter(fric_save_file);
@@ -54,7 +54,7 @@ open(fric_vid)
 % plot formatting parameters
 fontsize = 16;
 linewidth = 3;
-markersize = 2;
+markersize = 15;
 % number of samples to skip over to get 50 fps?
 skip_rate = 50;
 % number of time steps to skip
@@ -72,6 +72,7 @@ dt = duration/time_steps;
 
 %% Color Coding
 
+history_line_color = 1/256*[211,211,211];
 unsliced_color = 1/256*[90,200,243];
 % slice_color = 1/256*[72,181,163]; % light green
 % slice_color = 1/256*[75,154,76]; % dark green
@@ -109,15 +110,9 @@ vel = data.rosbag.debug_vel;
 % separately
 opt_k = data.rosbag.debug_traj_k;
 
-% error_data = readmatrix('HardwareVideo_MultipleRuns_06_15_2023_ROSBAG_Data.csv');
-% pos_err = error_data(:,11:17);
-% vel_err = error_data(:,18:24);
 error_data = readmatrix('HardwareSuccessROSData_v2_05_04_2023_original.csv');
 pos_err = error_data(:,12:18);
 vel_err = error_data(:,19:25);
-% error_data = readmatrix('HardwareFailureROSData_05_04_2023.csv');
-% pos_err = error_data(:,11:17);
-% vel_err = error_data(:,18:24);
 
 control_torque = data.rosbag.control_torque;
 
@@ -127,65 +122,6 @@ rs_pos = data.rosbag.debug_traj_pos;
 rs_vel = data.rosbag.debug_traj_vel;
 rs_accel = data.rosbag.debug_traj_accel;
 rs_opt_k = data.rosbag.debug_traj_k;
-
-%% error plotting
-linewidth_err_bounds = 2;
-linewidth_err_data = 1.5;
-figure(202)
-% set background to white
-set(gcf,'color','w');
-% Set the pixel size of the figure
-% width = 1930;    % Width in pixels
-% height = 1073;   % Height in pixels
-% set(gcf, 'Position', [100, 100, width, height]);
-
-% i = length(time);
-for i=1:100:length(time)
-    err_plot = tiledlayout(2,1);
-    nexttile
-    hold on
-    % joint position errors
-    plot(time(1:i),pos_err(1:i,:),'LineWidth',linewidth_err_data)
-
-    % multiple runs
-    % upper bound position
-    plot([1 time(end)],[0.0122 0.0122],'--k','LineWidth',linewidth_err_bounds)
-    % lower bound position
-    plot([1 time(end)],[-0.0122 -0.0122],'--k','LineWidth',linewidth_err_bounds)
-    % formatting
-    ylim([-0.015 0.015])
-
-    % constant formatting
-    xlim([1 time(end)])
-    title('Position Tracking Error','FontSize',fontsize)
-    ylabel('Error (rad)')
-    set(gca,'FontSize',fontsize)
-
-    nexttile
-    hold on
-    % joint velocity errors
-    plot(time(1:i),vel_err(1:i,:),'LineWidth',linewidth_err_data)
-    % upper bound velocity
-    plot([1 time(end)],[0.1222 0.1222],'--k','LineWidth',linewidth_err_bounds)
-    % lower bound velocity
-    plot([1 time(end)],[-0.1222 -0.1222],'--k','LineWidth',linewidth_err_bounds)
-    % formatting
-    xlim([1 time(end)])
-    ylim([-0.15 0.15])
-    title('Velocity Tracking Error','FontSize',fontsize)
-    ylabel(' Error (rad/s)')
-    xlabel('Time (s)')
-
-    set(gca,'FontSize',fontsize)
-
-    exportgraphics(err_plot,'SuccessErrorPlot_v10.gif','Resolution',300,'BackgroundColor','none','Append',true)
-%     make_video(err_plot,fric_vid)
-
-end
-
-test = [];
-    
-
 
 %% Load Robot Parameters
 
@@ -310,6 +246,10 @@ time_threshold = -1;
 plan_iter = 0;
 frame_idx = 1;
 for plot_idx = 1:skip_rate:length(time) % length(time) % length(time) %length(time) % UPDATE TO ITERATE THROUGH AT A FRAME RATE?
+
+    if plot_idx > 1
+        delete(fric_plot_cur_marker)
+    end
 
     if time(plot_idx) > time_threshold % check if new planning iteration
 
@@ -655,7 +595,8 @@ for plot_idx = 1:skip_rate:length(time) % length(time) % length(time) %length(ti
 %     end
 %     subplot(1,3,2)
     fric_plot = figure(fric_plot_num);
-    plot(force(1,1:plot_idx),force(2,1:plot_idx),'-k')%,'MarkerSize',markersize)
+    plot(force(1,1:plot_idx),force(2,1:plot_idx),'-','Color',history_line_color)%,'MarkerSize',markersize)
+    fric_plot_cur_marker = plot(force(1,plot_idx),force(2,plot_idx),'kx','MarkerSize',markersize);
 %     subplot(1,3,3)
 %     tip_plot = figure(tip_plot_num);
 %     plot(ZMP(1,1:plot_idx).*factor,ZMP(2,1:plot_idx).*factor,'-k')%,'MarkerSize',markersize)
@@ -685,6 +626,8 @@ for plot_idx = 1:skip_rate:length(time) % length(time) % length(time) %length(ti
     ylabel('y-axis Force (N)')
     xlim([-0.65 0.65])
     ylim([-0.65 0.65])
+    xticks([-0.5 0 0.5])
+    yticks([-0.5 0 0.5])
     set(gca,'FontSize',fontsize)
     set(gcf,'color','w')
     axis square

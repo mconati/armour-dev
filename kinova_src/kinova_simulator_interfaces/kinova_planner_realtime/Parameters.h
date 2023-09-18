@@ -50,7 +50,7 @@
     #define SLIPPING_CONSTRAINT_VIOLATION_THRESHOLD 1e-4
 
     // threshold for tipping constraint violation (unit: meter) // squared?
-    #define TIPPING_CONSTRAINT_VIOLATION_THRESHOLD 1e-4
+    #define TIPPING_CONSTRAINT_VIOLATION_THRESHOLD 1e-6
 
     // threshold for state limits violation (unit: radian)
     #define STATE_LIMITS_VIOLATION_THRESHOLD 1e-4
@@ -64,7 +64,7 @@
 // Parameters for armour_main.cpp
     #define IPOPT_OPTIMIZATION_TOLERANCE 1e-4
 
-    #define IPOPT_MAX_CPU_TIME 140.0 // 14.0
+    #define IPOPT_MAX_CPU_TIME 14.0 // 14.0
 
     #define IPOPT_PRINT_LEVEL 0
 

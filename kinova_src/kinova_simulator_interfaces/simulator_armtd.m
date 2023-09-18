@@ -162,14 +162,14 @@ classdef simulator_armtd < simulator
                         % current planner to get a control input
                         t_plan_start_tic = tic ;
                         if S.allow_replan_errors
-                            [T_nom,U_nom,Z_nom,planner_info] = P.replan(agent_info,world_info) ;
+                            [T_nom,U_nom,Z_nom,planner_info] = P.replan(A,agent_info,world_info) ;
 %                             [planner_info] = P.replan(agent_info,world_info) ;
 %                             T_nom = planner_info.T{end};
 %                             U_nom = planner_info.U{end};
 %                             Z_nom = planner_info.Z{end};
                         else
                             try
-                                [T_nom,U_nom,Z_nom,planner_info] = P.replan(agent_info,world_info) ;
+                                [T_nom,U_nom,Z_nom,planner_info] = P.replan(A,agent_info,world_info) ;
 %                                 [planner_info] = P.replan(agent_info,world_info) ;
 %                                 T_nom = planner_info.T{end};
 %                                 U_nom = planner_info.U{end};

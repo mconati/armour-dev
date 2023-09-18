@@ -1,4 +1,4 @@
-classdef uarmtd_planner < robot_arm_generic_planner
+classdef uarmtd_planner_ee_cost < robot_arm_generic_planner
     % UARMTD_PLANNER implements new polynomial zonotope collision-avoidance
     % and input constraints
     
@@ -58,7 +58,7 @@ classdef uarmtd_planner < robot_arm_generic_planner
     end
     
     methods
-        function P = uarmtd_planner(varargin)
+        function P = uarmtd_planner_ee_cost(varargin)
             for i = 1:nargin
                 if strcmp(varargin{i}, 'DURATION')
                     DURATION = varargin{i+1};
@@ -84,7 +84,7 @@ classdef uarmtd_planner < robot_arm_generic_planner
             P.combs.combs = generate_combinations_upto(200);
 
             data = load('kinova_test_folder_path');
-            P.kinova_test_folder_path = kinova_test_folder_path; %  
+            P.kinova_test_folder_path = data.name; % kinova_test_folder_path; %  
         end
         
         function init_info(P)
@@ -169,7 +169,7 @@ classdef uarmtd_planner < robot_arm_generic_planner
                     % Make sure this is consistent with the k_range in
                     % cuda-dev/PZsparse-Bernstein/Trajectory.h 
                     % !!!!!!
-                    P.jrs_info.g_k_bernstein = [pi/32; pi/32; pi/72; pi/72; pi/72; pi/32; pi/72];
+                    P.jrs_info.g_k_bernstein = [pi/72; pi/72; pi/72; pi/72; pi/72; pi/72; pi/72];
 %                     P.jrs_info.g_k_bernstein = pi/32*ones(P.jrs_info.n_q, 1);
 
     
@@ -709,35 +709,35 @@ classdef uarmtd_planner < robot_arm_generic_planner
             end
             
             if P.grasp_constraints_flag
-                % add the grasp constraints here
-                for i = 1:jrs_info.n_t                  
+                fprintf('Disabled Check, Currently Add All Constraints \n')
+                for i = 1:jrs_info.n_t
                     % adding separation constraints
                     sep_int = interval(sep_poly{i,1});
                     % First check if the constraint is necessary
-                    if ~(sep_int.sup < 0)
+%                     if ~(sep_int.sup < 0)
                         fprintf('ADDED GRASP SEPARATION CONSTRAINT \n')
                         P.constraints{end+1,1} = @(k) slice(sep_poly{i,1},k);
                         grad_sep_poly = grad(sep_poly{i,1},P.jrs_info.n_q);
                         P.grad_constraints{end+1, 1} = @(k) cellfun(@(C) slice(C, k), grad_sep_poly);
-                    end
+%                     end
                     
                     % adding slipping constraints
                     slip_int = interval(slip_poly{i,1});
-                    if ~(slip_int.sup < 0)
+%                     if ~(slip_int.sup < 0)
                         fprintf('ADDED GRASP SLIPPING CONSTRAINT \n')
                         P.constraints{end+1,1} = @(k) slice(slip_poly{i,1},k);
                         grad_slip_poly = grad(slip_poly{i,1},P.jrs_info.n_q);
                         P.grad_constraints{end+1, 1} = @(k) cellfun(@(C) slice(C, k), grad_slip_poly);
-                    end
+%                     end
                     
                     % adding tipping constraints
                     tip_int = interval(tip_poly{i,1});
-                    if ~(tip_int.sup < 0)
+%                     if ~(tip_int.sup < 0)
                         fprintf('ADDED GRASP TIPPING CONSTRAINT \n')
                         P.constraints{end+1,1} = @(k) slice(tip_poly{i,1},k);
                         grad_tip_poly = grad(tip_poly{i,1},P.jrs_info.n_q);
                         P.grad_constraints{end+1, 1} = @(k) cellfun(@(C) slice(C, k), grad_tip_poly);
-                    end
+%                     end
                 end
             end
 
@@ -826,9 +826,14 @@ classdef uarmtd_planner < robot_arm_generic_planner
             P.vdisp('Running trajopt', 3)
             
             P.trajopt_start_tic = tic ;
+
+            % calculate the gradient of the cost function
+            % should be 2*(ee_plan_pos-ee_des_pos)' * Jacobian(ee_plan_pos)
+            [q_plan_sym, grad_cost_sym] = calculate_grad_ee_cost_sym(P, A, q_0, q_dot_0, q_ddot_0, q_des);
+
             n_k = P.jrs_info.n_k;
             if P.smooth_obstacle_constraints_flag && ~isempty(P.smooth_obs_lambda_index)
-                cost_func = @(x) P.eval_cost(x(1:n_k), q_0, q_dot_0, q_ddot_0, q_des);
+                cost_func = @(x) P.eval_cost(x(1:n_k), q_0, q_dot_0, q_ddot_0, q_des, q_plan_sym, grad_cost_sym);
                 constraint_func = @(x) P.eval_smooth_constraint(x(1:n_k), x(n_k+1:end));
                 lb_k = -ones(n_k, 1);
                 ub_k = ones(n_k, 1);
@@ -837,7 +842,7 @@ classdef uarmtd_planner < robot_arm_generic_planner
                 lb = [lb_k; lb_lambda];
                 ub = [ub_k; ub_lambda];
             else
-                cost_func = @(k) P.eval_cost(A, k, q_0, q_dot_0, q_ddot_0, q_des);
+                cost_func = @(k) P.eval_cost(A, k, q_0, q_dot_0, q_ddot_0, q_des, q_plan_sym, grad_cost_sym);
                 constraint_func = @(k) P.eval_constraint(k);
                 lb = -ones(n_k, 1);
                 ub = ones(n_k, 1);
@@ -845,7 +850,7 @@ classdef uarmtd_planner < robot_arm_generic_planner
 
             initial_guess = zeros(n_k,1); % rand_range(lb, ub);
            
-            options = optimoptions('fmincon','SpecifyConstraintGradient',true,'SpecifyObjectiveGradient',true);
+            options = optimoptions('fmincon','SpecifyConstraintGradient',true,'SpecifyObjectiveGradient',true,'CheckGradients', true); % ); %
 %             options = optimoptions('fmincon','SpecifyConstraintGradient',true, 'CheckGradients', true);
             [k_opt, ~, exitflag, ~] = fmincon(cost_func, initial_guess, [], [], [], [], lb, ub, constraint_func, options) ;
             
@@ -855,10 +860,10 @@ classdef uarmtd_planner < robot_arm_generic_planner
             trajopt_failed = exitflag <= 0 ;
         end
         
-        function [cost,grad_cost] = eval_cost(P, A, k, q_0, q_dot_0, q_ddot_0, q_des)
+        function [cost,grad_cost] = eval_cost(P, A, k, q_0, q_dot_0, q_ddot_0, q_des, q_plan_sym, grad_cost_sym)
             
             % get configuration at t_plan
-            q_plan = P.desired_trajectory(q_0, q_dot_0, q_ddot_0, P.t_plan, k);
+            [q_plan, qd_plan, qdd_plan] = P.desired_trajectory(q_0, q_dot_0, q_ddot_0, P.t_plan, k);
             % calculate forward kinematics for t_plan
             ee_plan_fk = forward_kinematics(q_plan,A.params.true.T0,A.params.true.joint_axes);
             % calculate forward kinematics for desired configuration
@@ -873,51 +878,17 @@ classdef uarmtd_planner < robot_arm_generic_planner
 
             % if adding constraints to cost function
 %             [h, heq, grad_h, grad_heq] = eval_constraint(P,k);
-%             constraint_weight = 100;
+%             constraint_weight = 500;
 
             % calculate the cost
-            cost = sum((ee_plan_pos - ee_des_pos).^2); % + sum(h)/constraint_weight;
+            cost = sum((ee_plan_pos - ee_des_pos).^2) + sum(qd_plan); % + sum(h)./constraint_weight;
 
-            % calculate the gradient of the cost function
-            % should be 2*(ee_plan_pos-ee_des_pos)' * Jacobian(ee_plan_pos)
-            % 
-            
-            grad_cost = double(vpa(subs(grad_cost_sym,q_plan_sym,q_plan))) *P.jrs_info.g_k_bernstein(1)/2;
-            test = [];
+            % derivative of q_plan wrt the decision variables (needed?)
+            dk_q_plan = P.t_plan^3 * (6 * P.t_plan^2 - 15 * P.t_plan + 10);
 
-%             ee_jac_sym = jacobian(ee_pos_sym,q_plan_sym);
+            % cost gradient
+            grad_cost = (double(vpa(subs(grad_cost_sym,q_plan_sym,q_plan))) *P.jrs_info.g_k_bernstein(1)*dk_q_plan)'; % + sum(grad_h,2)./constraint_weight;
 
-%             grad_cost = 2*(sum((ee_plan_pos - ee_des_pos)))*vpa(subs(grad_cost_ee_sym,q_plan_sym,q_plan));
-%             grad_cost_sym = 2*(ee_plan_pos - ee_des_pos)' * ee_jac_sym;
-%             grad_cost = double(vpa(subs(grad_cost_sym,q_plan_sym,q_plan)));
-            % THIS IS HARD CODED
-%             grad_cost = [grad_cost'; 0];
-
-            %% extra?
-%             % derivative of q_plan wrt the decision variables (needed?)
-%             dk_q_plan = P.t_plan^3 * (6 * P.t_plan^2 - 15 * P.t_plan + 10);
-% 
-%             for i = 1:P.agent_info.n_inputs
-%                 % need to write gradient wrt k of ee_plan_pos which is done
-%                 % through the forward_kinematics function
-%                 grad_cost(i) = sum(2*(ee_plan_pos(i) - ee_des_pos(i)))*dk_q_plan; % + sum(grad_h(i,:))/constraint_weight;
-%             end
-% %             grad_cost = sum(2*(ee_plan_pos - ee_des_pos))*dk_q_plan + sum(grad_h)/constraint_weight;
-%             % need to change to not be all of the constraints (just
-%             % slipping and tipping?)
-% 
-%             
-% 
-% %             forward_kinematics(q_plan,)
-%             
-% %             if P.use_q_plan_for_cost
-% %                 q_plan = P.desired_trajectory(q_0, q_dot_0, q_ddot_0, P.t_plan, k);
-% %                 cost = sum((q_plan - q_des).^2);
-% %             else
-% %                 % use final position as cost
-% %                 q_stop = P.desired_trajectory(q_0, q_dot_0, q_ddot_0, P.t_stop, k);
-% %                 cost = sum((q_stop - q_des).^2);
-% %             end
         end
 
         function [h, heq, grad_h, grad_heq] = eval_constraint(P, k)
@@ -1077,6 +1048,31 @@ classdef uarmtd_planner < robot_arm_generic_planner
             otherwise
                 error('trajectory type not recognized');
             end
+        end
+
+        function [q_plan_sym, grad_cost_sym] = calculate_grad_ee_cost_sym(P, A, q_0, q_dot_0, q_ddot_0, q_des)
+            % calculate forward kinematics for desired configuration
+            ee_des_fk = forward_kinematics(q_des,A.params.true.T0,A.params.true.joint_axes);
+            % extract only the end-effector position (not orientation)
+            ee_des_pos = ee_des_fk(1:3,4);
+            
+            %% Symbolic Cost Function
+
+            % this can mostly be moved and then calculated once.
+            q_plan_sym = [sym('q1');
+                    sym('q2');
+                    sym('q3');
+                    sym('q4');
+                    sym('q5');
+                    sym('q6');
+                    sym('q7')];
+            fk_sym = simplify(forward_kinematics_symbolic(q_plan_sym,A.params.true.T0,A.params.true.joint_axes));
+            ee_pos_sym = fk_sym(1:3,4);
+            %             cost_ee_sym = sum(ee_pos_sym);
+            %             grad_cost_ee_sym = gradient(cost_ee_sym);
+            
+            cost_ee_sym = sum((ee_pos_sym-ee_des_pos).^2);
+            grad_cost_sym = jacobian(cost_ee_sym,q_plan_sym);
         end
         
     end
