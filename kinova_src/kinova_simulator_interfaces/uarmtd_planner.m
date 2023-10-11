@@ -21,6 +21,8 @@ classdef uarmtd_planner < robot_arm_generic_planner
         grad_constraints = {}; % cell will contain functions of $k$ for evaluating gradients
         obs_constraints = {};
         grad_obs_constraints = {};
+        save_constraints = false;
+        saved_constraints = [];
 
         % smooth obstacle constraints:
         smooth_obs_constraints;
@@ -681,6 +683,11 @@ classdef uarmtd_planner < robot_arm_generic_planner
                     end
                 end
             end
+
+            if P.save_constraints
+                P.saved_constraints = [P.saved_constraints, P.constraints];
+            end
+
 
             % more constraints to add:
             % 1) orientation constraints

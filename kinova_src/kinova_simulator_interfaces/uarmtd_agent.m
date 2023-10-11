@@ -28,6 +28,9 @@ classdef uarmtd_agent < robot_arm_agent
         r = []; % modified error
         int_lyapunov = [];
         int_disturbance = [];
+        full_state = [];
+        full_time = [];
+        full_u = [];
 
         % for dealing with measurement noise:
         add_measurement_noise_ = false;
@@ -278,7 +281,7 @@ classdef uarmtd_agent < robot_arm_agent
         
         %% integrator
         function [t_out,z_out] = integrator(A,arm_dyn,t_span,z0)
-            
+
             if A.add_measurement_noise_
                 A.add_measurement_noise(t_span);
             end
@@ -290,6 +293,7 @@ classdef uarmtd_agent < robot_arm_agent
             
             % call ODE solver
             [t_out, z_out] = ode15s(arm_dyn, t_span, z0, options);
+
 %             [t_out, z_out] = ode45(arm_dyn, t_span, z0, options);
 
             % process
@@ -318,6 +322,7 @@ classdef uarmtd_agent < robot_arm_agent
             
             % reset to zero by default
             A.state = zeros(A.n_states,1) ;
+            A.full_state = zeros(A.n_states,1) ;
             A.reference_state = zeros(A.n_states,1) ;
             A.reference_acceleration = zeros(A.n_states/2,1) ;
             
@@ -346,7 +351,9 @@ classdef uarmtd_agent < robot_arm_agent
             
             A.vdisp('Resetting time and inputs',3)
             A.time = 0 ;
+            A.full_time = 0;
             A.input = zeros(A.n_inputs,1) ;
+            A.full_u = zeros(A.n_inputs,1) ;
             A.input_time = 0 ;
             
             % reset LLC
@@ -417,7 +424,7 @@ classdef uarmtd_agent < robot_arm_agent
             % is why the last old input is discarded when the input is
             % updated. Similarly, this method assumes that the nominal time
             % starts at 0.
-            
+
             A.vdisp('Moving!',5)
             
             % set up default reference trajectory
@@ -437,10 +444,10 @@ classdef uarmtd_agent < robot_arm_agent
             
             % get the current state
             zcur = A.state(:,end) ;
-            
             switch A.move_mode
                 case 'integrator'
                     % call the ode solver to simulate agent
+                    
                     [tout,zout] = A.integrator(@(t,z) A.dynamics(t,z,planner_info),...
                                                [0 t_move], zcur) ;
                                            
@@ -480,6 +487,39 @@ classdef uarmtd_agent < robot_arm_agent
 %                     int_disturbance_out = interval(zeros(size(uout)), zeros(size(uout)));
 %                     int_lyap_out = interval(zeros(size(tout)), zeros(size(tout)));
 %                     r_out = zeros(A.n_states/2, size(tout, 2));
+                case 'save_full_trajectories'
+                    % call the ode solver to simulate agent
+                    [tout,zout] = A.integrator(@(t,z) A.dynamics(t,z,planner_info),...
+                                               [0 t_move], zcur) ;
+                    % initialize trajectories to log
+                    disp("MADE IT HERE")
+                    uout = zeros(A.n_inputs, size(tout, 2));
+                    A.full_state = [A.full_state, Z_ref(:, 2:end)];
+                    A.full_time = [A.full_time, A.full_time(end)+T_ref(:, 2:end)];
+                    A.full_u = [A.full_u, U_ref(:,1:end-1)];
+                   
+                    nominal_out = zeros(size(uout));
+                    robust_out = zeros(size(uout));
+%                     disturbance_out = zeros(size(uout));
+%                     lyap_out = zeros(size(tout));
+%                     r_out = zeros(A.n_states/2, size(tout, 2));
+%                     int_disturbance_out = interval(zeros(size(uout)), zeros(size(uout)));
+%                     int_lyap_out = interval(zeros(size(tout)), zeros(size(tout)));
+
+                    % store approximate inputs at each time:
+                    for j = 1:length(tout)
+                        t = tout(j);
+                        z_meas = zout(:,j);
+%                         [uout(:, j), nominal_out(:, j), robust_out(:, j),...
+%                          disturbance_out(:, j), lyap_out(:, j), r_out(:, j),...
+%                          int_disturbance_out(:, j), int_lyap_out(:, j)] = ...
+%                          A.LLC.get_control_inputs(A, t, z_meas, planner_info);
+                        [uout(:, j), nominal_out(:, j), robust_out(:, j)] = ...
+                         A.LLC.get_control_inputs(A, t, z_meas, planner_info);
+                    end
+
+
+
                 otherwise
                     error('Please set A.move_mode to ''integrator'' or ''direct''!')
             end

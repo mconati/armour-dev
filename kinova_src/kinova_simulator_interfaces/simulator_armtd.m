@@ -159,7 +159,7 @@ classdef simulator_armtd < simulator
                             [T_nom,U_nom,Z_nom,planner_info] = P.replan(agent_info,world_info) ;
 %                             [planner_info] = P.replan(agent_info,world_info) ;
 %                             T_nom = planner_info.T{end};
-%                             U_nom = planner_info.U{end};
+%                             U_nom = planner_info.U{end};w
 %                             Z_nom = planner_info.Z{end};
                         else
                             try
@@ -240,8 +240,7 @@ classdef simulator_armtd < simulator
                         else
                             ultimate_bound_check = false;
                         end
-                        joint_limit_check = A.joint_limit_check(W.current_time); % must come before collision_check (which updates time)
-                        collision_check = W.collision_check(agent_info,false) ;
+                        joint_limit_check = A.joint_limit_check(W.current_time); % must come before collision_check (which updates time)                        collision_check = W.collision_check(agent_info,false) ;
                         
                         if isa(A,'multi_link_agent')
                             S.vdisp('Checking for self-intersection.',2)
