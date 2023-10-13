@@ -172,17 +172,16 @@ subplot(3,1,3)
 title('Joint Torques')
 plot(A.time,A.input)
 
-
 %% 
 
 % Calculating the Acceleration
 
-joint_angles = A.state(A.joint_state_indices,:);
-joint_angular_velocity = A.state(A.joint_speed_indices,:);
+joint_angles = A.full_state(A.joint_state_indices,:);
+joint_angular_velocity = A.full_state(A.joint_speed_indices,:);
 
-qdd_post = zeros(7,length(A.time));
+qdd_post = zeros(7,length(A.full_time));
 % calculating the acceleration in post to compare with what is stored
-for i = 2:length(A.time)
+for i = 2:length(A.full_time)
     [M, C, g] = A.calculate_dynamics(joint_angles(:,i), joint_angular_velocity(:,i), A.params.true);
 
     for j = 1:A.n_inputs
@@ -190,127 +189,97 @@ for i = 2:length(A.time)
     end
     % can I call u=A.LLC.get_control_inputs() here with the P.info?
     
-    qdd_post(:,i) = M\(A.input(:,i)-C*joint_angular_velocity(:,i)-g);
+q    qdd_post(:,i) = M\(A.full_u(:,i)-C*joint_angular_velocity(:,i)-g);
 %         qdd_post(:,i) = M\(A.input(:,i)-C*joint_angular_velocity(:,i)-g);
 
 end
 
-figure(1001)
-hold on
-title('Acceleration')
-% plot(A.time,qdd_post,'o')
-plot(A.time,A.reference_acceleration)
 
-% Calling RNEA
-%% 
+%% Plotting Full trajectories
+%states
+T = A.full_time;
+Ys = A.full_state(A.joint_state_indices, :);
 
-for i = 1:length(A.time)
+%velocities
+Yv = A.full_state(A.joint_speed_indices, :);
 
-    % clear relevant variables
-    clear tau f n
+%accelerations
+Ya = qdd_post;
 
-    % call rnea
-    [tau, f, n] = rnea(joint_angles(:,i)',joint_angular_velocity(:,i)',joint_angular_velocity(:,i)',qdd_post(:,i)',true,A.params.true); % A.acceleration(:,i)'
-%     [tau, f, n] = rnea(joint_angles(:,i)',joint_angular_velocity(:,i)',joint_angular_velocity(:,i)',accel_short(:,i)',true,A.params.true); % A.acceleration(:,i)'
+%inputs
+%Yu = A.full_u;
 
-    % store rnea results
-    Tau{i} = tau;
-    F{i} = f;
-    N{i} = n;
-    disp(f)
+figure(101)
+subplot(3,1,1)
+title('Joint Positions')
+plot_whole_trajectories(A, T ,Ys, false);
+subplot(3,1,2)
+title('Joint Velocities')
+plot_whole_trajectories(A, T,Yv, false);
+subplot(3,1,3)
+title('Joint Accelerations')
+plot_whole_trajectories(A, T,Ya, false);
 
-    % store the contact forces
-    force(:,i) = f(:,8);
-    % store the contact moments
-    moment(:,i) = n(:,8);
 
+%%
+plot_whole_trajectories(A, T,Ya, true);
+
+%%
+function plot_whole_trajectories(A, T, Y, makefigure)
+    buffer_y = [Y(:, 1)];
+    buffer_yt = [T(:, 1)];
+    buffer_b = [];
+    buffer_bt = [];
+    t = A.time;
+    
+    t_stop = A.t_stop; 
+    
+    % Create a figure and axis
+    if makefigure
+       figure;
+    end
+    hold on;
+    
+    color_idx = 1; % Initialize the color index
+    start_time = 0;
+    s_T = 1;
+    while start_time < max(T)
+        
+        end_time = start_time + t_stop;
+        % Clip the time interval to avoid going beyond the data
+        if end_time > max(T)
+            end_time = max(T);
+        end
+        indices = find(T > start_time & T <= end_time);
+        % Select the appropriate color
+        if color_idx == 1
+            color = 'b'; % Blue
+            buffer_y = [buffer_y, Y(:, indices)];
+            buffer_yt = [buffer_yt, T(:, s_T:(s_T+length(indices))-1)];
+            s_T = s_T + length(indices)-1;
+        else
+            color = 'r'; % Red
+            buffer_b = [buffer_b, Y(:, indices)];
+            buffer_bt = [buffer_bt, T(:, s_T:(s_T+length(indices))-1)];
+            plot(T(:, s_T:(s_T+length(indices)-1)), Y(:, indices), color);
+        end
+        
+        % Find the corresponding indices in the time array
+    
+        
+        % Plot the line segment
+    
+        
+        % Update the color index and start time for the next segment
+        color_idx = 3 - color_idx; % Toggle between 1 and 2
+        start_time = end_time;
+    
+    end
+    plot(buffer_yt, buffer_y, 'b');
+    xlabel('Time (seconds)');
+    ylabel('Y');
+    grid on;
 end
 
-% Plotting the forces
 
-% if plot_force
-
-    figure(3)
-    % plot the x-axis force (in the tray frame)
-    subplot(1,3,1)
-    hold on
-    plot(A.time(1:end), force(1,:), 'k')
-    xlabel('time (s)')
-    ylabel('x-axis Force (N)')
-    axis('square')
-    grid on
-    % plot the y-axis force (in the tray frame)
-    subplot(1,3,2)
-    hold on
-    plot(A.time(1:end), force(2,:), 'k')
-    xlabel('time (s)')
-    ylabel('y-axis Force (N)')
-    axis('square')
-    grid on
-    % plot the z-axis force (in the tray frame)
-    subplot(1,3,3)
-    hold on
-    plot(A.time(1:end), force(3,:), 'k')
-    xlabel('time (s)')
-    ylabel('z-axis Force (N)')
-    axis('square')
-    grid on
-    
-% end
-
-% Calculating Constraints
-
-% separation constraint
-sep = -1*force(3,:);
-
-% slipping constraint
-slip = sqrt(force(1,:).^2+force(2,:).^2) - u_s.*abs(force(3,:));
-slip2 = force(1,:).^2+force(2,:).^2 - u_s^2.*force(3,:).^2;
-
-for i = 1:length(A.time)
-    % tipping constraint the normal way
-    ZMP_top = cross([0;0;1],moment(:,i)); % normal vector should come first
-    ZMP_bottom = dot([0;0;1],force(:,i));
-    ZMP(:,i) = ZMP_top/ZMP_bottom;
-    ZMP_rad(i) = sqrt(ZMP(1,i)^2+ZMP(2,i)^2);
-    tip(i) = ZMP_rad(i) - surf_rad;
-    % tipping constraint the PZ way
-    ZMP_top2 = cross([0;0;1],moment(:,i));
-    ZMP_bottom2 = dot([0;0;1],force(:,i));
-    tip2(i) = ZMP_top(1)^2 + ZMP_top(2)^2 - ZMP_bottom^2*(surf_rad)^2;
-end
-
-% plotting constraints
-
-% if plot_constraint
-    
-    figure(4)
-    % plot the separation constraint
-    subplot(1,3,1)
-    hold on
-    plot(A.time(1:end),sep, 'k')
-    xlabel('time (s)')
-    ylabel('Separation Constraint')
-    axis('square')
-    grid on
-    % plot the slipping constraint
-    subplot(1,3,2)
-    hold on
-    plot(A.time(1:end),slip, 'k')
-    plot(A.time(1:end),slip2, 'c')
-    xlabel('time (s)')
-    ylabel('Slipping Constraint')
-    axis('square')
-    grid on
-    % plot the tipping constraint
-    subplot(1,3,3)
-    hold on
-    plot(A.time(1:end),tip, 'k')
-    plot(A.time(1:end),tip2, 'c')
-    xlabel('time (s)')
-    ylabel('Tipping Constraint')
-    axis('square')
-    grid on
-
-% end
 

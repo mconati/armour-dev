@@ -332,6 +332,7 @@ classdef uarmtd_agent < robot_arm_agent
                     A.vdisp('Using provided joint positions',6)
                     A.state(A.joint_state_indices) = state ;
                     A.reference_state(A.joint_state_indices) = state ;
+                    A.full_state(A.joint_state_indices) = state ;
                     
                     if nargin > 2
                         % fill in joint speeds if they are provided
@@ -496,7 +497,7 @@ classdef uarmtd_agent < robot_arm_agent
                     uout = zeros(A.n_inputs, size(tout, 2));
                     A.full_state = [A.full_state, Z_ref(:, 2:end)];
                     A.full_time = [A.full_time, A.full_time(end)+T_ref(:, 2:end)];
-                    A.full_u = [A.full_u, U_ref(:,1:end-1)];
+                    
                    
                     nominal_out = zeros(size(uout));
                     robust_out = zeros(size(uout));
@@ -507,6 +508,21 @@ classdef uarmtd_agent < robot_arm_agent
 %                     int_lyap_out = interval(zeros(size(tout)), zeros(size(tout)));
 
                     % store approximate inputs at each time:
+                    for j = 1:length(T_ref)
+                        t = T_ref(j);
+                        z_meas = Z_ref(:,j);
+%                         [uout(:, j), nominal_out(:, j), robust_out(:, j),...
+%                          disturbance_out(:, j), lyap_out(:, j), r_out(:, j),...
+%                          int_disturbance_out(:, j), int_lyap_out(:, j)] = ...
+%                          A.LLC.get_control_inputs(A, t, z_meas, planner_info);
+                        [uout(:, j), nominal_out(:, j), robust_out(:, j)] = ...
+                         A.LLC.get_control_inputs(A, t, z_meas, planner_info);
+                    end
+                    A.full_u = [A.full_u, uout(:,1:end-1)] ;
+                    
+                    uout = zeros(A.n_inputs, size(tout, 2));
+                    nominal_out = zeros(size(uout));
+                    robust_out = zeros(size(uout));
                     for j = 1:length(tout)
                         t = tout(j);
                         z_meas = zout(:,j);
@@ -517,6 +533,7 @@ classdef uarmtd_agent < robot_arm_agent
                         [uout(:, j), nominal_out(:, j), robust_out(:, j)] = ...
                          A.LLC.get_control_inputs(A, t, z_meas, planner_info);
                     end
+
 
 
 

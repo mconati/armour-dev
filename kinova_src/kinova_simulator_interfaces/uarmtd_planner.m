@@ -219,7 +219,7 @@ classdef uarmtd_planner < robot_arm_generic_planner
                             control_input_radius = [];
                         end
                         constraints_value = readmatrix('armour_constraints.out', 'FileType', 'text');
-
+ 
                         record_tids = [1:10:P.jrs_info.n_t, P.jrs_info.n_t];
                         link_frs_vertices = cell(7,length(record_tids));
                         for tid = record_tids
@@ -427,6 +427,7 @@ classdef uarmtd_planner < robot_arm_generic_planner
         
         function [P, FO] = generate_constraints(P, q_0, q_dot_0, q_ddot_0, O, waypoint)
             %% get JRSs:
+            disp("GENERATING CONSTRAINTS")
             if strcmp(P.jrs_type, 'offline')
                 if ~strcmp(P.traj_type, 'orig')
                     error('Offline JRS only implemented for original parameterization');
@@ -683,8 +684,10 @@ classdef uarmtd_planner < robot_arm_generic_planner
                     end
                 end
             end
-
+                
+            disp("OUTSIDE MY CODE")
             if P.save_constraints
+                disp("SAVING CONSTRAINTS")
                 P.saved_constraints = [P.saved_constraints, P.constraints];
             end
 
