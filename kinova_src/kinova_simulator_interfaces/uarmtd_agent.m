@@ -28,9 +28,15 @@ classdef uarmtd_agent < robot_arm_agent
         r = []; % modified error
         int_lyapunov = [];
         int_disturbance = [];
+
+        %For saving trajectories and constraints
         full_state = [];
         full_time = [];
         full_u = [];
+        input_constraints = [];
+        position_constraints = [];
+        velocity_constraints = [];
+        
 
         % for dealing with measurement noise:
         add_measurement_noise_ = false;
@@ -493,7 +499,6 @@ classdef uarmtd_agent < robot_arm_agent
                     [tout,zout] = A.integrator(@(t,z) A.dynamics(t,z,planner_info),...
                                                [0 t_move], zcur) ;
                     % initialize trajectories to log
-                    disp("MADE IT HERE")
                     uout = zeros(A.n_inputs, size(tout, 2));
                     A.full_state = [A.full_state, Z_ref(:, 2:end)];
                     A.full_time = [A.full_time, A.full_time(end)+T_ref(:, 2:end)];

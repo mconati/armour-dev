@@ -295,6 +295,28 @@ classdef simulator_armtd < simulator
                         end
 
                         % iterate and increment time
+
+                       switch A.move_mode
+                           case 'save_full_trajectories'
+                                S.vdisp('SAVING CONSTRAINTS IN AGENT')
+    
+                                %Parse CUDA file
+                                NUM_TIME_STEPS = 128;
+                                NUM_JOINTS = 7;
+                                cpath = "/home/marco/Documents/GitHub/armour-dev/kinova_src/kinova_simulator_interfaces/kinova_planner_realtime/buffer/armour_constraints.out";
+                                constraints = readmatrix(cpath, 'FileType', 'text');
+                                input_constraints = constraints(1:NUM_TIME_STEPS*NUM_JOINTS, :);
+                                velocity_constraints = constraints(end-NUM_JOINTS*2+1:end, :);
+                                position_constraints = constraints(end-NUM_JOINTS*4+1:end-NUM_JOINTS*2, :);
+                                obstacle_constraints = constraints(NUM_TIME_STEPS*NUM_JOINTS+1:end-NUM_JOINTS*4);
+                                
+                                %Save values
+                                A.input_constraints = [A.input_constraints, input_constraints];
+                                A.position_constraints = [A.position_constraints, position_constraints];
+                                A.velocity_constraints = [A.velocity_constraints, velocity_constraints];
+                       end
+                       
+
                         S.vdisp(['END ITERATION ',num2str(current_iteration)],4,false)
                         current_iteration = current_iteration + 1 ;
                         t_cur = toc(planner_start_tic) - user_pause ;

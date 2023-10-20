@@ -118,6 +118,7 @@ P = uarmtd_planner('verbose', verbosity, ...
                    'use_robust_input', use_robust_input, ...
                    'traj_type', traj_type, ...
                    'use_cuda', use_cuda_flag, ...
+                   'waypoint_mode', 'goal', ...
                    'save_constraints', true) ;
 
 if if_use_RRT
@@ -189,7 +190,7 @@ for i = 2:length(A.full_time)
     end
     % can I call u=A.LLC.get_control_inputs() here with the P.info?
     
-q    qdd_post(:,i) = M\(A.full_u(:,i)-C*joint_angular_velocity(:,i)-g);
+    qdd_post(:,i) = M\(A.full_u(:,i)-C*joint_angular_velocity(:,i)-g);
 %         qdd_post(:,i) = M\(A.input(:,i)-C*joint_angular_velocity(:,i)-g);
 
 end
@@ -209,7 +210,7 @@ Ya = qdd_post;
 %inputs
 %Yu = A.full_u;
 
-figure(101)
+figure(102)
 subplot(3,1,1)
 title('Joint Positions')
 plot_whole_trajectories(A, T ,Ys, false);

@@ -23,6 +23,8 @@ classdef uarmtd_planner < robot_arm_generic_planner
         grad_obs_constraints = {};
         save_constraints = false;
         saved_constraints = [];
+        waypoint_mode = 'standard';
+        DURATION = 1;
 
         % smooth obstacle constraints:
         smooth_obs_constraints;
@@ -112,6 +114,7 @@ classdef uarmtd_planner < robot_arm_generic_planner
                 P.iter = P.iter + 1;
                 planning_time = tic;
                 q_des = P.HLP.get_waypoint(agent_info,world_info,P.lookahead_distance) ;
+
                 if isempty(q_des)
                     P.vdisp('Waypoint creation failed! Using global goal instead.', 3)
                     q_des = P.HLP.goal ;
@@ -148,11 +151,17 @@ classdef uarmtd_planner < robot_arm_generic_planner
                     % !!!!!!
 %                     P.jrs_info.g_k_bernstein = [pi/24; pi/24; pi/24; pi/24; pi/24; pi/24; pi/24];
                     P.jrs_info.g_k_bernstein = [pi/48; pi/48; pi/48; pi/48; pi/48; pi/48; pi/48];
-    
-                    q_des = P.HLP.get_waypoint(agent_info,world_info,P.lookahead_distance) ;
-                    if isempty(q_des)
-                        P.vdisp('Waypoint creation failed! Using global goal instead.', 3)
-                        q_des = P.HLP.goal ;
+                    switch P.waypoint_mode
+                        case 'standard'
+                            q_des = P.HLP.get_waypoint(agent_info,world_info,P.lookahead_distance) ;
+                            if isempty(q_des)
+                                P.vdisp('Waypoint creation failed! Using global goal instead.', 3)
+                                q_des = P.HLP.goal ;
+                             
+                            end
+                        case 'goal'
+                             q_des = P.HLP.goal ;
+                        case 'scaled'
                     end
     
                     % organize input to cuda program
