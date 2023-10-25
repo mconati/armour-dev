@@ -331,6 +331,10 @@ classdef uarmtd_agent < robot_arm_agent
             A.full_state = zeros(A.n_states,1) ;
             A.reference_state = zeros(A.n_states,1) ;
             A.reference_acceleration = zeros(A.n_states/2,1) ;
+            A.position_constraints = [];
+            A.velocity_constraints = [];
+            A.input_constraints = [];
+            
             
             if nargin > 1
                 if length(state) == A.n_states/2
