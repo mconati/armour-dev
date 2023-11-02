@@ -1,8 +1,10 @@
 #ifndef NLP_CLASS_CU
 #define NLP_CLASS_CU
+#include <iostream>
 
 #include "NLPclass.h"
 
+ 
 double wrap_to_pi(const double angle) {
     double wrapped_angle = angle;
     while (wrapped_angle < -M_PI) {
@@ -195,7 +197,7 @@ bool armtd_NLP::get_starting_point(
         x[i] = 0.0;
 
         // try to avoid local minimum
-        // x[i] = min(max((q_des[i] - desired_trajectory->q0[i]) / k_range[i], -0.5), 0.5);
+        // x[i] = min(max((q_des[i] - dg_copyesired_trajectory->q0[i]) / k_range[i], -0.5), 0.5);
     }
 
     return true;
@@ -219,16 +221,26 @@ bool armtd_NLP::eval_f(
     Eigen::VectorXd q_plan(n);
     for(Index i = 0; i < n; i++){
         q_plan[i] = q_des_func(desired_trajectory->q0[i], desired_trajectory->Tqd0[i], desired_trajectory->TTqdd0[i], k_range[i] * x[i], t_plan);
+  //normal      //q_plan[i] = q_des_func(desired_trajectory->q0[i], desired_trajectory->Tqd0[i], desired_trajectory->TTqdd0[i], k_range[i] * x[i], t_plan);
     }
 
     // kinova has 4 infinite rotation joints
-    obj_value = pow(wrap_to_pi(q_des[0] - q_plan[0]), 2) +
-                pow(wrap_to_pi(q_des[2] - q_plan[2]), 2) + 
-                pow(wrap_to_pi(q_des[4] - q_plan[4]), 2) + 
-                pow(wrap_to_pi(q_des[6] - q_plan[6]), 2) + 
-                pow(q_des[1] - q_plan[1], 2) + 
-                pow(q_des[3] - q_plan[3], 2) + 
-                pow(q_des[5] - q_plan[5], 2);
+    // //Normal approach
+    // obj_value = pow(wrap_to_pi(q_des[0] - q_plan[0]), 2) +
+    //             pow(wrap_to_pi(q_des[2] - q_plan[2]), 2) + 
+    //             pow(wrap_to_pi(q_des[4] - q_plan[4]), 2) + 
+    //             pow(wrap_to_pi(q_des[6] - q_plan[6]), 2) + 
+    //             pow(q_des[1] - q_plan[1], 2) + 
+    //             pow(q_des[3] - q_plan[3], 2) + 
+    //             pow(q_des[5] - q_plan[5], 2);
+    obj_value = -q_plan[6];
+    // sqrt(q_plan[0]*q_plan[0] +
+    // q_plan[1]*q_plan[1]+
+    // q_plan[2]*q_plan[2]+
+    // q_plan[3]*q_plan[3]+
+    // q_plan[4]*q_plan[4]+
+    // q_plan[5]*q_plan[5] +
+    // q_plan[6]*q_plan[6]);
 
     obj_value *= COST_FUNCTION_OPTIMALITY_SCALE;
 
@@ -253,15 +265,19 @@ bool armtd_NLP::eval_grad_f(
         double q_plan = q_des_func(desired_trajectory->q0[i], desired_trajectory->Tqd0[i], desired_trajectory->TTqdd0[i], k_range[i] * x[i], t_plan);
         double dk_q_plan = pow(t_plan,3) * (6 * pow(t_plan,2) - 15 * t_plan + 10) * k_range[i];
 
-        // kinova has 4 infinite rotation joints
-        if (i % 2 == 0) {
-            grad_f[i] = (2 * wrap_to_pi(q_plan - q_des[i]) * dk_q_plan);
-        }
-        else {
-            grad_f[i] = (2 * (q_plan - q_des[i]) * dk_q_plan);
-        }
-        grad_f[i] *= COST_FUNCTION_OPTIMALITY_SCALE;
+        // // kinova has 4 infinite rotation joints
+        // if (i % 2 == 0) {
+        //     grad_f[i] = (2 * wrap_to_pi(q_plan - q_des[i]) * dk_q_plan);
+        // }
+        // else {
+        //     grad_f[i] = (2 * (q_plan - q_des[i]) * dk_q_plan);
+        // }
+
+
     }
+        grad_f[6] = -qd_deriv_function(desired_trajectory->q0[6], desired_trajectory->Tqd0[6], desired_trajectory->TTqdd0[6], k_range[6] * x[6], t_plan)*k_range[6];
+        grad_f[6] *= COST_FUNCTION_OPTIMALITY_SCALE;
+
 
     return true;
 }

@@ -51,8 +51,8 @@ max_sim_iter = 600 ;
 stop_threshold = 4 ; % number of failed iterations before exiting
 
 %%% for world
-start = [0; -pi/2; 0; 0; 0; 0; 0]; % start configuration
-goal = [pi/4; -pi/2; 0; 0; 0; 0; 0]; % goal configuration
+start = [0; 0; 0; 0; 0; 0; 0]; % start configuration
+goal = [pi/4; 0; 0; 0; 0; 0; 0]; % goal configuration
 
 
 obstacles{1} = box_obstacle_zonotope('center', [0; 0; 0.6],...
@@ -223,7 +223,7 @@ plot_whole_trajectories(A, T,Ya, false);
 
 
 %%
-plot_whole_trajectories(A, T,Ya, true);
+plot_whole_trajectories(A, T,A.input_constraints(1), true);
 
 %%
 function plot_whole_trajectories(A, T, Y, makefigure)
@@ -282,5 +282,6 @@ function plot_whole_trajectories(A, T, Y, makefigure)
     grid on;
 end
 
-
+%% 
+%%
 

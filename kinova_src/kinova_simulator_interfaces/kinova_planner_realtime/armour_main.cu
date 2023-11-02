@@ -1,5 +1,6 @@
 #include "NLPclass.h"
 #include "BufferPath.h"
+#include <iostream>
 
 const std::string inputfilename = pathname + "armour.in";
 const std::string outputfilename1 = pathname + "armour.out";
@@ -224,7 +225,7 @@ Section II:
     auto duration1 = std::chrono::duration_cast<std::chrono::milliseconds>(stop1 - start1);
     cout << "        CUDA & C++: Time taken by generating reachable sets: " << duration1.count() << " milliseconds" << endl;
 
-    double time_for_optimization = 1; //DURATION * 0.5 - duration1.count() / 1000.0 - IPOPT_TIME_BUFFER;
+    double time_for_optimization = 10; //DURATION * 0.5 - duration1.count() / 1000.0 - IPOPT_TIME_BUFFER;
     time_for_optimization = max(time_for_optimization, 0.0);
     cout << "        CUDA & C++: Time allocated for Ipopt: " << time_for_optimization * 1000.0 << " milliseconds" << endl;
 
@@ -238,6 +239,13 @@ Section III:
     try {
 	    mynlp->set_parameters(q_des, t_plan, &traj, &kd, &torque_radius, &O);
     }
+    // Eigen::VectorXd& q_des_input,
+    // double t_plan_input,
+    // const BezierCurve* desired_trajectory_input,
+    // KinematicsDynamics* kinematics_dynamics_result_input,
+    // const Eigen::MatrixXd* torque_radius_input,
+    // Obstacles* obstacles_input
+
     catch (int errorCode) {
         WARNING_PRINT("        CUDA & C++: Error initializing Ipopt! Check previous error message!");
         return -1;
@@ -252,14 +260,18 @@ Section III:
     app->Options()->SetStringValue("linear_solver", IPOPT_LINEAR_SOLVER);
 	app->Options()->SetStringValue("hessian_approximation", "limited-memory");
 
-    // For gradient checking
-    // app->Options()->SetStringValue("output_file", "ipopt.out");
-    // app->Options()->SetStringValue("derivative_test", "first-order");
-    // app->Options()->SetNumericValue("derivative_test_perturbation", 1e-8);
-    // app->Options()->SetNumericValue("derivative_test_tol", 1e-6);
+  
 
     // Initialize the IpoptApplication and process the options
     ApplicationReturnStatus status;
+
+    //   // For gradient checking
+    // app->Options()->SetStringValue("output_file", "/home/marco/Documents/GitHub/armour-dev/kinova_src/kinova_simulator_interfaces/kinova_planner_realtime/buffer/ipopt.out");
+    // app->Options()->SetStringValue("derivative_test", "first-order");
+    // app->Options()->SetNumericValue("derivative_test_perturbation", 1e-8);
+    // app->Options()->SetNumericValue("derivative_test_tol", 1e-6);
+    // app->Options()->SetIntegerValue("print_level", 5); // Adjust the level as needed
+
     status = app->Initialize();
     if( status != Solve_Succeeded ) {
 		WARNING_PRINT("Error during initialization!");
@@ -369,7 +381,21 @@ Section IV:
     for (int i = 0; i < mynlp->constraint_number; i++) {
         outputstream5 << mynlp->g_copy[i] << '\n';
     }
+    //return position bound
+    for (int i = 0; i < NUM_FACTORS; i++) {
+        outputstream5 << -state_limits_lb[i] + qe << '\n';
+        outputstream5 << state_limits_ub[i] - qe << '\n';
+    }
+
+    //return velocity bound
+    for (int i = 0; i < NUM_FACTORS; i++) {
+        outputstream5 << -speed_limits[i] + qde << '\n';
+        outputstream5 << speed_limits[i] - qde << '\n';
+    }
+
+
     outputstream5.close();
 
     return 0;
+
 }

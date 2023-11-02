@@ -139,7 +139,7 @@ classdef simulator_armtd < simulator
                     t_cur = toc(planner_start_tic);
 
                 %% simulation loop
-                    while current_iteration < (iter_max+1) && t_cur < t_max
+                    while current_iteration < (50+1) && t_cur < t_max
                         S.vdisp('--------------------------------',3,false)
                         S.vdisp(['ITERATION ',num2str(current_iteration),' (t = ',num2str(A.time(end),'%0.2f'),')'],2,false)
 
@@ -301,19 +301,43 @@ classdef simulator_armtd < simulator
                                 S.vdisp('SAVING CONSTRAINTS IN AGENT')
     
                                 %Parse CUDA file
+                                agent_info = A.get_agent_info() ;
                                 NUM_TIME_STEPS = 128;
                                 NUM_JOINTS = 7;
-                                cpath = "/home/marco/Documents/GitHub/armour-dev/kinova_src/kinova_simulator_interfaces/kinova_planner_realtime/buffer/armour_constraints.out";
-                                constraints = readmatrix(cpath, 'FileType', 'text');
-                                input_constraints = constraints(1:NUM_TIME_STEPS*NUM_JOINTS, :);
-                                velocity_constraints = constraints(end-NUM_JOINTS*2+1:end, :);
-                                position_constraints = constraints(end-NUM_JOINTS*4+1:end-NUM_JOINTS*2, :);
-                                obstacle_constraints = constraints(NUM_TIME_STEPS*NUM_JOINTS+1:end-NUM_JOINTS*4);
+                                %This is stuff for 3D position constraints.
+                                %For now, we care about angles only
+%                                 link_frs_center = readmatrix('armour_joint_position_center.out', 'FileType', 'text');
+%                                 link_frs_generators = readmatrix('armour_joint_position_radius.out', 'FileType', 'text');
+%                                 record_tids = [1:10:NUM_TIME_STEPS, NUM_TIME_STEPS];
+%                                 link_frs_vertices = cell(7,length(record_tids));
+%                                 for tid = record_tids
+%                                     for j = 1:agent_info.n_links_and_joints
+%                                         c = link_frs_center((tid-1)*7+j, :)';
+%                                         g = link_frs_generators( ((tid-1)*7+j-1)*3+1 : ((tid-1)*7+j)*3, :);
+%                                         Z = zonotope(c, g);
+%                                         link_frs_vertices{j,tid} = [link_frs_vertices{j}; vertices(Z)'];
+%                                     end
+%                                 end
+                                control_input_radius = readmatrix('armour_control_input_radius.out', 'FileType', 'text');
+                                constraints = readmatrix('armour_constraints.out', 'FileType', 'text');
+
+                                input_radii = reshape(control_input_radius, [1, NUM_JOINTS, NUM_TIME_STEPS]);
+                                input_constraints = reshape(constraints(1:NUM_TIME_STEPS*NUM_JOINTS, :), [1, NUM_JOINTS, NUM_TIME_STEPS]);
+                                velocity_bounds = constraints(end-NUM_JOINTS*2+1:end, :);
+                                position_bounds = constraints(end-NUM_JOINTS*4+1:end-NUM_JOINTS*2, :);
+                                velocity_extrema = constraints(end-NUM_JOINTS*6+1:end-NUM_JOINTS*4, :);
+                                position_extrema = constraints(end-NUM_JOINTS*8+1:end-NUM_JOINTS*6, :);
+                                %obstacle_constraints = constraints(NUM_TIME_STEPS*NUM_JOINTS+1:end-NUM_JOINTS*8);
+
+                                
                                 
                                 %Save values
-                                A.input_constraints = [A.input_constraints, input_constraints];
-                                A.position_constraints = [A.position_constraints, position_constraints];
-                                A.velocity_constraints = [A.velocity_constraints, velocity_constraints];
+                                A.input_radii = [A.input_radii; input_radii];
+                                A.input_constraints = [A.input_constraints; input_constraints];
+                                A.velocity_bounds = [A.velocity_bounds, velocity_bounds];
+                                A.velocity_extrema = [A.velocity_extrema, velocity_extrema];
+                                A.position_bounds = [A.position_bounds, position_bounds];
+                                A.position_extrema = [A.position_extrema; position_extrema];
                        end
                        
 

@@ -570,6 +570,17 @@ double qd_des_func(double q0, double Tqd0, double TTqdd0, double k, double t) {
     double beta5 = q0 + k;
     return dB0 * beta0 + dB1 * beta1 + dB2 * beta2 + dB3 * beta3 + dB4 * beta4 + dB5 * beta5;
 }
+double qd_deriv_function(double q0, double Tqd0, double TTqdd0, double k, double t) {
+    double dB3 = pow(t,3.0)*(t*2.0-2.0)*1.0E+1+(t*t)*pow(t-1.0,2.0)*3.0E+1;
+    double dB4 = pow(t,3.0)*(t-1.0)*-2.0E+1-pow(t,4.0)*5.0;
+    double dB5 = pow(t,4.0)*5.0;
+
+    //norm velocity (broken)
+    //return 30*pow(t-1, 4)*pow(t, 4)*(q0+k)/abs((k+q0)*pow(t-1, 2)*pow(t, 2));
+    
+
+    return dB3 + dB4 + dB5;
+}
 
 double qdd_des_func(double q0, double Tqd0, double TTqdd0, double k, double t) {
     double t2 = t*2.0;

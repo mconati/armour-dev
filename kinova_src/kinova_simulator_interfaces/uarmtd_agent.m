@@ -34,8 +34,11 @@ classdef uarmtd_agent < robot_arm_agent
         full_time = [];
         full_u = [];
         input_constraints = [];
-        position_constraints = [];
-        velocity_constraints = [];
+        input_radii = [];
+        velocity_bounds = [];
+        position_bounds = [];
+        velocity_extrema = [];
+        position_extrema = [];
         
 
         % for dealing with measurement noise:
@@ -331,9 +334,13 @@ classdef uarmtd_agent < robot_arm_agent
             A.full_state = zeros(A.n_states,1) ;
             A.reference_state = zeros(A.n_states,1) ;
             A.reference_acceleration = zeros(A.n_states/2,1) ;
-            A.position_constraints = [];
-            A.velocity_constraints = [];
+            A.velocity_bounds = [];
             A.input_constraints = [];
+            A.velocity_extrema = [];
+            A.position_extrema = [];
+            A.input_radii = [];
+            A.position_bounds = [];
+            
             
             
             if nargin > 1
@@ -564,6 +571,8 @@ classdef uarmtd_agent < robot_arm_agent
             % state, time, input, and input_time properties.
             
             % update the state, time, input, and input time
+            disp("CURRENT VELOCITIES")
+            disp(Z_state(A.joint_speed_indices))
             A.state = [A.state, Z_state(:,2:end)] ;
             A.time = [A.time, A.time(end) + T_state(2:end)] ;
             A.input_time = [A.input_time, A.input_time(end) + T_used(2:end)] ;

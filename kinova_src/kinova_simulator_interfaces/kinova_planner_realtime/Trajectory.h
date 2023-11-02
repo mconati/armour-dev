@@ -102,6 +102,9 @@ double qd_des_func(double q0, double Tqd0, double TTqdd0, double k, double t);
 
 double qdd_des_func(double q0, double Tqd0, double TTqdd0, double k, double t);
 
+double qd_deriv_function(double q0, double Tqd0, double TTqdd0, double k, double t);
+
+
 // derivative of the second extrema of q_des (when qd_des = 0) w.r.t k 
 double q_des_extrema2_k_derivative(double q0, double Tqd0, double TTqdd0, double k);
 
