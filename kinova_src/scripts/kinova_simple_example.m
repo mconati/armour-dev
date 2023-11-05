@@ -225,7 +225,7 @@ plot_whole_trajectories_with_bounds(A, T ,Ya, -1, false);
 %plot_torques(A.full_u, A.input_constraints, A.input_radii, A.full_time, 1, 0)
 
 %Plot for all trajectories
-%plot_torques(A.full_u, A.input_constraints, A.input_radii, A.full_time, -1, 0)
+% plot_torques(A.full_u, A.input_constraints, A.input_radii, A.full_time, -1, 0)
 
 % %%
 % function plot_whole_trajectories(A, T, Y, makefigure)
