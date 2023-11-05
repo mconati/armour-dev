@@ -213,74 +213,76 @@ Ya = qdd_post;
 figure(102)
 subplot(3,1,1)
 title('Joint Positions')
-plot_whole_trajectories(A, T ,Ys, false);
+plot_whole_trajectories(A, T ,Ys, A.position_bounds(:, 1), false);
 subplot(3,1,2)
 title('Joint Velocities')
-plot_whole_trajectories(A, T,Yv, false);
+plot_whole_trajectories(A, T ,Yv, A.velocity_bounds(:, 1), false);
 subplot(3,1,3)
 title('Joint Accelerations')
-plot_whole_trajectories(A, T,Ya, false);
+plot_whole_trajectories(A, T ,Ya, -1, false);
 
+%plot torques for the first trajectory
+%plot_torques(A.full_u, A.input_constraints, A.input_radii, A.full_time, 1, 0)
 
-%%
-plot_whole_trajectories(A, T,Ya, true);
+%Plot for all trajectories
+% plot_torques(A.full_u, A.input_constraints, A.input_radii, A.full_time, -1, 0)
 
-%%
-function plot_whole_trajectories(A, T, Y, makefigure)
-    buffer_y = [Y(:, 1)];
-    buffer_yt = [T(:, 1)];
-    buffer_b = [];
-    buffer_bt = [];
-    t = A.time;
-    
-    t_stop = A.t_stop; 
-    
-    % Create a figure and axis
-    if makefigure
-       figure;
-    end
-    hold on;
-    
-    color_idx = 1; % Initialize the color index
-    start_time = 0;
-    s_T = 1;
-    while start_time < max(T)
-        
-        end_time = start_time + t_stop;
-        % Clip the time interval to avoid going beyond the data
-        if end_time > max(T)
-            end_time = max(T);
-        end
-        indices = find(T > start_time & T <= end_time);
-        % Select the appropriate color
-        if color_idx == 1
-            color = 'b'; % Blue
-            buffer_y = [buffer_y, Y(:, indices)];
-            buffer_yt = [buffer_yt, T(:, s_T:(s_T+length(indices))-1)];
-            s_T = s_T + length(indices)-1;
-        else
-            color = 'r'; % Red
-            buffer_b = [buffer_b, Y(:, indices)];
-            buffer_bt = [buffer_bt, T(:, s_T:(s_T+length(indices))-1)];
-            plot(T(:, s_T:(s_T+length(indices)-1)), Y(:, indices), color);
-        end
-        
-        % Find the corresponding indices in the time array
-    
-        
-        % Plot the line segment
-    
-        
-        % Update the color index and start time for the next segment
-        color_idx = 3 - color_idx; % Toggle between 1 and 2
-        start_time = end_time;
-    
-    end
-    plot(buffer_yt, buffer_y, 'b');
-    xlabel('Time (seconds)');
-    ylabel('Y');
-    grid on;
-end
-
-
-
+% %%
+% function plot_whole_trajectories(A, T, Y, makefigure)
+%     buffer_y = [Y(:, 1)];
+%     buffer_yt = [T(:, 1)];
+%     buffer_b = [];
+%     buffer_bt = [];
+%     t = A.time;
+%     
+%     t_stop = A.t_stop; 
+%     
+%     % Create a figure and axis
+%     if makefigure
+%        figure;
+%     end
+%     hold on;
+%     
+%     color_idx = 1; % Initialize the color index
+%     start_time = 0;
+%     s_T = 1;
+%     while start_time < max(T)
+%         end_time = start_time + t_stop;
+%         % Clip the time interval to avoid going beyond the data
+%         if end_time > max(T)
+%             end_time = max(T);
+%         end
+%         indices = find(T > start_time & T <= end_time);
+%         % Select the appropriate color
+%         if color_idx == 1
+%             color = 'b'; % Blue
+%             disp(indices)
+%             buffer_y = [buffer_y, Y(:, indices)];
+%             buffer_yt = [buffer_yt, T(:, s_T:(s_T+length(indices))-1)];
+%             s_T = s_T + length(indices)-1;
+%         else
+%             color = 'r'; % Red
+%             buffer_b = [buffer_b, Y(:, indices)];
+%             buffer_bt = [buffer_bt, T(:, s_T:(s_T+length(indices))-1)];
+%             plot(T(:, s_T:(s_T+length(indices)-1)), Y(:, indices), color);
+%         end
+%         
+%         % Find the corresponding indices in the time array
+%     
+%         
+%         % Plot the line segment
+%     
+%         
+%         % Update the color index and start time for the next segment
+%         color_idx = 3 - color_idx; % Toggle between 1 and 2
+%         start_time = end_time;
+%     
+%     end
+%     plot(buffer_yt, buffer_y, 'b');
+%     xlabel('Time (seconds)');
+%     ylabel('Y');
+%     grid on;
+% end
+% 
+% %% 
+%  
