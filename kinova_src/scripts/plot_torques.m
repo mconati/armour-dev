@@ -1,14 +1,19 @@
 %%
-function plot_torques(input, input_centers, input_radii, time, trajectory)
-
+function plot_torques(input, input_centers, input_radii, time, trajectory, bounds)
+    limits = [56.7, 56.7, 56.7, 56.7, 29.4, 29.4, 29.4];
     iterations = size(input_centers, 1);
     JOINTS = size(input, 1);
-    disp(JOINTS)
-
     disp(iterations)
-    
     % Reshape the input to have 100 timesteps for each iteration
-    trajectories = reshape(input(:, 1:end-1), [JOINTS, 100, iterations]);
+    [rows, cols] = size(input);
+    
+    try
+        trajectories = reshape(input(:, 1:end-1), [JOINTS, 100, iterations]);
+    catch %When the simulation finishes (as opposed to reaching maxIter) there are some extra inputs/time
+        input = input(:, 1:end-100);
+        time = time(:, 1:end-100);
+        trajectories = reshape(input(:, 1:end-1), [JOINTS, 100, iterations]);
+    end
     time = reshape(time(1:end-1), [100, iterations]);
     if trajectory == -1
     else
@@ -63,6 +68,13 @@ function plot_torques(input, input_centers, input_radii, time, trajectory)
             % Plot the input trajectory on top
             plot(x, squeeze(trajectories(i, j, :)), 'LineWidth', 2, 'Color', [0.8500, 0.3250, 0.0980]); % Input trajectory
             
+            if bounds ~= -1
+                upper_limit = limits(j);
+                lower_limit = -limits(j);
+                plot(x, repmat(upper_limit, 1, length(x)), 'k');
+                plot(x, repmat(lower_limit, 1, length(x)), 'g');
+
+            end
             % Labels and titles for each subplot
             xlabel('Time');
             title(['Joint ' num2str(j)]);

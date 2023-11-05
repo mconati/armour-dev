@@ -1,3 +1,4 @@
+
 function plot_whole_trajectories(A, T, Y, bounds, makefigure)
     buffer_y = [Y(:, 1)];
     buffer_yt = [T(:, 1)];
@@ -49,13 +50,21 @@ function plot_whole_trajectories(A, T, Y, bounds, makefigure)
     
     end
         % Plot the bounds 
-    for i=1:1:length(bounds)/2
-        y_min = bounds(2*i-1); % Lower bound for the i-th subplot
-        y_max = bounds(2*i);   % Upper bound for the i-th subplot
-        plot(T/2, repmat(y_min, 1, length(T)), 'k');
-        plot(T/2, repmat(y_max, 1, length(T)), 'g');
+    if bounds == -1
+        title("Trajectory Plotting with Braking")
+    else
+        for i=1:1:length(bounds)/2
+            y_min = bounds(2*i-1); % Lower bound for the i-th subplot
+            y_max = bounds(2*i);   % Upper bound for the i-th subplot
+            if y_min<-5 || y_max>5
+                continue
+            end
+            plot(T/2, repmat(y_min, 1, length(T)), 'k');
+            plot(T/2, repmat(y_max, 1, length(T)), 'g');
+        end
+        title("Trajectory Plotting with Braking and Bounds")
     end
-    title("Trajectory Plotting with Bounds")
+
     plot(buffer_yt, buffer_y, 'b');
     xlabel('Time (seconds)');
     ylabel('Y');
