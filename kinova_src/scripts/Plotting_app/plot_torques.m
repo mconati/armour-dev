@@ -1,9 +1,10 @@
 %%
-function plot_torques(input, input_centers, input_radii, time, trajectory, bounds)
-    limits = A.joint_input_limits(2, :);
+function plot_torques(ji_limits, input, input_centers, input_radii, time, trajectory, bounds)
+    limits = ji_limits;
     iterations = size(input_centers, 1);
     JOINTS = size(input, 1);
     disp(iterations)
+    figure;
     % Reshape the input to have 100 timesteps for each iteration
     [rows, cols] = size(input);
     
@@ -40,7 +41,6 @@ function plot_torques(input, input_centers, input_radii, time, trajectory, bound
     
     % Loop through each iteration to plot
     for i = 1:iterations
-        figure;  % Creates a new figure for each iteration
         hold on; % Hold on to plot multiple datasets
         x = squeeze(time(:, i)');
         if trajectory == -1
@@ -50,11 +50,14 @@ function plot_torques(input, input_centers, input_radii, time, trajectory, bound
         end
         
         
-        % Loop to calculate and plot the bounds and input for each joint
+       JOINTS = size(input, 1);
+        nRows = ceil(JOINTS / 2);
+        nCols = 2;
+    
+        % Loop through each joint to plot
         for j = 1:JOINTS
-            % Select the j-th subplot
-            subplot(ceil(JOINTS/2), 2, j);
-            
+        % Select the j-th subplot within the given axes plt
+        subplot(nRows, nCols, j);
             % Calculate bounds for this joint
             upper_bound = squeeze(scaled_torque_centers(i, j, :) + scaled_torque_radii(i, j, :))';
             lower_bound = squeeze(scaled_torque_centers(i, j, :) - scaled_torque_radii(i, j, :))';
@@ -67,7 +70,7 @@ function plot_torques(input, input_centers, input_radii, time, trajectory, bound
             
             % Plot the input trajectory on top
             plot(x, squeeze(trajectories(i, j, :)), 'LineWidth', 2, 'Color', [0.8500, 0.3250, 0.0980]); % Input trajectory
-            
+           
             if bounds ~= -1
                 upper_limit = limits(j);
                 lower_limit = -limits(j);
